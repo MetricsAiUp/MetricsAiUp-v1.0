@@ -36,9 +36,7 @@
             white-space: nowrap;
             letter-spacing: 0.5px;
         }
-        .logo span {
-            color: #4a9eff;
-        }
+        .logo span { color: #4a9eff; }
 
         /* Navigation */
         nav {
@@ -59,15 +57,9 @@
             transition: color 0.2s, border-color 0.2s;
             white-space: nowrap;
         }
-        nav a:hover {
-            color: #ccc;
-        }
-        nav a.active {
-            color: #fff;
-            border-bottom-color: #4a9eff;
-        }
+        nav a:hover { color: #ccc; }
+        nav a.active { color: #fff; border-bottom-color: #4a9eff; }
 
-        /* User info */
         .header-right {
             margin-left: auto;
             display: flex;
@@ -75,22 +67,15 @@
             gap: 16px;
         }
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             background: #4caf50;
             border-radius: 50%;
             display: inline-block;
         }
-        .header-right span {
-            font-size: 0.8rem;
-            color: #888;
-        }
+        .header-right span { font-size: 0.8rem; color: #888; }
 
-        /* Main content */
-        .main {
-            flex: 1;
-            padding: 24px;
-        }
+        /* Main */
+        .main { flex: 1; padding: 24px; }
         .page-title {
             font-size: 1.25rem;
             font-weight: 600;
@@ -119,80 +104,86 @@
             justify-content: center;
             position: relative;
         }
-        .camera-feed .placeholder {
-            color: #444;
-            font-size: 0.85rem;
-        }
+        .camera-feed .placeholder { color: #444; font-size: 0.85rem; z-index: 1; }
         .camera-feed .rec {
-            position: absolute;
-            top: 10px;
-            left: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.7rem;
-            color: #e53935;
-            font-weight: 600;
-            letter-spacing: 1px;
+            position: absolute; top: 10px; left: 12px;
+            display: none; align-items: center; gap: 6px;
+            font-size: 0.7rem; color: #e53935; font-weight: 600; letter-spacing: 1px;
+            z-index: 2;
         }
         .camera-feed .rec::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: #e53935;
-            border-radius: 50%;
+            content: ''; width: 6px; height: 6px;
+            background: #e53935; border-radius: 50%;
             animation: blink 1.2s infinite;
         }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
-        }
+        .camera-card.streaming .camera-feed .rec { display: flex; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
         .camera-feed .time {
-            position: absolute;
-            top: 10px;
-            right: 12px;
-            font-size: 0.7rem;
-            color: #666;
-            font-family: monospace;
+            position: absolute; top: 10px; right: 12px;
+            font-size: 0.7rem; color: #666; font-family: monospace; z-index: 2;
         }
+        .camera-feed video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            position: absolute; top: 0; left: 0;
+        }
+        .camera-card.streaming .camera-feed .placeholder { display: none; }
+
         .camera-info {
             padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .camera-name {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #ddd;
-        }
-        .camera-zone {
-            font-size: 0.75rem;
-            color: #666;
-        }
+        .camera-name { font-size: 0.85rem; font-weight: 500; color: #ddd; }
+        .camera-zone { font-size: 0.75rem; color: #666; }
         .camera-status {
-            font-size: 0.7rem;
-            padding: 3px 10px;
-            border-radius: 12px;
-            background: rgba(76, 175, 80, 0.15);
-            color: #4caf50;
-            font-weight: 500;
+            font-size: 0.7rem; padding: 3px 10px; border-radius: 12px;
+            background: rgba(76, 175, 80, 0.15); color: #4caf50; font-weight: 500;
         }
         .camera-status.offline {
-            background: rgba(229, 57, 53, 0.15);
+            background: rgba(229, 57, 53, 0.15); color: #e53935;
+        }
+        .camera-status.connecting {
+            background: rgba(255, 193, 7, 0.15); color: #ffc107;
+        }
+
+        /* Stream controls */
+        .camera-controls {
+            padding: 8px 16px 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            flex: 1;
+            padding: 7px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-start {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+        .btn-start:hover:not(:disabled) { background: rgba(76, 175, 80, 0.35); }
+        .btn-stop {
+            background: rgba(229, 57, 53, 0.2);
             color: #e53935;
         }
+        .btn-stop:hover:not(:disabled) { background: rgba(229, 57, 53, 0.35); }
 
         /* Footer */
         .footer {
             padding: 12px 24px;
             border-top: 1px solid #2a2a2a;
-            font-size: 0.7rem;
-            color: #555;
-            text-align: center;
-            flex-shrink: 0;
+            font-size: 0.7rem; color: #555; text-align: center; flex-shrink: 0;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
 
@@ -213,10 +204,32 @@
     <main class="main">
         <div class="page-title">Камеры наблюдения</div>
         <div class="camera-grid">
-            <div class="camera-card">
+
+            <div class="camera-card" data-cam="cam06">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
+                    <span class="placeholder">Стрим остановлен</span>
+                </div>
+                <div class="camera-info">
+                    <div>
+                        <div class="camera-name">CAM 06 — 3.6 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
+                    </div>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam06')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam06')" disabled>Стоп</button>
+                </div>
+            </div>
+
+            <div class="camera-card" data-cam="cam01">
+                <div class="camera-feed">
+                    <span class="rec">REC</span>
+                    <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
                     <span class="placeholder">Нет сигнала</span>
                 </div>
                 <div class="camera-info">
@@ -224,13 +237,19 @@
                         <div class="camera-name">Камера 01 — Подъёмник №1</div>
                         <div class="camera-zone">Зона: Ремонтный бокс A</div>
                     </div>
-                    <span class="camera-status">Онлайн</span>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam01')" disabled>Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam01')" disabled>Стоп</button>
                 </div>
             </div>
-            <div class="camera-card">
+
+            <div class="camera-card" data-cam="cam02">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
                     <span class="placeholder">Нет сигнала</span>
                 </div>
                 <div class="camera-info">
@@ -238,13 +257,19 @@
                         <div class="camera-name">Камера 02 — Подъёмник №2</div>
                         <div class="camera-zone">Зона: Ремонтный бокс A</div>
                     </div>
-                    <span class="camera-status">Онлайн</span>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam02')" disabled>Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam02')" disabled>Стоп</button>
                 </div>
             </div>
-            <div class="camera-card">
+
+            <div class="camera-card" data-cam="cam03">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
                     <span class="placeholder">Нет сигнала</span>
                 </div>
                 <div class="camera-info">
@@ -252,12 +277,18 @@
                         <div class="camera-name">Камера 03 — Зона приёмки</div>
                         <div class="camera-zone">Зона: Приёмка</div>
                     </div>
-                    <span class="camera-status">Онлайн</span>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam03')" disabled>Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam03')" disabled>Стоп</button>
                 </div>
             </div>
-            <div class="camera-card">
+
+            <div class="camera-card" data-cam="cam04">
                 <div class="camera-feed">
                     <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
                     <span class="placeholder">Нет сигнала</span>
                 </div>
                 <div class="camera-info">
@@ -267,7 +298,12 @@
                     </div>
                     <span class="camera-status offline">Офлайн</span>
                 </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam04')" disabled>Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam04')" disabled>Стоп</button>
+                </div>
             </div>
+
         </div>
     </main>
 
@@ -276,16 +312,125 @@
     </footer>
 
     <script>
-        // Live clock on camera feeds
+        // Clock
         function updateTime() {
             const now = new Date();
             const time = now.toLocaleTimeString('ru-RU', { hour12: false });
-            document.querySelectorAll('[data-camera-time]').forEach(el => {
-                el.textContent = time;
-            });
+            document.querySelectorAll('[data-camera-time]').forEach(el => el.textContent = time);
         }
         updateTime();
         setInterval(updateTime, 1000);
+
+        // HLS instances per camera
+        const hlsInstances = {};
+
+        function getCard(camId) {
+            return document.querySelector(`.camera-card[data-cam="${camId}"]`);
+        }
+
+        function setCardState(camId, state) {
+            const card = getCard(camId);
+            if (!card) return;
+            const status = card.querySelector('.camera-status');
+            const btnStart = card.querySelector('.btn-start');
+            const btnStop = card.querySelector('.btn-stop');
+            const placeholder = card.querySelector('.placeholder');
+
+            if (state === 'connecting') {
+                card.classList.remove('streaming');
+                status.textContent = 'Подключение...';
+                status.className = 'camera-status connecting';
+                placeholder.textContent = 'Подключение...';
+                btnStart.disabled = true;
+                btnStop.disabled = false;
+            } else if (state === 'streaming') {
+                card.classList.add('streaming');
+                status.textContent = 'Онлайн';
+                status.className = 'camera-status';
+                btnStart.disabled = true;
+                btnStop.disabled = false;
+            } else if (state === 'stopped') {
+                card.classList.remove('streaming');
+                status.textContent = 'Офлайн';
+                status.className = 'camera-status offline';
+                placeholder.textContent = 'Стрим остановлен';
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+            } else if (state === 'error') {
+                card.classList.remove('streaming');
+                status.textContent = 'Ошибка';
+                status.className = 'camera-status offline';
+                placeholder.textContent = 'Ошибка подключения';
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+            }
+        }
+
+        function initHlsPlayer(camId) {
+            const card = getCard(camId);
+            const video = card.querySelector('video');
+            const hlsUrl = '/hls/' + camId + '/stream.m3u8';
+            console.log('[HLS] Loading:', hlsUrl);
+
+            if (hlsInstances[camId]) {
+                hlsInstances[camId].destroy();
+                hlsInstances[camId] = null;
+            }
+
+            if (!Hls.isSupported()) {
+                video.src = hlsUrl;
+                video.addEventListener('loadedmetadata', () => {
+                    video.play();
+                    setCardState(camId, 'streaming');
+                });
+                return;
+            }
+
+            const hls = new Hls({
+                liveDurationInfinity: true,
+                lowLatencyMode: true,
+                backBufferLength: 0
+            });
+            hlsInstances[camId] = hls;
+
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play();
+                setCardState(camId, 'streaming');
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    // Retry if still supposed to be streaming
+                    const card = getCard(camId);
+                    if (card.querySelector('.btn-stop:not(:disabled)')) {
+                        setTimeout(() => {
+                            hls.destroy();
+                            initHlsPlayer(camId);
+                        }, 2000);
+                    }
+                }
+            });
+        }
+
+        function streamStart(camId) {
+            setCardState(camId, 'connecting');
+            // FFmpeg already running in background, just connect HLS player
+            initHlsPlayer(camId);
+        }
+
+        function streamStop(camId) {
+            if (hlsInstances[camId]) {
+                hlsInstances[camId].destroy();
+                hlsInstances[camId] = null;
+            }
+            const video = getCard(camId).querySelector('video');
+            video.removeAttribute('src');
+            video.load();
+            setCardState(camId, 'stopped');
+        }
     </script>
 </body>
 </html>
