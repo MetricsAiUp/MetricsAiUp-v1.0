@@ -23,14 +23,21 @@ const MIME_TYPES = {
 };
 
 // Camera registry: id -> { rtspUrl, name, ffmpeg process, streaming bool }
+function cam(name, rtspUrl) {
+    return { name, rtspUrl, ffmpeg: null, streaming: false, restartTimer: null };
+}
+
 const cameras = {
-    cam06: {
-        name: 'CAM 06 — 3.6 СТО',
-        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/',
-        ffmpeg: null,
-        streaming: false,
-        restartTimer: null
-    }
+    cam01: cam('CAM 01 — 3.5 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/t8rFCkD7_m/'),
+    cam02: cam('CAM 02 — 3.11 СТО',       'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/w9fKX1CE_m/'),
+    cam03: cam('CAM 03 — 3.9 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/RTHaqqOJ_m/'),
+    cam04: cam('CAM 04 — 3.10 СТО',       'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/Mn1PZPF0_m/'),
+    cam05: cam('CAM 05 — 3.4 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/NQ5s26a6_m/'),
+    cam06: cam('CAM 06 — 3.6 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/'),
+    cam07: cam('CAM 07 — 3.2 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/k0HNWQDk_m/'),
+    cam08: cam('CAM 08 — 3.3 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/KRoX0tGZ_m/'),
+    cam09: cam('CAM 09 — 3.1 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/we4rvi8t_m/'),
+    cam10: cam('CAM 10 — 3.7 Склад СТО',  'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/PxPU26jt_m/'),
 };
 
 function startStream(camId) {

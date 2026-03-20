@@ -205,6 +205,106 @@
         <div class="page-title">Камеры наблюдения</div>
         <div class="camera-grid">
 
+            <div class="camera-card" data-cam="cam01">
+                <div class="camera-feed">
+                    <span class="rec">REC</span>
+                    <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
+                    <span class="placeholder">Стрим остановлен</span>
+                </div>
+                <div class="camera-info">
+                    <div>
+                        <div class="camera-name">CAM 01 — 3.5 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
+                    </div>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam01')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam01')" disabled>Стоп</button>
+                </div>
+            </div>
+
+            <div class="camera-card" data-cam="cam02">
+                <div class="camera-feed">
+                    <span class="rec">REC</span>
+                    <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
+                    <span class="placeholder">Стрим остановлен</span>
+                </div>
+                <div class="camera-info">
+                    <div>
+                        <div class="camera-name">CAM 02 — 3.11 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
+                    </div>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam02')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam02')" disabled>Стоп</button>
+                </div>
+            </div>
+
+            <div class="camera-card" data-cam="cam03">
+                <div class="camera-feed">
+                    <span class="rec">REC</span>
+                    <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
+                    <span class="placeholder">Стрим остановлен</span>
+                </div>
+                <div class="camera-info">
+                    <div>
+                        <div class="camera-name">CAM 03 — 3.9 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
+                    </div>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam03')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam03')" disabled>Стоп</button>
+                </div>
+            </div>
+
+            <div class="camera-card" data-cam="cam04">
+                <div class="camera-feed">
+                    <span class="rec">REC</span>
+                    <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
+                    <span class="placeholder">Стрим остановлен</span>
+                </div>
+                <div class="camera-info">
+                    <div>
+                        <div class="camera-name">CAM 04 — 3.10 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
+                    </div>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam04')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam04')" disabled>Стоп</button>
+                </div>
+            </div>
+
+            <div class="camera-card" data-cam="cam05">
+                <div class="camera-feed">
+                    <span class="rec">REC</span>
+                    <span class="time" data-camera-time>--:--:--</span>
+                    <video autoplay muted playsinline></video>
+                    <span class="placeholder">Стрим остановлен</span>
+                </div>
+                <div class="camera-info">
+                    <div>
+                        <div class="camera-name">CAM 05 — 3.4 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
+                    </div>
+                    <span class="camera-status offline">Офлайн</span>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-start" onclick="streamStart('cam05')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam05')" disabled>Стоп</button>
+                </div>
+            </div>
+
             <div class="camera-card" data-cam="cam06">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
@@ -225,82 +325,83 @@
                 </div>
             </div>
 
-            <div class="camera-card" data-cam="cam01">
+            <div class="camera-card" data-cam="cam07">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
                     <video autoplay muted playsinline></video>
-                    <span class="placeholder">Нет сигнала</span>
+                    <span class="placeholder">Стрим остановлен</span>
                 </div>
                 <div class="camera-info">
                     <div>
-                        <div class="camera-name">Камера 01 — Подъёмник №1</div>
-                        <div class="camera-zone">Зона: Ремонтный бокс A</div>
+                        <div class="camera-name">CAM 07 — 3.2 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
                     </div>
                     <span class="camera-status offline">Офлайн</span>
                 </div>
                 <div class="camera-controls">
-                    <button class="btn btn-start" onclick="streamStart('cam01')" disabled>Старт</button>
-                    <button class="btn btn-stop" onclick="streamStop('cam01')" disabled>Стоп</button>
+                    <button class="btn btn-start" onclick="streamStart('cam07')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam07')" disabled>Стоп</button>
                 </div>
             </div>
 
-            <div class="camera-card" data-cam="cam02">
+            <div class="camera-card" data-cam="cam08">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
                     <video autoplay muted playsinline></video>
-                    <span class="placeholder">Нет сигнала</span>
+                    <span class="placeholder">Стрим остановлен</span>
                 </div>
                 <div class="camera-info">
                     <div>
-                        <div class="camera-name">Камера 02 — Подъёмник №2</div>
-                        <div class="camera-zone">Зона: Ремонтный бокс A</div>
+                        <div class="camera-name">CAM 08 — 3.3 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
                     </div>
                     <span class="camera-status offline">Офлайн</span>
                 </div>
                 <div class="camera-controls">
-                    <button class="btn btn-start" onclick="streamStart('cam02')" disabled>Старт</button>
-                    <button class="btn btn-stop" onclick="streamStop('cam02')" disabled>Стоп</button>
+                    <button class="btn btn-start" onclick="streamStart('cam08')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam08')" disabled>Стоп</button>
                 </div>
             </div>
 
-            <div class="camera-card" data-cam="cam03">
+            <div class="camera-card" data-cam="cam09">
                 <div class="camera-feed">
                     <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
                     <video autoplay muted playsinline></video>
-                    <span class="placeholder">Нет сигнала</span>
+                    <span class="placeholder">Стрим остановлен</span>
                 </div>
                 <div class="camera-info">
                     <div>
-                        <div class="camera-name">Камера 03 — Зона приёмки</div>
-                        <div class="camera-zone">Зона: Приёмка</div>
+                        <div class="camera-name">CAM 09 — 3.1 СТО</div>
+                        <div class="camera-zone">Зона: СТО</div>
                     </div>
                     <span class="camera-status offline">Офлайн</span>
                 </div>
                 <div class="camera-controls">
-                    <button class="btn btn-start" onclick="streamStart('cam03')" disabled>Старт</button>
-                    <button class="btn btn-stop" onclick="streamStop('cam03')" disabled>Стоп</button>
+                    <button class="btn btn-start" onclick="streamStart('cam09')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam09')" disabled>Стоп</button>
                 </div>
             </div>
 
-            <div class="camera-card" data-cam="cam04">
+            <div class="camera-card" data-cam="cam10">
                 <div class="camera-feed">
+                    <span class="rec">REC</span>
                     <span class="time" data-camera-time>--:--:--</span>
                     <video autoplay muted playsinline></video>
-                    <span class="placeholder">Нет сигнала</span>
+                    <span class="placeholder">Стрим остановлен</span>
                 </div>
                 <div class="camera-info">
                     <div>
-                        <div class="camera-name">Камера 04 — Склад запчастей</div>
-                        <div class="camera-zone">Зона: Склад</div>
+                        <div class="camera-name">CAM 10 — 3.7 Склад СТО</div>
+                        <div class="camera-zone">Зона: Склад СТО</div>
                     </div>
                     <span class="camera-status offline">Офлайн</span>
                 </div>
                 <div class="camera-controls">
-                    <button class="btn btn-start" onclick="streamStart('cam04')" disabled>Старт</button>
-                    <button class="btn btn-stop" onclick="streamStop('cam04')" disabled>Стоп</button>
+                    <button class="btn btn-start" onclick="streamStart('cam10')">Старт</button>
+                    <button class="btn btn-stop" onclick="streamStop('cam10')" disabled>Стоп</button>
                 </div>
             </div>
 
