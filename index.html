@@ -415,13 +415,25 @@
             });
         }
 
-        function streamStart(camId) {
+        async function streamStart(camId) {
             setCardState(camId, 'connecting');
-            // FFmpeg already running in background, just connect HLS player
-            initHlsPlayer(camId);
+            try {
+                const res = await fetch('/cam-api/stream/start/' + camId, { method: 'POST' });
+                if (!res.ok) throw new Error('API error');
+                // Wait for FFmpeg to generate first HLS segments
+                setTimeout(() => initHlsPlayer(camId), 4000);
+            } catch (e) {
+                console.error('Start failed:', e);
+                setCardState(camId, 'error');
+            }
         }
 
-        function streamStop(camId) {
+        async function streamStop(camId) {
+            try {
+                await fetch('/cam-api/stream/stop/' + camId, { method: 'POST' });
+            } catch (e) {
+                console.error('Stop failed:', e);
+            }
             if (hlsInstances[camId]) {
                 hlsInstances[camId].destroy();
                 hlsInstances[camId] = null;

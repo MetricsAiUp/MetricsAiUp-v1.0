@@ -46,18 +46,10 @@ function startStream(camId) {
 
     const args = [
         '-rtsp_transport', 'tcp',
-        '-fflags', 'nobuffer',
-        '-flags', 'low_delay',
+        '-fflags', '+genpts+discardcorrupt',
+        '-err_detect', 'ignore_err',
         '-i', cam.rtspUrl,
-        '-vf', 'scale=1280:720',
-        '-c:v', 'libx264',
-        '-preset', 'ultrafast',
-        '-tune', 'zerolatency',
-        '-b:v', '1500k',
-        '-maxrate', '1500k',
-        '-bufsize', '3000k',
-        '-g', '20',
-        '-sc_threshold', '0',
+        '-c:v', 'copy',
         '-an',
         '-f', 'hls',
         '-hls_time', '2',
@@ -73,9 +65,7 @@ function startStream(camId) {
 
     cam.ffmpeg.stderr.on('data', (data) => {
         const line = data.toString().trim();
-        if (line.includes('frame=')) {
-            process.stdout.write(`\r[${camId}] ${line.substring(0, 70)}`);
-        }
+        if (line) console.log(`[${camId}] ${line}`);
     });
 
     cam.ffmpeg.on('close', (code) => {
