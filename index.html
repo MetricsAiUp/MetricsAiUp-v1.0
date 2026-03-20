@@ -443,6 +443,26 @@
             video.load();
             setCardState(camId, 'stopped');
         }
+
+        // On page load — check which streams are already running
+        async function checkStreamStatus() {
+            try {
+                const res = await fetch('/cam-api/stream/status');
+                if (!res.ok) return;
+                const statuses = await res.json();
+                for (const [camId, info] of Object.entries(statuses)) {
+                    const card = getCard(camId);
+                    if (!card) continue;
+                    if (info.streaming) {
+                        setCardState(camId, 'connecting');
+                        initHlsPlayer(camId);
+                    }
+                }
+            } catch (e) {
+                console.log('Status check failed:', e);
+            }
+        }
+        checkStreamStatus();
     </script>
 </body>
 </html>
