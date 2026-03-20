@@ -3,3 +3,5 @@ core.*
 .claude-home/
 .terminal-log
 hls/
+.ssh/
+.autostart.sh
