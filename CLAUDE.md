@@ -24,6 +24,8 @@
 - Keep responses concise — the user sees everything in a terminal
 - If you create a dev server, bind to 0.0.0.0:8080
 - Commit and push every meaningful change immediately with a concise descriptive message
+- Every feature/fix = commit + push, no batching
+- When user confirms a feature works ("получилось", "отлично", etc.) — add #done to commit message
 - Push to origin using: GIT_SSH_COMMAND="ssh -i /project/.ssh/id_ed25519 -o StrictHostKeyChecking=no" git push origin <branch>
 - Main branch: main. Users work in personal branches (admin, artisom, envegii etc.)
 - After starting node server, always verify it's running before telling the user
