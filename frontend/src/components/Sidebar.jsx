@@ -10,6 +10,8 @@ const navItems = [
   { path: '/work-orders', icon: '📋', labelKey: 'nav.workOrders', permission: 'view_work_orders' },
   { path: '/events', icon: '📝', labelKey: 'nav.events', permission: 'view_events' },
   { path: '/analytics', icon: '📈', labelKey: 'nav.analytics', permission: 'view_analytics' },
+  { path: '/cameras', icon: '📹', labelKey: 'nav.cameras', permission: 'view_cameras' },
+  { path: '/camera-mapping', icon: '🎯', labelKey: 'nav.cameraMapping', permission: 'manage_cameras' },
   { path: '/data-1c', icon: '🏢', labelKey: 'nav.data1c', permission: 'view_work_orders' },
 ];
 

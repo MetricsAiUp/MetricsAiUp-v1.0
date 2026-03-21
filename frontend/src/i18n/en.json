@@ -10,6 +10,8 @@
     "workOrders": "Work Orders",
     "events": "Event Log",
     "analytics": "Analytics",
+    "cameras": "Cameras",
+    "cameraMapping": "Camera Mapping",
     "data1c": "1C Data",
     "settings": "Settings",
     "logout": "Logout"

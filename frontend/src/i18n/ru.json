@@ -10,6 +10,8 @@
     "workOrders": "Заказ-наряды",
     "events": "Журнал событий",
     "analytics": "Аналитика",
+    "cameras": "Камеры",
+    "cameraMapping": "Разметка камер",
     "data1c": "Данные 1С",
     "settings": "Настройки",
     "logout": "Выйти"

@@ -10,6 +10,8 @@ import WorkOrders from './pages/WorkOrders';
 import Events from './pages/Events';
 import Analytics from './pages/Analytics';
 import Data1C from './pages/Data1C';
+import Cameras from './pages/Cameras';
+import CameraMapping from './pages/CameraMapping';
 import './i18n';
 
 function ProtectedRoute({ children }) {
@@ -35,6 +37,8 @@ function AppRoutes() {
         <Route path="events" element={<Events />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="data-1c" element={<Data1C />} />
+        <Route path="cameras" element={<Cameras />} />
+        <Route path="camera-mapping" element={<CameraMapping />} />
       </Route>
     </Routes>
   );
