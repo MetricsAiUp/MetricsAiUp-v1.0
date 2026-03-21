@@ -9,6 +9,7 @@ import Sessions from './pages/Sessions';
 import WorkOrders from './pages/WorkOrders';
 import Events from './pages/Events';
 import Analytics from './pages/Analytics';
+import Data1C from './pages/Data1C';
 import './i18n';
 
 function ProtectedRoute({ children }) {
@@ -33,6 +34,7 @@ function AppRoutes() {
         <Route path="work-orders" element={<WorkOrders />} />
         <Route path="events" element={<Events />} />
         <Route path="analytics" element={<Analytics />} />
+        <Route path="data-1c" element={<Data1C />} />
       </Route>
     </Routes>
   );
