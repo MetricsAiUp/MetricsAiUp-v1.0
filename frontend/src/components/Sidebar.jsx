@@ -19,38 +19,40 @@ export default function Sidebar() {
   const { hasPermission } = useAuth();
 
   return (
-    <aside className="glass-static w-64 min-h-screen p-4 flex flex-col" style={{ borderRadius: 0, borderRight: '1px solid var(--border-glass)' }}>
+    <aside
+      className="glass-static min-h-screen p-3 flex flex-col flex-shrink-0"
+      style={{ width: 160, minWidth: 160, maxWidth: 160, borderRadius: 0, borderRight: '1px solid var(--border-glass)' }}
+    >
       {/* Logo */}
-      <div className="mb-8 px-2">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--accent)' }}>
+      <div className="mb-5 px-1">
+        <h1 className="text-sm font-bold" style={{ color: 'var(--accent)' }}>
           {t('app.title')}
         </h1>
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-xs" style={{ color: 'var(--text-muted)', lineHeight: 1.2 }}>
           {t('app.subtitle')}
         </p>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-0.5">
         {navItems.map(item => (
           hasPermission(item.permission) && (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm ${
-                  isActive
-                    ? 'glass font-medium'
-                    : 'hover:opacity-80'
+                `flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                  isActive ? 'font-medium' : 'hover:opacity-80'
                 }`
               }
               style={({ isActive }) => ({
                 color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
                 background: isActive ? 'var(--accent-light)' : 'transparent',
+                fontSize: '11px',
               })}
             >
-              <span>{item.icon}</span>
-              <span>{t(item.labelKey)}</span>
+              <span style={{ fontSize: '13px', flexShrink: 0 }}>{item.icon}</span>
+              <span className="truncate">{t(item.labelKey)}</span>
             </NavLink>
           )
         ))}
