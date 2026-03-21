@@ -20,17 +20,19 @@ const DEFAULT_ZONES = [
 ];
 
 const DEFAULT_CAMERAS = [
-  { id: 'cam-01', name: 'CAM 01' },
-  { id: 'cam-02', name: 'CAM 02' },
-  { id: 'cam-03', name: 'CAM 03' },
-  { id: 'cam-04', name: 'CAM 04' },
-  { id: 'cam-05', name: 'CAM 05' },
-  { id: 'cam-06', name: 'CAM 06' },
-  { id: 'cam-07', name: 'CAM 07' },
-  { id: 'cam-08', name: 'CAM 08' },
-  { id: 'cam-09', name: 'CAM 09' },
-  { id: 'cam-10', name: 'CAM 10' },
+  { id: 'cam-01', num: '01' },
+  { id: 'cam-02', num: '02' },
+  { id: 'cam-03', num: '03' },
+  { id: 'cam-04', num: '04' },
+  { id: 'cam-05', num: '05' },
+  { id: 'cam-06', num: '06' },
+  { id: 'cam-07', num: '07' },
+  { id: 'cam-08', num: '08' },
+  { id: 'cam-09', num: '09' },
+  { id: 'cam-10', num: '10' },
 ];
+
+const camLabel = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
 
 // Начальная привязка камер к зонам { zoneId: { camId: priority } }
 const DEFAULT_MAPPING = {
@@ -304,7 +306,7 @@ export default function CameraMapping() {
                           </button>
 
                           <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            📹 {cam.name}
+                            📹 {camLabel(cam.num, lang === 'ru')}
                           </span>
 
                           {/* Other zones this camera covers */}
@@ -373,7 +375,7 @@ export default function CameraMapping() {
                   </th>
                   {DEFAULT_CAMERAS.map(c => (
                     <th key={c.id} className="px-2 py-1.5 text-center" style={{ color: 'var(--text-muted)' }}>
-                      {c.name.replace('CAM ', '')}
+                      {camLabel(c.num, lang === 'ru')}
                     </th>
                   ))}
                 </tr>

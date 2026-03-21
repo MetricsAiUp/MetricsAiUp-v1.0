@@ -3,6 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
 
+const EVENT_TYPES = {
+  vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
+  vehicle_left_zone: { ru: 'Авто уехало', en: 'Vehicle left' },
+  vehicle_moving: { ru: 'Движение', en: 'Moving' },
+  vehicle_waiting: { ru: 'Ожидание', en: 'Waiting' },
+  post_occupied: { ru: 'Пост занят', en: 'Post occupied' },
+  post_vacated: { ru: 'Пост свободен', en: 'Post vacated' },
+  worker_present: { ru: 'Работник пришёл', en: 'Worker arrived' },
+  worker_absent: { ru: 'Работник ушёл', en: 'Worker left' },
+  work_activity: { ru: 'Активная работа', en: 'Active work' },
+  work_idle: { ru: 'Простой', en: 'Idle' },
+};
+
 function StatCard({ icon, label, value, color }) {
   return (
     <div className="glass p-5">
@@ -49,11 +62,13 @@ function RecommendationCard({ rec, onAcknowledge, t }) {
 }
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
   const { api } = useAuth();
   const [overview, setOverview] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [events, setEvents] = useState([]);
+  const [eventFilter, setEventFilter] = useState('all');
 
   const fetchData = async () => {
     try {
@@ -143,9 +158,23 @@ export default function Dashboard() {
 
         {/* Recent Events */}
         <div>
-          <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('dashboard.recentEvents')}
           </h3>
+          <div className="flex flex-wrap gap-1 mb-3">
+            <button onClick={() => setEventFilter('all')}
+              className="px-2 py-1 rounded text-xs" style={{
+                background: eventFilter === 'all' ? 'var(--accent)' : 'var(--bg-glass)',
+                color: eventFilter === 'all' ? 'white' : 'var(--text-muted)',
+              }}>{isRu ? 'Все' : 'All'}</button>
+            {[...new Set(events.map(e => e.type))].slice(0, 5).map(type => (
+              <button key={type} onClick={() => setEventFilter(type)}
+                className="px-2 py-1 rounded text-xs" style={{
+                  background: eventFilter === type ? 'var(--accent)' : 'var(--bg-glass)',
+                  color: eventFilter === type ? 'white' : 'var(--text-muted)',
+                }}>{EVENT_TYPES[type]?.[isRu ? 'ru' : 'en'] || type}</button>
+            ))}
+          </div>
           <div className="glass-static overflow-hidden">
             {events.length === 0 ? (
               <div className="p-4 text-center" style={{ color: 'var(--text-muted)' }}>
@@ -153,11 +182,11 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="divide-y" style={{ borderColor: 'var(--border-glass)' }}>
-                {events.map(ev => (
+                {events.filter(ev => eventFilter === 'all' || ev.type === eventFilter).map(ev => (
                   <div key={ev.id} className="px-4 py-3 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {ev.type.replace(/_/g, ' ')}
+                        {EVENT_TYPES[ev.type]?.[isRu ? 'ru' : 'en'] || ev.type}
                       </span>
                       <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>
                         {ev.zone?.name}

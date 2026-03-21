@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Text, Group, Line, Circle, Arrow } from 'react-konva';
 import { useTranslation } from 'react-i18next';
 
+const STATUS_LABELS = {
+  free: { ru: 'Свободен', en: 'Free' },
+  occupied: { ru: 'Занят', en: 'Occupied' },
+  occupied_no_work: { ru: 'Простой', en: 'Idle' },
+  active_work: { ru: 'В работе', en: 'Active' },
+};
+
 const STATUS_COLORS = {
   free: '#10b981',
   occupied: '#f59e0b',
@@ -86,20 +93,20 @@ const MAP_LAYOUT = {
   ],
   // Камеры по периметру и внутри (по фото — красные отметки)
   cameras: [
-    { key: 'cam01', x: 155, y: 490, angle: 0,   label: 'CAM01' },
-    { key: 'cam02', x: 155, y: 185, angle: 90,  label: 'CAM02' },
-    { key: 'cam03', x: 310, y: 330, angle: 180, label: 'CAM03' },
-    { key: 'cam04', x: 470, y: 330, angle: 180, label: 'CAM04' },
-    { key: 'cam05', x: 465, y: 180, angle: 180, label: 'CAM05' },
-    { key: 'cam06', x: 620, y: 180, angle: 180, label: 'CAM06' },
-    { key: 'cam07', x: 770, y: 100, angle: 0,   label: 'CAM07' },
-    { key: 'cam08', x: 770, y: 450, angle: 0,   label: 'CAM08' },
-    { key: 'cam09', x: 80,  y: 625, angle: 0,   label: 'CAM09' },
-    { key: 'cam10', x: 1060, y: 325, angle: 270, label: 'CAM10' },
+    { key: 'cam01', x: 155, y: 490, angle: 0,   num: '01' },
+    { key: 'cam02', x: 155, y: 185, angle: 90,  num: '02' },
+    { key: 'cam03', x: 310, y: 330, angle: 180, num: '03' },
+    { key: 'cam04', x: 470, y: 330, angle: 180, num: '04' },
+    { key: 'cam05', x: 465, y: 180, angle: 180, num: '05' },
+    { key: 'cam06', x: 620, y: 180, angle: 180, num: '06' },
+    { key: 'cam07', x: 770, y: 100, angle: 0,   num: '07' },
+    { key: 'cam08', x: 770, y: 450, angle: 0,   num: '08' },
+    { key: 'cam09', x: 80,  y: 625, angle: 0,   num: '09' },
+    { key: 'cam10', x: 1060, y: 325, angle: 270, num: '10' },
   ],
 };
 
-function PostRect({ layout, post, isDark, onClick }) {
+function PostRect({ layout, post, isDark, onClick, isRu }) {
   if (layout.visible === false && !post) return null;
   const status = post?.status || 'free';
   const color = STATUS_COLORS[status];
@@ -138,7 +145,7 @@ function PostRect({ layout, post, isDark, onClick }) {
       {/* Status text */}
       <Text
         x={10} y={layout.label.includes('\n') ? 46 : 30}
-        text={status.replace(/_/g, ' ')}
+        text={STATUS_LABELS[status]?.[isRu ? 'ru' : 'en'] || status}
         fontSize={11}
         fill={color}
       />
@@ -171,7 +178,7 @@ function PostRect({ layout, post, isDark, onClick }) {
       {post?.stays?.[0]?.hasWorker && (
         <Text
           x={10} y={layout.label.includes('\n') ? 62 : 48}
-          text="👷 Работник"
+          text={isRu ? '👷 Работник' : '👷 Worker'}
           fontSize={11}
           fill={isDark ? '#94a3b8' : '#718096'}
         />
@@ -180,15 +187,16 @@ function PostRect({ layout, post, isDark, onClick }) {
   );
 }
 
-function CameraIcon({ cam, isDark }) {
+function CameraIcon({ cam, isDark, isRu }) {
+  const label = (isRu ? 'КАМ' : 'CAM') + cam.num;
   return (
     <Group x={cam.x} y={cam.y}>
       <Circle radius={8} fill={isDark ? '#334155' : '#e2e8f0'} stroke="#ef4444" strokeWidth={1.5} />
       <Circle radius={3} fill="#ef4444" />
       <Text
-        x={-18} y={10}
-        width={36}
-        text={cam.label}
+        x={-20} y={10}
+        width={40}
+        text={label}
         fontSize={8}
         fill={isDark ? '#94a3b8' : '#718096'}
         align="center"
@@ -337,12 +345,12 @@ export default function STOMap({ zones = [], onPostClick, isDark = true }) {
 
           {/* Posts */}
           {MAP_LAYOUT.posts.map(pl => (
-            <PostRect key={pl.key} layout={pl} post={postMap[pl.key]} isDark={isDark} onClick={onPostClick} />
+            <PostRect key={pl.key} layout={pl} post={postMap[pl.key]} isDark={isDark} onClick={onPostClick} isRu={isRu} />
           ))}
 
           {/* Cameras */}
           {MAP_LAYOUT.cameras.map(cam => (
-            <CameraIcon key={cam.key} cam={cam} isDark={isDark} />
+            <CameraIcon key={cam.key} cam={cam} isDark={isDark} isRu={isRu} />
           ))}
 
           {/* Gate / Entry arrows */}

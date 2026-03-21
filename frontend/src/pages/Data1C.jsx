@@ -122,6 +122,14 @@ function StatsTab({ stats, lang }) {
 function PlanningTab({ data, lang }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('startTime');
+  const [sortDir, setSortDir] = useState('desc');
+
+  const toggleSort = (col) => {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(col); setSortDir('asc'); }
+  };
+  const si = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
   const filtered = data.filter(r => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
@@ -134,6 +142,12 @@ function PlanningTab({ data, lang }) {
         (r.vin || '').toLowerCase().includes(q);
     }
     return true;
+  }).sort((a, b) => {
+    let va = a[sortBy] || '', vb = b[sortBy] || '';
+    if (sortBy === 'durationHours') { va = a.durationHours || 0; vb = b.durationHours || 0; }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   return (
@@ -171,17 +185,21 @@ function PlanningTab({ data, lang }) {
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
               {[
-                lang === 'ru' ? 'Документ' : 'Document',
-                lang === 'ru' ? 'Номер' : 'Number',
-                lang === 'ru' ? 'Госномер' : 'Plate',
-                'VIN',
-                lang === 'ru' ? 'Начало' : 'Start',
-                lang === 'ru' ? 'Конец' : 'End',
-                lang === 'ru' ? 'Пост' : 'Post',
-                lang === 'ru' ? 'Часы' : 'Hours',
-                lang === 'ru' ? 'Статус' : 'Status',
+                { key: 'document', label: lang === 'ru' ? 'Документ' : 'Document' },
+                { key: 'number', label: lang === 'ru' ? 'Номер' : 'Number' },
+                { key: 'plateNumber', label: lang === 'ru' ? 'Госномер' : 'Plate' },
+                { key: 'vin', label: 'VIN' },
+                { key: 'startTime', label: lang === 'ru' ? 'Начало' : 'Start' },
+                { key: 'endTime', label: lang === 'ru' ? 'Конец' : 'End' },
+                { key: 'workStation', label: lang === 'ru' ? 'Пост' : 'Post' },
+                { key: 'durationHours', label: lang === 'ru' ? 'Часы' : 'Hours' },
+                { key: 'status', label: lang === 'ru' ? 'Статус' : 'Status' },
               ].map(col => (
-                <th key={col} className="text-left px-3 py-2 font-medium whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{col}</th>
+                <th key={col.key} className="text-left px-3 py-2 font-medium whitespace-nowrap cursor-pointer select-none hover:opacity-80"
+                  style={{ color: sortBy === col.key ? 'var(--accent)' : 'var(--text-muted)' }}
+                  onClick={() => toggleSort(col.key)}>
+                  {col.label}{si(col.key)}
+                </th>
               ))}
             </tr>
           </thead>
@@ -215,6 +233,14 @@ function PlanningTab({ data, lang }) {
 
 function WorkersTab({ data, lang }) {
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('number');
+  const [sortDir, setSortDir] = useState('asc');
+
+  const toggleSort = (col) => {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(col); setSortDir('asc'); }
+  };
+  const si = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
   const filtered = data.filter(r => {
     if (!search) return true;
@@ -224,6 +250,12 @@ function WorkersTab({ data, lang }) {
       (r.number || '').toLowerCase().includes(q) ||
       (r.vin || '').toLowerCase().includes(q) ||
       (r.repairType || '').toLowerCase().includes(q);
+  }).sort((a, b) => {
+    let va = a[sortBy] || '', vb = b[sortBy] || '';
+    if (sortBy === 'normHours') { va = a.normHours || 0; vb = b.normHours || 0; }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   return (
@@ -244,18 +276,22 @@ function WorkersTab({ data, lang }) {
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
               {[
-                lang === 'ru' ? 'Номер ЗН' : 'WO Number',
-                lang === 'ru' ? 'Вид ремонта' : 'Repair Type',
-                lang === 'ru' ? 'Марка' : 'Brand',
-                lang === 'ru' ? 'Модель' : 'Model',
-                lang === 'ru' ? 'Исполнитель' : 'Worker',
-                lang === 'ru' ? 'Начало' : 'Start',
-                lang === 'ru' ? 'Окончание' : 'End',
-                lang === 'ru' ? 'Состояние' : 'Status',
-                lang === 'ru' ? 'Мастер' : 'Master',
-                lang === 'ru' ? 'Нормочасы' : 'Norm Hours',
+                { key: 'number', label: lang === 'ru' ? 'Номер ЗН' : 'WO Number' },
+                { key: 'repairType', label: lang === 'ru' ? 'Вид ремонта' : 'Repair Type' },
+                { key: 'brand', label: lang === 'ru' ? 'Марка' : 'Brand' },
+                { key: 'model', label: lang === 'ru' ? 'Модель' : 'Model' },
+                { key: 'worker', label: lang === 'ru' ? 'Исполнитель' : 'Worker' },
+                { key: 'startDate', label: lang === 'ru' ? 'Начало' : 'Start' },
+                { key: 'endDate', label: lang === 'ru' ? 'Окончание' : 'End' },
+                { key: 'orderStatus', label: lang === 'ru' ? 'Состояние' : 'Status' },
+                { key: 'master', label: lang === 'ru' ? 'Мастер' : 'Master' },
+                { key: 'normHours', label: lang === 'ru' ? 'Нормочасы' : 'Norm Hours' },
               ].map(col => (
-                <th key={col} className="text-left px-3 py-2 font-medium whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{col}</th>
+                <th key={col.key} className="text-left px-3 py-2 font-medium whitespace-nowrap cursor-pointer select-none hover:opacity-80"
+                  style={{ color: sortBy === col.key ? 'var(--accent)' : 'var(--text-muted)' }}
+                  onClick={() => toggleSort(col.key)}>
+                  {col.label}{si(col.key)}
+                </th>
               ))}
             </tr>
           </thead>
