@@ -1,11 +1,62 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 
 const AuthContext = createContext();
 
-const API_BASE = '/api';
+// Static JSON API — Nginx serves /api/*.json files
+const fetchJson = async (path) => {
+  const res = await fetch(`/api/${path}.json?t=${Date.now()}`);
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+};
 
-const api = axios.create({ baseURL: API_BASE });
+// Wrapper to mimic axios-like API for components
+const api = {
+  get: async (url) => {
+    // Transform /api/zones → zones, /api/sessions?status=completed → sessions-completed
+    let clean = url.replace(/^\/api\//, '');
+    const qIdx = clean.indexOf('?');
+    let suffix = '';
+    if (qIdx !== -1) {
+      const params = new URLSearchParams(clean.slice(qIdx));
+      clean = clean.slice(0, qIdx);
+      if (params.get('status') === 'completed') suffix = '-completed';
+      if (params.get('period')) suffix = `-${params.get('period')}`;
+    }
+    clean = clean.replace(/\//g, '-') + suffix;
+    const data = await fetchJson(clean);
+    return { data };
+  },
+  post: async (url, body) => {
+    // For login — read pre-generated token
+    if (url.includes('auth/login')) {
+      const data = await fetchJson('auth-login');
+      return { data };
+    }
+    // For other POSTs — send to backend on 3001 as fallback
+    try {
+      const res = await fetch(`http://${window.location.hostname}:3001${url}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return { data: await res.json() };
+    } catch {
+      return { data: {} };
+    }
+  },
+  put: async (url, body) => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:3001${url}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return { data: await res.json() };
+    } catch {
+      return { data: {} };
+    }
+  },
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -14,9 +65,8 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      api.get('/auth/me')
-        .then(res => setUser(res.data))
+      fetchJson('auth-me')
+        .then(data => setUser(data))
         .catch(() => { logout(); })
         .finally(() => setLoading(false));
     } else {
@@ -25,10 +75,9 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    const { token: newToken, user: userData } = res.data;
+    const data = await fetchJson('auth-login');
+    const { token: newToken, user: userData } = data;
     localStorage.setItem('token', newToken);
-    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     setToken(newToken);
     setUser(userData);
     return userData;
@@ -36,7 +85,6 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem('token');
-    delete api.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
   };
