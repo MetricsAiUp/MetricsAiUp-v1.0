@@ -86,7 +86,7 @@ export default function WorkOrders() {
   const columns = [
     { key: 'orderNumber', label: t('workOrders.orderNumber') },
     { key: 'scheduledTime', label: t('workOrders.scheduledTime') },
-    { key: 'plateNumber', label: t('workOrders.plateNumber') || (isRu ? 'Авто' : 'Vehicle') },
+    { key: 'plateNumber', label: t('workOrders.plateNumber') },
     { key: 'workType', label: t('workOrders.workType'), noSort: true },
     { key: 'normHours', label: t('workOrders.normHours') },
     { key: 'status', label: t('workOrders.status') },

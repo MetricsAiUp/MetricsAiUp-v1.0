@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { Camera } from 'lucide-react';
 
 // Mock plate image — SVG генерирует "фото номера"
 function PlatePreview({ plate, small = false }) {
@@ -24,7 +25,7 @@ function CarOnPostPlaceholder({ postName, isRu }) {
   return (
     <div className="w-full h-48 rounded-xl flex flex-col items-center justify-center gap-2"
       style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '1px solid var(--border-glass)' }}>
-      <span className="text-4xl">📷</span>
+      <Camera size={40} style={{ color: '#64748b' }} />
       <span className="text-xs" style={{ color: '#94a3b8' }}>
         {isRu ? `Скриншот с камеры — ${postName || 'пост'}` : `Camera screenshot — ${postName || 'post'}`}
       </span>

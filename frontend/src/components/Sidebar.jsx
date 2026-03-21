@@ -1,17 +1,21 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  LayoutDashboard, Map, Car, ClipboardList, ScrollText,
+  BarChart3, Camera, Focus, Database,
+} from 'lucide-react';
 
 const navItems = [
-  { path: '/', icon: '📊', labelKey: 'nav.dashboard', permission: 'view_dashboard' },
-  { path: '/map', icon: '🗺️', labelKey: 'nav.map', permission: 'view_zones' },
-  { path: '/sessions', icon: '🚗', labelKey: 'nav.sessions', permission: 'view_sessions' },
-  { path: '/work-orders', icon: '📋', labelKey: 'nav.workOrders', permission: 'view_work_orders' },
-  { path: '/events', icon: '📝', labelKey: 'nav.events', permission: 'view_events' },
-  { path: '/analytics', icon: '📈', labelKey: 'nav.analytics', permission: 'view_analytics' },
-  { path: '/cameras', icon: '📹', labelKey: 'nav.cameras', permission: 'view_cameras' },
-  { path: '/camera-mapping', icon: '🎯', labelKey: 'nav.cameraMapping', permission: 'manage_cameras' },
-  { path: '/data-1c', icon: '🏢', labelKey: 'nav.data1c', permission: 'view_work_orders' },
+  { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', permission: 'view_dashboard' },
+  { path: '/map', icon: Map, labelKey: 'nav.map', permission: 'view_zones' },
+  { path: '/sessions', icon: Car, labelKey: 'nav.sessions', permission: 'view_sessions' },
+  { path: '/work-orders', icon: ClipboardList, labelKey: 'nav.workOrders', permission: 'view_work_orders' },
+  { path: '/events', icon: ScrollText, labelKey: 'nav.events', permission: 'view_events' },
+  { path: '/analytics', icon: BarChart3, labelKey: 'nav.analytics', permission: 'view_analytics' },
+  { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', permission: 'view_cameras' },
+  { path: '/camera-mapping', icon: Focus, labelKey: 'nav.cameraMapping', permission: 'manage_cameras' },
+  { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', permission: 'view_work_orders' },
 ];
 
 export default function Sidebar() {
@@ -35,8 +39,9 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5">
-        {navItems.map(item => (
-          hasPermission(item.permission) && (
+        {navItems.map(item => {
+          const Icon = item.icon;
+          return hasPermission(item.permission) && (
             <NavLink
               key={item.path}
               to={item.path}
@@ -51,11 +56,11 @@ export default function Sidebar() {
                 fontSize: '11px',
               })}
             >
-              <span style={{ fontSize: '13px', flexShrink: 0 }}>{item.icon}</span>
+              <Icon size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
               <span className="truncate">{t(item.labelKey)}</span>
             </NavLink>
-          )
-        ))}
+          );
+        })}
       </nav>
     </aside>
   );

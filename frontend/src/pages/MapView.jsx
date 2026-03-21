@@ -174,7 +174,7 @@ export default function MapView() {
                   {t(`zones.${zone.type}`)}
                 </span>
                 <span className="text-sm font-bold" style={{ color: zoneColor }}>
-                  {vehicleCount > 0 ? `🚗 ${vehicleCount}` : '—'}
+                  {vehicleCount > 0 ? vehicleCount : '—'}
                 </span>
               </div>
               {zone.posts?.length > 0 && (

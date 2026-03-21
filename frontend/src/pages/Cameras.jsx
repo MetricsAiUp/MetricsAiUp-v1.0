@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { Camera, DoorOpen, Wrench, Search, ParkingCircle } from 'lucide-react';
 
 // Камеры хранятся по номерам, prefix (КАМ/CAM) добавляется по языку
 const camName = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
@@ -44,11 +45,11 @@ const TYPE_COLORS = {
 };
 
 const TYPE_ICONS = {
-  entry: '🚪',
-  exit: '🚪',
-  lift: '🔧',
-  diag: '🔍',
-  parking: '🅿️',
+  entry: DoorOpen,
+  exit: DoorOpen,
+  lift: Wrench,
+  diag: Search,
+  parking: ParkingCircle,
 };
 
 const TYPE_LABELS_RU = {
@@ -61,13 +62,13 @@ const TYPE_LABELS_RU = {
 
 function ZoneCameraCard({ zone, isDark, isRu }) {
   const color = TYPE_COLORS[zone.type] || '#94a3b8';
-  const icon = TYPE_ICONS[zone.type] || '📍';
+  const Icon = TYPE_ICONS[zone.type] || Wrench;
 
   return (
     <div className="glass p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span>{icon}</span>
+          <Icon size={14} style={{ color }} />
           <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             {zone.zone[isRu ? 'ru' : 'en']}
           </span>
@@ -95,7 +96,7 @@ function ZoneCameraCard({ zone, isDark, isRu }) {
               }}
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs">📹</span>
+                <Camera size={12} style={{ color: 'var(--text-muted)' }} />
                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{camName(num, isRu)}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -119,7 +120,7 @@ function AllCamerasCard({ cam, isDark, isRu }) {
     <div className="glass p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg">📹</span>
+          <Camera size={18} style={{ color: 'var(--accent)' }} />
           <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             {camName(cam.num, isRu)}
           </span>
@@ -161,16 +162,16 @@ export default function Cameras() {
     : ZONE_CAMERA_MAP.filter(z => z.type === filter || (filter === 'entry' && z.type === 'exit'));
 
   const tabs = [
-    { key: 'zones', label: isRu ? '🗺️ Камеры по зонам' : '🗺️ Cameras by Zone' },
-    { key: 'all', label: isRu ? '📹 Все камеры' : '📹 All Cameras' },
+    { key: 'zones', label: isRu ? 'Камеры по зонам' : 'Cameras by Zone' },
+    { key: 'all', label: isRu ? 'Все камеры' : 'All Cameras' },
   ];
 
   const filters = [
     { key: 'all', label: isRu ? 'Все' : 'All' },
-    { key: 'entry', label: isRu ? '🚪 Въезд/Выезд' : '🚪 Entry/Exit' },
-    { key: 'lift', label: isRu ? '🔧 Подъёмники' : '🔧 Lifts' },
-    { key: 'diag', label: isRu ? '🔍 Диагностика' : '🔍 Diagnostics' },
-    { key: 'parking', label: isRu ? '🅿️ Парковка' : '🅿️ Parking' },
+    { key: 'entry', label: isRu ? 'Въезд/Выезд' : 'Entry/Exit' },
+    { key: 'lift', label: isRu ? 'Подъёмники' : 'Lifts' },
+    { key: 'diag', label: isRu ? 'Диагностика' : 'Diagnostics' },
+    { key: 'parking', label: isRu ? 'Парковка' : 'Parking' },
   ];
 
   return (
@@ -181,10 +182,10 @@ export default function Cameras() {
         </h2>
         <div className="flex items-center gap-3">
           <span className="text-xs px-3 py-1.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
-            📹 {ALL_CAMERAS.length} {isRu ? 'камер' : 'cameras'}
+            {ALL_CAMERAS.length} {isRu ? 'камер' : 'cameras'}
           </span>
           <span className="text-xs px-3 py-1.5 rounded-full" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>
-            📍 {ZONE_CAMERA_MAP.length} {isRu ? 'зон' : 'zones'}
+            {ZONE_CAMERA_MAP.length} {isRu ? 'зон' : 'zones'}
           </span>
         </div>
       </div>

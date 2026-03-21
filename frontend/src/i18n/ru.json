@@ -62,6 +62,7 @@
   "workOrders": {
     "title": "Заказ-наряды",
     "orderNumber": "Номер ЗН",
+    "plateNumber": "Авто",
     "scheduledTime": "Время записи",
     "workType": "Тип работ",
     "normHours": "Нормочасы",

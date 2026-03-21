@@ -165,7 +165,7 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
             x={8} y={layout.h - 38}
             width={layout.w - 16}
             height={26}
-            text={`🚗 ${vehicle.plateNumber || vehicle.trackId?.slice(0, 10) || '—'}`}
+            text={vehicle.plateNumber || vehicle.trackId?.slice(0, 10) || '—'}
             fontSize={12}
             fontStyle="bold"
             fill={isDark ? '#e2e8f0' : '#1a202c'}
@@ -178,7 +178,7 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
       {post?.stays?.[0]?.hasWorker && (
         <Text
           x={10} y={layout.label.includes('\n') ? 62 : 48}
-          text={isRu ? '👷 Работник' : '👷 Worker'}
+          text={isRu ? '● Работник' : '● Worker'}
           fontSize={11}
           fill={isDark ? '#94a3b8' : '#718096'}
         />
@@ -334,7 +334,7 @@ export default function STOMap({ zones = [], onPostClick, isDark = true }) {
                     <Text
                       x={zl.x + zl.w - 38} y={zl.y + 5}
                       width={30} height={18}
-                      text={`🚗${vehicleCount}`}
+                      text={`${vehicleCount}`}
                       fontSize={9} fill="white" align="center" verticalAlign="middle"
                     />
                   </Group>

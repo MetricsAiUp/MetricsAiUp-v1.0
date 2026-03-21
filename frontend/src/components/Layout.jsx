@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { Sun, Moon, Globe, LogOut } from 'lucide-react';
 import Sidebar from './Sidebar';
 
 function Header() {
@@ -32,7 +33,7 @@ function Header() {
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
         style={{ color: 'var(--text-secondary)' }}
       >
-        <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+        {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
         <span>{theme === 'dark' ? (isRu ? 'Светлая' : 'Light') : (isRu ? 'Тёмная' : 'Dark')}</span>
       </button>
 
@@ -42,7 +43,7 @@ function Header() {
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:opacity-80"
         style={{ color: 'var(--text-secondary)' }}
       >
-        <span>🌐</span>
+        <Globe size={14} />
         <span>{isRu ? 'English' : 'Русский'}</span>
       </button>
 

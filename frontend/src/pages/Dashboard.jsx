@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
+import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
@@ -16,11 +17,13 @@ const EVENT_TYPES = {
   work_idle: { ru: 'Простой', en: 'Idle' },
 };
 
-function StatCard({ icon, label, value, color }) {
+function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className="glass p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-2xl">{icon}</span>
+        <div className="p-2 rounded-lg" style={{ background: color + '15' }}>
+          <Icon size={20} style={{ color }} />
+        </div>
         <span className="text-3xl font-bold" style={{ color }}>{value}</span>
       </div>
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</p>
@@ -107,25 +110,25 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon="🚗"
+          icon={Car}
           label={t('dashboard.activeSessions')}
           value={overview?.activeSessions || 0}
           color="var(--accent)"
         />
         <StatCard
-          icon="✅"
+          icon={CircleCheck}
           label={t('dashboard.freePosts')}
           value={freePostsCount}
           color="var(--success)"
         />
         <StatCard
-          icon="🔧"
+          icon={Wrench}
           label={t('dashboard.occupiedPosts')}
           value={occupiedCount}
           color="var(--warning)"
         />
         <StatCard
-          icon="💡"
+          icon={Lightbulb}
           label={t('dashboard.recommendations')}
           value={overview?.activeRecommendations || 0}
           color="var(--info)"

@@ -62,6 +62,7 @@
   "workOrders": {
     "title": "Work Orders",
     "orderNumber": "WO Number",
+    "plateNumber": "Vehicle",
     "scheduledTime": "Scheduled Time",
     "workType": "Work Type",
     "normHours": "Norm Hours",

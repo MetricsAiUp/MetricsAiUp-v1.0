@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft } from 'lucide-react';
 
 // Все зоны СТО (каждый подъёмник, въезд, выезд, парковка — отдельная зона)
 const DEFAULT_ZONES = [
-  { id: 'entry', name: 'Въезд', type: 'entry', icon: '🚪' },
-  { id: 'exit', name: 'Выезд', type: 'exit', icon: '🚪' },
-  { id: 'post-1', name: 'Пост 1', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-2', name: 'Пост 2', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-3', name: 'Пост 3', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-4', name: 'Пост 4', type: 'lift', icon: '🔧', description: '2-х ст. >2.5т (грузовой)' },
-  { id: 'post-5', name: 'Пост 5', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-6', name: 'Пост 6', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-7', name: 'Пост 7', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-8', name: 'Пост 8', type: 'lift', icon: '🔧', description: '2-х ст. <2.5т' },
-  { id: 'post-9', name: 'Пост 9', type: 'diag', icon: '🔍', description: 'Диагностика' },
-  { id: 'post-10', name: 'Пост 10', type: 'diag', icon: '🔍', description: 'Диагностика' },
-  { id: 'parking', name: 'Парковка / Ожидание', type: 'parking', icon: '🅿️' },
+  { id: 'entry', name: 'Въезд', type: 'entry' },
+  { id: 'exit', name: 'Выезд', type: 'exit' },
+  { id: 'post-1', name: 'Пост 1', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-2', name: 'Пост 2', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-3', name: 'Пост 3', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-4', name: 'Пост 4', type: 'lift', description: '2-х ст. >2.5т (грузовой)' },
+  { id: 'post-5', name: 'Пост 5', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-6', name: 'Пост 6', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-7', name: 'Пост 7', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-8', name: 'Пост 8', type: 'lift', description: '2-х ст. <2.5т' },
+  { id: 'post-9', name: 'Пост 9', type: 'diag', description: 'Диагностика' },
+  { id: 'post-10', name: 'Пост 10', type: 'diag', description: 'Диагностика' },
+  { id: 'parking', name: 'Парковка / Ожидание', type: 'parking' },
 ];
 
 const DEFAULT_CAMERAS = [
@@ -55,6 +56,17 @@ const TYPE_COLORS = {
   entry: '#10b981', exit: '#ef4444', lift: '#6366f1',
   diag: '#a855f7', parking: '#f59e0b',
 };
+
+const TYPE_ICONS_MAP = {
+  entry: DoorOpen, exit: DoorOpen, lift: Wrench,
+  diag: Search, parking: ParkingCircle,
+};
+
+function ZoneIcon({ type, size = 14 }) {
+  const Icon = TYPE_ICONS_MAP[type] || Wrench;
+  const color = TYPE_COLORS[type] || '#94a3b8';
+  return <Icon size={size} style={{ color, flexShrink: 0 }} />;
+}
 
 const PRIORITY_OPTIONS = [
   { value: 10, label: 'Основная (P10)' },
@@ -228,14 +240,14 @@ export default function CameraMapping() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span>{zone.icon}</span>
+                    <ZoneIcon type={zone.type} />
                     <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       {zone.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs" style={{ color: camCount > 0 ? color : 'var(--danger)' }}>
-                      📹 {camCount}
+                      {camCount}
                     </span>
                   </div>
                 </div>
@@ -306,7 +318,7 @@ export default function CameraMapping() {
                           </button>
 
                           <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            📹 {camLabel(cam.num, lang === 'ru')}
+                            <Camera size={12} style={{ flexShrink: 0 }} /> {camLabel(cam.num, lang === 'ru')}
                           </span>
 
                           {/* Other zones this camera covers */}
@@ -353,7 +365,7 @@ export default function CameraMapping() {
             </div>
           ) : (
             <div className="glass-static p-12 text-center">
-              <p className="text-4xl mb-4">👈</p>
+              <ArrowLeft size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {lang === 'ru'
                   ? 'Выберите зону слева для настройки привязки камер'
@@ -392,7 +404,7 @@ export default function CameraMapping() {
                       onClick={() => setSelectedZone(zone)}
                     >
                       <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
-                        {zone.icon} {zone.name}
+                        <ZoneIcon type={zone.type} size={12} /> {zone.name}
                       </td>
                       {DEFAULT_CAMERAS.map(cam => {
                         const prio = cams[cam.id];
