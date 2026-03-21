@@ -5,10 +5,7 @@ let socket = null;
 
 export function getSocket() {
   if (!socket) {
-    const url = window.location.port === '8080'
-      ? `${window.location.protocol}//${window.location.hostname}:3001`
-      : undefined;
-    socket = io(url, { autoConnect: false });
+    socket = io({ autoConnect: false });
   }
   return socket;
 }
