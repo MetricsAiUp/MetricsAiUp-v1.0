@@ -7,3 +7,8 @@ hls/
 .autostart.sh
 backend/.env
 frontend/dist/
+screenshot-*.png
+backend/prisma/dev.db
+api.php
+hls-proxy.js
+stream-server.js
