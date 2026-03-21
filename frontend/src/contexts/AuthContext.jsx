@@ -3,7 +3,12 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const api = axios.create({ baseURL: '/api' });
+// В dev — проксируется через Vite, в prod — определяем по location
+const API_BASE = window.location.port === '8080'
+  ? `${window.location.protocol}//${window.location.hostname}:3001/api`
+  : '/api';
+
+const api = axios.create({ baseURL: API_BASE });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

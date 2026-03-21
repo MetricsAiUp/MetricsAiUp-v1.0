@@ -41,10 +41,10 @@ async function processEvent(data) {
       zoneId: zone_id,
       postId: post_id || null,
       vehicleSessionId: vehicleSession?.id || null,
-      cameraSources: camera_sources,
+      cameraSources: JSON.stringify(camera_sources),
       confidence,
       startTime: timestamp ? new Date(timestamp) : new Date(),
-      rawData: data,
+      rawData: JSON.stringify(data),
     },
   });
 
