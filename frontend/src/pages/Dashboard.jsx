@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { useSocket, useSubscribe } from '../hooks/useSocket';
+import { usePolling } from '../hooks/useSocket';
 
 function StatCard({ icon, label, value, color }) {
   return (
@@ -55,8 +55,6 @@ export default function Dashboard() {
   const [recommendations, setRecommendations] = useState([]);
   const [events, setEvents] = useState([]);
 
-  useSubscribe('all');
-
   const fetchData = async () => {
     try {
       const [ovRes, recRes, evRes] = await Promise.all([
@@ -66,19 +64,14 @@ export default function Dashboard() {
       ]);
       setOverview(ovRes.data);
       setRecommendations(recRes.data);
-      setEvents(evRes.data.events);
+      setEvents(evRes.data.events || []);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
     }
   };
 
   useEffect(() => { fetchData(); }, []);
-
-  // Realtime updates
-  useSocket('event', () => { fetchData(); });
-  useSocket('recommendation', (rec) => {
-    setRecommendations(prev => [rec, ...prev]);
-  });
+  usePolling(fetchData, 5000);
 
   const acknowledgeRec = async (id) => {
     await api.put(`/api/recommendations/${id}/acknowledge`);

@@ -1,36 +1,28 @@
 import { useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
 
-let socket = null;
+// Socket.IO disabled — using polling via static JSON API
+// These hooks are no-ops to prevent errors
 
 export function getSocket() {
-  if (!socket) {
-    socket = io({ autoConnect: false });
-  }
-  return socket;
+  return null;
 }
 
 export function useSocket(event, callback) {
+  // No-op — polling handles updates
+}
+
+export function useSubscribe(channel) {
+  // No-op — polling handles updates
+}
+
+// Polling hook — refetch data every N seconds
+export function usePolling(callback, intervalMs = 5000) {
   const savedCallback = useRef(callback);
   savedCallback.current = callback;
 
   useEffect(() => {
-    const s = getSocket();
-    if (!s.connected) s.connect();
-
-    const handler = (...args) => savedCallback.current(...args);
-    s.on(event, handler);
-
-    return () => {
-      s.off(event, handler);
-    };
-  }, [event]);
-}
-
-export function useSubscribe(channel) {
-  useEffect(() => {
-    const s = getSocket();
-    if (!s.connected) s.connect();
-    s.emit(`subscribe:${channel}`);
-  }, [channel]);
+    const tick = () => savedCallback.current();
+    const id = setInterval(tick, intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
 }

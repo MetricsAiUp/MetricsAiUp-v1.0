@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { useSocket, useSubscribe } from '../hooks/useSocket';
+import { usePolling } from '../hooks/useSocket';
 import STOMap from '../components/STOMap';
 
 const statusColors = {
@@ -19,8 +19,6 @@ export default function MapView() {
   const [zones, setZones] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  useSubscribe('all');
-
   const fetchZones = async () => {
     try {
       const res = await api.get('/api/zones');
@@ -31,8 +29,7 @@ export default function MapView() {
   };
 
   useEffect(() => { fetchZones(); }, []);
-  useSocket('zone:update', () => { fetchZones(); });
-  useSocket('event', () => { fetchZones(); });
+  usePolling(fetchZones, 5000);
 
   const isDark = theme === 'dark';
 

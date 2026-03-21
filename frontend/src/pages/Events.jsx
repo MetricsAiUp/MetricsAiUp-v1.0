@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { useSocket, useSubscribe } from '../hooks/useSocket';
+import { usePolling } from '../hooks/useSocket';
 
 export default function Events() {
   const { t } = useTranslation();
@@ -9,23 +9,18 @@ export default function Events() {
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
 
-  useSubscribe('all');
-
   const fetchEvents = async () => {
     try {
       const res = await api.get('/api/events?limit=50');
-      setEvents(res.data.events);
-      setTotal(res.data.total);
+      setEvents(res.data.events || []);
+      setTotal(res.data.total || 0);
     } catch (err) {
       console.error(err);
     }
   };
 
   useEffect(() => { fetchEvents(); }, []);
-  useSocket('event', (newEvent) => {
-    setEvents(prev => [newEvent, ...prev].slice(0, 50));
-    setTotal(prev => prev + 1);
-  });
+  usePolling(fetchEvents, 5000);
 
   return (
     <div className="space-y-6">
