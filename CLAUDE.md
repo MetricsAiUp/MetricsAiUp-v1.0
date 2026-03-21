@@ -62,5 +62,5 @@ WebSocket (Socket.IO) тоже проксируется автоматическ
 - Always create files in /project directory
 - When building web apps, create index.html as the entry point
 - If you create a dev server, bind to 0.0.0.0 (NOT localhost)
-- Commit meaningful changes with git when appropriate
+- **НЕ делай git commit и git push без прямой команды пользователя**
 - Давай пользователю публичные ссылки когда он спрашивает как посмотреть результат
