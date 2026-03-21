@@ -1,0 +1,102 @@
+{
+  "app": {
+    "title": "MetricsAiUp",
+    "subtitle": "Service Center Monitoring"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "map": "STO Map",
+    "sessions": "Vehicle Sessions",
+    "workOrders": "Work Orders",
+    "events": "Event Log",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "loginError": "Invalid email or password"
+  },
+  "dashboard": {
+    "activeSessions": "Active Sessions",
+    "freePosts": "Free Posts",
+    "occupiedPosts": "Occupied Posts",
+    "recommendations": "Recommendations",
+    "zoneLoad": "Zone Load",
+    "recentEvents": "Recent Events"
+  },
+  "zones": {
+    "title": "Zones",
+    "repair": "Repair",
+    "waiting": "Waiting",
+    "entry": "Entry",
+    "parking": "Parking",
+    "free": "Free"
+  },
+  "posts": {
+    "title": "Posts",
+    "free": "Free",
+    "occupied": "Occupied",
+    "occupied_no_work": "Occupied (idle)",
+    "active_work": "Active Work",
+    "light": "Light vehicle",
+    "heavy": "Heavy vehicle",
+    "special": "Special"
+  },
+  "sessions": {
+    "title": "Vehicle Sessions",
+    "plateNumber": "Plate Number",
+    "entryTime": "Entry Time",
+    "exitTime": "Exit Time",
+    "status": "Status",
+    "active": "Active",
+    "completed": "Completed",
+    "currentZone": "Current Zone",
+    "currentPost": "Current Post"
+  },
+  "workOrders": {
+    "title": "Work Orders",
+    "orderNumber": "WO Number",
+    "scheduledTime": "Scheduled Time",
+    "workType": "Work Type",
+    "normHours": "Norm Hours",
+    "actualHours": "Actual Hours",
+    "status": "Status",
+    "importCsv": "Import CSV",
+    "scheduled": "Scheduled",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "no_show": "No Show"
+  },
+  "recommendations": {
+    "title": "Recommendations",
+    "no_show": "Client no-show",
+    "post_free": "Post is free",
+    "capacity_available": "Capacity available",
+    "work_overtime": "Work overtime",
+    "vehicle_idle": "Vehicle idle",
+    "acknowledge": "Acknowledge"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "noData": "No data",
+    "period": "Period",
+    "24h": "24 hours",
+    "7d": "7 days",
+    "30d": "30 days"
+  }
+}

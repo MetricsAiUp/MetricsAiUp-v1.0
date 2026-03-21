@@ -1,0 +1,102 @@
+{
+  "app": {
+    "title": "MetricsAiUp",
+    "subtitle": "Мониторинг СТО"
+  },
+  "nav": {
+    "dashboard": "Дашборд",
+    "map": "Карта СТО",
+    "sessions": "Сессии авто",
+    "workOrders": "Заказ-наряды",
+    "events": "Журнал событий",
+    "analytics": "Аналитика",
+    "settings": "Настройки",
+    "logout": "Выйти"
+  },
+  "auth": {
+    "login": "Войти",
+    "email": "Email",
+    "password": "Пароль",
+    "loginError": "Неверный email или пароль"
+  },
+  "dashboard": {
+    "activeSessions": "Активные сессии",
+    "freePosts": "Свободные посты",
+    "occupiedPosts": "Занятые посты",
+    "recommendations": "Рекомендации",
+    "zoneLoad": "Загрузка зон",
+    "recentEvents": "Последние события"
+  },
+  "zones": {
+    "title": "Зоны",
+    "repair": "Ремонтная",
+    "waiting": "Ожидание",
+    "entry": "Въезд",
+    "parking": "Парковка",
+    "free": "Свободная"
+  },
+  "posts": {
+    "title": "Посты",
+    "free": "Свободен",
+    "occupied": "Занят",
+    "occupied_no_work": "Занят без работы",
+    "active_work": "Активная работа",
+    "light": "Легковой",
+    "heavy": "Грузовой",
+    "special": "Специальный"
+  },
+  "sessions": {
+    "title": "Сессии автомобилей",
+    "plateNumber": "Гос. номер",
+    "entryTime": "Время въезда",
+    "exitTime": "Время выезда",
+    "status": "Статус",
+    "active": "Активна",
+    "completed": "Завершена",
+    "currentZone": "Текущая зона",
+    "currentPost": "Текущий пост"
+  },
+  "workOrders": {
+    "title": "Заказ-наряды",
+    "orderNumber": "Номер ЗН",
+    "scheduledTime": "Время записи",
+    "workType": "Тип работ",
+    "normHours": "Нормочасы",
+    "actualHours": "Факт. часы",
+    "status": "Статус",
+    "importCsv": "Импорт CSV",
+    "scheduled": "Запланирован",
+    "in_progress": "В работе",
+    "completed": "Завершён",
+    "cancelled": "Отменён",
+    "no_show": "Не приехал"
+  },
+  "recommendations": {
+    "title": "Рекомендации",
+    "no_show": "Клиент не приехал",
+    "post_free": "Пост свободен",
+    "capacity_available": "Свободная мощность",
+    "work_overtime": "Работа затянулась",
+    "vehicle_idle": "Авто без работ",
+    "acknowledge": "Принять"
+  },
+  "theme": {
+    "light": "Светлая",
+    "dark": "Тёмная"
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "add": "Добавить",
+    "search": "Поиск",
+    "noData": "Нет данных",
+    "period": "Период",
+    "24h": "24 часа",
+    "7d": "7 дней",
+    "30d": "30 дней"
+  }
+}

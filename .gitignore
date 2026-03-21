@@ -5,3 +5,5 @@ core.*
 hls/
 .ssh/
 .autostart.sh
+backend/.env
+frontend/dist/

@@ -1,0 +1,51 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import MapView from './pages/MapView';
+import Sessions from './pages/Sessions';
+import WorkOrders from './pages/WorkOrders';
+import Events from './pages/Events';
+import Analytics from './pages/Analytics';
+import './i18n';
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  return children;
+}
+
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  return (
+    <Routes>
+      <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route index element={<Dashboard />} />
+        <Route path="map" element={<MapView />} />
+        <Route path="sessions" element={<Sessions />} />
+        <Route path="work-orders" element={<WorkOrders />} />
+        <Route path="events" element={<Events />} />
+        <Route path="analytics" element={<Analytics />} />
+      </Route>
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
+}

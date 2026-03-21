@@ -1,0 +1,349 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// RBAC — Роли и права
+// ==========================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  roles UserRole[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String   @map("display_name")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  displayName String   @map("display_name")
+  group       String
+  description String?
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ==========================================
+// Зоны и Посты
+// ==========================================
+
+enum ZoneType {
+  repair
+  waiting
+  entry
+  parking
+  free
+}
+
+model Zone {
+  id          String   @id @default(uuid())
+  name        String
+  type        ZoneType
+  description String?
+  coordinates Json?    // полигон зоны на карте
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  posts     Post[]
+  stays     ZoneStay[]
+  events    Event[]
+  cameras   CameraZone[]
+  recommendations Recommendation[]
+
+  @@map("zones")
+}
+
+enum PostType {
+  light    // легковой
+  heavy    // грузовой
+  special  // спец
+}
+
+enum PostStatus {
+  free
+  occupied
+  occupied_no_work
+  active_work
+}
+
+model Post {
+  id          String     @id @default(uuid())
+  zoneId      String     @map("zone_id")
+  name        String
+  type        PostType
+  status      PostStatus @default(free)
+  coordinates Json?      // позиция поста на карте
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  zone   Zone        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  stays  PostStay[]
+  events Event[]
+  recommendations Recommendation[]
+
+  @@map("posts")
+}
+
+// ==========================================
+// Камеры
+// ==========================================
+
+model Camera {
+  id       String  @id @default(uuid())
+  name     String
+  rtspUrl  String  @map("rtsp_url")
+  isActive Boolean @default(true) @map("is_active")
+
+  zones  CameraZone[]
+  events Event[]
+
+  @@map("cameras")
+}
+
+model CameraZone {
+  cameraId String @map("camera_id")
+  zoneId   String @map("zone_id")
+  priority Int    @default(0) // приоритет камеры для зоны
+
+  camera Camera @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+  zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@id([cameraId, zoneId])
+  @@map("camera_zones")
+}
+
+// ==========================================
+// Сессии авто
+// ==========================================
+
+enum VehicleSessionStatus {
+  active
+  completed
+}
+
+model VehicleSession {
+  id            String               @id @default(uuid())
+  plateNumber   String?              @map("plate_number")
+  entryTime     DateTime             @default(now()) @map("entry_time")
+  exitTime      DateTime?            @map("exit_time")
+  status        VehicleSessionStatus @default(active)
+  trackId       String?              @map("track_id") // от CV-системы
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  zoneStays      ZoneStay[]
+  postStays      PostStay[]
+  events         Event[]
+  workOrderLinks WorkOrderLink[]
+
+  @@map("vehicle_sessions")
+}
+
+// ==========================================
+// Пребывание в зонах и на постах
+// ==========================================
+
+model ZoneStay {
+  id               String    @id @default(uuid())
+  zoneId           String    @map("zone_id")
+  vehicleSessionId String    @map("vehicle_session_id")
+  entryTime        DateTime  @default(now()) @map("entry_time")
+  exitTime         DateTime? @map("exit_time")
+  duration         Int?      // в секундах
+
+  zone           Zone           @relation(fields: [zoneId], references: [id])
+  vehicleSession VehicleSession @relation(fields: [vehicleSessionId], references: [id])
+
+  @@map("zone_stays")
+}
+
+model PostStay {
+  id               String    @id @default(uuid())
+  postId           String    @map("post_id")
+  vehicleSessionId String    @map("vehicle_session_id")
+  startTime        DateTime  @default(now()) @map("start_time")
+  endTime          DateTime? @map("end_time")
+  hasWorker        Boolean   @default(false) @map("has_worker")
+  isActive         Boolean   @default(false) @map("is_active") // есть активная работа
+  activeTime       Int       @default(0) @map("active_time")   // секунды активной работы
+  idleTime         Int       @default(0) @map("idle_time")     // секунды простоя
+
+  post           Post           @relation(fields: [postId], references: [id])
+  vehicleSession VehicleSession @relation(fields: [vehicleSessionId], references: [id])
+  workOrderLinks WorkOrderLink[]
+
+  @@map("post_stays")
+}
+
+// ==========================================
+// События от CV
+// ==========================================
+
+enum EventType {
+  vehicle_entered_zone
+  vehicle_left_zone
+  vehicle_moving
+  vehicle_waiting
+  post_occupied
+  post_vacated
+  worker_present
+  worker_absent
+  work_activity
+  work_idle
+}
+
+model Event {
+  id               String    @id @default(uuid())
+  type             EventType
+  zoneId           String    @map("zone_id")
+  postId           String?   @map("post_id")
+  vehicleSessionId String?   @map("vehicle_session_id")
+  cameraId         String?   @map("camera_id")
+  cameraSources    String[]  @map("camera_sources")
+  confidence       Float     @default(0)
+  startTime        DateTime  @default(now()) @map("start_time")
+  endTime          DateTime? @map("end_time")
+  rawData          Json?     @map("raw_data") // оригинальные данные от CV
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  zone           Zone            @relation(fields: [zoneId], references: [id])
+  post           Post?           @relation(fields: [postId], references: [id])
+  vehicleSession VehicleSession? @relation(fields: [vehicleSessionId], references: [id])
+  camera         Camera?         @relation(fields: [cameraId], references: [id])
+
+  @@index([type])
+  @@index([zoneId])
+  @@index([createdAt])
+  @@map("events")
+}
+
+// ==========================================
+// Заказ-наряды (1С)
+// ==========================================
+
+enum WorkOrderStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+  no_show
+}
+
+model WorkOrder {
+  id            String          @id @default(uuid())
+  externalId    String?         @unique @map("external_id") // ID из 1С
+  orderNumber   String          @map("order_number")
+  scheduledTime DateTime        @map("scheduled_time")
+  status        WorkOrderStatus @default(scheduled)
+  plateNumber   String?         @map("plate_number")
+  workType      String?         @map("work_type")
+  normHours     Float?          @map("norm_hours") // нормочасы
+  actualHours   Float?          @map("actual_hours")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  links WorkOrderLink[]
+
+  @@map("work_orders")
+}
+
+model WorkOrderLink {
+  id               String  @id @default(uuid())
+  vehicleSessionId String  @map("vehicle_session_id")
+  postStayId       String? @map("post_stay_id")
+  workOrderId      String  @map("work_order_id")
+  confidence       Float   @default(0)
+  matchType        String  @map("match_type") // time, zone, plate, manual
+
+  vehicleSession VehicleSession @relation(fields: [vehicleSessionId], references: [id])
+  postStay       PostStay?      @relation(fields: [postStayId], references: [id])
+  workOrder      WorkOrder      @relation(fields: [workOrderId], references: [id])
+
+  @@map("work_order_links")
+}
+
+// ==========================================
+// Рекомендации
+// ==========================================
+
+enum RecommendationType {
+  no_show
+  post_free
+  capacity_available
+  work_overtime
+  vehicle_idle
+}
+
+enum RecommendationStatus {
+  active
+  acknowledged
+  resolved
+}
+
+model Recommendation {
+  id        String               @id @default(uuid())
+  type      RecommendationType
+  zoneId    String?              @map("zone_id")
+  postId    String?              @map("post_id")
+  message   String
+  status    RecommendationStatus @default(active)
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+
+  zone Zone? @relation(fields: [zoneId], references: [id])
+  post Post? @relation(fields: [postId], references: [id])
+
+  @@map("recommendations")
+}
