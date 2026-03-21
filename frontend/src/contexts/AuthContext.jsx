@@ -2,9 +2,10 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-// Static JSON API — Nginx serves /api/*.json files
+// Static JSON API — Nginx serves api/*.json files relative to base
+const BASE = import.meta.env.BASE_URL || './';
 const fetchJson = async (path) => {
-  const res = await fetch(`/api/${path}.json?t=${Date.now()}`);
+  const res = await fetch(`${BASE}api/${path}.json?t=${Date.now()}`);
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 };
