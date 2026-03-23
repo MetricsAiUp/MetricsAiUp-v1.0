@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Camera, DoorOpen, Wrench, Search, ParkingCircle, X, Maximize2 } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 // Камеры хранятся по номерам, prefix (КАМ/CAM) добавляется по языку
 const camName = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
@@ -283,9 +284,12 @@ export default function Cameras() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {isRu ? 'Камеры' : 'Cameras'}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {isRu ? 'Камеры' : 'Cameras'}
+          </h2>
+          <HelpButton pageKey="cameras" />
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-xs px-3 py-1.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
             {ALL_CAMERAS.length} {isRu ? 'камер' : 'cameras'}

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
 import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
 import { translateZone } from '../utils/translate';
+import HelpButton from '../components/HelpButton';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
@@ -104,9 +105,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-        {t('nav.dashboard')}
-      </h2>
+      <div className="flex items-center gap-3">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          {t('nav.dashboard')}
+        </h2>
+        <HelpButton pageKey="dashboard" />
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

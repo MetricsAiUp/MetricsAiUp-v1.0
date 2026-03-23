@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { usePolling } from '../hooks/useSocket';
 import STOMap from '../components/STOMap';
 import { translateZone, translatePost } from '../utils/translate';
+import HelpButton from '../components/HelpButton';
 
 const statusColors = {
   free: '#10b981',
@@ -45,9 +46,12 @@ export default function MapView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {t('nav.map')}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {t('nav.map')}
+          </h2>
+          <HelpButton pageKey="map" />
+        </div>
         {/* Status summary */}
         <div className="flex gap-3">
           {Object.entries(statusCounts).map(([status, count]) => (

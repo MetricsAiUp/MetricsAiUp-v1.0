@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera } from 'lucide-react';
 import { translateZone, translatePost } from '../utils/translate';
+import HelpButton from '../components/HelpButton';
 
 // Mock plate image — SVG генерирует "фото номера"
 function PlatePreview({ plate, small = false }) {
@@ -244,9 +245,12 @@ export default function Sessions() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {t('sessions.title')}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {t('sessions.title')}
+          </h2>
+          <HelpButton pageKey="sessions" />
+        </div>
         <div className="flex gap-2">
           {['active', 'completed'].map(s => (
             <button

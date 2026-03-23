@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Upload, FileSpreadsheet, FileText, X, Check } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 const STATUS_LABELS = {
   in_progress: { ru: 'В работе', en: 'In Progress', color: '#f59e0b' },
@@ -460,9 +461,12 @@ export default function Data1C() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {isRu ? 'Данные 1С' : '1C Data'}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {isRu ? 'Данные 1С' : '1C Data'}
+          </h2>
+          <HelpButton pageKey="data1c" />
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowUpload(!showUpload)}

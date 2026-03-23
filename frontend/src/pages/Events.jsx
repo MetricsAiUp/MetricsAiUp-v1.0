@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
 import { translateZone, translatePost } from '../utils/translate';
+import HelpButton from '../components/HelpButton';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало в зону', en: 'Vehicle entered zone' },
@@ -60,9 +61,12 @@ export default function Events() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {t('nav.events')}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {t('nav.events')}
+          </h2>
+          <HelpButton pageKey="events" />
+        </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
             className="text-xs px-3 py-1.5 rounded-lg" style={{ color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>

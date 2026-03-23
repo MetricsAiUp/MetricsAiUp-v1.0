@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 // Все зоны СТО
 const DEFAULT_ZONES = [
@@ -160,9 +161,12 @@ export default function CameraMapping() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            {lang === 'ru' ? 'Разметка камер' : 'Camera Mapping'}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              {lang === 'ru' ? 'Разметка камер' : 'Camera Mapping'}
+            </h2>
+            <HelpButton pageKey="cameraMapping" />
+          </div>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             {lang === 'ru'
               ? 'Привязка камер к зонам СТО с настройкой приоритетов'

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import HelpButton from '../components/HelpButton';
 
 export default function WorkOrders() {
   const { t, i18n } = useTranslation();
@@ -95,9 +96,12 @@ export default function WorkOrders() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {t('workOrders.title')}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {t('workOrders.title')}
+          </h2>
+          <HelpButton pageKey="workOrders" />
+        </div>
         <button onClick={() => setShowImport(!showImport)}
           className="px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
           style={{ background: 'var(--accent)' }}>

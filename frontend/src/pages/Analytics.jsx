@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, Legend, CartesianGrid, Area, AreaChart,
 } from 'recharts';
+import HelpButton from '../components/HelpButton';
 
 const POST_COLORS = ['#6366f1', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
 
@@ -162,9 +163,12 @@ export default function Analytics() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {isRu ? 'Аналитика постов' : 'Post Analytics'}
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {isRu ? 'Аналитика постов' : 'Post Analytics'}
+          </h2>
+          <HelpButton pageKey="analytics" />
+        </div>
         <div className="flex gap-2">
           {[
             { key: 'today', label: isRu ? 'Сегодня' : 'Today' },
