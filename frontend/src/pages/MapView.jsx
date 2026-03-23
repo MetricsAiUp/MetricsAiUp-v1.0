@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePolling } from '../hooks/useSocket';
 import STOMap from '../components/STOMap';
+import { translateZone, translatePost } from '../utils/translate';
 
 const statusColors = {
   free: '#10b981',
@@ -13,7 +14,8 @@ const statusColors = {
 };
 
 export default function MapView() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
   const { api } = useAuth();
   const { theme } = useTheme();
   const [zones, setZones] = useState([]);
@@ -145,7 +147,7 @@ export default function MapView() {
                 {t('zones.title')}
               </p>
               <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                {selectedPost.zone?.name || zones.find(z => z.posts?.some(p => p.id === selectedPost.id))?.name || '—'}
+                {translateZone(selectedPost.zone?.name || zones.find(z => z.posts?.some(p => p.id === selectedPost.id))?.name, isRu) || '—'}
               </p>
             </div>
           </div>
@@ -166,7 +168,7 @@ export default function MapView() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-2 h-2 rounded-full" style={{ background: zoneColor }} />
                 <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {zone.name.split('—')[0].trim()}
+                  {translateZone(zone.name, isRu)?.split('—')[0].trim()}
                 </span>
               </div>
               <div className="flex items-center justify-between">

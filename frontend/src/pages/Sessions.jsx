@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera } from 'lucide-react';
+import { translateZone, translatePost } from '../utils/translate';
 
 // Mock plate image — SVG генерирует "фото номера"
 function PlatePreview({ plate, small = false }) {
@@ -119,11 +120,11 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Текущая зона' : 'Current Zone'}</p>
-            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{zone?.name || '—'}</p>
+            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{translateZone(zone?.name, isRu) || '—'}</p>
           </div>
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Текущий пост' : 'Current Post'}</p>
-            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{post?.name || '—'}</p>
+            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{translatePost(post?.name, isRu) || '—'}</p>
           </div>
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Время въезда' : 'Entry Time'}</p>
@@ -289,7 +290,7 @@ export default function Sessions() {
               color: postFilter === name ? 'white' : 'var(--text-muted)',
             }}
           >
-            {name}
+            {translatePost(name, isRu)}
           </button>
         ))}
         <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
@@ -344,10 +345,10 @@ export default function Sessions() {
                   {new Date(s.entryTime).toLocaleString()}
                 </td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
-                  {s.zoneStays?.[0]?.zone?.name || '—'}
+                  {translateZone(s.zoneStays?.[0]?.zone?.name, isRu) || '—'}
                 </td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
-                  {s.postStays?.[0]?.post?.name || '—'}
+                  {translatePost(s.postStays?.[0]?.post?.name, isRu) || '—'}
                 </td>
                 <td className="px-4 py-3">
                   <span

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -104,7 +105,7 @@ export default function Login() {
             className="text-sm px-3 py-1 rounded-lg transition-all hover:opacity-80"
             style={{ color: 'var(--text-muted)' }}
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button
             onClick={toggleLang}

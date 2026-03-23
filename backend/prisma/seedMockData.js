@@ -169,16 +169,19 @@ async function main() {
   }
   console.log('35 events');
 
-  // ======= РЕКОМЕНДАЦИИ (8 шт) =======
-  await prisma.recommendation.create({ data: { type: 'vehicle_idle', postId: p2.id, message: 'Авто В456КМ50 на Посту 2 без работника более 45 минут. Возможен простой.' } });
-  await prisma.recommendation.create({ data: { type: 'vehicle_idle', postId: p7.id, message: 'Авто К111АА99 на Посту 7 — работник присутствует, но активности нет 40 мин.' } });
-  await prisma.recommendation.create({ data: { type: 'no_show', message: 'Клиент не приехал: ЗН-2026-0310 (АВ55577), запись была 5 часов назад.' } });
-  await prisma.recommendation.create({ data: { type: 'capacity_available', zoneId: z4.id, message: 'Ремонтная зона (посты 5-8): Посты 6 и 8 свободны, можно принять ещё 2 авто.' } });
-  await prisma.recommendation.create({ data: { type: 'work_overtime', postId: p1.id, message: 'ТО-2 на Посту 1 (А123ВС77) превышает норму: 2.3ч из 3.0ч запланированных.' } });
-  await prisma.recommendation.create({ data: { type: 'post_free', postId: p6.id, message: 'Пост 6 свободен более 2 часов при наличии записанных клиентов.' } });
-  await prisma.recommendation.create({ data: { type: 'post_free', postId: p10.id, message: 'Пост 10 (Диагностика) свободен. Есть 2 авто в зоне ожидания.' } });
-  await prisma.recommendation.create({ data: { type: 'capacity_available', zoneId: z5.id, message: 'Диагностика: Пост 10 свободен, в очереди 1 авто на компьютерную диагностику.' } });
-  console.log('8 recommendations');
+  // ======= РЕКОМЕНДАЦИИ (8 шт, RU + EN) =======
+  const recs = [
+    { type: 'vehicle_idle', postId: p2.id, message: 'Авто В456КМ50 на Посту 2 без работника более 45 минут. Возможен простой.', messageEn: 'Vehicle В456КМ50 at Post 2 without worker for over 45 minutes. Possible idle time.' },
+    { type: 'vehicle_idle', postId: p7.id, message: 'Авто К111АА99 на Посту 7 — работник присутствует, но активности нет 40 мин.', messageEn: 'Vehicle К111АА99 at Post 7 — worker present but no activity for 40 min.' },
+    { type: 'no_show', message: 'Клиент не приехал: ЗН-2026-0310 (АВ55577), запись была 5 часов назад.', messageEn: 'Client no-show: WO-2026-0310 (АВ55577), appointment was 5 hours ago.' },
+    { type: 'capacity_available', zoneId: z4.id, message: 'Ремонтная зона (посты 5-8): Посты 6 и 8 свободны, можно принять ещё 2 авто.', messageEn: 'Repair zone (posts 5-8): Posts 6 and 8 are free, can accept 2 more vehicles.' },
+    { type: 'work_overtime', postId: p1.id, message: 'ТО-2 на Посту 1 (А123ВС77) превышает норму: 2.3ч из 3.0ч запланированных.', messageEn: 'Service TO-2 at Post 1 (А123ВС77) exceeds norm: 2.3h out of 3.0h planned.' },
+    { type: 'post_free', postId: p6.id, message: 'Пост 6 свободен более 2 часов при наличии записанных клиентов.', messageEn: 'Post 6 has been free for over 2 hours while there are scheduled clients.' },
+    { type: 'post_free', postId: p10.id, message: 'Пост 10 (Диагностика) свободен. Есть 2 авто в зоне ожидания.', messageEn: 'Post 10 (Diagnostics) is free. 2 vehicles in waiting zone.' },
+    { type: 'capacity_available', zoneId: z5.id, message: 'Диагностика: Пост 10 свободен, в очереди 1 авто на компьютерную диагностику.', messageEn: 'Diagnostics: Post 10 is free, 1 vehicle queued for computer diagnostics.' },
+  ];
+  for (const r of recs) await prisma.recommendation.create({ data: r });
+  console.log('8 recommendations (RU + EN)');
 
   console.log('\n✅ Mock data seeded!');
   console.log('  Zones: 5, Posts: 10, Cameras: 10');

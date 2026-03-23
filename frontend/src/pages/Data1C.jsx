@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { Upload, FileSpreadsheet, FileText, X, Check } from 'lucide-react';
 
 const STATUS_LABELS = {
   in_progress: { ru: 'В работе', en: 'In Progress', color: '#f59e0b' },
@@ -324,6 +325,109 @@ function WorkersTab({ data, lang }) {
   );
 }
 
+function FileUploadZone({ lang, onFiles }) {
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const inputRef = useRef(null);
+
+  const ACCEPTED = '.xlsx,.xls,.csv,.pdf';
+  const ACCEPTED_TYPES = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel', 'text/csv', 'application/pdf'];
+
+  const handleFiles = (files) => {
+    const valid = Array.from(files).filter(f =>
+      ACCEPTED_TYPES.some(t => f.type === t) ||
+      f.name.match(/\.(xlsx|xls|csv|pdf)$/i)
+    );
+    if (valid.length === 0) return;
+
+    const newFiles = valid.map(f => ({
+      file: f,
+      name: f.name,
+      size: (f.size / 1024).toFixed(1) + ' KB',
+      type: f.name.split('.').pop().toUpperCase(),
+      status: 'uploaded', // uploaded → processing → done | error
+    }));
+
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+    onFiles?.(valid);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const removeFile = (idx) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const typeIcon = (type) => {
+    if (type === 'PDF') return <FileText size={16} style={{ color: '#ef4444' }} />;
+    return <FileSpreadsheet size={16} style={{ color: '#10b981' }} />;
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Drop zone */}
+      <div
+        className="rounded-xl p-6 text-center cursor-pointer transition-all"
+        style={{
+          border: `2px dashed ${dragActive ? 'var(--accent)' : 'var(--border-glass)'}`,
+          background: dragActive ? 'var(--accent-light)' : 'transparent',
+        }}
+        onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={handleDrop}
+        onClick={() => inputRef.current?.click()}
+      >
+        <Upload size={28} style={{ color: 'var(--accent)', margin: '0 auto 8px' }} />
+        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+          {lang === 'ru'
+            ? 'Перетащите файлы сюда или нажмите для выбора'
+            : 'Drag files here or click to browse'}
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+          Excel (.xlsx, .xls), CSV (.csv), PDF (.pdf)
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept={ACCEPTED}
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </div>
+
+      {/* Uploaded files list */}
+      {uploadedFiles.length > 0 && (
+        <div className="space-y-2">
+          {uploadedFiles.map((f, i) => (
+            <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg"
+              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+              <div className="flex items-center gap-2">
+                {typeIcon(f.type)}
+                <div>
+                  <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{f.name}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{f.size} · {f.type}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check size={14} style={{ color: '#10b981' }} />
+                <button onClick={() => removeFile(i)} className="hover:opacity-60">
+                  <X size={14} style={{ color: 'var(--text-muted)' }} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Data1C() {
   const { i18n } = useTranslation();
   const { api } = useAuth();
@@ -331,8 +435,10 @@ export default function Data1C() {
   const [stats, setStats] = useState(null);
   const [planning, setPlanning] = useState([]);
   const [workers, setWorkers] = useState([]);
+  const [showUpload, setShowUpload] = useState(false);
 
   const lang = i18n.language;
+  const isRu = lang === 'ru';
 
   useEffect(() => {
     api.get('/api/1c-stats').then(r => setStats(r.data)).catch(console.error);
@@ -340,22 +446,52 @@ export default function Data1C() {
     api.get('/api/1c-workers').then(r => setWorkers(r.data)).catch(console.error);
   }, []);
 
+  const handleUploadedFiles = (files) => {
+    // TODO: send files to backend for parsing
+    console.log('Files uploaded:', files.map(f => f.name));
+  };
+
   const tabs = [
-    { key: 'stats', label: lang === 'ru' ? '📊 Статистика' : '📊 Statistics' },
-    { key: 'planning', label: lang === 'ru' ? '📅 Планирование ремонта' : '📅 Repair Planning' },
-    { key: 'workers', label: lang === 'ru' ? '👷 Выработка исполнителей' : '👷 Worker Output' },
+    { key: 'stats', label: isRu ? 'Статистика' : 'Statistics' },
+    { key: 'planning', label: isRu ? 'Планирование ремонта' : 'Repair Planning' },
+    { key: 'workers', label: isRu ? 'Выработка исполнителей' : 'Worker Output' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          {lang === 'ru' ? 'Данные 1С' : '1C Data'}
+          {isRu ? 'Данные 1С' : '1C Data'}
         </h2>
-        <span className="text-xs px-3 py-1 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
-          {lang === 'ru' ? `${planning.length + workers.length} записей` : `${planning.length + workers.length} records`}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowUpload(!showUpload)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
+            style={{ background: 'var(--accent)' }}
+          >
+            <Upload size={14} />
+            {isRu ? 'Загрузить файл' : 'Upload File'}
+          </button>
+          <span className="text-xs px-3 py-1 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+            {isRu ? `${planning.length + workers.length} записей` : `${planning.length + workers.length} records`}
+          </span>
+        </div>
       </div>
+
+      {/* Upload zone */}
+      {showUpload && (
+        <div className="glass-static p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {isRu ? 'Загрузка данных из 1С' : 'Upload 1C Data'}
+            </h3>
+            <button onClick={() => setShowUpload(false)} className="hover:opacity-60">
+              <X size={16} style={{ color: 'var(--text-muted)' }} />
+            </button>
+          </div>
+          <FileUploadZone lang={lang} onFiles={handleUploadedFiles} />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2">

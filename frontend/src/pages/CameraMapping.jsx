@@ -3,22 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft } from 'lucide-react';
 
-// Все зоны СТО (каждый подъёмник, въезд, выезд, парковка — отдельная зона)
+// Все зоны СТО
 const DEFAULT_ZONES = [
-  { id: 'entry', name: 'Въезд', type: 'entry' },
-  { id: 'exit', name: 'Выезд', type: 'exit' },
-  { id: 'post-1', name: 'Пост 1', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-2', name: 'Пост 2', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-3', name: 'Пост 3', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-4', name: 'Пост 4', type: 'lift', description: '2-х ст. >2.5т (грузовой)' },
-  { id: 'post-5', name: 'Пост 5', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-6', name: 'Пост 6', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-7', name: 'Пост 7', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-8', name: 'Пост 8', type: 'lift', description: '2-х ст. <2.5т' },
-  { id: 'post-9', name: 'Пост 9', type: 'diag', description: 'Диагностика' },
-  { id: 'post-10', name: 'Пост 10', type: 'diag', description: 'Диагностика' },
-  { id: 'parking', name: 'Парковка / Ожидание', type: 'parking' },
+  { id: 'entry', name: { ru: 'Въезд', en: 'Entry' }, type: 'entry' },
+  { id: 'exit', name: { ru: 'Выезд', en: 'Exit' }, type: 'exit' },
+  { id: 'post-1', name: { ru: 'Пост 1', en: 'Post 1' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-2', name: { ru: 'Пост 2', en: 'Post 2' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-3', name: { ru: 'Пост 3', en: 'Post 3' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-4', name: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift', desc: { ru: '2-х ст. >2.5т (грузовой)', en: '2-post >2.5t (heavy)' } },
+  { id: 'post-5', name: { ru: 'Пост 5', en: 'Post 5' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-6', name: { ru: 'Пост 6', en: 'Post 6' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-7', name: { ru: 'Пост 7', en: 'Post 7' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-8', name: { ru: 'Пост 8', en: 'Post 8' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
+  { id: 'post-9', name: { ru: 'Пост 9', en: 'Post 9' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' } },
+  { id: 'post-10', name: { ru: 'Пост 10', en: 'Post 10' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' } },
+  { id: 'parking', name: { ru: 'Парковка / Ожидание', en: 'Parking / Waiting' }, type: 'parking' },
 ];
+
+const zn = (zone, isRu) => typeof zone.name === 'string' ? zone.name : zone.name[isRu ? 'ru' : 'en'];
+const zd = (zone, isRu) => zone.desc ? zone.desc[isRu ? 'ru' : 'en'] : '';
 
 const DEFAULT_CAMERAS = [
   { id: 'cam-01', num: '01' },
@@ -81,11 +84,21 @@ export default function CameraMapping() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const lang = i18n.language;
+  const isRu = lang === 'ru';
 
   // State: mapping data (persisted in localStorage for now)
   const [mapping, setMapping] = useState(() => {
-    const saved = localStorage.getItem('cameraMappingData');
-    return saved ? JSON.parse(saved) : DEFAULT_MAPPING;
+    try {
+      const saved = localStorage.getItem('cameraMappingData');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Validate: check if keys match DEFAULT_MAPPING structure
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).some(k => k in DEFAULT_MAPPING)) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return JSON.parse(JSON.stringify(DEFAULT_MAPPING));
   });
   const [selectedZone, setSelectedZone] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -96,8 +109,10 @@ export default function CameraMapping() {
   };
 
   const resetMapping = () => {
-    setMapping(DEFAULT_MAPPING);
-    localStorage.setItem('cameraMappingData', JSON.stringify(DEFAULT_MAPPING));
+    localStorage.removeItem('cameraMappingData');
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_MAPPING));
+    setMapping(fresh);
+    setSelectedZone(null);
     setHasChanges(false);
   };
 
@@ -204,12 +219,12 @@ export default function CameraMapping() {
         <div className="glass-static p-4 space-y-2" style={{ borderLeft: '3px solid var(--warning)' }}>
           {unmappedZones.length > 0 && (
             <p className="text-sm" style={{ color: 'var(--warning)' }}>
-              ⚠️ {lang === 'ru' ? 'Зоны без камер:' : 'Zones without cameras:'} {unmappedZones.map(z => z.name).join(', ')}
+              ⚠️ {lang === 'ru' ? 'Зоны без камер:' : 'Zones without cameras:'} {unmappedZones.map(z => zn(z, isRu)).join(', ')}
             </p>
           )}
           {unmappedCameras.length > 0 && (
             <p className="text-sm" style={{ color: 'var(--warning)' }}>
-              ⚠️ {lang === 'ru' ? 'Камеры без привязки:' : 'Unlinked cameras:'} {unmappedCameras.map(c => c.name).join(', ')}
+              ⚠️ {lang === 'ru' ? 'Камеры без привязки:' : 'Unlinked cameras:'} {unmappedCameras.map(c => camLabel(c.num, lang === 'ru')).join(', ')}
             </p>
           )}
         </div>
@@ -242,7 +257,7 @@ export default function CameraMapping() {
                   <div className="flex items-center gap-2">
                     <ZoneIcon type={zone.type} />
                     <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {zone.name}
+                      {zn(zone, isRu)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -251,8 +266,8 @@ export default function CameraMapping() {
                     </span>
                   </div>
                 </div>
-                {zone.description && (
-                  <p className="text-xs mt-1 ml-6" style={{ color: 'var(--text-muted)' }}>{zone.description}</p>
+                {zone.desc && (
+                  <p className="text-xs mt-1 ml-6" style={{ color: 'var(--text-muted)' }}>{zd(zone, isRu)}</p>
                 )}
               </button>
             );
@@ -267,10 +282,10 @@ export default function CameraMapping() {
                 <span className="text-xl">{selectedZone.icon}</span>
                 <div>
                   <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {selectedZone.name}
+                    {zn(selectedZone, isRu)}
                   </h3>
-                  {selectedZone.description && (
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{selectedZone.description}</p>
+                  {selectedZone.desc && (
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{zd(selectedZone, isRu)}</p>
                   )}
                 </div>
               </div>
@@ -333,7 +348,7 @@ export default function CameraMapping() {
                                     color: 'var(--text-muted)',
                                   }}
                                 >
-                                  {z.name}
+                                  {zn(z, isRu)}
                                 </span>
                               ))}
                             </div>
@@ -404,7 +419,7 @@ export default function CameraMapping() {
                       onClick={() => setSelectedZone(zone)}
                     >
                       <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
-                        <ZoneIcon type={zone.type} size={12} /> {zone.name}
+                        <ZoneIcon type={zone.type} size={12} /> {zn(zone, isRu)}
                       </td>
                       {DEFAULT_CAMERAS.map(cam => {
                         const prio = cams[cam.id];

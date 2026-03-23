@@ -75,21 +75,21 @@ const MAP_LAYOUT = {
   ],
   // 10 постов по реальной схеме
   posts: [
-    // Нижний ряд — Посты 1-4 (2-х стоечные подъёмники <2.5т)
-    { key: 'post01', x: 170, y: 370, w: 135, h: 115, label: 'Пост 1' },
-    { key: 'post02', x: 320, y: 370, w: 135, h: 115, label: 'Пост 2' },
-    { key: 'post03', x: 470, y: 370, w: 135, h: 115, label: 'Пост 3' },
-    { key: 'post04', x: 620, y: 370, w: 135, h: 115, label: 'Пост 4' },
+    // Нижний ряд — Посты 1-4
+    { key: 'post01', x: 170, y: 370, w: 135, h: 115, label: 'Пост 1', labelEN: 'Post 1' },
+    { key: 'post02', x: 320, y: 370, w: 135, h: 115, label: 'Пост 2', labelEN: 'Post 2' },
+    { key: 'post03', x: 470, y: 370, w: 135, h: 115, label: 'Пост 3', labelEN: 'Post 3' },
+    { key: 'post04', x: 620, y: 370, w: 135, h: 115, label: 'Пост 4', labelEN: 'Post 4' },
     // Нижний ряд — второй уровень
-    { key: 'post01b', x: 170, y: 500, w: 135, h: 115, label: 'Пост 1\n(яма)', visible: false },
+    { key: 'post01b', x: 170, y: 500, w: 135, h: 115, label: 'Пост 1\n(яма)', labelEN: 'Post 1\n(pit)', visible: false },
     // Верхний ряд — Посты 5-8
-    { key: 'post05', x: 170, y: 55,  w: 135, h: 120, label: 'Пост 5' },
-    { key: 'post06', x: 320, y: 55,  w: 135, h: 120, label: 'Пост 6' },
-    { key: 'post07', x: 470, y: 55,  w: 135, h: 120, label: 'Пост 7' },
-    { key: 'post08', x: 620, y: 55,  w: 135, h: 120, label: 'Пост 8' },
+    { key: 'post05', x: 170, y: 55,  w: 135, h: 120, label: 'Пост 5', labelEN: 'Post 5' },
+    { key: 'post06', x: 320, y: 55,  w: 135, h: 120, label: 'Пост 6', labelEN: 'Post 6' },
+    { key: 'post07', x: 470, y: 55,  w: 135, h: 120, label: 'Пост 7', labelEN: 'Post 7' },
+    { key: 'post08', x: 620, y: 55,  w: 135, h: 120, label: 'Пост 8', labelEN: 'Post 8' },
     // Правая часть — Посты 9-10 (Диагностика)
-    { key: 'post09', x: 800, y: 55,  w: 255, h: 250, label: 'Пост 9\n(Диагностика)' },
-    { key: 'post10', x: 800, y: 330, w: 255, h: 250, label: 'Пост 10\n(Диагностика)' },
+    { key: 'post09', x: 800, y: 55,  w: 255, h: 250, label: 'Пост 9\n(Диагностика)', labelEN: 'Post 9\n(Diagnostics)' },
+    { key: 'post10', x: 800, y: 330, w: 255, h: 250, label: 'Пост 10\n(Диагностика)', labelEN: 'Post 10\n(Diagnostics)' },
   ],
   // Камеры по периметру и внутри (по фото — красные отметки)
   cameras: [
@@ -111,6 +111,7 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
   const status = post?.status || 'free';
   const color = STATUS_COLORS[status];
   const vehicle = post?.stays?.[0]?.vehicleSession;
+  const postLabel = isRu ? layout.label : (layout.labelEN || layout.label);
 
   return (
     <Group
@@ -136,7 +137,7 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
       {/* Post name */}
       <Text
         x={10} y={10}
-        text={layout.label}
+        text={postLabel}
         fontSize={13}
         fontStyle="bold"
         fill={isDark ? '#f1f5f9' : '#1a202c'}
@@ -144,7 +145,7 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
       />
       {/* Status text */}
       <Text
-        x={10} y={layout.label.includes('\n') ? 46 : 30}
+        x={10} y={postLabel.includes('\n') ? 46 : 30}
         text={STATUS_LABELS[status]?.[isRu ? 'ru' : 'en'] || status}
         fontSize={11}
         fill={color}
@@ -177,7 +178,7 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
       {/* Worker indicator */}
       {post?.stays?.[0]?.hasWorker && (
         <Text
-          x={10} y={layout.label.includes('\n') ? 62 : 48}
+          x={10} y={postLabel.includes('\n') ? 62 : 48}
           text={isRu ? '● Работник' : '● Worker'}
           fontSize={11}
           fill={isDark ? '#94a3b8' : '#718096'}
@@ -392,7 +393,12 @@ export default function STOMap({ zones = [], onPostClick, isDark = true }) {
                     occupied: 'Занят',
                     occupied_no_work: 'Простой',
                     active_work: 'Работа',
-                  }[status] : status.split('_')[0]}
+                  }[status] : {
+                    free: 'Free',
+                    occupied: 'Busy',
+                    occupied_no_work: 'Idle',
+                    active_work: 'Active',
+                  }[status]}
                   fontSize={9}
                   fill={isDark ? '#cbd5e1' : '#4a5568'}
                 />

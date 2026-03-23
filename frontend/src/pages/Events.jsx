@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
+import { translateZone, translatePost } from '../utils/translate';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало в зону', en: 'Vehicle entered zone' },
@@ -104,7 +105,7 @@ export default function Events() {
               className="px-2.5 py-1 rounded-lg text-xs" style={{
                 background: zoneFilter === z ? 'var(--accent)' : 'var(--bg-glass)',
                 color: zoneFilter === z ? 'white' : 'var(--text-muted)',
-              }}>{z}</button>
+              }}>{translateZone(z, isRu)}</button>
           ))}
         </div>
         {/* Post filter */}
@@ -120,7 +121,7 @@ export default function Events() {
               className="px-2.5 py-1 rounded-lg text-xs" style={{
                 background: postFilter === p ? 'var(--accent)' : 'var(--bg-glass)',
                 color: postFilter === p ? 'white' : 'var(--text-muted)',
-              }}>{p}</button>
+              }}>{translatePost(p, isRu)}</button>
           ))}
         </div>
       </div>
@@ -134,14 +135,14 @@ export default function Events() {
                   style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
                   {EVENT_TYPES[ev.type]?.[isRu ? 'ru' : 'en'] || ev.type.replace(/_/g, ' ')}
                 </span>
-                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{ev.zone?.name}</span>
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{translateZone(ev.zone?.name, isRu)}</span>
                 {ev.post && (
-                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>→ {ev.post.name}</span>
+                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>→ {translatePost(ev.post.name, isRu)}</span>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  conf: {(ev.confidence * 100).toFixed(0)}%
+                  {isRu ? 'увер.' : 'conf'}: {(ev.confidence * 100).toFixed(0)}%
                 </span>
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   {new Date(ev.createdAt).toLocaleTimeString()}

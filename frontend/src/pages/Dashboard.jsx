@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
 import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
+import { translateZone } from '../utils/translate';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
@@ -31,7 +32,7 @@ function StatCard({ icon: Icon, label, value, color }) {
   );
 }
 
-function RecommendationCard({ rec, onAcknowledge, t }) {
+function RecommendationCard({ rec, onAcknowledge, t, isRu }) {
   const typeColors = {
     no_show: 'var(--danger)',
     post_free: 'var(--success)',
@@ -50,7 +51,7 @@ function RecommendationCard({ rec, onAcknowledge, t }) {
           {t(`recommendations.${rec.type}`)}
         </span>
         <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          {rec.message}
+          {isRu ? rec.message : (rec.messageEn || rec.message)}
         </p>
       </div>
       <button
@@ -153,6 +154,7 @@ export default function Dashboard() {
                   rec={rec}
                   onAcknowledge={acknowledgeRec}
                   t={t}
+                  isRu={isRu}
                 />
               ))
             )}
@@ -192,7 +194,7 @@ export default function Dashboard() {
                         {EVENT_TYPES[ev.type]?.[isRu ? 'ru' : 'en'] || ev.type}
                       </span>
                       <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>
-                        {ev.zone?.name}
+                        {translateZone(ev.zone?.name, isRu)}
                       </span>
                     </div>
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
