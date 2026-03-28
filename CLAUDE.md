@@ -1,66 +1,84 @@
-# Project Configuration
+# MetricsAiUp — Система мониторинга СТО
 
-## Environment
-- You are running inside a Docker container as part of the Metrics Companion platform
-- Your working directory is /project — ALL files must be created here
-- NEVER write files outside /project (e.g. /home/developer/)
-- The project directory is served via Nginx on port 8080 inside this container
-- Domain: dev.metricsavto.com
+## Среда
+- Docker-контейнер, рабочая директория: `/project`
+- Nginx на порту 8080 раздаёт статику из `/project`
+- Домен: `dev.metricsavto.com`
+- Node.js 20, Python 3.11, PHP 8.2, Go 1.22, git, curl, wget
 
-## Available Runtimes
-- Node.js 20 (npm, npx available)
-- Python 3.11 (python command)
-- PHP 8.2 (php command)
-- Go 1.22 (go command)
-- git, curl, wget, build-essential
+## Публичные URL
+- **Основной:** `https://dev.metricsavto.com/p//`
+- **Другой порт:** `https://dev.metricsavto.com/p//{PORT}/`
+- WebSocket проксируется. Авторизация не нужна.
 
-## Public URLs (ВАЖНО!)
-Результаты работы доступны публично по следующим ссылкам:
+## Стек проекта
+- **Frontend:** React 18 + Vite, Tailwind CSS, Recharts, react-konva, react-i18next (RU/EN)
+- **Роутинг:** HashRouter (React Router v6)
+- **Иконки:** Lucide React (SVG)
+- **Дизайн:** Glassmorphism, тёмная + светлая тема (CSS Variables)
+- **API:** Статичные JSON файлы в `/project/api/`, Nginx раздаёт
+- **Состояние:** React Context (Auth, Theme) + localStorage
+- **Карта СТО:** react-konva (Canvas)
 
-- **Порт 8080 (Nginx, по умолчанию):**
-  https://dev.metricsavto.com/p//
-  https://dev.metricsavto.com/api/projects//preview/
+## Архитектура
+```
+/project
+├── frontend/src/
+│   ├── App.jsx              # Роутинг
+│   ├── components/
+│   │   ├── Layout.jsx       # Sidebar + Header + Outlet
+│   │   ├── Sidebar.jsx      # Навигация (permission-based)
+│   │   ├── STOMap.jsx        # Карта СТО (react-konva)
+│   │   └── HelpButton.jsx
+│   ├── pages/
+│   │   ├── Dashboard.jsx     # Главный дашборд (KPI, рекомендации, события)
+│   │   ├── DashboardPosts.jsx # Дашборд постов (Gantt-таймлайн ЗН)
+│   │   ├── PostsDetail.jsx   # Аналитика по постам (master-detail)
+│   │   ├── MapView.jsx       # Карта СТО + модальное окно поста
+│   │   ├── Sessions.jsx      # Сессии авто
+│   │   ├── WorkOrders.jsx    # Заказ-наряды
+│   │   ├── Events.jsx        # Журнал событий
+│   │   ├── Analytics.jsx     # Аналитика (Recharts)
+│   │   ├── Data1C.jsx        # Данные из 1С Альфа-Авто
+│   │   ├── Cameras.jsx       # Камеры
+│   │   └── CameraMapping.jsx # Разметка камер
+│   ├── contexts/             # AuthContext, ThemeContext
+│   ├── hooks/useSocket.js    # usePolling
+│   └── i18n/                 # ru.json, en.json
+├── api/                      # 20+ JSON файлов (моки)
+├── assets/                   # Билд-ассеты
+└── index.html                # Entry point (Vite build)
+```
 
-- **Любой другой порт (Express, Vite, и т.д.):**
-  https://dev.metricsavto.com/p//{PORT}/
-  Пример: https://dev.metricsavto.com/p//3001/
+## Карта СТО (STOMap.jsx)
+- Верхний ряд постов: 5, 6, 7, 8, 9
+- Нижний ряд постов: 1, 2, 3, 4, 10
+- Зона проезда между рядами
+- Въезд/выезд слева напротив проезда
+- Парковка по бокам от въезда (сверху и снизу)
+- Камеры 10шт в зоне проезда и на стенах
+- По клику на пост — модальное окно с инфой + кнопка перехода на страницу Посты
 
-- **API на другом порту:**
-  https://dev.metricsavto.com/p//{PORT}/api/endpoint
-  Пример: https://dev.metricsavto.com/p//3001/api/health
+## API (моки в /project/api/)
+- `auth-login.json`, `auth-me.json` — авторизация
+- `posts.json`, `zones.json`, `sessions.json`, `events.json` — основные данные
+- `work-orders.json` — заказ-наряды из 1С
+- `dashboard-posts.json` — данные для Gantt-таймлайна
+- `posts-analytics.json` — аналитика по постам
+- `1c-planning.json`, `1c-workers.json`, `1c-stats.json` — данные Альфа-Авто
+- `analytics-history.json`, `cameras.json`, `zones-cameras.json` и др.
 
-Где {PORT} — любой порт, который слушает сервер внутри контейнера.
+## Билд и деплой
+```bash
+cd /project/frontend && npm run build
+cp -r dist/* /project/
+```
+Nginx раздаёт из `/project/` автоматически.
 
-WebSocket (Socket.IO) тоже проксируется автоматически.
-
-Авторизация НЕ требуется — ссылки публичные, доступны кому угодно.
-
-Когда пользователь просит ссылку или спрашивает как посмотреть результат — давай ему эти URL.
-
-## Web Preview
-- Static files in /project are served automatically at port 8080 (Nginx)
-- For dev servers, можно использовать ЛЮБОЙ порт (3000, 3001, 5173, 8080, и т.д.)
-- Dev server должен слушать на 0.0.0.0 (не localhost/127.0.0.1), иначе не будет доступен извне
-- Пользователь видит результат через iframe или по прямой ссылке
-
-## Autostart
-- Если нужно автоматически запускать сервер при старте контейнера — создай файл /project/.autostart.sh
-- Он будет выполнен от имени developer при каждом запуске контейнера
-- Пример:
-  ```bash
-  #!/bin/bash
-  cd /project && node server.js > /tmp/server.log 2>&1 &
-  ```
-
-## Git & SSH
-- SSH-ключ для git push уже настроен в /home/developer/.ssh/
-- Публичный ключ: cat /home/developer/.ssh/id_ed25519.pub
-- Добавь его в GitHub → Settings → Deploy keys для доступа к репозиторию
-- Git user и branch настраиваются автоматически платформой
-
-## Guidelines
-- Always create files in /project directory
-- When building web apps, create index.html as the entry point
-- If you create a dev server, bind to 0.0.0.0 (NOT localhost)
+## Правила
 - **НЕ делай git commit и git push без прямой команды пользователя**
-- Давай пользователю публичные ссылки когда он спрашивает как посмотреть результат
+- Все файлы только в `/project`
+- Dev server на `0.0.0.0`
+- i18n: все тексты через `t('key')`, оба языка (ru.json + en.json)
+- Иконки: только Lucide React, без emoji
+- API: `fetchApi('name')` → fetch `api/name.json`

@@ -268,6 +268,7 @@ export default function MapView() {
           zones={zones}
           isDark={isDark}
           onPostClick={(post) => setSelectedPost(post)}
+          dashboardData={dashboardData}
         />
       </div>
 

@@ -21,97 +21,99 @@ const ZONE_COLORS = {
   waiting: { fill: 'rgba(245, 158, 11, 0.08)', stroke: '#f59e0b' },
   repair: { fill: 'rgba(99, 102, 241, 0.08)', stroke: '#6366f1' },
   diagnostics: { fill: 'rgba(168, 85, 247, 0.08)', stroke: '#a855f7' },
+  driveway: { fill: 'rgba(107, 114, 128, 0.06)', stroke: '#6b7280' },
   parking: { fill: 'rgba(59, 130, 246, 0.08)', stroke: '#3b82f6' },
   free: { fill: 'rgba(148, 163, 184, 0.08)', stroke: '#94a3b8' },
 };
 
-// Реальная схема СТО по чертежу
+// ─── РАСКЛАДКА v8 ──────────────────────────────────────────────────────────
+// Верхний ряд: 5,6,7,8,9. Нижний ряд: 1,2,3,4,10
+// Проезд между рядами. Въезд слева напротив проезда. Парковка по бокам въезда.
+// Камеры в зоне проезда.
+//
+// Пост: 130×120. Зазор между постами: 10px. 5 постов = 5×130 + 4×10 = 690
+// Зона ремонта: x=145, w=700 (5px padding по бокам)
+// Парковка сверху: x=15, y=15, w=125, h=170
+// Въезд: x=15, y=190, w=125, h=60 (напротив проезда)
+// Парковка снизу: x=15, y=255, w=125, h=170
+//
 const MAP_LAYOUT = {
-  width: 1100,
-  height: 650,
-  // Стены здания
-  building: { x: 20, y: 20, w: 1060, h: 610 },
+  width: 1000,
+  height: 460,
+  building: { x: 10, y: 10, w: 980, h: 440 },
   zones: [
-    {
-      key: 'entry',
-      type: 'entry',
-      x: 25, y: 440,
-      w: 120, h: 185,
-      label: 'Въезд/Выезд',
-      labelEN: 'Entry/Exit',
-    },
-    {
-      key: 'waiting',
-      type: 'waiting',
-      x: 25, y: 25,
-      w: 120, h: 410,
-      label: 'Зона ожидания\n/ Парковка',
-      labelEN: 'Waiting\n/ Parking',
-    },
-    {
-      key: 'repair_lower',
-      type: 'repair',
-      x: 150, y: 330,
-      w: 620, h: 295,
-      label: 'Ремонтная зона (посты 1-4)',
-      labelEN: 'Repair zone (posts 1-4)',
-    },
-    {
-      key: 'repair_upper',
-      type: 'repair',
-      x: 150, y: 25,
-      w: 620, h: 300,
-      label: 'Ремонтная зона (посты 5-8)',
-      labelEN: 'Repair zone (posts 5-8)',
-    },
-    {
-      key: 'diagnostics',
-      type: 'diagnostics',
-      x: 780, y: 25,
-      w: 295, h: 600,
-      label: 'Диагностика (посты 9-10)',
-      labelEN: 'Diagnostics (posts 9-10)',
-    },
+    // Верхний ремонт: посты 5,6,7,8,9
+    { key: 'repair_upper', type: 'repair', x: 145, y: 15, w: 700, h: 165,
+      label: 'Ремонтная зона (посты 5-9)', labelEN: 'Repair zone (posts 5-9)' },
+    // Зона проезда
+    { key: 'driveway', type: 'driveway', x: 145, y: 185, w: 700, h: 55,
+      label: 'Проезд', labelEN: 'Driveway' },
+    // Нижний ремонт: посты 1,2,3,4,10
+    { key: 'repair_lower', type: 'repair', x: 145, y: 245, w: 700, h: 165,
+      label: 'Ремонтная зона (посты 1-4, 10)', labelEN: 'Repair zone (posts 1-4, 10)' },
+    // Парковка верх (слева сверху от въезда)
+    { key: 'parking_top', type: 'parking', x: 15, y: 15, w: 125, h: 165,
+      label: 'Парковка', labelEN: 'Parking' },
+    // Въезд/выезд (напротив проезда)
+    { key: 'entry', type: 'entry', x: 15, y: 185, w: 125, h: 55,
+      label: 'Въезд/Выезд', labelEN: 'Entry/Exit' },
+    // Парковка низ (слева снизу от въезда)
+    { key: 'parking_bottom', type: 'parking', x: 15, y: 245, w: 125, h: 165,
+      label: 'Парковка', labelEN: 'Parking' },
   ],
-  // 10 постов по реальной схеме
   posts: [
-    // Нижний ряд — Посты 1-4
-    { key: 'post01', x: 170, y: 370, w: 135, h: 115, label: 'Пост 1', labelEN: 'Post 1' },
-    { key: 'post02', x: 320, y: 370, w: 135, h: 115, label: 'Пост 2', labelEN: 'Post 2' },
-    { key: 'post03', x: 470, y: 370, w: 135, h: 115, label: 'Пост 3', labelEN: 'Post 3' },
-    { key: 'post04', x: 620, y: 370, w: 135, h: 115, label: 'Пост 4', labelEN: 'Post 4' },
-    // Нижний ряд — второй уровень
-    { key: 'post01b', x: 170, y: 500, w: 135, h: 115, label: 'Пост 1\n(яма)', labelEN: 'Post 1\n(pit)', visible: false },
-    // Верхний ряд — Посты 5-8
-    { key: 'post05', x: 170, y: 55,  w: 135, h: 120, label: 'Пост 5', labelEN: 'Post 5' },
-    { key: 'post06', x: 320, y: 55,  w: 135, h: 120, label: 'Пост 6', labelEN: 'Post 6' },
-    { key: 'post07', x: 470, y: 55,  w: 135, h: 120, label: 'Пост 7', labelEN: 'Post 7' },
-    { key: 'post08', x: 620, y: 55,  w: 135, h: 120, label: 'Пост 8', labelEN: 'Post 8' },
-    // Правая часть — Посты 9-10 (Диагностика)
-    { key: 'post09', x: 800, y: 55,  w: 255, h: 250, label: 'Пост 9\n(Диагностика)', labelEN: 'Post 9\n(Diagnostics)' },
-    { key: 'post10', x: 800, y: 330, w: 255, h: 250, label: 'Пост 10\n(Диагностика)', labelEN: 'Post 10\n(Diagnostics)' },
+    // Верхний ряд (5,6,7,8,9): y=35..155
+    { key: 'post05', x: 150, y: 35, w: 130, h: 120, label: 'Пост 5', labelEN: 'Post 5' },
+    { key: 'post06', x: 290, y: 35, w: 130, h: 120, label: 'Пост 6', labelEN: 'Post 6' },
+    { key: 'post07', x: 430, y: 35, w: 130, h: 120, label: 'Пост 7', labelEN: 'Post 7' },
+    { key: 'post08', x: 570, y: 35, w: 130, h: 120, label: 'Пост 8', labelEN: 'Post 8' },
+    { key: 'post09', x: 710, y: 35, w: 130, h: 120, label: 'Пост 9', labelEN: 'Post 9' },
+    // Нижний ряд (1,2,3,4,10): y=265..385
+    { key: 'post01', x: 150, y: 265, w: 130, h: 120, label: 'Пост 1', labelEN: 'Post 1' },
+    { key: 'post02', x: 290, y: 265, w: 130, h: 120, label: 'Пост 2', labelEN: 'Post 2' },
+    { key: 'post03', x: 430, y: 265, w: 130, h: 120, label: 'Пост 3', labelEN: 'Post 3' },
+    { key: 'post04', x: 570, y: 265, w: 130, h: 120, label: 'Пост 4', labelEN: 'Post 4' },
+    { key: 'post10', x: 710, y: 265, w: 130, h: 120, label: 'Пост 10', labelEN: 'Post 10' },
+    { key: 'post01b', x: 150, y: 420, w: 130, h: 120, label: 'Пост 1\n(яма)', labelEN: 'Post 1\n(pit)', visible: false },
   ],
-  // Камеры по периметру и внутри (по фото — красные отметки)
+  // Камеры: в проезде (y=185..240, 55px) и на стенах
   cameras: [
-    { key: 'cam01', x: 155, y: 490, angle: 0,   num: '01' },
-    { key: 'cam02', x: 155, y: 185, angle: 90,  num: '02' },
-    { key: 'cam03', x: 310, y: 330, angle: 180, num: '03' },
-    { key: 'cam04', x: 470, y: 330, angle: 180, num: '04' },
-    { key: 'cam05', x: 465, y: 180, angle: 180, num: '05' },
-    { key: 'cam06', x: 620, y: 180, angle: 180, num: '06' },
-    { key: 'cam07', x: 770, y: 100, angle: 0,   num: '07' },
-    { key: 'cam08', x: 770, y: 450, angle: 0,   num: '08' },
-    { key: 'cam09', x: 80,  y: 625, angle: 0,   num: '09' },
-    { key: 'cam10', x: 1060, y: 325, angle: 270, num: '10' },
+    { key: 'cam01', x: 75,  y: 210, num: '01', angle: 0 },    // въезд, в центре
+    { key: 'cam02', x: 75,  y: 100, num: '02', angle: 90 },   // парковка верх
+    { key: 'cam03', x: 215, y: 210, num: '03', angle: 180 },  // проезд
+    { key: 'cam04', x: 355, y: 210, num: '04', angle: 180 },  // проезд
+    { key: 'cam05', x: 495, y: 210, num: '05', angle: 180 },  // проезд
+    { key: 'cam06', x: 635, y: 210, num: '06', angle: 180 },  // проезд
+    { key: 'cam07', x: 775, y: 210, num: '07', angle: 180 },  // проезд
+    { key: 'cam08', x: 900, y: 210, num: '08', angle: 270 },  // проезд правая часть
+    { key: 'cam09', x: 75,  y: 340, num: '09', angle: 90 },   // парковка низ
+    { key: 'cam10', x: 980, y: 210, num: '10', angle: 270 },  // правая стена
   ],
 };
 
-function PostRect({ layout, post, isDark, onClick, isRu }) {
+function fmtTime(t) {
+  if (!t) return '—';
+  const d = new Date(t);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
   if (layout.visible === false && !post) return null;
   const status = post?.status || 'free';
   const color = STATUS_COLORS[status];
   const vehicle = post?.stays?.[0]?.vehicleSession;
   const postLabel = isRu ? layout.label : (layout.labelEN || layout.label);
+  const isLarge = layout.h >= 200; // diagnostic posts are larger
+
+  // Data from dashboard-posts
+  const currentWO = dashPost?.timeline?.find(t => t.status === 'in_progress');
+  const currentVehicle = dashPost?.currentVehicle;
+  const workerName = currentWO?.worker;
+  const note = currentWO?.note;
+
+  const nameY = 5;
+  const statusY = postLabel.includes('\n') ? 30 : 19;
+  let y = statusY + 12;
 
   return (
     <Group
@@ -133,40 +135,101 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
         shadowOpacity={0.4}
       />
       {/* Status indicator */}
-      <Circle x={layout.w - 16} y={16} radius={6} fill={color} />
+      <Circle x={layout.w - 15} y={14} radius={6} fill={color} />
       {/* Post name */}
       <Text
-        x={10} y={10}
+        x={7} y={nameY}
         text={postLabel}
-        fontSize={13}
+        fontSize={12}
         fontStyle="bold"
         fill={isDark ? '#f1f5f9' : '#1a202c'}
-        lineHeight={1.2}
+        lineHeight={1.15}
       />
       {/* Status text */}
       <Text
-        x={10} y={postLabel.includes('\n') ? 46 : 30}
+        x={7} y={statusY}
         text={STATUS_LABELS[status]?.[isRu ? 'ru' : 'en'] || status}
-        fontSize={11}
+        fontSize={10}
         fill={color}
       />
-      {/* Vehicle plate */}
+
+      {/* Vehicle: brand + model */}
+      {currentVehicle && (
+        <Text
+          x={7} y={y}
+          width={layout.w - 14}
+          text={`${currentVehicle.brand} ${currentVehicle.model}`}
+          fontSize={10}
+          fill={isDark ? '#94a3b8' : '#718096'}
+          ellipsis={true}
+        />
+      )}
+
+      {/* Work Order number */}
+      {currentWO && (
+        <Text
+          x={7} y={y + (currentVehicle ? 13 : 0)}
+          width={layout.w - 14}
+          text={currentWO.workOrderNumber}
+          fontSize={10}
+          fontStyle="bold"
+          fill={isDark ? '#a5b4fc' : '#6366f1'}
+          ellipsis={true}
+        />
+      )}
+
+      {/* Worker */}
+      {workerName && (
+        <Text
+          x={7} y={y + (currentVehicle ? 26 : 13)}
+          width={layout.w - 14}
+          text={workerName}
+          fontSize={9}
+          fill={isDark ? '#94a3b8' : '#718096'}
+          ellipsis={true}
+        />
+      )}
+
+      {/* Time: placed → estimated end */}
+      {(post?.stays?.[0]?.startTime || currentWO?.estimatedEnd) && (
+        <Text
+          x={7} y={y + (currentVehicle ? 38 : 26)}
+          width={layout.w - 14}
+          text={`${fmtTime(post?.stays?.[0]?.startTime)} → ${fmtTime(currentWO?.estimatedEnd)}`}
+          fontSize={9}
+          fill={isDark ? '#94a3b8' : '#718096'}
+        />
+      )}
+
+      {/* Note (warning) — only on large posts (diagnostics) */}
+      {note && layout.h >= 200 && (
+        <Text
+          x={7} y={y + (currentVehicle ? 52 : 39)}
+          width={layout.w - 14}
+          text={`⚠ ${note}`}
+          fontSize={9}
+          fill="#f59e0b"
+          ellipsis={true}
+        />
+      )}
+
+      {/* Vehicle plate at bottom */}
       {vehicle && (
         <Group>
           <Rect
-            x={8} y={layout.h - 38}
-            width={layout.w - 16}
-            height={26}
+            x={7} y={layout.h - 30}
+            width={layout.w - 14}
+            height={24}
             fill={isDark ? 'rgba(15, 23, 42, 0.7)' : 'rgba(240, 244, 248, 0.9)'}
             cornerRadius={6}
             stroke={color}
             strokeWidth={0.5}
           />
           <Text
-            x={8} y={layout.h - 38}
-            width={layout.w - 16}
-            height={26}
-            text={vehicle.plateNumber || vehicle.trackId?.slice(0, 10) || '—'}
+            x={7} y={layout.h - 30}
+            width={layout.w - 14}
+            height={24}
+            text={vehicle.plateNumber || '—'}
             fontSize={12}
             fontStyle="bold"
             fill={isDark ? '#e2e8f0' : '#1a202c'}
@@ -174,15 +237,6 @@ function PostRect({ layout, post, isDark, onClick, isRu }) {
             verticalAlign="middle"
           />
         </Group>
-      )}
-      {/* Worker indicator */}
-      {post?.stays?.[0]?.hasWorker && (
-        <Text
-          x={10} y={postLabel.includes('\n') ? 62 : 48}
-          text={isRu ? '● Работник' : '● Worker'}
-          fontSize={11}
-          fill={isDark ? '#94a3b8' : '#718096'}
-        />
       )}
     </Group>
   );
@@ -202,7 +256,6 @@ function CameraIcon({ cam, isDark, isRu }) {
         fill={isDark ? '#94a3b8' : '#718096'}
         align="center"
       />
-      {/* FOV lines */}
       <Line
         points={[0, 0, Math.cos((cam.angle - 25) * Math.PI / 180) * 22, Math.sin((cam.angle - 25) * Math.PI / 180) * 22]}
         stroke="rgba(239, 68, 68, 0.25)" strokeWidth={1}
@@ -215,10 +268,10 @@ function CameraIcon({ cam, isDark, isRu }) {
   );
 }
 
-export default function STOMap({ zones = [], onPostClick, isDark = true }) {
+export default function STOMap({ zones = [], onPostClick, isDark = true, dashboardData = null }) {
   const { i18n } = useTranslation();
   const containerRef = useRef(null);
-  const [stageSize, setStageSize] = useState({ width: 1100, height: 650 });
+  const [stageSize, setStageSize] = useState({ width: 1000, height: 460 });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -266,11 +319,11 @@ export default function STOMap({ zones = [], onPostClick, isDark = true }) {
           />
 
           {/* Grid */}
-          {Array.from({ length: 23 }).map((_, i) => (
+          {Array.from({ length: 21 }).map((_, i) => (
             <Line key={`gv${i}`} points={[i * 50, 0, i * 50, MAP_LAYOUT.height]}
               stroke={isDark ? 'rgba(148,163,184,0.04)' : 'rgba(0,0,0,0.02)'} strokeWidth={1} />
           ))}
-          {Array.from({ length: 14 }).map((_, i) => (
+          {Array.from({ length: 10 }).map((_, i) => (
             <Line key={`gh${i}`} points={[0, i * 50, MAP_LAYOUT.width, i * 50]}
               stroke={isDark ? 'rgba(148,163,184,0.04)' : 'rgba(0,0,0,0.02)'} strokeWidth={1} />
           ))}
@@ -285,20 +338,7 @@ export default function STOMap({ zones = [], onPostClick, isDark = true }) {
             cornerRadius={4}
           />
 
-          {/* Center divider line (between upper and lower rows) */}
-          <Line
-            points={[150, 325, 770, 325]}
-            stroke={isDark ? 'rgba(148,163,184,0.12)' : 'rgba(0,0,0,0.08)'}
-            strokeWidth={1}
-            dash={[6, 4]}
-          />
-          {/* Divider between repair and diagnostics */}
-          <Line
-            points={[775, 25, 775, 625]}
-            stroke={isDark ? 'rgba(168,85,247,0.2)' : 'rgba(168,85,247,0.15)'}
-            strokeWidth={1}
-            dash={[6, 4]}
-          />
+          {/* No vertical divider — all posts in same area */}
 
           {/* Zones */}
           {MAP_LAYOUT.zones.map(zl => {
@@ -345,38 +385,41 @@ export default function STOMap({ zones = [], onPostClick, isDark = true }) {
           })}
 
           {/* Posts */}
-          {MAP_LAYOUT.posts.map(pl => (
-            <PostRect key={pl.key} layout={pl} post={postMap[pl.key]} isDark={isDark} onClick={onPostClick} isRu={isRu} />
-          ))}
+          {MAP_LAYOUT.posts.map(pl => {
+            // Match dashboard data by post number
+            const num = pl.label.match(/\d+/)?.[0];
+            const dashPost = dashboardData?.posts?.find(p => p.number === parseInt(num, 10));
+            return (
+              <PostRect key={pl.key} layout={pl} post={postMap[pl.key]} isDark={isDark} onClick={onPostClick} isRu={isRu} dashPost={dashPost} />
+            );
+          })}
 
           {/* Cameras */}
           {MAP_LAYOUT.cameras.map(cam => (
             <CameraIcon key={cam.key} cam={cam} isDark={isDark} isRu={isRu} />
           ))}
 
-          {/* Gate / Entry arrows */}
+          {/* Entry arrows inside entry zone */}
           <Arrow
-            points={[25, 540, 145, 540]}
+            points={[15, 205, 55, 205]}
             stroke={isDark ? 'rgba(16,185,129,0.5)' : 'rgba(16,185,129,0.7)'}
-            strokeWidth={2} pointerLength={8} pointerWidth={6}
+            strokeWidth={2} pointerLength={6} pointerWidth={5}
           />
-          <Text x={50} y={550} text={isRu ? '→ Въезд' : '→ Entry'} fontSize={11} fill="#10b981" />
           <Arrow
-            points={[145, 570, 25, 570]}
+            points={[55, 225, 15, 225]}
             stroke={isDark ? 'rgba(239,68,68,0.4)' : 'rgba(239,68,68,0.6)'}
-            strokeWidth={2} pointerLength={8} pointerWidth={6}
+            strokeWidth={2} pointerLength={6} pointerWidth={5}
           />
-          <Text x={50} y={578} text={isRu ? '← Выезд' : '← Exit'} fontSize={11} fill="#ef4444" />
 
-          {/* Flow arrows: waiting → repair */}
+          {/* Flow arrow: entry → driveway */}
           <Arrow
-            points={[140, 200, 165, 200]}
-            stroke={isDark ? 'rgba(245,158,11,0.4)' : 'rgba(245,158,11,0.6)'}
+            points={[137, 212, 148, 212]}
+            stroke={isDark ? 'rgba(107,114,128,0.4)' : 'rgba(107,114,128,0.6)'}
             strokeWidth={2} pointerLength={6} pointerWidth={5}
           />
 
           {/* Legend */}
-          <Group x={810} y={590}>
+          <Group x={150} y={420}>
             <Rect
               width={260} height={35}
               fill={isDark ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.8)'}
