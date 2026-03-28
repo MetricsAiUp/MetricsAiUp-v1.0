@@ -12,6 +12,8 @@ import Analytics from './pages/Analytics';
 import Data1C from './pages/Data1C';
 import Cameras from './pages/Cameras';
 import CameraMapping from './pages/CameraMapping';
+import DashboardPosts from './pages/DashboardPosts';
+import PostsDetail from './pages/PostsDetail';
 import './i18n';
 
 function ProtectedRoute({ children }) {
@@ -31,6 +33,8 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
+        <Route path="dashboard-posts" element={<DashboardPosts />} />
+        <Route path="posts-detail" element={<PostsDetail />} />
         <Route path="map" element={<MapView />} />
         <Route path="sessions" element={<Sessions />} />
         <Route path="work-orders" element={<WorkOrders />} />

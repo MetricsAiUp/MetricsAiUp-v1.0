@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
-  BarChart3, Camera, Focus, Database,
+  BarChart3, Camera, Focus, Database, CalendarClock, Columns,
 } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', permission: 'view_dashboard' },
+  { path: '/dashboard-posts', icon: CalendarClock, labelKey: 'nav.dashboardPosts', permission: 'view_dashboard' },
+  { path: '/posts-detail', icon: Columns, labelKey: 'nav.postsDetail', permission: 'view_dashboard' },
   { path: '/map', icon: Map, labelKey: 'nav.map', permission: 'view_zones' },
   { path: '/sessions', icon: Car, labelKey: 'nav.sessions', permission: 'view_sessions' },
   { path: '/work-orders', icon: ClipboardList, labelKey: 'nav.workOrders', permission: 'view_work_orders' },
