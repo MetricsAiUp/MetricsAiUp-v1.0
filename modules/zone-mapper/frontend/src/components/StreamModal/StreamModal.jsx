@@ -1,11 +1,56 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { startStream, stopStream, getHlsUrl } from '../../api/streaming';
 
-export default function StreamModal({ camName, rtspCameraId, onClose }) {
+function ZoneOverlay({ zones, showZones }) {
+  if (!showZones || !zones || zones.length === 0) return null;
+
+  // Find the bounding box to set viewBox (use the max rect extents)
+  let maxX = 1920, maxY = 1080;
+  zones.forEach(z => {
+    if (z.rect.x + z.rect.w > maxX) maxX = z.rect.x + z.rect.w;
+    if (z.rect.y + z.rect.h > maxY) maxY = z.rect.y + z.rect.h;
+  });
+
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full"
+      viewBox={`0 0 ${maxX} ${maxY}`}
+      preserveAspectRatio="xMidYMid slice"
+      style={{ pointerEvents: 'none' }}
+    >
+      {zones.map(z => (
+        <g key={z.zoneId}>
+          <rect
+            x={z.rect.x} y={z.rect.y}
+            width={z.rect.w} height={z.rect.h}
+            fill="none"
+            stroke={z.color || '#22c55e'}
+            strokeWidth={2}
+            opacity={0.8}
+          />
+          <text
+            x={z.rect.x + 4}
+            y={z.rect.y + 16}
+            fill={z.color || '#22c55e'}
+            fontSize={14}
+            fontFamily="system-ui, sans-serif"
+            fontWeight="600"
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}
+          >
+            {z.zoneName}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export default function StreamModal({ camName, rtspCameraId, zones2d, onClose }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
-  const [status, setStatus] = useState('starting'); // starting | playing | error
+  const [status, setStatus] = useState('starting');
   const [error, setError] = useState(null);
+  const [showZones, setShowZones] = useState(true);
 
   const initStream = useCallback(async () => {
     try {
@@ -13,7 +58,6 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
       setError(null);
       await startStream(rtspCameraId);
 
-      // Wait for HLS segments to be generated
       const hlsUrl = getHlsUrl(rtspCameraId);
       let attempts = 0;
       const maxAttempts = 15;
@@ -46,7 +90,6 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
     const video = videoRef.current;
     if (!video) return;
 
-    // Dynamically import hls.js
     try {
       const HlsModule = await import('hls.js');
       const Hls = HlsModule.default;
@@ -78,7 +121,6 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
         });
       }
     } catch {
-      // hls.js not available, try native
       video.src = hlsUrl;
       video.play().catch(() => {});
       setStatus('playing');
@@ -105,6 +147,8 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
     onClose();
   };
 
+  const hasZones = zones2d && zones2d.length > 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={handleClose}>
       <div
@@ -118,6 +162,16 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
             <span className="text-xs text-slate-400">{rtspCameraId}</span>
           </div>
           <div className="flex items-center gap-3">
+            {hasZones && (
+              <button
+                onClick={() => setShowZones(!showZones)}
+                className={`text-xs px-2 py-1 rounded ${
+                  showZones ? 'bg-green-700 text-white' : 'bg-slate-700 text-slate-400'
+                }`}
+              >
+                Zones {showZones ? 'ON' : 'OFF'}
+              </button>
+            )}
             {status === 'playing' && (
               <span className="flex items-center gap-1 text-xs text-green-400">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" /> LIVE
@@ -127,7 +181,7 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
           </div>
         </div>
 
-        {/* Video */}
+        {/* Video + zone overlay */}
         <div className="relative bg-black aspect-video">
           <video
             ref={videoRef}
@@ -136,6 +190,9 @@ export default function StreamModal({ camName, rtspCameraId, onClose }) {
             muted
             playsInline
           />
+          {/* Zone overlay (SVG on top of video, zero server cost) */}
+          <ZoneOverlay zones={zones2d} showZones={showZones} />
+
           {status === 'starting' && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">

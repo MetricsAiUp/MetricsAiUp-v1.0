@@ -149,6 +149,54 @@ const server = http.createServer((req, res) => {
         return jsonResponse(res, 200, { status: 'stopped', camId });
     }
 
+    // API: GET /api/stream/snapshot/:camId — capture single JPEG frame from RTSP
+    const snapMatch = urlPath.match(/^\/api\/stream\/snapshot\/(\w+)$/);
+    if (snapMatch && req.method === 'GET') {
+        const camId = snapMatch[1];
+        const camObj = cameras[camId];
+        if (!camObj) return jsonResponse(res, 404, { error: 'Camera not found' });
+
+        const args = [
+            '-rtsp_transport', 'tcp',
+            '-i', camObj.rtspUrl,
+            '-frames:v', '1',
+            '-q:v', '2',
+            '-f', 'image2',
+            '-vcodec', 'mjpeg',
+            'pipe:1'
+        ];
+
+        const proc = spawn(ffmpegPath, args, { timeout: 15000 });
+        const chunks = [];
+        let errData = '';
+
+        proc.stdout.on('data', (chunk) => chunks.push(chunk));
+        proc.stderr.on('data', (chunk) => { errData += chunk.toString(); });
+
+        proc.on('close', (code) => {
+            if (chunks.length > 0) {
+                const jpeg = Buffer.concat(chunks);
+                res.writeHead(200, {
+                    'Content-Type': 'image/jpeg',
+                    'Content-Length': jpeg.length,
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'no-cache'
+                });
+                res.end(jpeg);
+            } else {
+                console.error(`[${camId}] Snapshot failed:`, errData.slice(-200));
+                jsonResponse(res, 500, { error: 'Snapshot failed' });
+            }
+        });
+
+        proc.on('error', (err) => {
+            console.error(`[${camId}] Snapshot spawn error:`, err.message);
+            jsonResponse(res, 500, { error: 'Snapshot failed: ' + err.message });
+        });
+
+        return;
+    }
+
     // API: GET /api/stream/status
     if (urlPath === '/api/stream/status') {
         const statuses = {};

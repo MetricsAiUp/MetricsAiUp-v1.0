@@ -28,7 +28,7 @@ function SceneContent({ onCameraContextMenu }) {
           key={zone.id}
           zone={zone}
           selected={zone.id === selectedZoneId}
-          onClick={() => selectZone(zone.id)}
+          onClick={() => selectZone(zone.id === selectedZoneId ? null : zone.id)}
           onUpdate={(data) => editZone(zone.id, data)}
           room={currentRoom}
         />
@@ -39,7 +39,7 @@ function SceneContent({ onCameraContextMenu }) {
           key={cam.id}
           camera={cam}
           selected={cam.id === selectedCameraId}
-          onClick={() => selectCamera(cam.id)}
+          onClick={() => selectCamera(cam.id === selectedCameraId ? null : cam.id)}
           onUpdate={(data) => editCamera(cam.id, data)}
           onContextMenu={onCameraContextMenu}
           room={currentRoom}

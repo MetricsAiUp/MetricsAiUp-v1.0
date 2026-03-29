@@ -113,6 +113,32 @@ router.get('/:cameraId/projection', (req, res) => {
   });
 });
 
+// Get custom 2D zone overrides for this camera
+router.get('/:cameraId/zones2d', (req, res) => {
+  const { rooms } = read();
+  const room = rooms.find(r => r.id === req.params.roomId);
+  if (!room) return res.status(404).json({ error: 'Room not found' });
+  const camera = (room.cameras || []).find(c => c.id === req.params.cameraId);
+  if (!camera) return res.status(404).json({ error: 'Camera not found' });
+  res.json(camera.zones2d || null);
+});
+
+// Save custom 2D zone overrides for this camera
+router.put('/:cameraId/zones2d', (req, res) => {
+  let found = null;
+  update(data => {
+    const room = data.rooms.find(r => r.id === req.params.roomId);
+    if (!room) return;
+    const cam = (room.cameras || []).find(c => c.id === req.params.cameraId);
+    if (!cam) return;
+    cam.zones2d = req.body.zones2d;
+    found = cam.zones2d;
+  });
+  if (found === null && !req.body.zones2d) return res.json(null);
+  if (found === undefined) return res.status(404).json({ error: 'Camera not found' });
+  res.json(found);
+});
+
 // Export motion detection config for this camera
 router.get('/:cameraId/export', (req, res) => {
   const { rooms } = read();

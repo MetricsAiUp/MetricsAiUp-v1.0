@@ -9,6 +9,8 @@ const _intersection = new THREE.Vector3();
 export default function useDragOnPlane({
   planeNormal = new THREE.Vector3(0, 1, 0),
   planeConstant = 0,
+  cameraFacing = false,
+  objectPosition,
   onDragStart,
   onDrag,
   onDragEnd,
@@ -35,7 +37,14 @@ export default function useDragOnPlane({
     if (!enabled || e.button !== 0) return;
     e.stopPropagation();
 
-    plane.current.set(planeNormal, planeConstant);
+    if (cameraFacing && objectPosition) {
+      // Create a plane facing the view camera, passing through the object
+      const normal = camera.getWorldDirection(new THREE.Vector3()).negate();
+      const constant = -normal.dot(objectPosition);
+      plane.current.set(normal, constant);
+    } else {
+      plane.current.set(planeNormal, planeConstant);
+    }
 
     const point = getIntersection(e.nativeEvent || e);
     if (!point) return;
@@ -53,7 +62,7 @@ export default function useDragOnPlane({
     }
 
     gl.domElement.setPointerCapture(e.pointerId);
-  }, [enabled, planeNormal, planeConstant, getIntersection, onDragStart, orbitControlsRef, gl]);
+  }, [enabled, planeNormal, planeConstant, cameraFacing, objectPosition, getIntersection, onDragStart, orbitControlsRef, gl, camera]);
 
   const onPointerMove = useCallback((e) => {
     if (!dragging.current) return;

@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useRef } from 'react';
 import * as THREE from 'three';
+import { Html } from '@react-three/drei';
 import useDragOnPlane from '../../hooks/useDragOnPlane';
 import { useSceneContext } from './SceneContext';
 
@@ -52,7 +53,7 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
     currentPos.z + currentSize.depth / 2
   ];
 
-  // --- Zone drag-to-move ---
+  // --- Zone drag-to-move (only when selected) ---
   const moveDrag = useDragOnPlane({
     planeNormal: new THREE.Vector3(0, 1, 0),
     planeConstant: -(pos.y + size.height / 2),
@@ -70,6 +71,7 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
       setLocalPos(null);
     },
     orbitControlsRef,
+    enabled: selected,
   });
 
   const handleClick = useCallback((e) => {
@@ -163,6 +165,28 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
         <lineSegments geometry={edges}>
           <lineBasicMaterial color={color} linewidth={selected ? 2 : 1} />
         </lineSegments>
+
+        {/* Label */}
+        <Html
+          position={[0, currentSize.height / 2 + 0.15, 0]}
+          center
+          distanceFactor={8}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            background: selected ? color : 'rgba(0,0,0,0.6)',
+            color: '#fff',
+            padding: '2px 6px',
+            borderRadius: '3px',
+            fontSize: '11px',
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: selected ? 600 : 400,
+            whiteSpace: 'nowrap',
+            border: `1px solid ${color}`,
+          }}>
+            {zone.name}
+          </div>
+        </Html>
       </group>
 
       {selected && corners.map(c => (

@@ -26,3 +26,7 @@ export const deleteCamera = (roomId, camId) => api.delete(`/rooms/${roomId}/came
 // Projection
 export const getProjection = (roomId, camId) => api.get(`/rooms/${roomId}/cameras/${camId}/projection`).then(r => r.data);
 export const exportConfig = (roomId, camId) => api.get(`/rooms/${roomId}/cameras/${camId}/export`).then(r => r.data);
+
+// Custom 2D zone overrides
+export const getZones2d = (roomId, camId) => api.get(`/rooms/${roomId}/cameras/${camId}/zones2d`).then(r => r.data);
+export const saveZones2d = (roomId, camId, zones2d) => api.put(`/rooms/${roomId}/cameras/${camId}/zones2d`, { zones2d }).then(r => r.data);

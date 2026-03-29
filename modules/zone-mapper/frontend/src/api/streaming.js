@@ -32,3 +32,8 @@ export const getHlsUrl = (camId) => {
   const base = getStreamBase();
   return `${base}/hls/${camId}/stream.m3u8`;
 };
+
+export const getSnapshotUrl = (camId) => {
+  const base = getStreamBase();
+  return `${base}/api/stream/snapshot/${camId}`;
+};
