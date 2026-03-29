@@ -84,28 +84,30 @@ function getItemStatus(item, shiftStart, shiftEnd) {
 function TimelineHeader({ shiftStart, shiftEnd }) {
   const startH = parseInt(shiftStart.split(':')[0], 10);
   const endH = parseInt(shiftEnd.split(':')[0], 10);
-  const hours = [];
-  for (let h = startH; h <= endH; h++) {
-    hours.push(h);
-  }
   const total = endH - startH;
+  const ticks = [];
+  for (let h = startH; h <= endH; h++) {
+    ticks.push({ h, m: 0, isHour: true });
+    if (h < endH) ticks.push({ h, m: 30, isHour: false });
+  }
 
   return (
-    <div className="relative h-6 mb-1" style={{ marginLeft: 0 }}>
-      {hours.map((h) => {
-        const pos = ((h - startH) / total) * 100;
+    <div className="relative h-5 mb-0" style={{ marginLeft: 0 }}>
+      {ticks.map(({ h, m, isHour }) => {
+        const pos = ((h - startH + m / 60) / total) * 100;
         return (
           <span
-            key={h}
-            className="absolute text-xs"
+            key={`${h}:${m}`}
+            className="absolute"
             style={{
               left: `${pos}%`,
               transform: 'translateX(-50%)',
-              color: 'var(--text-muted)',
-              fontSize: '10px',
+              color: isHour ? 'var(--text-secondary)' : 'var(--text-muted)',
+              fontSize: isHour ? '10px' : '8px',
+              top: isHour ? 0 : 2,
             }}
           >
-            {String(h).padStart(2, '0')}:00
+            {String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}
           </span>
         );
       })}
@@ -126,33 +128,33 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
 
   return (
     <div
-      className="flex items-stretch gap-3 py-2 border-b"
+      className="flex items-center gap-2 py-1.5 border-b"
       style={{ borderColor: 'var(--border-glass)' }}
     >
       {/* Post info column */}
-      <div className="flex-shrink-0" style={{ width: 200, minWidth: 200 }}>
-        <div className="flex items-center gap-2">
+      <div className="flex-shrink-0" style={{ width: 170, minWidth: 170 }}>
+        <div className="flex items-center gap-1.5">
           <div
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ background: postStatusColor }}
           />
-          <PostIcon size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-          <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+          <PostIcon size={12} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+          <span className="font-medium" style={{ color: 'var(--text-primary)', fontSize: '11px' }}>
             {post.name}
           </span>
           <span
-            className="text-xs px-1.5 py-0.5 rounded"
+            className="px-1 rounded"
             style={{
               background: 'var(--accent-light)',
               color: 'var(--accent)',
-              fontSize: '9px',
+              fontSize: '8px',
             }}
           >
             {t(`posts.${post.type}`) || post.type}
           </span>
         </div>
         {post.currentVehicle ? (
-          <div className="mt-1 ml-4.5 text-xs" style={{ color: 'var(--text-secondary)', marginLeft: 18 }}>
+          <div style={{ color: 'var(--text-secondary)', marginLeft: 16, fontSize: '10px' }}>
             <span className="font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
               {post.currentVehicle.plateNumber}
             </span>
@@ -161,40 +163,49 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
             </span>
           </div>
         ) : (
-          <div className="mt-1 text-xs" style={{ color: 'var(--text-muted)', marginLeft: 18 }}>
+          <div style={{ color: 'var(--text-muted)', marginLeft: 16, fontSize: '10px' }}>
             {t('posts.free')}
           </div>
         )}
       </div>
 
       {/* Timeline */}
-      <div className="flex-1 relative" style={{ minHeight: 40 }}>
+      <div className="flex-1 relative" style={{ minHeight: 28 }}>
         {/* Background grid */}
         <div
           className="absolute inset-0 rounded"
           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
         />
 
-        {/* Hour grid lines */}
+        {/* Hour + half-hour grid lines */}
         {(() => {
           const startH = parseInt(shiftStart.split(':')[0], 10);
           const endH = parseInt(shiftEnd.split(':')[0], 10);
           const total = endH - startH;
           const lines = [];
-          for (let h = startH + 1; h < endH; h++) {
-            const pos = ((h - startH) / total) * 100;
-            lines.push(
-              <div
-                key={h}
-                className="absolute top-0 bottom-0"
-                style={{
-                  left: `${pos}%`,
-                  width: 1,
-                  background: 'var(--border-glass)',
-                  opacity: 0.5,
-                }}
-              />
-            );
+          for (let h = startH; h <= endH; h++) {
+            // Hour line
+            if (h > startH) {
+              const pos = ((h - startH) / total) * 100;
+              lines.push(
+                <div
+                  key={`h${h}`}
+                  className="absolute top-0 bottom-0"
+                  style={{ left: `${pos}%`, width: 1, background: 'var(--text-muted)', opacity: 0.3 }}
+                />
+              );
+            }
+            // Half-hour line
+            if (h < endH) {
+              const pos30 = ((h - startH + 0.5) / total) * 100;
+              lines.push(
+                <div
+                  key={`m${h}`}
+                  className="absolute top-0 bottom-0"
+                  style={{ left: `${pos30}%`, width: 1, background: 'var(--text-muted)', opacity: 0.12 }}
+                />
+              );
+            }
           }
           return lines;
         })()}
@@ -208,18 +219,19 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
           return (
             <div
               key={item.id}
-              className="absolute top-1 bottom-1 rounded cursor-pointer transition-all hover:opacity-90 hover:shadow-lg flex items-center px-1.5 overflow-hidden"
+              className="absolute top-0.5 bottom-0.5 rounded cursor-pointer transition-all hover:opacity-90 hover:shadow-lg flex items-center px-1 overflow-hidden"
               style={{
                 ...style,
                 background: colors.bg,
                 color: colors.text,
                 zIndex: 2,
+                marginRight: 2,
                 minWidth: 30,
               }}
               onClick={() => onBlockClick(item, post)}
               title={`${item.workOrderNumber} — ${item.workType}`}
             >
-              <span className="text-xs font-medium truncate" style={{ fontSize: '10px' }}>
+              <span className="font-medium truncate" style={{ fontSize: '9px' }}>
                 {item.workOrderNumber}
               </span>
             </div>
@@ -816,8 +828,8 @@ export default function DashboardPosts() {
         </button>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-5 gap-3">
+      {/* Summary cards — compact inline */}
+      <div className="flex flex-wrap gap-2">
         {[
           { label: t('dashboardPosts.occupiedPosts'), value: stats.occupied, color: 'var(--danger)', icon: CircleDot },
           { label: t('dashboardPosts.freePosts'), value: stats.free, color: 'var(--success)', icon: CircleDot },
@@ -827,16 +839,12 @@ export default function DashboardPosts() {
         ].map((card, i) => (
           <div
             key={i}
-            className="glass rounded-xl p-3"
-            style={{ border: '1px solid var(--border-glass)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
           >
-            <div className="flex items-center gap-2 mb-1">
-              <card.icon size={14} style={{ color: card.color }} />
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{card.label}</span>
-            </div>
-            <div className="text-xl font-bold" style={{ color: card.color }}>
-              {card.value}
-            </div>
+            <card.icon size={12} style={{ color: card.color }} />
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{card.label}</span>
+            <span className="text-sm font-bold" style={{ color: card.color }}>{card.value}</span>
           </div>
         ))}
       </div>
@@ -844,19 +852,17 @@ export default function DashboardPosts() {
       {/* Legend */}
       <Legend t={t} />
 
-      {/* Timeline header */}
-      <div className="flex gap-3">
-        <div style={{ width: 200, minWidth: 200 }} />
-        <div className="flex-1">
-          <TimelineHeader shiftStart={settings.shiftStart} shiftEnd={settings.shiftEnd} />
-        </div>
-      </div>
-
-      {/* Timeline rows */}
+      {/* Timeline header + rows */}
       <div
         className="glass rounded-xl p-3"
         style={{ border: '1px solid var(--border-glass)' }}
       >
+      <div className="flex gap-2 mb-1">
+        <div style={{ width: 170, minWidth: 170 }} />
+        <div className="flex-1">
+          <TimelineHeader shiftStart={settings.shiftStart} shiftEnd={settings.shiftEnd} />
+        </div>
+      </div>
         {posts.map((post) => (
           <TimelineRow
             key={post.id}

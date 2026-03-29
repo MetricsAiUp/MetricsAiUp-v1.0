@@ -21,14 +21,14 @@ const EVENT_TYPES = {
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="glass p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="p-2 rounded-lg" style={{ background: color + '15' }}>
-          <Icon size={20} style={{ color }} />
-        </div>
-        <span className="text-3xl font-bold" style={{ color }}>{value}</span>
+    <div className="glass p-3 flex items-center gap-3">
+      <div className="p-1.5 rounded-lg" style={{ background: color + '15' }}>
+        <Icon size={16} style={{ color }} />
       </div>
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <div>
+        <span className="text-xl font-bold" style={{ color }}>{value}</span>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      </div>
     </div>
   );
 }
@@ -43,15 +43,15 @@ function RecommendationCard({ rec, onAcknowledge, t, isRu }) {
   };
 
   return (
-    <div className="glass p-4 flex items-center justify-between">
-      <div>
+    <div className="glass p-2.5 flex items-center justify-between gap-2">
+      <div className="min-w-0">
         <span
-          className="text-xs font-medium px-2 py-1 rounded-full"
+          className="text-xs font-medium px-1.5 py-0.5 rounded-full"
           style={{ background: typeColors[rec.type] + '22', color: typeColors[rec.type] }}
         >
           {t(`recommendations.${rec.type}`)}
         </span>
-        <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="mt-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
           {isRu ? rec.message : (rec.messageEn || rec.message)}
         </p>
       </div>
@@ -104,16 +104,16 @@ export default function Dashboard() {
     ?.reduce((sum, p) => sum + p._count, 0) || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
           {t('nav.dashboard')}
         </h2>
         <HelpButton pageKey="dashboard" />
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         <StatCard
           icon={Car}
           label={t('dashboard.activeSessions')}
@@ -140,13 +140,13 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recommendations */}
         <div>
-          <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('recommendations.title')}
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             {recommendations.length === 0 ? (
               <div className="glass p-4 text-center" style={{ color: 'var(--text-muted)' }}>
                 {t('common.noData')}
@@ -167,7 +167,7 @@ export default function Dashboard() {
 
         {/* Recent Events */}
         <div>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('dashboard.recentEvents')}
           </h3>
           <div className="flex flex-wrap gap-1 mb-3">
@@ -192,7 +192,7 @@ export default function Dashboard() {
             ) : (
               <div className="divide-y" style={{ borderColor: 'var(--border-glass)' }}>
                 {events.filter(ev => eventFilter === 'all' || ev.type === eventFilter).map(ev => (
-                  <div key={ev.id} className="px-4 py-3 flex items-center justify-between">
+                  <div key={ev.id} className="px-3 py-1.5 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                         {EVENT_TYPES[ev.type]?.[isRu ? 'ru' : 'en'] || ev.type}
