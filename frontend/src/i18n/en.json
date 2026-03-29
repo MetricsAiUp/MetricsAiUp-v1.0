@@ -52,7 +52,15 @@
     "diagnostics": "Diagnostics",
     "wash": "Car Wash",
     "tire": "Tire Service",
-    "alignment": "Wheel Alignment"
+    "alignment": "Wheel Alignment",
+    "post1": "Post 1", "post2": "Post 2", "post3": "Post 3", "post4": "Post 4", "post5": "Post 5",
+    "post6": "Post 6", "post7": "Post 7", "post8": "Post 8", "post9": "Post 9", "post10": "Post 10",
+    "repairZone59": "Repair zone (posts 5-9)",
+    "repairZone1410": "Repair zone (posts 1-4, 10)",
+    "repairZone": "Repair zone",
+    "driveway": "Driveway",
+    "parking": "Parking",
+    "entryExit": "Entry/Exit"
   },
   "postsDetail": {
     "title": "Posts",

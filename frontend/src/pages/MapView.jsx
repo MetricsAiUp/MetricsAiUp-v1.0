@@ -9,8 +9,73 @@ import { translateZone, translatePost } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import {
   X, Car, Clock, Timer, User, Wrench, FileText, AlertTriangle,
-  ArrowRight, Camera,
+  ArrowRight, Camera, Maximize2,
 } from 'lucide-react';
+
+const ALL_CAMERAS = [
+  { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
+  { num: '02', loc: { ru: 'Верхний ряд, левый угол', en: 'Upper row, left corner' }, covers: { ru: 'Пост 5, Пост 6', en: 'Post 5, Post 6' } },
+  { num: '03', loc: { ru: 'Проезд, левая часть', en: 'Driveway, left' }, covers: { ru: 'Пост 1, Пост 2, Пост 3', en: 'Post 1, Post 2, Post 3' } },
+  { num: '04', loc: { ru: 'Проезд, центр-лево', en: 'Driveway, center-left' }, covers: { ru: 'Пост 3, Пост 4', en: 'Post 3, Post 4' } },
+  { num: '05', loc: { ru: 'Проезд, центр', en: 'Driveway, center' }, covers: { ru: 'Пост 6, Пост 7', en: 'Post 6, Post 7' } },
+  { num: '06', loc: { ru: 'Проезд, центр-право', en: 'Driveway, center-right' }, covers: { ru: 'Пост 7, Пост 8', en: 'Post 7, Post 8' } },
+  { num: '07', loc: { ru: 'Проезд, правая часть', en: 'Driveway, right' }, covers: { ru: 'Пост 8, Пост 9', en: 'Post 8, Post 9' } },
+  { num: '08', loc: { ru: 'Правая стена, верх', en: 'Right wall, upper' }, covers: { ru: 'Пост 9, Пост 10', en: 'Post 9, Post 10' } },
+  { num: '09', loc: { ru: 'Въезд/Выезд', en: 'Entry/Exit' }, covers: { ru: 'Въезд, Выезд, Парковка', en: 'Entry, Exit, Parking' } },
+  { num: '10', loc: { ru: 'Правая стена, низ', en: 'Right wall, lower' }, covers: { ru: 'Пост 10', en: 'Post 10' } },
+];
+
+function CameraStreamModal({ camNum, isRu, isDark, onClose }) {
+  const name = (isRu ? 'КАМ' : 'CAM') + camNum;
+  const camData = ALL_CAMERAS.find(c => c.num === camNum);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}>
+      <div className="w-full max-w-4xl" onClick={e => e.stopPropagation()}>
+        <div className="relative rounded-t-xl overflow-hidden" style={{ aspectRatio: '16/9', background: '#000' }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <Camera size={56} style={{ color: 'rgba(148,163,184,0.25)' }} />
+            <span className="text-sm" style={{ color: 'rgba(148,163,184,0.5)' }}>
+              {isRu ? 'Подключение к камере...' : 'Connecting to camera...'}
+            </span>
+          </div>
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3"
+            style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-white font-bold text-sm">{name}</span>
+              <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}>LIVE</span>
+            </div>
+            <button onClick={onClose} className="p-1 rounded hover:bg-white/10"><X size={16} color="white" /></button>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2"
+            style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
+            <span className="text-xs text-white/60 font-mono">{new Date().toLocaleTimeString()}</span>
+            <span className="text-xs text-white/40">{camData?.loc?.[isRu ? 'ru' : 'en'] || ''}</span>
+          </div>
+        </div>
+        <div className="rounded-b-xl p-4 flex items-center justify-between"
+          style={{ background: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)', border: '1px solid var(--border-glass)', borderTop: 'none' }}>
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{name}</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{camData?.loc?.[isRu ? 'ru' : 'en'] || ''}</p>
+          </div>
+          {camData && (
+            <div className="flex flex-wrap gap-1">
+              {camData.covers[isRu ? 'ru' : 'en'].split(', ').map(z => (
+                <span key={z} className="px-2 py-0.5 rounded text-xs"
+                  style={{ background: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.08)', color: 'var(--accent)' }}>
+                  {z}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const BASE = import.meta.env.BASE_URL || './';
 const fetchApi = async (path) => {
@@ -58,7 +123,7 @@ function PostModal({ post, dashboardData, onClose, onGoToPost, t, isRu }) {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ background: statusColor }} />
             <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-              {post.name}
+              {(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}
             </h3>
             <span
               className="text-xs px-2 py-0.5 rounded-full"
@@ -206,6 +271,7 @@ export default function MapView() {
   const [zones, setZones] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const [selectedCam, setSelectedCam] = useState(null);
 
   const fetchZones = async () => {
     try {
@@ -268,6 +334,7 @@ export default function MapView() {
           zones={zones}
           isDark={isDark}
           onPostClick={(post) => setSelectedPost(post)}
+          onCameraClick={(num) => setSelectedCam(num)}
           dashboardData={dashboardData}
         />
       </div>
@@ -284,47 +351,48 @@ export default function MapView() {
         />
       )}
 
-      {/* Zones summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {zones.map(zone => {
-          const vehicleCount = zone._count?.stays || 0;
-          const zoneColor = {
-            entry: '#10b981', waiting: '#f59e0b',
-            repair: '#6366f1', parking: '#3b82f6', free: '#94a3b8',
-          }[zone.type] || '#94a3b8';
+      {selectedCam && (
+        <CameraStreamModal
+          camNum={selectedCam}
+          isRu={isRu}
+          isDark={isDark}
+          onClose={() => setSelectedCam(null)}
+        />
+      )}
 
-          return (
-            <div key={zone.id} className="glass p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 rounded-full" style={{ background: zoneColor }} />
-                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {translateZone(zone.name, isRu)?.split('—')[0].trim()}
-                </span>
+      {/* STO summary stats */}
+      {(() => {
+        const total = allPosts.length;
+        const free = allPosts.filter(p => p.status === 'free').length;
+        const occupied = total - free;
+        const activeWork = allPosts.filter(p => p.status === 'active_work').length;
+        const idle = allPosts.filter(p => p.status === 'occupied_no_work').length;
+        const totalVehicles = zones.reduce((s, z) => s + (z._count?.stays || 0), 0);
+        const freeWO = dashboardData?.freeWorkOrders?.length || 0;
+        const loadPct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+
+        const stats = [
+          { label: isRu ? 'Всего постов' : 'Total posts', value: total, color: 'var(--text-primary)' },
+          { label: isRu ? 'Занято' : 'Occupied', value: occupied, color: 'var(--danger)' },
+          { label: isRu ? 'Свободно' : 'Free', value: free, color: 'var(--success)' },
+          { label: isRu ? 'В работе' : 'Active work', value: activeWork, color: 'var(--accent)' },
+          { label: isRu ? 'Простой' : 'Idle', value: idle, color: 'var(--warning)' },
+          { label: isRu ? 'Авто на СТО' : 'Vehicles', value: totalVehicles, color: 'var(--info)' },
+          { label: isRu ? 'В очереди' : 'In queue', value: freeWO, color: 'var(--text-muted)' },
+          { label: isRu ? 'Загрузка' : 'Load', value: `${loadPct}%`, color: loadPct >= 70 ? 'var(--success)' : loadPct >= 30 ? 'var(--warning)' : 'var(--danger)' },
+        ];
+
+        return (
+          <div className="flex flex-wrap gap-2">
+            {stats.map((s, i) => (
+              <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</span>
+                <span className="text-sm font-bold" style={{ color: s.color }}>{s.value}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {t(`zones.${zone.type}`)}
-                </span>
-                <span className="text-sm font-bold" style={{ color: zoneColor }}>
-                  {vehicleCount > 0 ? vehicleCount : '—'}
-                </span>
-              </div>
-              {zone.posts?.length > 0 && (
-                <div className="flex gap-1 mt-2">
-                  {zone.posts.map(p => (
-                    <span
-                      key={p.id}
-                      className="w-4 h-4 rounded"
-                      style={{ background: statusColors[p.status] || '#94a3b8' }}
-                      title={`${p.name}: ${p.status}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -38,9 +38,9 @@ const ZONE_COLORS = {
 // Парковка снизу: x=15, y=255, w=125, h=170
 //
 const MAP_LAYOUT = {
-  width: 1000,
+  width: 860,
   height: 460,
-  building: { x: 10, y: 10, w: 980, h: 440 },
+  building: { x: 10, y: 10, w: 840, h: 440 },
   zones: [
     // Верхний ремонт: посты 5,6,7,8,9
     { key: 'repair_upper', type: 'repair', x: 145, y: 15, w: 700, h: 165,
@@ -62,18 +62,18 @@ const MAP_LAYOUT = {
       label: 'Парковка', labelEN: 'Parking' },
   ],
   posts: [
-    // Верхний ряд (5,6,7,8,9): y=35..155
-    { key: 'post05', x: 150, y: 35, w: 130, h: 120, label: 'Пост 5', labelEN: 'Post 5' },
-    { key: 'post06', x: 290, y: 35, w: 130, h: 120, label: 'Пост 6', labelEN: 'Post 6' },
-    { key: 'post07', x: 430, y: 35, w: 130, h: 120, label: 'Пост 7', labelEN: 'Post 7' },
-    { key: 'post08', x: 570, y: 35, w: 130, h: 120, label: 'Пост 8', labelEN: 'Post 8' },
-    { key: 'post09', x: 710, y: 35, w: 130, h: 120, label: 'Пост 9', labelEN: 'Post 9' },
-    // Нижний ряд (1,2,3,4,10): y=265..385
-    { key: 'post01', x: 150, y: 265, w: 130, h: 120, label: 'Пост 1', labelEN: 'Post 1' },
-    { key: 'post02', x: 290, y: 265, w: 130, h: 120, label: 'Пост 2', labelEN: 'Post 2' },
-    { key: 'post03', x: 430, y: 265, w: 130, h: 120, label: 'Пост 3', labelEN: 'Post 3' },
-    { key: 'post04', x: 570, y: 265, w: 130, h: 120, label: 'Пост 4', labelEN: 'Post 4' },
-    { key: 'post10', x: 710, y: 265, w: 130, h: 120, label: 'Пост 10', labelEN: 'Post 10' },
+    // Верхний ряд (5,6,7,8,9): y=40..160
+    { key: 'post05', x: 150, y: 40, w: 130, h: 120, label: 'Пост 5', labelEN: 'Post 5' },
+    { key: 'post06', x: 290, y: 40, w: 130, h: 120, label: 'Пост 6', labelEN: 'Post 6' },
+    { key: 'post07', x: 430, y: 40, w: 130, h: 120, label: 'Пост 7', labelEN: 'Post 7' },
+    { key: 'post08', x: 570, y: 40, w: 130, h: 120, label: 'Пост 8', labelEN: 'Post 8' },
+    { key: 'post09', x: 710, y: 40, w: 130, h: 120, label: 'Пост 9', labelEN: 'Post 9' },
+    // Нижний ряд (1,2,3,4,10): y=270..390
+    { key: 'post01', x: 150, y: 270, w: 130, h: 120, label: 'Пост 1', labelEN: 'Post 1' },
+    { key: 'post02', x: 290, y: 270, w: 130, h: 120, label: 'Пост 2', labelEN: 'Post 2' },
+    { key: 'post03', x: 430, y: 270, w: 130, h: 120, label: 'Пост 3', labelEN: 'Post 3' },
+    { key: 'post04', x: 570, y: 270, w: 130, h: 120, label: 'Пост 4', labelEN: 'Post 4' },
+    { key: 'post10', x: 710, y: 270, w: 130, h: 120, label: 'Пост 10', labelEN: 'Post 10' },
     { key: 'post01b', x: 150, y: 420, w: 130, h: 120, label: 'Пост 1\n(яма)', labelEN: 'Post 1\n(pit)', visible: false },
   ],
   // Камеры: в проезде (y=185..240, 55px) и на стенах
@@ -85,9 +85,9 @@ const MAP_LAYOUT = {
     { key: 'cam05', x: 495, y: 210, num: '05', angle: 180 },  // проезд
     { key: 'cam06', x: 635, y: 210, num: '06', angle: 180 },  // проезд
     { key: 'cam07', x: 775, y: 210, num: '07', angle: 180 },  // проезд
-    { key: 'cam08', x: 900, y: 210, num: '08', angle: 270 },  // проезд правая часть
+    { key: 'cam08', x: 845, y: 100, num: '08', angle: 270 },  // правая стена верх
     { key: 'cam09', x: 75,  y: 340, num: '09', angle: 90 },   // парковка низ
-    { key: 'cam10', x: 980, y: 210, num: '10', angle: 270 },  // правая стена
+    { key: 'cam10', x: 845, y: 340, num: '10', angle: 270 },  // правая стена низ
   ],
 };
 
@@ -242,10 +242,10 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
   );
 }
 
-function CameraIcon({ cam, isDark, isRu }) {
+function CameraIcon({ cam, isDark, isRu, onClick }) {
   const label = (isRu ? 'КАМ' : 'CAM') + cam.num;
   return (
-    <Group x={cam.x} y={cam.y}>
+    <Group x={cam.x} y={cam.y} onClick={() => onClick?.(cam.num)} onTap={() => onClick?.(cam.num)}>
       <Circle radius={8} fill={isDark ? '#334155' : '#e2e8f0'} stroke="#ef4444" strokeWidth={1.5} />
       <Circle radius={3} fill="#ef4444" />
       <Text
@@ -268,17 +268,17 @@ function CameraIcon({ cam, isDark, isRu }) {
   );
 }
 
-export default function STOMap({ zones = [], onPostClick, isDark = true, dashboardData = null }) {
+export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark = true, dashboardData = null }) {
   const { i18n } = useTranslation();
   const containerRef = useRef(null);
-  const [stageSize, setStageSize] = useState({ width: 1000, height: 460 });
+  const [stageSize, setStageSize] = useState({ width: 860, height: 460 });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
         const w = containerRef.current.offsetWidth;
-        const s = Math.min(w / MAP_LAYOUT.width, 1);
+        const s = w / MAP_LAYOUT.width;
         setScale(s);
         setStageSize({ width: MAP_LAYOUT.width * s, height: MAP_LAYOUT.height * s });
       }
@@ -396,7 +396,7 @@ export default function STOMap({ zones = [], onPostClick, isDark = true, dashboa
 
           {/* Cameras */}
           {MAP_LAYOUT.cameras.map(cam => (
-            <CameraIcon key={cam.key} cam={cam} isDark={isDark} isRu={isRu} />
+            <CameraIcon key={cam.key} cam={cam} isDark={isDark} isRu={isRu} onClick={onCameraClick} />
           ))}
 
           {/* Entry arrows inside entry zone */}
@@ -418,31 +418,31 @@ export default function STOMap({ zones = [], onPostClick, isDark = true, dashboa
             strokeWidth={2} pointerLength={6} pointerWidth={5}
           />
 
-          {/* Legend */}
-          <Group x={150} y={420}>
+          {/* Legend — compact, bottom-right inside building */}
+          <Group x={615} y={420}>
             <Rect
-              width={260} height={35}
-              fill={isDark ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.8)'}
-              stroke={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.1)'}
-              cornerRadius={8}
+              width={220} height={25}
+              fill={isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.9)'}
+              stroke={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.08)'}
+              cornerRadius={6}
             />
             {Object.entries(STATUS_COLORS).map(([status, color], i) => (
-              <Group key={status} x={12 + i * 64} y={10}>
-                <Circle x={0} y={5} radius={4} fill={color} />
+              <Group key={status} x={10 + i * 54} y={7}>
+                <Circle x={0} y={4} radius={3} fill={color} />
                 <Text
-                  x={8} y={0}
+                  x={7} y={0}
                   text={isRu ? {
                     free: 'Своб.',
                     occupied: 'Занят',
-                    occupied_no_work: 'Простой',
+                    occupied_no_work: 'Прост.',
                     active_work: 'Работа',
                   }[status] : {
                     free: 'Free',
                     occupied: 'Busy',
                     occupied_no_work: 'Idle',
-                    active_work: 'Active',
+                    active_work: 'Work',
                   }[status]}
-                  fontSize={9}
+                  fontSize={8}
                   fill={isDark ? '#cbd5e1' : '#4a5568'}
                 />
               </Group>

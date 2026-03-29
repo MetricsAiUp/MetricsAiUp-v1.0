@@ -140,7 +140,7 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
           />
           <PostIcon size={12} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
           <span className="font-medium" style={{ color: 'var(--text-primary)', fontSize: '11px' }}>
-            {post.name}
+            {(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}
           </span>
           <span
             className="px-1 rounded"
@@ -421,7 +421,7 @@ function WorkOrderModal({ item, post, onClose, t }) {
               {t('dashboardPosts.post')}
             </div>
             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {post.name}
+              {(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}
             </div>
           </div>
 
