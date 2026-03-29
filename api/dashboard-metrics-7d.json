@@ -1,1 +1,1 @@
-{"zoneMetrics":[],"postMetrics":[{"_avg":{"activeTime":0,"idleTime":1800},"_count":1,"postId":"317b4a2e-00bc-4116-a592-3825032ef2ea"},{"_avg":{"activeTime":5400,"idleTime":0},"_count":1,"postId":"4b7c58e4-b1fa-4944-a840-ccbfbfb27451"}],"workOrderMetrics":[{"_count":2,"status":"in_progress"},{"_count":3,"status":"scheduled"}],"period":"7d"}
+{"zoneMetrics":[],"postMetrics":[],"workOrderMetrics":[],"period":"7d"}

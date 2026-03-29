@@ -1,0 +1,65 @@
+{
+  "rooms": [
+    {
+      "id": "9d164330-e59d-4ba6-a0fb-3f1f5a3cd749",
+      "name": "Пост 1",
+      "width": 10,
+      "height": 4,
+      "depth": 8,
+      "cameras": [
+        {
+          "id": "0d400f0a-e052-45c4-9bda-66c8883b63ec",
+          "name": "Камера 1",
+          "position": {
+            "x": 0.15076252753634378,
+            "y": 3,
+            "z": 0
+          },
+          "rotation": {
+            "yaw": 45,
+            "pitch": 6,
+            "roll": 0
+          },
+          "fov": 90,
+          "resolution": {
+            "width": 1920,
+            "height": 1080
+          },
+          "rtspCameraId": "cam01"
+        }
+      ],
+      "zones": [
+        {
+          "id": "3670ccc7-fdaa-44fc-bd5e-ab13e75e3676",
+          "name": "Подьемник 1",
+          "position": {
+            "x": 2.3085546599041864,
+            "y": 0,
+            "z": 0.6092258628495442
+          },
+          "size": {
+            "width": 2,
+            "height": 2,
+            "depth": 2
+          },
+          "color": "#22c55e"
+        },
+        {
+          "id": "dde77f18-66a0-41ba-a7f2-311c8a5c2fda",
+          "name": "Подьемник 2",
+          "position": {
+            "x": 6.26494110603017,
+            "y": 0,
+            "z": 0.5621039807843404
+          },
+          "size": {
+            "width": 2,
+            "height": 2,
+            "depth": 2
+          },
+          "color": "#22c55e"
+        }
+      ]
+    }
+  ]
+}

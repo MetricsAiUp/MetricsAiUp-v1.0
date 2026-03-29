@@ -1,0 +1,101 @@
+import { useState } from 'react';
+import { useStore } from '../../store/useStore';
+
+const COLORS = ['#ef4444', '#22c55e', '#3b82f6', '#eab308', '#a855f7', '#ec4899', '#06b6d4', '#f97316'];
+
+export default function ZoneList() {
+  const { currentRoom, selectedZoneId, selectZone, addZone, removeZone } = useStore();
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({
+    name: '', x: 1, y: 0, z: 1, width: 2, height: 2, depth: 2, color: '#22c55e'
+  });
+
+  const zones = currentRoom?.zones || [];
+
+  const handleCreate = async () => {
+    if (!form.name.trim()) return;
+    await addZone({
+      name: form.name,
+      position: { x: form.x, y: form.y, z: form.z },
+      size: { width: form.width, height: form.height, depth: form.depth },
+      color: form.color
+    });
+    const nextColor = COLORS[(zones.length + 1) % COLORS.length];
+    setCreating(false);
+    setForm({ name: '', x: 1, y: 0, z: 1, width: 2, height: 2, depth: 2, color: nextColor });
+  };
+
+  return (
+    <div className="p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Zones</h3>
+        <button
+          onClick={() => setCreating(!creating)}
+          className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
+        >
+          {creating ? 'Cancel' : '+ Zone'}
+        </button>
+      </div>
+
+      {creating && (
+        <div className="mb-3 p-2 bg-slate-800 rounded space-y-2">
+          <div className="flex gap-2">
+            <input type="text" placeholder="Zone name" value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })} className="flex-1" />
+            <input type="color" value={form.color}
+              onChange={e => setForm({ ...form, color: e.target.value })} className="w-8 h-8 p-0 rounded" />
+          </div>
+          <div className="text-xs text-slate-500 mb-1">Position (m)</div>
+          <div className="grid grid-cols-3 gap-1">
+            <input type="number" value={form.x} step={0.5} placeholder="X"
+              onChange={e => setForm({ ...form, x: +e.target.value })} />
+            <input type="number" value={form.y} step={0.5} placeholder="Y"
+              onChange={e => setForm({ ...form, y: +e.target.value })} />
+            <input type="number" value={form.z} step={0.5} placeholder="Z"
+              onChange={e => setForm({ ...form, z: +e.target.value })} />
+          </div>
+          <div className="text-xs text-slate-500 mb-1">Size (m)</div>
+          <div className="grid grid-cols-3 gap-1">
+            <input type="number" value={form.width} step={0.5} min={0.1} placeholder="W"
+              onChange={e => setForm({ ...form, width: +e.target.value })} />
+            <input type="number" value={form.height} step={0.5} min={0.1} placeholder="H"
+              onChange={e => setForm({ ...form, height: +e.target.value })} />
+            <input type="number" value={form.depth} step={0.5} min={0.1} placeholder="D"
+              onChange={e => setForm({ ...form, depth: +e.target.value })} />
+          </div>
+          <button onClick={handleCreate} className="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-1 rounded">
+            Add Zone
+          </button>
+        </div>
+      )}
+
+      <div className="space-y-1">
+        {zones.map(z => (
+          <div
+            key={z.id}
+            onClick={() => selectZone(z.id)}
+            className={`p-2 rounded cursor-pointer flex items-center justify-between group ${
+              selectedZoneId === z.id ? 'bg-slate-700 border border-slate-500' : 'bg-slate-800 hover:bg-slate-750 border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: z.color }} />
+              <div>
+                <div className="text-sm">{z.name}</div>
+                <div className="text-xs text-slate-500">
+                  {z.size.width}x{z.size.height}x{z.size.depth}m
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={e => { e.stopPropagation(); removeZone(z.id); }}
+              className="text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100"
+            >
+              Del
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
