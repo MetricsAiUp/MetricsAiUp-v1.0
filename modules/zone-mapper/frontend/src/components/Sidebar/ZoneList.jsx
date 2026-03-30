@@ -84,6 +84,15 @@ export default function ZoneList() {
                 <div className="text-sm">{z.name}</div>
                 <div className="text-xs text-slate-500">
                   {z.size.width}x{z.size.height}x{z.size.depth}m
+                  <span className="ml-1 text-slate-600">
+                    {(z.type || 'lift') === 'lift' ? '⬆ Подъёмник' : '🔧 Прочие'}
+                  </span>
+                  <span className={`ml-1 ${z.liftStatus === 'occupied' ? 'text-red-400' : 'text-green-400'}`}>
+                    {(z.type || 'lift') === 'lift'
+                      ? (z.liftStatus === 'occupied' ? '(занят)' : '(свободен)')
+                      : (z.liftStatus === 'occupied' ? '(ведутся)' : '(не ведутся)')
+                    }
+                  </span>
                 </div>
               </div>
             </div>

@@ -173,18 +173,39 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
           distanceFactor={8}
           style={{ pointerEvents: 'none' }}
         >
-          <div style={{
-            background: selected ? color : 'rgba(0,0,0,0.6)',
-            color: '#fff',
-            padding: '2px 6px',
-            borderRadius: '3px',
-            fontSize: '11px',
-            fontFamily: 'system-ui, sans-serif',
-            fontWeight: selected ? 600 : 400,
-            whiteSpace: 'nowrap',
-            border: `1px solid ${color}`,
-          }}>
-            {zone.name}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              background: selected ? color : 'rgba(0,0,0,0.6)',
+              color: '#fff',
+              padding: '2px 6px',
+              borderRadius: '3px 3px 0 0',
+              fontSize: '11px',
+              fontFamily: 'system-ui, sans-serif',
+              fontWeight: selected ? 600 : 400,
+              whiteSpace: 'nowrap',
+              border: `1px solid ${color}`,
+              borderBottom: 'none',
+            }}>
+              {zone.name}
+            </div>
+            <div style={{
+              background: zone.liftStatus === 'occupied'
+                ? ((zone.type || 'lift') === 'lift' ? '#dc2626' : '#ea580c')
+                : '#16a34a',
+              color: '#fff',
+              padding: '2px 6px',
+              borderRadius: '0 0 3px 3px',
+              fontSize: '10px',
+              fontFamily: 'system-ui, sans-serif',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.5px',
+            }}>
+              {(zone.type || 'lift') === 'lift'
+                ? (zone.liftStatus === 'occupied' ? 'ЗАНЯТ' : 'СВОБОДЕН')
+                : (zone.liftStatus === 'occupied' ? 'РАБОТЫ ВЕДУТСЯ' : 'НЕТ РАБОТ')
+              }
+            </div>
           </div>
         </Html>
       </group>

@@ -64,8 +64,8 @@ function startDetection(camId, config) {
     frameInterval: config.frameInterval || 5,
     width: config.width || 320,
     height: config.height || 180,
-    threshold: config.threshold || 25,
-    motionPercent: config.motionPercent || 1.5,
+    threshold: config.threshold || 15,
+    motionPercent: config.motionPercent || 0.3,
     zones: config.zones || [],
     resolution: config.resolution || { width: 1920, height: 1080 },
   };

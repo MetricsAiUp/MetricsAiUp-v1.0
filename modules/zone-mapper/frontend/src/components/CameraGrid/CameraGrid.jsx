@@ -70,15 +70,28 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
   const [zones2d, setZones2d] = useState(null);
   const [showZones, setShowZones] = useState(true);
   const [detecting, setDetecting] = useState(false);
-  const [frameInterval, setFrameInterval] = useState(5);
+  const [frameInterval, setFrameInterval] = useState(2);
+  const [sensitivity, setSensitivity] = useState('medium'); // low | medium | high
   const { currentRoom } = useStore();
 
   const { events, connected, clearEvents } = useServerMotion(cam.id);
 
-  // Load zones
+  // Load zones and enrich with 3D zone metadata (type, liftStatus)
   useEffect(() => {
     if (!currentRoom || !linkedCamera) return;
-    getZones2d(currentRoom.id, linkedCamera.id).then(z => setZones2d(z)).catch(() => {});
+    getZones2d(currentRoom.id, linkedCamera.id).then(z => {
+      if (!z || !z.length) { setZones2d(null); return; }
+      const zones3d = currentRoom.zones || [];
+      const enriched = z.map(z2d => {
+        const z3d = zones3d.find(zz => zz.id === z2d.zoneId);
+        return {
+          ...z2d,
+          type: z3d?.type || z2d.type || 'lift',
+          liftStatus: z3d?.liftStatus || z2d.liftStatus || 'free',
+        };
+      });
+      setZones2d(enriched);
+    }).catch(() => {});
   }, [currentRoom, linkedCamera]);
 
   // Start/stop server-side motion detection
@@ -87,10 +100,16 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
       await stopMotion(cam.id).catch(() => {});
       setDetecting(false);
     } else if (zones2d && zones2d.length > 0 && linkedCamera) {
+      const sensConfig = {
+        low:    { threshold: 30, motionPercent: 1.5 },
+        medium: { threshold: 15, motionPercent: 0.5 },
+        high:   { threshold: 8,  motionPercent: 0.2 },
+      };
       await startMotion(cam.id, {
         frameInterval,
         zones: zones2d,
         resolution: linkedCamera.resolution || { width: 1920, height: 1080 },
+        ...sensConfig[sensitivity],
       }).catch(() => {});
       setDetecting(true);
     }
@@ -178,7 +197,24 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
           </div>
         </div>
         {showEvents && (
-          <div className="w-36 border-l border-[#333] bg-[#1e1e1e]" style={{ minHeight: 0 }}>
+          <div className="w-36 border-l border-[#333] bg-[#1e1e1e] flex flex-col" style={{ minHeight: 0 }}>
+            {/* Lift statuses */}
+            {zones2d && zones2d.length > 0 && (
+              <div className="px-2 py-1.5 border-b border-[#333] space-y-0.5">
+                {zones2d.map(z => (
+                  <div key={z.zoneId} className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${z.liftStatus === 'occupied' ? ((z.type || 'lift') === 'lift' ? 'bg-red-500' : 'bg-orange-500') : 'bg-green-500'}`} />
+                    <span className="text-[0.6rem] text-slate-300 truncate">{z.zoneName}</span>
+                    <span className={`text-[0.55rem] ml-auto flex-shrink-0 ${z.liftStatus === 'occupied' ? 'text-red-400' : 'text-green-400'}`}>
+                      {(z.type || 'lift') === 'lift'
+                        ? (z.liftStatus === 'occupied' ? 'занят' : 'свободен')
+                        : (z.liftStatus === 'occupied' ? 'работы' : 'нет работ')
+                      }
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <EventLog events={events} clearEvents={clearEvents} connected={connected} />
           </div>
         )}
@@ -217,13 +253,24 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
           <select
             value={frameInterval}
             onChange={e => setFrameInterval(+e.target.value)}
-            className="bg-[#333] text-[0.7rem] text-slate-300 border border-[#444] rounded px-1.5 py-1"
+            disabled={detecting}
+            className="bg-[#333] text-[0.65rem] text-slate-300 border border-[#444] rounded px-1 py-1 disabled:opacity-50"
           >
             <option value={1}>1s</option>
             <option value={2}>2s</option>
             <option value={5}>5s</option>
             <option value={10}>10s</option>
             <option value={30}>30s</option>
+          </select>
+          <select
+            value={sensitivity}
+            onChange={e => setSensitivity(e.target.value)}
+            disabled={detecting}
+            className="bg-[#333] text-[0.65rem] text-slate-300 border border-[#444] rounded px-1 py-1 disabled:opacity-50"
+          >
+            <option value="high">High</option>
+            <option value="medium">Med</option>
+            <option value="low">Low</option>
           </select>
         </div>
       )}

@@ -14,7 +14,7 @@ router.get('/', (req, res) => {
 
 // Create zone
 router.post('/', (req, res) => {
-  const { name, position, size, color } = req.body;
+  const { name, position, size, color, type } = req.body;
   if (!name || !position || !size) {
     return res.status(400).json({ error: 'name, position {x,y,z}, size {width,height,depth} required' });
   }
@@ -23,7 +23,9 @@ router.post('/', (req, res) => {
     name,
     position: { x: Number(position.x), y: Number(position.y), z: Number(position.z) },
     size: { width: Number(size.width), height: Number(size.height), depth: Number(size.depth) },
-    color: color || '#00ff00'
+    color: color || '#00ff00',
+    type: type || 'lift',
+    liftStatus: 'free'
   };
   let found = false;
   update(data => {
@@ -45,7 +47,7 @@ router.put('/:zoneId', (req, res) => {
     if (!room) return;
     const zone = (room.zones || []).find(z => z.id === req.params.zoneId);
     if (!zone) return;
-    const { name, position, size, color } = req.body;
+    const { name, position, size, color, type, liftStatus } = req.body;
     if (name !== undefined) zone.name = name;
     if (position) {
       zone.position = {
@@ -62,6 +64,11 @@ router.put('/:zoneId', (req, res) => {
       };
     }
     if (color !== undefined) zone.color = color;
+    if (type !== undefined) zone.type = type;
+    if (liftStatus !== undefined) zone.liftStatus = liftStatus;
+    // Ensure defaults for old zones
+    if (!zone.type) zone.type = 'lift';
+    if (!zone.liftStatus) zone.liftStatus = 'free';
     found = zone;
   });
   if (!found) return res.status(404).json({ error: 'Zone not found' });

@@ -32,7 +32,20 @@ export default function Layout() {
     const cam = contextMenu.camera;
     let zones2d = null;
     if (currentRoom) {
-      try { zones2d = await getZones2d(currentRoom.id, cam.id); } catch {}
+      try {
+        const raw = await getZones2d(currentRoom.id, cam.id);
+        if (raw && raw.length) {
+          const zones3d = currentRoom.zones || [];
+          zones2d = raw.map(z2d => {
+            const z3d = zones3d.find(zz => zz.id === z2d.zoneId);
+            return {
+              ...z2d,
+              type: z3d?.type || z2d.type || 'lift',
+              liftStatus: z3d?.liftStatus || z2d.liftStatus || 'free',
+            };
+          });
+        }
+      } catch {}
     }
     setStreamCamera({ name: cam.name, rtspCameraId: cam.rtspCameraId, zones2d: zones2d || [] });
   }, [contextMenu, currentRoom]);

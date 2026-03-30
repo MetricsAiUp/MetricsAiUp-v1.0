@@ -183,6 +183,23 @@ export default function StreamModal({ camName, rtspCameraId, zones2d, onClose })
 
         {hasZones && (
           <div className="w-64 border-l border-slate-700 bg-slate-900/95 flex flex-col">
+            {/* Lift statuses */}
+            {zones2d && zones2d.length > 0 && (
+              <div className="px-3 py-2 border-b border-slate-700 space-y-1">
+                {zones2d.map(z => (
+                  <div key={z.zoneId} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${z.liftStatus === 'occupied' ? ((z.type || 'lift') === 'lift' ? 'bg-red-500' : 'bg-orange-500') : 'bg-green-500'}`} />
+                    <span className="text-xs text-slate-300 truncate">{z.zoneName}</span>
+                    <span className={`text-xs ml-auto flex-shrink-0 font-medium ${z.liftStatus === 'occupied' ? 'text-red-400' : 'text-green-400'}`}>
+                      {(z.type || 'lift') === 'lift'
+                        ? (z.liftStatus === 'occupied' ? 'Занят' : 'Свободен')
+                        : (z.liftStatus === 'occupied' ? 'Работы' : 'Нет работ')
+                      }
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <EventLog events={events} clearEvents={clearEvents} />
           </div>
         )}
