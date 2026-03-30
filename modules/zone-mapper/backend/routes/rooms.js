@@ -51,11 +51,12 @@ router.put('/:id', (req, res) => {
   update(data => {
     const room = data.rooms.find(r => r.id === req.params.id);
     if (!room) return;
-    const { name, width, height, depth } = req.body;
+    const { name, width, height, depth, segments } = req.body;
     if (name !== undefined) room.name = name;
     if (width !== undefined) room.width = Number(width);
     if (height !== undefined) room.height = Number(height);
     if (depth !== undefined) room.depth = Number(depth);
+    if (segments !== undefined) room.segments = segments;
     found = room;
   });
   if (!found) return res.status(404).json({ error: 'Room not found' });

@@ -37,3 +37,22 @@ export const getSnapshotUrl = (camId) => {
   const base = getStreamBase();
   return `${base}/api/stream/snapshot/${camId}`;
 };
+
+// Motion detection API (port 8182)
+const getMotionBase = () => {
+  const match = window.location.pathname.match(/^(\/p\/[^/]+)\//);
+  if (match) return `${match[1]}/8182`;
+  return 'http://localhost:8182';
+};
+
+const motionApi = axios.create({ baseURL: getMotionBase() });
+
+export const startMotion = (camId, config) => motionApi.post(`/api/motion/start/${camId}`, config).then(r => r.data);
+export const stopMotion = (camId) => motionApi.post(`/api/motion/stop/${camId}`).then(r => r.data);
+export const getMotionStatus = () => motionApi.get('/api/motion/status').then(r => r.data);
+export const getMotionEvents = (camId) => motionApi.get(`/api/motion/events/${camId}`).then(r => r.data);
+
+export const getMotionSSEUrl = () => {
+  const base = getMotionBase();
+  return `${base}/api/motion/events`;
+};

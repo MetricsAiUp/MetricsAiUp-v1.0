@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { useStore } from '../../store/useStore';
@@ -8,19 +8,39 @@ import ZoneBox from './ZoneBox';
 import CameraCone from './CameraCone';
 import Grid from './Grid';
 
+// Compute total bounding box of room + all segments
+function getRoomBounds(room) {
+  let maxX = room.width, maxY = room.height, maxZ = room.depth;
+  let minX = 0, minY = 0, minZ = 0;
+
+  for (const seg of (room.segments || [])) {
+    const sx = seg.position.x, sy = seg.position.y, sz = seg.position.z;
+    minX = Math.min(minX, sx);
+    minY = Math.min(minY, sy);
+    minZ = Math.min(minZ, sz);
+    maxX = Math.max(maxX, sx + seg.size.width);
+    maxY = Math.max(maxY, sy + seg.size.height);
+    maxZ = Math.max(maxZ, sz + seg.size.depth);
+  }
+
+  return { minX, minY, minZ, maxX, maxY, maxZ, width: maxX - minX, height: maxY - minY, depth: maxZ - minZ };
+}
+
 function SceneContent({ onCameraContextMenu }) {
   const { currentRoom, selectedZoneId, selectedCameraId, selectZone, selectCamera, editZone, editCamera } = useStore();
   const orbitRef = useRef();
 
   if (!currentRoom) return null;
 
+  const bounds = useMemo(() => getRoomBounds(currentRoom), [currentRoom]);
+
   return (
     <SceneContext.Provider value={{ orbitControlsRef: orbitRef }}>
       <ambientLight intensity={0.4} />
       <directionalLight position={[10, 15, 10]} intensity={0.8} />
-      <pointLight position={[0, currentRoom.height, 0]} intensity={0.3} />
+      <pointLight position={[0, bounds.maxY, 0]} intensity={0.3} />
 
-      <Grid size={Math.max(currentRoom.width, currentRoom.depth) * 2} />
+      <Grid size={Math.max(bounds.width, bounds.depth) * 2} />
       <RoomBox room={currentRoom} />
 
       {(currentRoom.zones || []).map(zone => (
@@ -49,7 +69,7 @@ function SceneContent({ onCameraContextMenu }) {
       <OrbitControls
         ref={orbitRef}
         makeDefault
-        target={[currentRoom.width / 2, currentRoom.height / 2, currentRoom.depth / 2]}
+        target={[(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2, (bounds.minZ + bounds.maxZ) / 2]}
       />
 
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
@@ -65,7 +85,8 @@ export default function Scene({ onCameraContextMenu }) {
   const { currentRoom } = useStore();
   if (!currentRoom) return null;
 
-  const maxDim = Math.max(currentRoom.width, currentRoom.height, currentRoom.depth);
+  const bounds = getRoomBounds(currentRoom);
+  const maxDim = Math.max(bounds.width, bounds.height, bounds.depth);
 
   return (
     <Canvas
