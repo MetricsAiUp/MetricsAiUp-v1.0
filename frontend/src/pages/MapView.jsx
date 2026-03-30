@@ -301,7 +301,8 @@ export default function MapView() {
 
   const handleGoToPost = (post) => {
     const num = post.name.match(/\d+/)?.[0];
-    navigate(`/posts-detail?post=${num}`);
+    setSelectedPost(null);
+    navigate(`/posts-detail?post=post-${num}`);
   };
 
   return (

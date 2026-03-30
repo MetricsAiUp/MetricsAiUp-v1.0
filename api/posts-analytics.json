@@ -13,53 +13,203 @@
         "loadPercent": 68,
         "efficiency": 82,
         "workOrders": [
-          { "id": "wo-001", "orderNumber": "ЗН-2026-0301", "plateNumber": "К555МН77", "brand": "Hyundai", "model": "Solaris", "workType": "ТО-1", "normHours": 1.5, "actualHours": 1.5, "status": "completed", "planVsFact": 100 },
-          { "id": "wo-015", "orderNumber": "ЗН-2026-0315", "plateNumber": "А123ВС77", "brand": "Toyota", "model": "Camry", "workType": "Замена тормозных колодок", "normHours": 2, "actualHours": null, "status": "in_progress", "planVsFact": null },
-          { "id": "wo-020", "orderNumber": "ЗН-2026-0320", "plateNumber": "Р888АА50", "brand": "Kia", "model": "Rio", "workType": "Диагностика ходовой", "normHours": 1, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-001",
+            "orderNumber": "ЗН-2026-0301",
+            "plateNumber": "К555МН77",
+            "brand": "Hyundai",
+            "model": "Solaris",
+            "workType": "ТО-1",
+            "normHours": 1.5,
+            "actualHours": 1.5,
+            "status": "completed",
+            "planVsFact": 100
+          },
+          {
+            "id": "wo-015",
+            "orderNumber": "ЗН-2026-0315",
+            "plateNumber": "А123ВС77",
+            "brand": "Toyota",
+            "model": "Camry",
+            "workType": "Замена тормозных колодок",
+            "normHours": 2,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          },
+          {
+            "id": "wo-020",
+            "orderNumber": "ЗН-2026-0320",
+            "plateNumber": "Р888АА50",
+            "brand": "Kia",
+            "model": "Rio",
+            "workType": "Диагностика ходовой",
+            "normHours": 1,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-1", "name": "Петров Д.В.", "role": "Механик", "hoursWorked": 5.5, "ordersCompleted": 1 },
-          { "id": "w-2", "name": "Иванов А.С.", "role": "Мастер-приёмщик", "hoursWorked": 2, "ordersCompleted": 0 }
+          {
+            "id": "w-1",
+            "name": "Петров Д.В.",
+            "role": "Механик",
+            "hoursWorked": 5.5,
+            "ordersCompleted": 1
+          },
+          {
+            "id": "w-2",
+            "name": "Иванов А.С.",
+            "role": "Мастер-приёмщик",
+            "hoursWorked": 2,
+            "ordersCompleted": 0
+          }
         ],
         "alerts": [
-          { "id": "a-1", "type": "delay", "message": "Простой >30 мин между ЗН-0301 и ЗН-0315", "time": "2026-03-28T09:30:00", "severity": "warning" }
+          {
+            "id": "a-1",
+            "type": "delay",
+            "message": "Простой >30 мин между ЗН-0301 и ЗН-0315",
+            "time": "2026-03-30T09:30:00",
+            "severity": "warning"
+          }
         ],
         "eventLog": [
-          { "id": "e-1", "type": "post_occupied", "description": "Авто К555МН77 установлено на пост", "time": "2026-03-28T08:02:00" },
-          { "id": "e-2", "type": "work_start", "description": "Начало работ ЗН-0301", "time": "2026-03-28T08:05:00" },
-          { "id": "e-3", "type": "work_end", "description": "Завершение ЗН-0301", "time": "2026-03-28T09:30:00" },
-          { "id": "e-4", "type": "post_vacated", "description": "Авто К555МН77 снято с поста", "time": "2026-03-28T09:35:00" },
-          { "id": "e-5", "type": "idle", "description": "Простой поста", "time": "2026-03-28T09:35:00" },
-          { "id": "e-6", "type": "post_occupied", "description": "Авто А123ВС77 установлено на пост", "time": "2026-03-28T10:00:00" },
-          { "id": "e-7", "type": "work_start", "description": "Начало работ ЗН-0315", "time": "2026-03-28T10:05:00" }
+          {
+            "id": "e-1",
+            "type": "post_occupied",
+            "description": "Авто К555МН77 установлено на пост",
+            "time": "2026-03-30T08:02:00"
+          },
+          {
+            "id": "e-2",
+            "type": "work_start",
+            "description": "Начало работ ЗН-0301",
+            "time": "2026-03-30T08:05:00"
+          },
+          {
+            "id": "e-3",
+            "type": "work_end",
+            "description": "Завершение ЗН-0301",
+            "time": "2026-03-30T09:30:00"
+          },
+          {
+            "id": "e-4",
+            "type": "post_vacated",
+            "description": "Авто К555МН77 снято с поста",
+            "time": "2026-03-30T09:35:00"
+          },
+          {
+            "id": "e-5",
+            "type": "idle",
+            "description": "Простой поста",
+            "time": "2026-03-30T09:35:00"
+          },
+          {
+            "id": "e-6",
+            "type": "post_occupied",
+            "description": "Авто А123ВС77 установлено на пост",
+            "time": "2026-03-30T10:00:00"
+          },
+          {
+            "id": "e-7",
+            "type": "work_start",
+            "description": "Начало работ ЗН-0315",
+            "time": "2026-03-30T10:05:00"
+          }
         ],
         "workStats": {
           "byGroup": [
-            { "group": "ТО", "count": 1, "hours": 1.5 },
-            { "group": "Тормозная система", "count": 1, "hours": 2 },
-            { "group": "Диагностика", "count": 1, "hours": 1 }
+            {
+              "group": "ТО",
+              "count": 1,
+              "hours": 1.5
+            },
+            {
+              "group": "Тормозная система",
+              "count": 1,
+              "hours": 2
+            },
+            {
+              "group": "Диагностика",
+              "count": 1,
+              "hours": 1
+            }
           ],
           "byBrand": [
-            { "brand": "Hyundai", "count": 1 },
-            { "brand": "Toyota", "count": 1 },
-            { "brand": "Kia", "count": 1 }
+            {
+              "brand": "Hyundai",
+              "count": 1
+            },
+            {
+              "brand": "Toyota",
+              "count": 1
+            },
+            {
+              "brand": "Kia",
+              "count": 1
+            }
           ],
           "avgTimePerOrder": 1.5
         },
         "cameras": [
-          { "id": "cam-1", "name": "КАМ-01", "preview": null },
-          { "id": "cam-3", "name": "КАМ-03", "preview": null }
+          {
+            "id": "cam-1",
+            "name": "КАМ-01",
+            "preview": null
+          },
+          {
+            "id": "cam-3",
+            "name": "КАМ-03",
+            "preview": null
+          }
         ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 75, "efficiency": 85, "normHours": 9 },
-        { "date": "2026-03-23", "loadPercent": 60, "efficiency": 78, "normHours": 7.2 },
-        { "date": "2026-03-24", "loadPercent": 90, "efficiency": 92, "normHours": 10.8 },
-        { "date": "2026-03-25", "loadPercent": 45, "efficiency": 70, "normHours": 5.4 },
-        { "date": "2026-03-26", "loadPercent": 82, "efficiency": 88, "normHours": 9.8 },
-        { "date": "2026-03-27", "loadPercent": 70, "efficiency": 80, "normHours": 8.4 },
-        { "date": "2026-03-28", "loadPercent": 68, "efficiency": 82, "normHours": 8.2 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 75,
+          "efficiency": 85,
+          "normHours": 9
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 60,
+          "efficiency": 78,
+          "normHours": 7.2
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 90,
+          "efficiency": 92,
+          "normHours": 10.8
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 45,
+          "efficiency": 70,
+          "normHours": 5.4
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 82,
+          "efficiency": 88,
+          "normHours": 9.8
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 70,
+          "efficiency": 80,
+          "normHours": 8.4
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 68,
+          "efficiency": 82,
+          "normHours": 8.2
+        }
       ]
     },
     {
@@ -75,36 +225,146 @@
         "loadPercent": 50,
         "efficiency": 75,
         "workOrders": [
-          { "id": "wo-002", "orderNumber": "ЗН-2026-0302", "plateNumber": "В456КМ50", "brand": "Volkswagen", "model": "Polo", "workType": "Замена масла + фильтры", "normHours": 1, "actualHours": null, "status": "in_progress", "planVsFact": null },
-          { "id": "wo-018", "orderNumber": "ЗН-2026-0318", "plateNumber": "Н777ОР99", "brand": "Skoda", "model": "Octavia", "workType": "ТО-2", "normHours": 2.5, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-002",
+            "orderNumber": "ЗН-2026-0302",
+            "plateNumber": "В456КМ50",
+            "brand": "Volkswagen",
+            "model": "Polo",
+            "workType": "Замена масла + фильтры",
+            "normHours": 1,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          },
+          {
+            "id": "wo-018",
+            "orderNumber": "ЗН-2026-0318",
+            "plateNumber": "Н777ОР99",
+            "brand": "Skoda",
+            "model": "Octavia",
+            "workType": "ТО-2",
+            "normHours": 2.5,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-3", "name": "Козлов И.П.", "role": "Механик", "hoursWorked": 3, "ordersCompleted": 0 }
+          {
+            "id": "w-3",
+            "name": "Козлов И.П.",
+            "role": "Механик",
+            "hoursWorked": 3,
+            "ordersCompleted": 0
+          }
         ],
         "alerts": [
-          { "id": "a-2", "type": "parts", "message": "Ожидание запчастей — масляный фильтр для ЗН-0302", "time": "2026-03-28T09:00:00", "severity": "warning" }
+          {
+            "id": "a-2",
+            "type": "parts",
+            "message": "Ожидание запчастей — масляный фильтр для ЗН-0302",
+            "time": "2026-03-30T09:00:00",
+            "severity": "warning"
+          }
         ],
         "eventLog": [
-          { "id": "e-10", "type": "post_occupied", "description": "Авто В456КМ50 установлено на пост", "time": "2026-03-28T08:30:00" },
-          { "id": "e-11", "type": "work_start", "description": "Начало работ ЗН-0302", "time": "2026-03-28T08:35:00" },
-          { "id": "e-12", "type": "alert", "description": "Ожидание запчастей", "time": "2026-03-28T09:00:00" }
+          {
+            "id": "e-10",
+            "type": "post_occupied",
+            "description": "Авто В456КМ50 установлено на пост",
+            "time": "2026-03-30T08:30:00"
+          },
+          {
+            "id": "e-11",
+            "type": "work_start",
+            "description": "Начало работ ЗН-0302",
+            "time": "2026-03-30T08:35:00"
+          },
+          {
+            "id": "e-12",
+            "type": "alert",
+            "description": "Ожидание запчастей",
+            "time": "2026-03-30T09:00:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "ТО", "count": 1, "hours": 1 }, { "group": "ТО-2", "count": 1, "hours": 2.5 }],
-          "byBrand": [{ "brand": "Volkswagen", "count": 1 }, { "brand": "Skoda", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "ТО",
+              "count": 1,
+              "hours": 1
+            },
+            {
+              "group": "ТО-2",
+              "count": 1,
+              "hours": 2.5
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Volkswagen",
+              "count": 1
+            },
+            {
+              "brand": "Skoda",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 1.75
         },
-        "cameras": [{ "id": "cam-1", "name": "КАМ-01", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-1",
+            "name": "КАМ-01",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 65, "efficiency": 80, "normHours": 7.8 },
-        { "date": "2026-03-23", "loadPercent": 55, "efficiency": 72, "normHours": 6.6 },
-        { "date": "2026-03-24", "loadPercent": 80, "efficiency": 85, "normHours": 9.6 },
-        { "date": "2026-03-25", "loadPercent": 40, "efficiency": 65, "normHours": 4.8 },
-        { "date": "2026-03-26", "loadPercent": 70, "efficiency": 78, "normHours": 8.4 },
-        { "date": "2026-03-27", "loadPercent": 50, "efficiency": 75, "normHours": 6 },
-        { "date": "2026-03-28", "loadPercent": 50, "efficiency": 75, "normHours": 6 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 65,
+          "efficiency": 80,
+          "normHours": 7.8
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 55,
+          "efficiency": 72,
+          "normHours": 6.6
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 80,
+          "efficiency": 85,
+          "normHours": 9.6
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 40,
+          "efficiency": 65,
+          "normHours": 4.8
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 70,
+          "efficiency": 78,
+          "normHours": 8.4
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 50,
+          "efficiency": 75,
+          "normHours": 6
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 50,
+          "efficiency": 75,
+          "normHours": 6
+        }
       ]
     },
     {
@@ -120,33 +380,132 @@
         "loadPercent": 83,
         "efficiency": 90,
         "workOrders": [
-          { "id": "wo-003", "orderNumber": "ЗН-2026-0303", "plateNumber": "Е789ОР77", "brand": "Nissan", "model": "Qashqai", "workType": "Диагностика ходовой + замена стоек", "normHours": 3, "actualHours": null, "status": "in_progress", "planVsFact": null },
-          { "id": "wo-022", "orderNumber": "ЗН-2026-0322", "plateNumber": "Т444УФ77", "brand": "Ford", "model": "Focus", "workType": "Замена сцепления", "normHours": 4, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-003",
+            "orderNumber": "ЗН-2026-0303",
+            "plateNumber": "Е789ОР77",
+            "brand": "Nissan",
+            "model": "Qashqai",
+            "workType": "Диагностика ходовой + замена стоек",
+            "normHours": 3,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          },
+          {
+            "id": "wo-022",
+            "orderNumber": "ЗН-2026-0322",
+            "plateNumber": "Т444УФ77",
+            "brand": "Ford",
+            "model": "Focus",
+            "workType": "Замена сцепления",
+            "normHours": 4,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-4", "name": "Семёнов К.Р.", "role": "Механик", "hoursWorked": 4, "ordersCompleted": 0 }
+          {
+            "id": "w-4",
+            "name": "Семёнов К.Р.",
+            "role": "Механик",
+            "hoursWorked": 4,
+            "ordersCompleted": 0
+          }
         ],
         "alerts": [],
         "eventLog": [
-          { "id": "e-20", "type": "post_occupied", "description": "Авто Е789ОР77 установлено на пост", "time": "2026-03-28T08:00:00" },
-          { "id": "e-21", "type": "work_start", "description": "Начало работ ЗН-0303", "time": "2026-03-28T08:05:00" }
+          {
+            "id": "e-20",
+            "type": "post_occupied",
+            "description": "Авто Е789ОР77 установлено на пост",
+            "time": "2026-03-30T08:00:00"
+          },
+          {
+            "id": "e-21",
+            "type": "work_start",
+            "description": "Начало работ ЗН-0303",
+            "time": "2026-03-30T08:05:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "Ходовая", "count": 1, "hours": 3 }, { "group": "Трансмиссия", "count": 1, "hours": 4 }],
-          "byBrand": [{ "brand": "Nissan", "count": 1 }, { "brand": "Ford", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "Ходовая",
+              "count": 1,
+              "hours": 3
+            },
+            {
+              "group": "Трансмиссия",
+              "count": 1,
+              "hours": 4
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Nissan",
+              "count": 1
+            },
+            {
+              "brand": "Ford",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 3.5
         },
-        "cameras": [{ "id": "cam-2", "name": "КАМ-02", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-2",
+            "name": "КАМ-02",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 85, "efficiency": 90, "normHours": 10.2 },
-        { "date": "2026-03-23", "loadPercent": 78, "efficiency": 85, "normHours": 9.4 },
-        { "date": "2026-03-24", "loadPercent": 92, "efficiency": 95, "normHours": 11 },
-        { "date": "2026-03-25", "loadPercent": 50, "efficiency": 72, "normHours": 6 },
-        { "date": "2026-03-26", "loadPercent": 88, "efficiency": 91, "normHours": 10.6 },
-        { "date": "2026-03-27", "loadPercent": 80, "efficiency": 87, "normHours": 9.6 },
-        { "date": "2026-03-28", "loadPercent": 83, "efficiency": 90, "normHours": 10 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 85,
+          "efficiency": 90,
+          "normHours": 10.2
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 78,
+          "efficiency": 85,
+          "normHours": 9.4
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 92,
+          "efficiency": 95,
+          "normHours": 11
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 50,
+          "efficiency": 72,
+          "normHours": 6
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 88,
+          "efficiency": 91,
+          "normHours": 10.6
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 80,
+          "efficiency": 87,
+          "normHours": 9.6
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 83,
+          "efficiency": 90,
+          "normHours": 10
+        }
       ]
     },
     {
@@ -162,35 +521,140 @@
         "loadPercent": 92,
         "efficiency": 78,
         "workOrders": [
-          { "id": "wo-004", "orderNumber": "ЗН-2026-0304", "plateNumber": "Х999ХХ77", "brand": "MAN", "model": "TGS", "workType": "Диагностика двигателя + ремонт", "normHours": 5, "actualHours": null, "status": "in_progress", "planVsFact": null },
-          { "id": "wo-025", "orderNumber": "ЗН-2026-0325", "plateNumber": "С111АА77", "brand": "Volvo", "model": "FH", "workType": "ТО грузовое", "normHours": 4, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-004",
+            "orderNumber": "ЗН-2026-0304",
+            "plateNumber": "Х999ХХ77",
+            "brand": "MAN",
+            "model": "TGS",
+            "workType": "Диагностика двигателя + ремонт",
+            "normHours": 5,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          },
+          {
+            "id": "wo-025",
+            "orderNumber": "ЗН-2026-0325",
+            "plateNumber": "С111АА77",
+            "brand": "Volvo",
+            "model": "FH",
+            "workType": "ТО грузовое",
+            "normHours": 4,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-5", "name": "Громов Н.А.", "role": "Механик грузовых", "hoursWorked": 5, "ordersCompleted": 0 }
+          {
+            "id": "w-5",
+            "name": "Громов Н.А.",
+            "role": "Механик грузовых",
+            "hoursWorked": 5,
+            "ordersCompleted": 0
+          }
         ],
         "alerts": [
-          { "id": "a-3", "type": "overtime", "message": "ЗН-0304 превышает плановое время (+30 мин)", "time": "2026-03-28T13:30:00", "severity": "danger" }
+          {
+            "id": "a-3",
+            "type": "overtime",
+            "message": "ЗН-0304 превышает плановое время (+30 мин)",
+            "time": "2026-03-30T13:30:00",
+            "severity": "danger"
+          }
         ],
         "eventLog": [
-          { "id": "e-30", "type": "post_occupied", "description": "Авто Х999ХХ77 установлено на пост", "time": "2026-03-28T08:00:00" },
-          { "id": "e-31", "type": "work_start", "description": "Начало работ ЗН-0304", "time": "2026-03-28T08:10:00" }
+          {
+            "id": "e-30",
+            "type": "post_occupied",
+            "description": "Авто Х999ХХ77 установлено на пост",
+            "time": "2026-03-30T08:00:00"
+          },
+          {
+            "id": "e-31",
+            "type": "work_start",
+            "description": "Начало работ ЗН-0304",
+            "time": "2026-03-30T08:10:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "Двигатель", "count": 1, "hours": 5 }, { "group": "ТО грузовое", "count": 1, "hours": 4 }],
-          "byBrand": [{ "brand": "MAN", "count": 1 }, { "brand": "Volvo", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "Двигатель",
+              "count": 1,
+              "hours": 5
+            },
+            {
+              "group": "ТО грузовое",
+              "count": 1,
+              "hours": 4
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "MAN",
+              "count": 1
+            },
+            {
+              "brand": "Volvo",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 4.5
         },
-        "cameras": [{ "id": "cam-2", "name": "КАМ-02", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-2",
+            "name": "КАМ-02",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 90, "efficiency": 82, "normHours": 10.8 },
-        { "date": "2026-03-23", "loadPercent": 85, "efficiency": 80, "normHours": 10.2 },
-        { "date": "2026-03-24", "loadPercent": 95, "efficiency": 88, "normHours": 11.4 },
-        { "date": "2026-03-25", "loadPercent": 70, "efficiency": 75, "normHours": 8.4 },
-        { "date": "2026-03-26", "loadPercent": 88, "efficiency": 84, "normHours": 10.6 },
-        { "date": "2026-03-27", "loadPercent": 92, "efficiency": 79, "normHours": 11 },
-        { "date": "2026-03-28", "loadPercent": 92, "efficiency": 78, "normHours": 11 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 90,
+          "efficiency": 82,
+          "normHours": 10.8
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 85,
+          "efficiency": 80,
+          "normHours": 10.2
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 95,
+          "efficiency": 88,
+          "normHours": 11.4
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 70,
+          "efficiency": 75,
+          "normHours": 8.4
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 88,
+          "efficiency": 84,
+          "normHours": 10.6
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 92,
+          "efficiency": 79,
+          "normHours": 11
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 92,
+          "efficiency": 78,
+          "normHours": 11
+        }
       ]
     },
     {
@@ -206,34 +670,138 @@
         "loadPercent": 63,
         "efficiency": 85,
         "workOrders": [
-          { "id": "wo-005", "orderNumber": "ЗН-2026-0305", "plateNumber": "Г222ВВ50", "brand": "Renault", "model": "Duster", "workType": "Замена ремня ГРМ", "normHours": 2.5, "actualHours": 2.5, "status": "completed", "planVsFact": 100 },
-          { "id": "wo-016", "orderNumber": "ЗН-2026-0316", "plateNumber": "М777ММ97", "brand": "Mazda", "model": "CX-5", "workType": "Замена стоек + развал", "normHours": 2.5, "actualHours": null, "status": "in_progress", "planVsFact": null }
+          {
+            "id": "wo-005",
+            "orderNumber": "ЗН-2026-0305",
+            "plateNumber": "Г222ВВ50",
+            "brand": "Renault",
+            "model": "Duster",
+            "workType": "Замена ремня ГРМ",
+            "normHours": 2.5,
+            "actualHours": 2.5,
+            "status": "completed",
+            "planVsFact": 100
+          },
+          {
+            "id": "wo-016",
+            "orderNumber": "ЗН-2026-0316",
+            "plateNumber": "М777ММ97",
+            "brand": "Mazda",
+            "model": "CX-5",
+            "workType": "Замена стоек + развал",
+            "normHours": 2.5,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-6", "name": "Тихонов А.Е.", "role": "Механик", "hoursWorked": 5, "ordersCompleted": 1 }
+          {
+            "id": "w-6",
+            "name": "Тихонов А.Е.",
+            "role": "Механик",
+            "hoursWorked": 5,
+            "ordersCompleted": 1
+          }
         ],
         "alerts": [],
         "eventLog": [
-          { "id": "e-40", "type": "post_occupied", "description": "Авто Г222ВВ50 установлено", "time": "2026-03-28T08:00:00" },
-          { "id": "e-41", "type": "work_end", "description": "Завершение ЗН-0305", "time": "2026-03-28T10:30:00" },
-          { "id": "e-42", "type": "post_occupied", "description": "Авто М777ММ97 установлено", "time": "2026-03-28T11:00:00" }
+          {
+            "id": "e-40",
+            "type": "post_occupied",
+            "description": "Авто Г222ВВ50 установлено",
+            "time": "2026-03-30T08:00:00"
+          },
+          {
+            "id": "e-41",
+            "type": "work_end",
+            "description": "Завершение ЗН-0305",
+            "time": "2026-03-30T10:30:00"
+          },
+          {
+            "id": "e-42",
+            "type": "post_occupied",
+            "description": "Авто М777ММ97 установлено",
+            "time": "2026-03-30T11:00:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "ГРМ", "count": 1, "hours": 2.5 }, { "group": "Ходовая", "count": 1, "hours": 2.5 }],
-          "byBrand": [{ "brand": "Renault", "count": 1 }, { "brand": "Mazda", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "ГРМ",
+              "count": 1,
+              "hours": 2.5
+            },
+            {
+              "group": "Ходовая",
+              "count": 1,
+              "hours": 2.5
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Renault",
+              "count": 1
+            },
+            {
+              "brand": "Mazda",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 2.5
         },
-        "cameras": [{ "id": "cam-4", "name": "КАМ-04", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-4",
+            "name": "КАМ-04",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 70, "efficiency": 88, "normHours": 8.4 },
-        { "date": "2026-03-23", "loadPercent": 65, "efficiency": 82, "normHours": 7.8 },
-        { "date": "2026-03-24", "loadPercent": 85, "efficiency": 90, "normHours": 10.2 },
-        { "date": "2026-03-25", "loadPercent": 55, "efficiency": 78, "normHours": 6.6 },
-        { "date": "2026-03-26", "loadPercent": 78, "efficiency": 86, "normHours": 9.4 },
-        { "date": "2026-03-27", "loadPercent": 60, "efficiency": 83, "normHours": 7.2 },
-        { "date": "2026-03-28", "loadPercent": 63, "efficiency": 85, "normHours": 7.5 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 70,
+          "efficiency": 88,
+          "normHours": 8.4
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 65,
+          "efficiency": 82,
+          "normHours": 7.8
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 85,
+          "efficiency": 90,
+          "normHours": 10.2
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 55,
+          "efficiency": 78,
+          "normHours": 6.6
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 78,
+          "efficiency": 86,
+          "normHours": 9.4
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 60,
+          "efficiency": 83,
+          "normHours": 7.2
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 63,
+          "efficiency": 85,
+          "normHours": 7.5
+        }
       ]
     },
     {
@@ -249,34 +817,138 @@
         "loadPercent": 33,
         "efficiency": 65,
         "workOrders": [
-          { "id": "wo-006", "orderNumber": "ЗН-2026-0306", "plateNumber": "К111АА99", "brand": "Lada", "model": "Vesta", "workType": "Замена масла + фильтры", "normHours": 1, "actualHours": 1, "status": "completed", "planVsFact": 100 },
-          { "id": "wo-019", "orderNumber": "ЗН-2026-0319", "plateNumber": "Д999ДД77", "brand": "Chevrolet", "model": "Cruze", "workType": "Диагностика электрики", "normHours": 1.5, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-006",
+            "orderNumber": "ЗН-2026-0306",
+            "plateNumber": "К111АА99",
+            "brand": "Lada",
+            "model": "Vesta",
+            "workType": "Замена масла + фильтры",
+            "normHours": 1,
+            "actualHours": 1,
+            "status": "completed",
+            "planVsFact": 100
+          },
+          {
+            "id": "wo-019",
+            "orderNumber": "ЗН-2026-0319",
+            "plateNumber": "Д999ДД77",
+            "brand": "Chevrolet",
+            "model": "Cruze",
+            "workType": "Диагностика электрики",
+            "normHours": 1.5,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-7", "name": "Морозов П.С.", "role": "Механик", "hoursWorked": 1, "ordersCompleted": 1 }
+          {
+            "id": "w-7",
+            "name": "Морозов П.С.",
+            "role": "Механик",
+            "hoursWorked": 1,
+            "ordersCompleted": 1
+          }
         ],
         "alerts": [],
         "eventLog": [
-          { "id": "e-50", "type": "post_occupied", "description": "Авто К111АА99 установлено", "time": "2026-03-28T08:00:00" },
-          { "id": "e-51", "type": "work_end", "description": "Завершение ЗН-0306", "time": "2026-03-28T09:00:00" },
-          { "id": "e-52", "type": "post_vacated", "description": "Пост свободен", "time": "2026-03-28T09:05:00" }
+          {
+            "id": "e-50",
+            "type": "post_occupied",
+            "description": "Авто К111АА99 установлено",
+            "time": "2026-03-30T08:00:00"
+          },
+          {
+            "id": "e-51",
+            "type": "work_end",
+            "description": "Завершение ЗН-0306",
+            "time": "2026-03-30T09:00:00"
+          },
+          {
+            "id": "e-52",
+            "type": "post_vacated",
+            "description": "Пост свободен",
+            "time": "2026-03-30T09:05:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "ТО", "count": 1, "hours": 1 }, { "group": "Электрика", "count": 1, "hours": 1.5 }],
-          "byBrand": [{ "brand": "Lada", "count": 1 }, { "brand": "Chevrolet", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "ТО",
+              "count": 1,
+              "hours": 1
+            },
+            {
+              "group": "Электрика",
+              "count": 1,
+              "hours": 1.5
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Lada",
+              "count": 1
+            },
+            {
+              "brand": "Chevrolet",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 1.25
         },
-        "cameras": [{ "id": "cam-4", "name": "КАМ-04", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-4",
+            "name": "КАМ-04",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 40, "efficiency": 68, "normHours": 4.8 },
-        { "date": "2026-03-23", "loadPercent": 35, "efficiency": 60, "normHours": 4.2 },
-        { "date": "2026-03-24", "loadPercent": 55, "efficiency": 72, "normHours": 6.6 },
-        { "date": "2026-03-25", "loadPercent": 30, "efficiency": 58, "normHours": 3.6 },
-        { "date": "2026-03-26", "loadPercent": 50, "efficiency": 70, "normHours": 6 },
-        { "date": "2026-03-27", "loadPercent": 45, "efficiency": 67, "normHours": 5.4 },
-        { "date": "2026-03-28", "loadPercent": 33, "efficiency": 65, "normHours": 4 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 40,
+          "efficiency": 68,
+          "normHours": 4.8
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 35,
+          "efficiency": 60,
+          "normHours": 4.2
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 55,
+          "efficiency": 72,
+          "normHours": 6.6
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 30,
+          "efficiency": 58,
+          "normHours": 3.6
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 50,
+          "efficiency": 70,
+          "normHours": 6
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 45,
+          "efficiency": 67,
+          "normHours": 5.4
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 33,
+          "efficiency": 65,
+          "normHours": 4
+        }
       ]
     },
     {
@@ -292,33 +964,132 @@
         "loadPercent": 58,
         "efficiency": 80,
         "workOrders": [
-          { "id": "wo-007", "orderNumber": "ЗН-2026-0307", "plateNumber": "К111АА99", "brand": "Honda", "model": "CR-V", "workType": "Компьютерная диагностика + ТО", "normHours": 2, "actualHours": null, "status": "in_progress", "planVsFact": null },
-          { "id": "wo-023", "orderNumber": "ЗН-2026-0323", "plateNumber": "Л333ОО50", "brand": "Mitsubishi", "model": "Outlander", "workType": "Замена тормозных дисков", "normHours": 2, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-007",
+            "orderNumber": "ЗН-2026-0307",
+            "plateNumber": "К111АА99",
+            "brand": "Honda",
+            "model": "CR-V",
+            "workType": "Компьютерная диагностика + ТО",
+            "normHours": 2,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          },
+          {
+            "id": "wo-023",
+            "orderNumber": "ЗН-2026-0323",
+            "plateNumber": "Л333ОО50",
+            "brand": "Mitsubishi",
+            "model": "Outlander",
+            "workType": "Замена тормозных дисков",
+            "normHours": 2,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-8", "name": "Белов Е.Д.", "role": "Механик", "hoursWorked": 3, "ordersCompleted": 0 }
+          {
+            "id": "w-8",
+            "name": "Белов Е.Д.",
+            "role": "Механик",
+            "hoursWorked": 3,
+            "ordersCompleted": 0
+          }
         ],
         "alerts": [],
         "eventLog": [
-          { "id": "e-60", "type": "post_occupied", "description": "Авто К111АА99 установлено", "time": "2026-03-28T09:00:00" },
-          { "id": "e-61", "type": "work_start", "description": "Начало работ ЗН-0307", "time": "2026-03-28T09:05:00" }
+          {
+            "id": "e-60",
+            "type": "post_occupied",
+            "description": "Авто К111АА99 установлено",
+            "time": "2026-03-30T09:00:00"
+          },
+          {
+            "id": "e-61",
+            "type": "work_start",
+            "description": "Начало работ ЗН-0307",
+            "time": "2026-03-30T09:05:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "Диагностика", "count": 1, "hours": 2 }, { "group": "Тормозная система", "count": 1, "hours": 2 }],
-          "byBrand": [{ "brand": "Honda", "count": 1 }, { "brand": "Mitsubishi", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "Диагностика",
+              "count": 1,
+              "hours": 2
+            },
+            {
+              "group": "Тормозная система",
+              "count": 1,
+              "hours": 2
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Honda",
+              "count": 1
+            },
+            {
+              "brand": "Mitsubishi",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 2
         },
-        "cameras": [{ "id": "cam-5", "name": "КАМ-05", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-5",
+            "name": "КАМ-05",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 60, "efficiency": 82, "normHours": 7.2 },
-        { "date": "2026-03-23", "loadPercent": 55, "efficiency": 78, "normHours": 6.6 },
-        { "date": "2026-03-24", "loadPercent": 75, "efficiency": 85, "normHours": 9 },
-        { "date": "2026-03-25", "loadPercent": 48, "efficiency": 73, "normHours": 5.8 },
-        { "date": "2026-03-26", "loadPercent": 68, "efficiency": 80, "normHours": 8.2 },
-        { "date": "2026-03-27", "loadPercent": 62, "efficiency": 81, "normHours": 7.4 },
-        { "date": "2026-03-28", "loadPercent": 58, "efficiency": 80, "normHours": 7 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 60,
+          "efficiency": 82,
+          "normHours": 7.2
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 55,
+          "efficiency": 78,
+          "normHours": 6.6
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 75,
+          "efficiency": 85,
+          "normHours": 9
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 48,
+          "efficiency": 73,
+          "normHours": 5.8
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 68,
+          "efficiency": 80,
+          "normHours": 8.2
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 62,
+          "efficiency": 81,
+          "normHours": 7.4
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 58,
+          "efficiency": 80,
+          "normHours": 7
+        }
       ]
     },
     {
@@ -334,27 +1105,90 @@
         "loadPercent": 17,
         "efficiency": 0,
         "workOrders": [
-          { "id": "wo-021", "orderNumber": "ЗН-2026-0321", "plateNumber": "У555КК77", "brand": "BMW", "model": "X3", "workType": "Замена АКПП масла", "normHours": 1.5, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-021",
+            "orderNumber": "ЗН-2026-0321",
+            "plateNumber": "У555КК77",
+            "brand": "BMW",
+            "model": "X3",
+            "workType": "Замена АКПП масла",
+            "normHours": 1.5,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [],
         "alerts": [],
         "eventLog": [],
         "workStats": {
-          "byGroup": [{ "group": "АКПП", "count": 1, "hours": 1.5 }],
-          "byBrand": [{ "brand": "BMW", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "АКПП",
+              "count": 1,
+              "hours": 1.5
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "BMW",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 1.5
         },
-        "cameras": [{ "id": "cam-5", "name": "КАМ-05", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-5",
+            "name": "КАМ-05",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 20, "efficiency": 55, "normHours": 2.4 },
-        { "date": "2026-03-23", "loadPercent": 25, "efficiency": 60, "normHours": 3 },
-        { "date": "2026-03-24", "loadPercent": 45, "efficiency": 70, "normHours": 5.4 },
-        { "date": "2026-03-25", "loadPercent": 15, "efficiency": 50, "normHours": 1.8 },
-        { "date": "2026-03-26", "loadPercent": 38, "efficiency": 65, "normHours": 4.6 },
-        { "date": "2026-03-27", "loadPercent": 22, "efficiency": 58, "normHours": 2.6 },
-        { "date": "2026-03-28", "loadPercent": 17, "efficiency": 0, "normHours": 2 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 20,
+          "efficiency": 55,
+          "normHours": 2.4
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 25,
+          "efficiency": 60,
+          "normHours": 3
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 45,
+          "efficiency": 70,
+          "normHours": 5.4
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 15,
+          "efficiency": 50,
+          "normHours": 1.8
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 38,
+          "efficiency": 65,
+          "normHours": 4.6
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 22,
+          "efficiency": 58,
+          "normHours": 2.6
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 17,
+          "efficiency": 0,
+          "normHours": 2
+        }
       ]
     },
     {
@@ -370,34 +1204,133 @@
         "loadPercent": 50,
         "efficiency": 88,
         "workOrders": [
-          { "id": "wo-008", "orderNumber": "ЗН-2026-0308", "plateNumber": "Б777ГГ77", "brand": "Mercedes", "model": "C-Class", "workType": "Диагностика АКПП", "normHours": 1.5, "actualHours": 1.5, "status": "completed", "planVsFact": 100 },
-          { "id": "wo-017", "orderNumber": "ЗН-2026-0317", "plateNumber": "О222НН50", "brand": "Audi", "model": "A4", "workType": "Компьютерная диагностика", "normHours": 1, "actualHours": null, "status": "in_progress", "planVsFact": null }
+          {
+            "id": "wo-008",
+            "orderNumber": "ЗН-2026-0308",
+            "plateNumber": "Б777ГГ77",
+            "brand": "Mercedes",
+            "model": "C-Class",
+            "workType": "Диагностика АКПП",
+            "normHours": 1.5,
+            "actualHours": 1.5,
+            "status": "completed",
+            "planVsFact": 100
+          },
+          {
+            "id": "wo-017",
+            "orderNumber": "ЗН-2026-0317",
+            "plateNumber": "О222НН50",
+            "brand": "Audi",
+            "model": "A4",
+            "workType": "Компьютерная диагностика",
+            "normHours": 1,
+            "actualHours": null,
+            "status": "in_progress",
+            "planVsFact": null
+          }
         ],
         "workers": [
-          { "id": "w-9", "name": "Зайцев О.В.", "role": "Диагност", "hoursWorked": 3, "ordersCompleted": 1 }
+          {
+            "id": "w-9",
+            "name": "Зайцев О.В.",
+            "role": "Диагност",
+            "hoursWorked": 3,
+            "ordersCompleted": 1
+          }
         ],
         "alerts": [],
         "eventLog": [
-          { "id": "e-70", "type": "post_occupied", "description": "Авто Б777ГГ77 установлено", "time": "2026-03-28T08:00:00" },
-          { "id": "e-71", "type": "work_end", "description": "Завершение ЗН-0308", "time": "2026-03-28T09:30:00" },
-          { "id": "e-72", "type": "post_occupied", "description": "Авто О222НН50 установлено", "time": "2026-03-28T10:00:00" }
+          {
+            "id": "e-70",
+            "type": "post_occupied",
+            "description": "Авто Б777ГГ77 установлено",
+            "time": "2026-03-30T08:00:00"
+          },
+          {
+            "id": "e-71",
+            "type": "work_end",
+            "description": "Завершение ЗН-0308",
+            "time": "2026-03-30T09:30:00"
+          },
+          {
+            "id": "e-72",
+            "type": "post_occupied",
+            "description": "Авто О222НН50 установлено",
+            "time": "2026-03-30T10:00:00"
+          }
         ],
         "workStats": {
-          "byGroup": [{ "group": "Диагностика", "count": 2, "hours": 2.5 }],
-          "byBrand": [{ "brand": "Mercedes", "count": 1 }, { "brand": "Audi", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "Диагностика",
+              "count": 2,
+              "hours": 2.5
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Mercedes",
+              "count": 1
+            },
+            {
+              "brand": "Audi",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 1.25
         },
-        "cameras": [{ "id": "cam-6", "name": "КАМ-06", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-6",
+            "name": "КАМ-06",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 55, "efficiency": 90, "normHours": 5.5 },
-        { "date": "2026-03-23", "loadPercent": 50, "efficiency": 88, "normHours": 5 },
-        { "date": "2026-03-24", "loadPercent": 65, "efficiency": 92, "normHours": 6.5 },
-        { "date": "2026-03-25", "loadPercent": 35, "efficiency": 80, "normHours": 3.5 },
-        { "date": "2026-03-26", "loadPercent": 60, "efficiency": 90, "normHours": 6 },
-        { "date": "2026-03-27", "loadPercent": 48, "efficiency": 85, "normHours": 4.8 },
-        { "date": "2026-03-28", "loadPercent": 50, "efficiency": 88, "normHours": 5 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 55,
+          "efficiency": 90,
+          "normHours": 5.5
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 50,
+          "efficiency": 88,
+          "normHours": 5
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 65,
+          "efficiency": 92,
+          "normHours": 6.5
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 35,
+          "efficiency": 80,
+          "normHours": 3.5
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 60,
+          "efficiency": 90,
+          "normHours": 6
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 48,
+          "efficiency": 85,
+          "normHours": 4.8
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 50,
+          "efficiency": 88,
+          "normHours": 5
+        }
       ]
     },
     {
@@ -413,29 +1346,98 @@
         "loadPercent": 30,
         "efficiency": 0,
         "workOrders": [
-          { "id": "wo-024", "orderNumber": "ЗН-2026-0324", "plateNumber": "Ф666ФФ99", "brand": "Lexus", "model": "RX", "workType": "Диагностика подвески", "normHours": 1.5, "actualHours": null, "status": "scheduled", "planVsFact": null }
+          {
+            "id": "wo-024",
+            "orderNumber": "ЗН-2026-0324",
+            "plateNumber": "Ф666ФФ99",
+            "brand": "Lexus",
+            "model": "RX",
+            "workType": "Диагностика подвески",
+            "normHours": 1.5,
+            "actualHours": null,
+            "status": "scheduled",
+            "planVsFact": null
+          }
         ],
         "workers": [],
         "alerts": [],
         "eventLog": [],
         "workStats": {
-          "byGroup": [{ "group": "Диагностика", "count": 1, "hours": 1.5 }],
-          "byBrand": [{ "brand": "Lexus", "count": 1 }],
+          "byGroup": [
+            {
+              "group": "Диагностика",
+              "count": 1,
+              "hours": 1.5
+            }
+          ],
+          "byBrand": [
+            {
+              "brand": "Lexus",
+              "count": 1
+            }
+          ],
           "avgTimePerOrder": 1.5
         },
-        "cameras": [{ "id": "cam-6", "name": "КАМ-06", "preview": null }],
+        "cameras": [
+          {
+            "id": "cam-6",
+            "name": "КАМ-06",
+            "preview": null
+          }
+        ],
         "currentPlateImage": null
       },
       "calendar": [
-        { "date": "2026-03-22", "loadPercent": 40, "efficiency": 75, "normHours": 4 },
-        { "date": "2026-03-23", "loadPercent": 30, "efficiency": 70, "normHours": 3 },
-        { "date": "2026-03-24", "loadPercent": 55, "efficiency": 82, "normHours": 5.5 },
-        { "date": "2026-03-25", "loadPercent": 20, "efficiency": 60, "normHours": 2 },
-        { "date": "2026-03-26", "loadPercent": 45, "efficiency": 78, "normHours": 4.5 },
-        { "date": "2026-03-27", "loadPercent": 35, "efficiency": 72, "normHours": 3.5 },
-        { "date": "2026-03-28", "loadPercent": 30, "efficiency": 0, "normHours": 3 }
+        {
+          "date": "2026-03-24",
+          "loadPercent": 40,
+          "efficiency": 75,
+          "normHours": 4
+        },
+        {
+          "date": "2026-03-25",
+          "loadPercent": 30,
+          "efficiency": 70,
+          "normHours": 3
+        },
+        {
+          "date": "2026-03-26",
+          "loadPercent": 55,
+          "efficiency": 82,
+          "normHours": 5.5
+        },
+        {
+          "date": "2026-03-27",
+          "loadPercent": 20,
+          "efficiency": 60,
+          "normHours": 2
+        },
+        {
+          "date": "2026-03-28",
+          "loadPercent": 45,
+          "efficiency": 78,
+          "normHours": 4.5
+        },
+        {
+          "date": "2026-03-29",
+          "loadPercent": 35,
+          "efficiency": 72,
+          "normHours": 3.5
+        },
+        {
+          "date": "2026-03-30",
+          "loadPercent": 30,
+          "efficiency": 0,
+          "normHours": 3
+        }
       ]
     }
   ],
-  "periods": ["today", "yesterday", "week", "month", "custom"]
+  "periods": [
+    "today",
+    "yesterday",
+    "week",
+    "month",
+    "custom"
+  ]
 }
