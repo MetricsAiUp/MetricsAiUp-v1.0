@@ -103,7 +103,7 @@ function TimelineHeader({ shiftStart, shiftEnd }) {
               left: `${pos}%`,
               transform: 'translateX(-50%)',
               color: isHour ? 'var(--text-secondary)' : 'var(--text-muted)',
-              fontSize: isHour ? '10px' : '8px',
+              fontSize: isHour ? '11px' : '9px',
               top: isHour ? 0 : 2,
             }}
           >
@@ -118,7 +118,6 @@ function TimelineHeader({ shiftStart, shiftEnd }) {
 // Single timeline row for a post
 function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
   const { t } = useTranslation();
-  const nowPos = getNowPosition(shiftStart, shiftEnd);
   const PostIcon = POST_TYPE_ICONS[post.type] || Car;
   const postStatusColor = post.status === 'free'
     ? POST_STATUS_COLORS.free
@@ -132,29 +131,29 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
       style={{ borderColor: 'var(--border-glass)' }}
     >
       {/* Post info column */}
-      <div className="flex-shrink-0" style={{ width: 170, minWidth: 170 }}>
+      <div className="flex-shrink-0" style={{ width: 190, minWidth: 190 }}>
         <div className="flex items-center gap-1.5">
           <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
+            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
             style={{ background: postStatusColor }}
           />
-          <PostIcon size={12} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-          <span className="font-medium" style={{ color: 'var(--text-primary)', fontSize: '11px' }}>
+          <PostIcon size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+          <span className="font-semibold" style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
             {(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}
           </span>
           <span
-            className="px-1 rounded"
+            className="px-1.5 py-0.5 rounded"
             style={{
               background: 'var(--accent-light)',
               color: 'var(--accent)',
-              fontSize: '8px',
+              fontSize: '9px',
             }}
           >
             {t(`posts.${post.type}`) || post.type}
           </span>
         </div>
         {post.currentVehicle ? (
-          <div style={{ color: 'var(--text-secondary)', marginLeft: 16, fontSize: '10px' }}>
+          <div style={{ color: 'var(--text-secondary)', marginLeft: 18, fontSize: '11px' }}>
             <span className="font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
               {post.currentVehicle.plateNumber}
             </span>
@@ -163,7 +162,7 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
             </span>
           </div>
         ) : (
-          <div style={{ color: 'var(--text-muted)', marginLeft: 16, fontSize: '10px' }}>
+          <div style={{ color: 'var(--text-muted)', marginLeft: 18, fontSize: '11px' }}>
             {t('posts.free')}
           </div>
         )}
@@ -191,7 +190,7 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
                 <div
                   key={`h${h}`}
                   className="absolute top-0 bottom-0"
-                  style={{ left: `${pos}%`, width: 1, background: 'var(--text-muted)', opacity: 0.3 }}
+                  style={{ left: `${pos}%`, width: 1, background: 'var(--text-muted)', opacity: 0.45 }}
                 />
               );
             }
@@ -202,7 +201,7 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
                 <div
                   key={`m${h}`}
                   className="absolute top-0 bottom-0"
-                  style={{ left: `${pos30}%`, width: 1, background: 'var(--text-muted)', opacity: 0.12 }}
+                  style={{ left: `${pos30}%`, width: 1, background: 'var(--text-muted)', opacity: 0.2 }}
                 />
               );
             }
@@ -231,28 +230,14 @@ function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick }) {
               onClick={() => onBlockClick(item, post)}
               title={`${item.workOrderNumber} — ${item.workType}`}
             >
-              <span className="font-medium truncate" style={{ fontSize: '9px' }}>
+              <span className="font-medium truncate" style={{ fontSize: '10px' }}>
                 {item.workOrderNumber}
               </span>
             </div>
           );
         })}
 
-        {/* Current time indicator */}
-        <div
-          className="absolute top-0 bottom-0"
-          style={{
-            left: `${nowPos}%`,
-            width: 2,
-            background: 'var(--danger)',
-            zIndex: 3,
-          }}
-        >
-          <div
-            className="absolute -top-1 -left-1 w-2 h-2 rounded-full"
-            style={{ background: 'var(--danger)' }}
-          />
-        </div>
+        {/* Current time indicator — drawn globally */}
       </div>
     </div>
   );
@@ -625,7 +610,7 @@ function FreeWorkOrdersTable({ orders, t }) {
           className="glass rounded-xl overflow-hidden"
           style={{ border: '1px solid var(--border-glass)' }}
         >
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
               <tr style={{ background: 'var(--bg-glass)' }}>
                 <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -660,35 +645,35 @@ function FreeWorkOrdersTable({ orders, t }) {
                     className="border-t hover:opacity-80 transition-opacity"
                     style={{ borderColor: 'var(--border-glass)' }}
                   >
-                    <td className="px-3 py-2 font-mono font-medium text-xs" style={{ color: 'var(--accent)' }}>
+                    <td className="px-3 py-2.5 font-mono font-medium text-sm" style={{ color: 'var(--accent)' }}>
                       {wo.workOrderNumber}
                     </td>
-                    <td className="px-3 py-2">
-                      <span className="font-mono font-medium text-xs" style={{ color: 'var(--text-primary)' }}>
+                    <td className="px-3 py-2.5">
+                      <span className="font-mono font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
                         {wo.plateNumber}
                       </span>
                       <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         {wo.brand} {wo.model}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <td className="px-3 py-2.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
                       {wo.workType}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1">
-                        <TypeIcon size={12} style={{ color: 'var(--text-muted)' }} />
-                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <TypeIcon size={14} style={{ color: 'var(--text-muted)' }} />
+                        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                           {t(`posts.${wo.postType}`)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+                    <td className="px-3 py-2.5 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       {wo.normHours} {t('dashboardPosts.hours')}
                     </td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <td className="px-3 py-2.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
                       {wo.client}
                     </td>
-                    <td className="px-3 py-2 text-xs" style={{ color: wo.note ? 'var(--warning)' : 'var(--text-muted)' }}>
+                    <td className="px-3 py-2.5 text-sm" style={{ color: wo.note ? 'var(--warning)' : 'var(--text-muted)' }}>
                       {wo.note || '—'}
                     </td>
                   </tr>
@@ -726,7 +711,8 @@ function Legend({ t }) {
 
 // Main component
 export default function DashboardPosts() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -781,17 +767,55 @@ export default function DashboardPosts() {
 
   // Summary stats
   const stats = useMemo(() => {
-    if (!posts.length) return { occupied: 0, free: 0, inProgress: 0, completed: 0, scheduled: 0 };
+    if (!posts.length) return {};
     const occupied = posts.filter(p => p.status !== 'free').length;
     const free = posts.length - occupied;
-    let inProgress = 0, completed = 0, scheduled = 0;
-    posts.forEach(p => p.timeline.forEach(item => {
-      if (item.status === 'in_progress') inProgress++;
-      if (item.status === 'completed') completed++;
-      if (item.status === 'scheduled') scheduled++;
-    }));
-    return { occupied, free, inProgress, completed, scheduled };
-  }, [posts]);
+    let completedWO = 0, totalNormHours = 0, totalActualHours = 0;
+    let idleMinutes = 0, overdueMinutes = 0, savedMinutes = 0;
+    const now = new Date();
+    const { start: shiftStartMs } = getShiftBounds(settings.shiftStart, settings.shiftEnd);
+
+    posts.forEach(p => {
+      const tl = p.timeline.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      tl.forEach(item => {
+        if (item.status === 'completed') {
+          completedWO++;
+          totalNormHours += item.normHours || 0;
+          totalActualHours += item.actualHours || 0;
+          // Saved time: norm - actual (if faster)
+          if (item.actualHours != null && item.normHours > item.actualHours) {
+            savedMinutes += (item.normHours - item.actualHours) * 60;
+          }
+        }
+        // Overdue: in_progress past estimatedEnd
+        if (item.status === 'in_progress' && item.estimatedEnd) {
+          const est = new Date(item.estimatedEnd);
+          if (now > est) overdueMinutes += (now - est) / 60000;
+        }
+      });
+      // Idle time: gaps between WOs within shift
+      for (let i = 0; i < tl.length - 1; i++) {
+        const end = new Date(tl[i].endTime || tl[i].estimatedEnd || tl[i].startTime);
+        const nextStart = new Date(tl[i + 1].startTime);
+        if (nextStart > end) idleMinutes += (nextStart - end) / 60000;
+      }
+      // Idle before first WO (from shift start)
+      if (tl.length > 0) {
+        const firstStart = new Date(tl[0].startTime);
+        if (firstStart.getTime() > shiftStartMs) {
+          idleMinutes += (firstStart.getTime() - shiftStartMs) / 60000;
+        }
+      }
+    });
+
+    const fmtMin = (m) => {
+      const h = Math.floor(m / 60);
+      const min = Math.round(m % 60);
+      return h > 0 ? `${h}ч ${min}м` : `${min}м`;
+    };
+
+    return { occupied, free, completedWO, totalNormHours: Math.round(totalNormHours * 10) / 10, idleTime: fmtMin(idleMinutes), overdueTime: fmtMin(overdueMinutes), savedTime: fmtMin(savedMinutes) };
+  }, [posts, settings.shiftStart, settings.shiftEnd]);
 
   if (loading) {
     return (
@@ -819,30 +843,54 @@ export default function DashboardPosts() {
             )}
           </p>
         </div>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2 rounded-xl hover:opacity-80 transition-opacity"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
-        >
-          <Settings size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+            <Calendar size={14} style={{ color: 'var(--accent)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 rounded-xl hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+          >
+            <Settings size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Summary cards — compact inline */}
+      {/* Summary stats */}
       <div className="flex flex-wrap gap-2">
         {[
-          { label: t('dashboardPosts.occupiedPosts'), value: stats.occupied, color: 'var(--danger)', icon: CircleDot },
-          { label: t('dashboardPosts.freePosts'), value: stats.free, color: 'var(--success)', icon: CircleDot },
-          { label: t('dashboardPosts.inProgress'), value: stats.inProgress, color: 'var(--accent)', icon: Wrench },
-          { label: t('dashboardPosts.completedToday'), value: stats.completed, color: 'var(--success)', icon: FileText },
-          { label: t('dashboardPosts.scheduledToday'), value: stats.scheduled, color: 'var(--text-muted)', icon: Calendar },
-        ].map((card, i) => (
+          { label: isRu ? 'Занято' : 'Occupied', value: stats.occupied, color: 'var(--accent)', icon: CircleDot,
+            tip: isRu ? 'Количество постов, на которых сейчас находится автомобиль' : 'Number of posts currently occupied by a vehicle' },
+          { label: isRu ? 'Свободно' : 'Free', value: stats.free, color: 'var(--warning)', icon: CircleDot,
+            tip: isRu ? 'Количество свободных постов, готовых принять авто' : 'Number of free posts ready to accept a vehicle' },
+          { sep: true },
+          { label: isRu ? 'Выполнено ЗН' : 'Completed WO', value: stats.completedWO, color: 'var(--success)', icon: FileText,
+            tip: isRu ? 'Количество завершённых заказ-нарядов за текущую смену' : 'Number of completed work orders this shift' },
+          { label: isRu ? 'Нормо-часы' : 'Norm hours', value: stats.totalNormHours, color: 'var(--text-primary)', icon: Clock,
+            tip: isRu ? 'Сумма нормо-часов по завершённым заказ-нарядам' : 'Total norm hours from completed work orders' },
+          { label: isRu ? 'Простой' : 'Idle time', value: stats.idleTime, color: 'var(--text-muted)', icon: Timer,
+            tip: isRu ? 'Суммарное время, когда посты были свободны в течение смены' : 'Total time posts were idle during the shift' },
+          { label: isRu ? 'Просрочка' : 'Overdue', value: stats.overdueTime, color: 'var(--danger)', icon: AlertTriangle,
+            tip: isRu ? 'Суммарное время задержки — работы идут дольше запланированного' : 'Total overdue time — work taking longer than planned' },
+          { label: isRu ? 'Турбо' : 'Turbo', value: stats.savedTime, color: 'var(--success)', icon: ArrowRight,
+            tip: isRu ? 'Сэкономленное время — работы выполнены быстрее нормо-часов' : 'Saved time — work completed faster than norm hours' },
+        ].map((card, i) => card.sep ? (
+          <div key={i} style={{ width: 1, background: 'var(--border-glass)', alignSelf: 'stretch' }} />
+        ) : (
           <div
             key={i}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg relative group"
             style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
           >
-            <card.icon size={12} style={{ color: card.color }} />
+            <div className="absolute top-full left-0 mt-1 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 220, fontSize: '12px', lineHeight: 1.4 }}>
+              {card.tip}
+            </div>
+            <card.icon size={11} style={{ color: card.color }} />
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{card.label}</span>
             <span className="text-sm font-bold" style={{ color: card.color }}>{card.value}</span>
           </div>
@@ -852,17 +900,17 @@ export default function DashboardPosts() {
       {/* Legend */}
       <Legend t={t} />
 
-      {/* Timeline header + rows */}
+      {/* Timeline header + rows with global "now" line */}
       <div
-        className="glass rounded-xl p-3"
+        className="glass rounded-xl p-3 relative"
         style={{ border: '1px solid var(--border-glass)' }}
       >
-      <div className="flex gap-2 mb-1">
-        <div style={{ width: 170, minWidth: 170 }} />
-        <div className="flex-1">
-          <TimelineHeader shiftStart={settings.shiftStart} shiftEnd={settings.shiftEnd} />
+        <div className="flex gap-2 mb-1">
+          <div style={{ width: 190, minWidth: 190 }} />
+          <div className="flex-1">
+            <TimelineHeader shiftStart={settings.shiftStart} shiftEnd={settings.shiftEnd} />
+          </div>
         </div>
-      </div>
         {posts.map((post) => (
           <TimelineRow
             key={post.id}
@@ -872,6 +920,21 @@ export default function DashboardPosts() {
             onBlockClick={handleBlockClick}
           />
         ))}
+        {/* Global "now" line overlay — same flex layout as rows */}
+        <div className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none flex gap-2" style={{ padding: '12px', zIndex: 10 }}>
+          <div style={{ width: 190, minWidth: 190, flexShrink: 0 }} />
+          <div className="flex-1 relative">
+            {(() => {
+              const nowPos = getNowPosition(settings.shiftStart, settings.shiftEnd);
+              return (
+                <>
+                  <div className="absolute top-0 bottom-0" style={{ left: `${nowPos}%`, width: 2, background: 'var(--danger)' }} />
+                  <div className="absolute" style={{ left: `${nowPos}%`, top: 0, width: 8, height: 8, borderRadius: '50%', background: 'var(--danger)', transform: 'translate(-3px, -2px)' }} />
+                </>
+              );
+            })()}
+          </div>
+        </div>
       </div>
 
       {/* Free work orders */}
