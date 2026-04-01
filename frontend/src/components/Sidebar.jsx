@@ -67,25 +67,32 @@ export default function Sidebar() {
           if (item.hasSub) {
             return (
               <div key={item.path}>
-                <button
-                  onClick={() => {
-                    setPostsOpen(!postsOpen);
-                    if (!isPostsActive && posts.length > 0) {
-                      navigate(`/posts-detail?post=${posts[0].id}`);
-                    }
-                  }}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all whitespace-nowrap"
+                <div
+                  className="flex items-center rounded-lg transition-all whitespace-nowrap"
                   style={{
-                    color: isPostsActive ? 'var(--accent)' : 'var(--text-secondary)',
                     background: isPostsActive ? 'var(--accent-light)' : 'transparent',
-                    fontSize: '11px',
-                    fontWeight: isPostsActive ? 500 : 400,
                   }}
                 >
-                  <Icon size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
-                  <span className="truncate flex-1 text-left">{t(item.labelKey)}</span>
-                  <ChevronDown size={10} style={{ flexShrink: 0, transform: postsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
+                  <button
+                    onClick={() => navigate('/posts-detail')}
+                    className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:opacity-80 transition-opacity"
+                    style={{
+                      color: isPostsActive ? 'var(--accent)' : 'var(--text-secondary)',
+                      fontSize: '11px',
+                      fontWeight: isPostsActive ? 500 : 400,
+                    }}
+                  >
+                    <Icon size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
+                    <span className="truncate text-left">{t(item.labelKey)}</span>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPostsOpen(!postsOpen); }}
+                    className="px-1.5 py-1.5 rounded-md hover:opacity-70 transition-opacity"
+                    style={{ color: isPostsActive ? 'var(--accent)' : 'var(--text-muted)' }}
+                  >
+                    <ChevronDown size={14} strokeWidth={2.5} style={{ transform: postsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                  </button>
+                </div>
                 {postsOpen && (
                   <div className="ml-3 mt-0.5 space-y-0 border-l" style={{ borderColor: 'var(--border-glass)' }}>
                     {posts.map(post => {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const BASE = import.meta.env.BASE_URL || './';
@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import {
   Car, Truck, Wrench, Clock, User, AlertTriangle, ScrollText,
-  Camera, Image, ChevronRight, ChevronDown, BarChart3, Calendar, FileText,
+  Camera, Image, ChevronRight, ChevronDown, ArrowLeft, BarChart3, Calendar, FileText,
   CircleDot, Timer, X, Users, Activity, Eye,
 } from 'lucide-react';
 
@@ -462,13 +462,16 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
 
 // Main component
 export default function PostsDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [dashData, setDashData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('today');
   const [modal, setModal] = useState(null);
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
 
   const selectedPostId = searchParams.get('post') || null;
 
@@ -506,7 +509,15 @@ export default function PostsDetail() {
           <>
             {/* Post header */}
             <div className="flex items-center justify-between mb-4">
-              <div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/posts-detail')}
+                  className="p-1.5 rounded-lg hover:opacity-80 transition-opacity"
+                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div>
                 <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                   {translatePostName(selectedPost.name, t)}
                   <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
@@ -514,6 +525,7 @@ export default function PostsDetail() {
                   </span>
                 </h2>
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{translateZoneName(selectedPost.zone, t)}</p>
+                </div>
               </div>
               {/* Period selector */}
               <div className="flex gap-1">
@@ -584,8 +596,244 @@ export default function PostsDetail() {
             </CollapsibleSection>
           </>
         ) : (
-          <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
-            {t('postsDetail.selectPost')}
+          <div>
+            {/* Header with view toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')}</h2>
+              <div className="flex gap-1">
+                {[{ key: 'cards', label: isRu ? 'Плитки' : 'Cards' }, { key: 'table', label: isRu ? 'Таблица' : 'Table' }].map(v => (
+                  <button key={v.key} onClick={() => setViewMode(v.key)}
+                    className="px-3 py-1 rounded-lg text-xs transition-all"
+                    style={{ background: viewMode === v.key ? 'var(--accent)' : 'var(--bg-glass)', color: viewMode === v.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${viewMode === v.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* === VARIANT A: Cards === */}
+            {viewMode === 'cards' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {posts.map(post => {
+                  const d = post.today;
+                  const Icon = POST_TYPE_ICONS[post.type] || Car;
+                  const idleH = Math.max(0, Math.round((post.maxCapacityHours - d.factHours) * 10) / 10);
+                  const topWorkers = d.workers?.slice(0, 3) || [];
+                  const topWorks = d.workStats?.byGroup?.slice(0, 3) || [];
+                  const alertCount = d.alerts?.length || 0;
+                  return (
+                    <div key={post.id} className="glass rounded-xl p-4 hover:shadow-lg transition-all"
+                      style={{ border: '1px solid var(--border-glass)' }}
+                      onClick={() => navigate(`/posts-detail?post=${post.id}`)}>
+                      {/* Card header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.loadPercent > 50 ? 'var(--success)' : d.loadPercent > 0 ? 'var(--warning)' : 'var(--text-muted)' }} />
+                          <Icon size={14} style={{ color: 'var(--text-secondary)' }} />
+                          <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{translatePostName(post.name, t)}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '9px' }}>{t(`posts.${post.type}`)}</span>
+                        </div>
+                        {alertCount > 0 && (
+                          <div className="relative group">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(234,179,8,0.15)', color: 'var(--warning)' }}>{alertCount}</span>
+                            <div className="absolute top-full right-0 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 140, fontSize: '11px', textAlign: 'center' }}>
+                              {isRu ? 'Нарушения и замечания' : 'Alerts and warnings'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Plan / Fact / Max / Idle / Turbo row */}
+                      <div className="grid grid-cols-5 gap-1.5 mb-3">
+                        {[
+                          { label: isRu ? 'План' : 'Plan', value: `${d.planHours}ч`, color: 'var(--accent)', tip: isRu ? 'Плановые часы работ на посту' : 'Planned work hours' },
+                          { label: isRu ? 'Факт' : 'Fact', value: `${d.factHours}ч`, color: 'var(--success)', tip: isRu ? 'Фактически отработанные часы' : 'Actual hours worked' },
+                          { label: isRu ? 'Макс' : 'Max', value: `${post.maxCapacityHours}ч`, color: 'var(--text-muted)', tip: isRu ? 'Максимальная ёмкость поста за смену' : 'Max post capacity per shift' },
+                          { label: isRu ? 'Простой' : 'Idle', value: `${idleH}ч`, color: idleH > 4 ? 'var(--danger)' : 'var(--text-muted)', tip: isRu ? 'Время когда пост был свободен' : 'Time post was idle' },
+                          { label: isRu ? 'Турбо' : 'Turbo', value: `${Math.max(0, Math.round((d.planHours - d.factHours) * 10) / 10)}ч`, color: 'var(--success)', tip: isRu ? 'Сэкономленное время (план минус факт)' : 'Saved time (plan minus actual)' },
+                        ].map((m, i) => (
+                          <div key={i} className="text-center px-1 py-1.5 rounded-lg relative group" style={{ background: 'var(--bg-glass)' }}>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 160, fontSize: '11px', lineHeight: 1.3, textAlign: 'center' }}>
+                              {m.tip}
+                            </div>
+                            <div className="text-sm font-bold" style={{ color: m.color }}>{m.value}</div>
+                            <div className="text-xs" style={{ color: 'var(--text-muted)', fontSize: '9px' }}>{m.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Load + Efficiency bars */}
+                      <div className="space-y-2 mb-3">
+                        <div className="flex items-center gap-2 relative group">
+                          <span className="text-xs w-24" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.load')}</span>
+                          <div className="flex-1 h-2.5 rounded-full" style={{ background: 'var(--border-glass)' }}>
+                            <div className="h-full rounded-full transition-all" style={{ width: `${d.loadPercent}%`, background: loadColor(d.loadPercent) }} />
+                          </div>
+                          <span className="text-xs font-bold w-10 text-right" style={{ color: loadColor(d.loadPercent) }}>{d.loadPercent}%</span>
+                          <div className="absolute top-full left-24 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 180, fontSize: '11px', textAlign: 'center' }}>
+                            {isRu ? 'Процент загрузки поста за смену' : 'Post load percentage for the shift'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 relative group">
+                          <span className="text-xs w-24" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.efficiency')}</span>
+                          <div className="flex-1 h-2.5 rounded-full" style={{ background: 'var(--border-glass)' }}>
+                            <div className="h-full rounded-full transition-all" style={{ width: `${d.efficiency}%`, background: effColor(d.efficiency) }} />
+                          </div>
+                          <span className="text-xs font-bold w-10 text-right" style={{ color: effColor(d.efficiency) }}>{d.efficiency}%</span>
+                          <div className="absolute top-full left-24 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 180, fontSize: '11px', textAlign: 'center' }}>
+                            {isRu ? 'Эффективность использования рабочего времени' : 'Work time utilization efficiency'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* WO count + workers + works */}
+                      <div className="flex items-start gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="relative group">
+                          <div className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{d.workOrders?.length || 0}</div>
+                          <div style={{ color: 'var(--text-muted)', fontSize: '9px' }}>{isRu ? 'ЗН' : 'WO'}</div>
+                          <div className="absolute top-full left-0 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 140, fontSize: '11px', textAlign: 'center' }}>
+                            {isRu ? 'Заказ-наряды на посту' : 'Work orders on post'}
+                          </div>
+                        </div>
+                        <div className="flex-1 relative group">
+                          <div style={{ color: 'var(--text-muted)', fontSize: '9px', marginBottom: 2 }}>{isRu ? 'Исполнители' : 'Workers'}</div>
+                          {topWorkers.map((w, i) => <div key={i} className="truncate">{w.name}</div>)}
+                          {!topWorkers.length && <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                          <div className="absolute top-full left-0 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 160, fontSize: '11px', textAlign: 'center' }}>
+                            {isRu ? 'ТОП-3 исполнителей на посту' : 'Top 3 workers on post'}
+                          </div>
+                        </div>
+                        <div className="flex-1 relative group">
+                          <div style={{ color: 'var(--text-muted)', fontSize: '9px', marginBottom: 2 }}>{isRu ? 'Работы' : 'Works'}</div>
+                          {topWorks.map((w, i) => <div key={i} className="truncate">{w.group}</div>)}
+                          {!topWorks.length && <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                          <div className="absolute top-full left-0 mt-1 px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
+                            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 160, fontSize: '11px', textAlign: 'center' }}>
+                            {isRu ? 'ТОП-3 типов работ на посту' : 'Top 3 work types on post'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer link */}
+                      <div className="mt-3 pt-2 text-xs text-right" style={{ borderTop: '1px solid var(--border-glass)', color: 'var(--accent)' }}>
+                        {t('postsDetail.goToPost')} <ChevronRight size={12} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* === VARIANT B: Table with inline bars === */}
+            {viewMode === 'table' && (
+              <div className="glass rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr style={{ background: 'var(--bg-glass)' }}>
+                        <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пост' : 'Post'}</th>
+                        <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)', minWidth: 160 }}>{isRu ? 'План / Факт / Простой' : 'Plan / Fact / Idle'}</th>
+                        <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)', minWidth: 110 }}>{t('postsDetail.load')}</th>
+                        <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)', minWidth: 110 }}>{t('postsDetail.efficiency')}</th>
+                        <th className="text-center px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'ЗН' : 'WO'}</th>
+                        <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Исполнители' : 'Workers'}</th>
+                        <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Работы' : 'Works'}</th>
+                        <th className="text-center px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Алерты' : 'Alerts'}</th>
+                        <th className="px-2 py-2.5"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {posts.map(post => {
+                        const d = post.today;
+                        const Icon = POST_TYPE_ICONS[post.type] || Car;
+                        const idleH = Math.max(0, Math.round((post.maxCapacityHours - d.factHours) * 10) / 10);
+                        const topWorkers = d.workers?.slice(0, 3) || [];
+                        const topWorks = d.workStats?.byGroup?.slice(0, 3) || [];
+                        const alertCount = d.alerts?.length || 0;
+                        const maxH = post.maxCapacityHours;
+                        return (
+                          <tr key={post.id} className="border-t cursor-pointer hover:opacity-90 transition-opacity"
+                            style={{ borderColor: 'var(--border-glass)' }}
+                            onClick={() => navigate(`/posts-detail?post=${post.id}`)}>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ background: d.loadPercent > 50 ? 'var(--success)' : d.loadPercent > 0 ? 'var(--warning)' : 'var(--text-muted)' }} />
+                                <Icon size={13} style={{ color: 'var(--text-secondary)' }} />
+                                <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{translatePostName(post.name, t)}</span>
+                                <span className="text-xs px-1 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '8px' }}>{t(`posts.${post.type}`)}</span>
+                              </div>
+                            </td>
+                            {/* Plan/Fact/Idle mini bars */}
+                            <td className="px-2 py-3">
+                              <div className="space-y-1">
+                                {[
+                                  { lbl: isRu ? 'План' : 'Plan', val: d.planHours, color: 'var(--accent)', pct: (d.planHours / maxH) * 100 },
+                                  { lbl: isRu ? 'Факт' : 'Fact', val: d.factHours, color: 'var(--success)', pct: (d.factHours / maxH) * 100 },
+                                  { lbl: isRu ? 'Прост' : 'Idle', val: idleH, color: 'var(--danger)', pct: (idleH / maxH) * 100 },
+                                ].map((r, i) => (
+                                  <div key={i} className="flex items-center gap-1" style={{ fontSize: '10px' }}>
+                                    <span className="w-8 text-right" style={{ color: 'var(--text-muted)' }}>{r.lbl}</span>
+                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--border-glass)' }}>
+                                      <div className="h-full rounded-full" style={{ width: `${Math.min(r.pct, 100)}%`, background: r.color }} />
+                                    </div>
+                                    <span className="w-8 font-semibold" style={{ color: r.color }}>{r.val}ч</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            {/* Load */}
+                            <td className="px-2 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--border-glass)' }}>
+                                  <div className="h-full rounded-full" style={{ width: `${d.loadPercent}%`, background: loadColor(d.loadPercent) }} />
+                                </div>
+                                <span className="text-xs font-bold" style={{ color: loadColor(d.loadPercent) }}>{d.loadPercent}%</span>
+                              </div>
+                            </td>
+                            {/* Efficiency */}
+                            <td className="px-2 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--border-glass)' }}>
+                                  <div className="h-full rounded-full" style={{ width: `${d.efficiency}%`, background: effColor(d.efficiency) }} />
+                                </div>
+                                <span className="text-xs font-bold" style={{ color: effColor(d.efficiency) }}>{d.efficiency}%</span>
+                              </div>
+                            </td>
+                            {/* WO */}
+                            <td className="text-center px-2 py-3 font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{d.workOrders?.length || 0}</td>
+                            {/* Workers */}
+                            <td className="px-2 py-3">
+                              <div className="space-y-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                {topWorkers.map((w, i) => <div key={i} className="truncate" style={{ maxWidth: 110 }}>{w.name}</div>)}
+                                {!topWorkers.length && <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                              </div>
+                            </td>
+                            {/* Works */}
+                            <td className="px-2 py-3">
+                              <div className="space-y-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                {topWorks.map((w, i) => <div key={i} className="truncate" style={{ maxWidth: 110 }}>{w.group}</div>)}
+                                {!topWorks.length && <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                              </div>
+                            </td>
+                            {/* Alerts */}
+                            <td className="text-center px-2 py-3">
+                              {alertCount > 0 ? <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(234,179,8,0.15)', color: 'var(--warning)' }}>{alertCount}</span> : <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>}
+                            </td>
+                            <td className="px-2 py-3"><ChevronRight size={14} style={{ color: 'var(--accent)' }} /></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
