@@ -470,6 +470,9 @@ export default function PostsDetail() {
   const [dashData, setDashData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('today');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [showCustom, setShowCustom] = useState(false);
   const [modal, setModal] = useState(null);
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
 
@@ -528,16 +531,17 @@ export default function PostsDetail() {
                 </div>
               </div>
               {/* Period selector */}
-              <div className="flex gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 {[
                   { key: 'today', label: t('postsDetail.today') },
                   { key: 'yesterday', label: t('postsDetail.yesterday') },
                   { key: 'week', label: t('postsDetail.week') },
                   { key: 'month', label: t('postsDetail.month') },
+                  { key: 'custom', label: isRu ? 'Период' : 'Custom' },
                 ].map(p => (
                   <button
                     key={p.key}
-                    onClick={() => setPeriod(p.key)}
+                    onClick={() => { setPeriod(p.key); if (p.key === 'custom') setShowCustom(true); else setShowCustom(false); }}
                     className="px-2 py-1 rounded-lg text-xs transition-all"
                     style={{
                       background: period === p.key ? 'var(--accent)' : 'var(--bg-glass)',
@@ -548,6 +552,17 @@ export default function PostsDetail() {
                     {p.label}
                   </button>
                 ))}
+                {showCustom && (
+                  <div className="flex items-center gap-1 ml-1">
+                    <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                      className="px-1.5 py-0.5 rounded-lg text-xs"
+                      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
+                    <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                      className="px-1.5 py-0.5 rounded-lg text-xs"
+                      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -597,17 +612,48 @@ export default function PostsDetail() {
           </>
         ) : (
           <div>
-            {/* Header with view toggle */}
-            <div className="flex items-center justify-between mb-4">
+            {/* Header with period + view toggle */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')}</h2>
-              <div className="flex gap-1">
-                {[{ key: 'cards', label: isRu ? 'Плитки' : 'Cards' }, { key: 'table', label: isRu ? 'Таблица' : 'Table' }].map(v => (
-                  <button key={v.key} onClick={() => setViewMode(v.key)}
-                    className="px-3 py-1 rounded-lg text-xs transition-all"
-                    style={{ background: viewMode === v.key ? 'var(--accent)' : 'var(--bg-glass)', color: viewMode === v.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${viewMode === v.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
-                    {v.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Period selector */}
+                <div className="flex items-center gap-1">
+                  {[
+                    { key: 'today', label: t('postsDetail.today') },
+                    { key: 'yesterday', label: t('postsDetail.yesterday') },
+                    { key: 'week', label: t('postsDetail.week') },
+                    { key: 'month', label: t('postsDetail.month') },
+                    { key: 'custom', label: isRu ? 'Период' : 'Custom' },
+                  ].map(p => (
+                    <button key={p.key}
+                      onClick={() => { setPeriod(p.key); if (p.key === 'custom') setShowCustom(true); else setShowCustom(false); }}
+                      className="px-2 py-1 rounded-lg text-xs transition-all"
+                      style={{ background: period === p.key ? 'var(--accent)' : 'var(--bg-glass)', color: period === p.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${period === p.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
+                      {p.label}
+                    </button>
+                  ))}
+                  {showCustom && (
+                    <div className="flex items-center gap-1 ml-1">
+                      <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                        className="px-1.5 py-0.5 rounded-lg text-xs"
+                        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
+                      <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                        className="px-1.5 py-0.5 rounded-lg text-xs"
+                        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+                    </div>
+                  )}
+                </div>
+                {/* View toggle */}
+                <div className="flex gap-1" style={{ borderLeft: '1px solid var(--border-glass)', paddingLeft: 8 }}>
+                  {[{ key: 'cards', label: isRu ? 'Плитки' : 'Cards' }, { key: 'table', label: isRu ? 'Таблица' : 'Table' }].map(v => (
+                    <button key={v.key} onClick={() => setViewMode(v.key)}
+                      className="px-3 py-1 rounded-lg text-xs transition-all"
+                      style={{ background: viewMode === v.key ? 'var(--accent)' : 'var(--bg-glass)', color: viewMode === v.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${viewMode === v.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
