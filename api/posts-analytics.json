@@ -169,46 +169,466 @@
       },
       "calendar": [
         {
+          "date": "2026-03-01",
+          "loadPercent": 63,
+          "efficiency": 42,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 4.4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 46,
+          "efficiency": 37,
+          "normHours": 5.5,
+          "woCount": 3,
+          "idleHours": 6.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 28,
+          "efficiency": 39,
+          "normHours": 3.4,
+          "woCount": 2,
+          "idleHours": 8.6,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 23,
+          "efficiency": 47,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 35,
+          "efficiency": 59,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 54,
+          "efficiency": 70,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 66,
+          "efficiency": 76,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 63,
+          "efficiency": 76,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 4.4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 46,
+          "efficiency": 69,
+          "normHours": 5.5,
+          "woCount": 3,
+          "idleHours": 6.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 28,
+          "efficiency": 58,
+          "normHours": 3.4,
+          "woCount": 2,
+          "idleHours": 8.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 23,
+          "efficiency": 47,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 35,
+          "efficiency": 39,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 54,
+          "efficiency": 37,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 66,
+          "efficiency": 43,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 62,
+          "efficiency": 53,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 45,
+          "efficiency": 65,
+          "normHours": 5.4,
+          "woCount": 3,
+          "idleHours": 6.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 28,
+          "efficiency": 74,
+          "normHours": 3.4,
+          "woCount": 2,
+          "idleHours": 8.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 24,
+          "efficiency": 77,
+          "normHours": 2.9,
+          "woCount": 1,
+          "idleHours": 9.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 35,
+          "efficiency": 73,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 55,
+          "efficiency": 64,
+          "normHours": 6.6,
+          "woCount": 3,
+          "idleHours": 5.4,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 66,
+          "efficiency": 52,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 62,
+          "efficiency": 42,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 45,
+          "efficiency": 37,
+          "normHours": 5.4,
+          "woCount": 3,
+          "idleHours": 6.6,
+          "turboHours": 0.5
+        },
+        {
           "date": "2026-03-24",
-          "loadPercent": 75,
-          "efficiency": 85,
-          "normHours": 9
+          "loadPercent": 28,
+          "efficiency": 39,
+          "normHours": 3.4,
+          "woCount": 2,
+          "idleHours": 8.6,
+          "turboHours": 0.3
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 60,
-          "efficiency": 78,
-          "normHours": 7.2
+          "loadPercent": 24,
+          "efficiency": 48,
+          "normHours": 2.9,
+          "woCount": 1,
+          "idleHours": 9.1,
+          "turboHours": 0
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 90,
-          "efficiency": 92,
-          "normHours": 10.8
+          "loadPercent": 36,
+          "efficiency": 59,
+          "normHours": 4.3,
+          "woCount": 2,
+          "idleHours": 7.7,
+          "turboHours": 0
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 45,
+          "loadPercent": 55,
           "efficiency": 70,
-          "normHours": 5.4
+          "normHours": 6.6,
+          "woCount": 3,
+          "idleHours": 5.4,
+          "turboHours": 0.7
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 82,
-          "efficiency": 88,
-          "normHours": 9.8
+          "loadPercent": 67,
+          "efficiency": 76,
+          "normHours": 8,
+          "woCount": 4,
+          "idleHours": 4,
+          "turboHours": 0.8
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 70,
-          "efficiency": 80,
-          "normHours": 8.4
+          "loadPercent": 62,
+          "efficiency": 76,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 68,
-          "efficiency": 82,
-          "normHours": 8.2
+          "loadPercent": 44,
+          "efficiency": 69,
+          "normHours": 5.3,
+          "woCount": 3,
+          "idleHours": 6.7,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 27,
+          "efficiency": 57,
+          "normHours": 3.2,
+          "woCount": 2,
+          "idleHours": 8.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 65,
+          "efficiency": 43,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -324,46 +744,466 @@
       },
       "calendar": [
         {
-          "date": "2026-03-24",
-          "loadPercent": 65,
+          "date": "2026-03-01",
+          "loadPercent": 42,
+          "efficiency": 54,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 7,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 29,
+          "efficiency": 66,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 32,
+          "efficiency": 77,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 48,
+          "efficiency": 83,
+          "normHours": 5.8,
+          "woCount": 3,
+          "idleHours": 6.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 66,
+          "efficiency": 83,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 72,
+          "efficiency": 76,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 61,
+          "efficiency": 65,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 4.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 42,
+          "efficiency": 54,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 29,
+          "efficiency": 46,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 32,
+          "efficiency": 44,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 49,
+          "efficiency": 50,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 6.1,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 66,
+          "efficiency": 60,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 72,
+          "efficiency": 72,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 61,
+          "efficiency": 81,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 4.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 42,
+          "efficiency": 84,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 7,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 29,
           "efficiency": 80,
-          "normHours": 7.8
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 32,
+          "efficiency": 71,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 49,
+          "efficiency": 59,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 6.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 67,
+          "efficiency": 49,
+          "normHours": 8,
+          "woCount": 4,
+          "idleHours": 4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 72,
+          "efficiency": 44,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 60,
+          "efficiency": 46,
+          "normHours": 7.2,
+          "woCount": 4,
+          "idleHours": 4.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 41,
+          "efficiency": 55,
+          "normHours": 4.9,
+          "woCount": 2,
+          "idleHours": 7.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 29,
+          "efficiency": 66,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-24",
+          "loadPercent": 32,
+          "efficiency": 77,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0.4
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 55,
-          "efficiency": 72,
-          "normHours": 6.6
+          "loadPercent": 49,
+          "efficiency": 83,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 6.1,
+          "turboHours": 0
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 80,
-          "efficiency": 85,
-          "normHours": 9.6
+          "loadPercent": 67,
+          "efficiency": 83,
+          "normHours": 8,
+          "woCount": 4,
+          "idleHours": 4,
+          "turboHours": 0
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 40,
-          "efficiency": 65,
-          "normHours": 4.8
+          "loadPercent": 72,
+          "efficiency": 76,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0.9
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 70,
-          "efficiency": 78,
-          "normHours": 8.4
+          "loadPercent": 60,
+          "efficiency": 64,
+          "normHours": 7.2,
+          "woCount": 4,
+          "idleHours": 4.8,
+          "turboHours": 0
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 50,
-          "efficiency": 75,
-          "normHours": 6
+          "loadPercent": 41,
+          "efficiency": 53,
+          "normHours": 4.9,
+          "woCount": 2,
+          "idleHours": 7.1,
+          "turboHours": 0.5
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 50,
-          "efficiency": 75,
-          "normHours": 6
+          "loadPercent": 29,
+          "efficiency": 46,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 33,
+          "efficiency": 44,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 59,
+          "efficiency": 60,
+          "normHours": 7.1,
+          "woCount": 4,
+          "idleHours": 4.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -465,46 +1305,466 @@
       },
       "calendar": [
         {
-          "date": "2026-03-24",
-          "loadPercent": 85,
+          "date": "2026-03-01",
+          "loadPercent": 33,
           "efficiency": 90,
-          "normHours": 10.2
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 43,
+          "efficiency": 90,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 62,
+          "efficiency": 83,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 76,
+          "efficiency": 72,
+          "normHours": 9.1,
+          "woCount": 5,
+          "idleHours": 2.9,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 74,
+          "efficiency": 61,
+          "normHours": 8.9,
+          "woCount": 4,
+          "idleHours": 3.1,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 58,
+          "efficiency": 53,
+          "normHours": 7,
+          "woCount": 4,
+          "idleHours": 5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 40,
+          "efficiency": 51,
+          "normHours": 4.8,
+          "woCount": 2,
+          "idleHours": 7.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 33,
+          "efficiency": 57,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 43,
+          "efficiency": 67,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 62,
+          "efficiency": 79,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 76,
+          "efficiency": 88,
+          "normHours": 9.1,
+          "woCount": 5,
+          "idleHours": 2.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 74,
+          "efficiency": 91,
+          "normHours": 8.9,
+          "woCount": 4,
+          "idleHours": 3.1,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 57,
+          "efficiency": 87,
+          "normHours": 6.8,
+          "woCount": 3,
+          "idleHours": 5.2,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 39,
+          "efficiency": 78,
+          "normHours": 4.7,
+          "woCount": 2,
+          "idleHours": 7.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 33,
+          "efficiency": 66,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 44,
+          "efficiency": 56,
+          "normHours": 5.3,
+          "woCount": 3,
+          "idleHours": 6.7,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 63,
+          "efficiency": 51,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 4.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 76,
+          "efficiency": 53,
+          "normHours": 9.1,
+          "woCount": 5,
+          "idleHours": 2.9,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 73,
+          "efficiency": 62,
+          "normHours": 8.8,
+          "woCount": 4,
+          "idleHours": 3.2,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 57,
+          "efficiency": 73,
+          "normHours": 6.8,
+          "woCount": 3,
+          "idleHours": 5.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 39,
+          "efficiency": 84,
+          "normHours": 4.7,
+          "woCount": 2,
+          "idleHours": 7.3,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 33,
+          "efficiency": 90,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 44,
+          "efficiency": 90,
+          "normHours": 5.3,
+          "woCount": 3,
+          "idleHours": 6.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-24",
+          "loadPercent": 63,
+          "efficiency": 83,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 4.4,
+          "turboHours": 0.8
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 78,
-          "efficiency": 85,
-          "normHours": 9.4
+          "loadPercent": 76,
+          "efficiency": 71,
+          "normHours": 9.1,
+          "woCount": 5,
+          "idleHours": 2.9,
+          "turboHours": 0
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 92,
-          "efficiency": 95,
-          "normHours": 11
+          "loadPercent": 73,
+          "efficiency": 60,
+          "normHours": 8.8,
+          "woCount": 4,
+          "idleHours": 3.2,
+          "turboHours": 0
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 50,
-          "efficiency": 72,
-          "normHours": 6
+          "loadPercent": 57,
+          "efficiency": 53,
+          "normHours": 6.8,
+          "woCount": 3,
+          "idleHours": 5.2,
+          "turboHours": 0
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 88,
-          "efficiency": 91,
-          "normHours": 10.6
+          "loadPercent": 39,
+          "efficiency": 51,
+          "normHours": 4.7,
+          "woCount": 2,
+          "idleHours": 7.3,
+          "turboHours": 0
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 80,
-          "efficiency": 87,
-          "normHours": 9.6
+          "loadPercent": 33,
+          "efficiency": 57,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0.4
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 83,
-          "efficiency": 90,
-          "normHours": 10
+          "loadPercent": 44,
+          "efficiency": 68,
+          "normHours": 5.3,
+          "woCount": 3,
+          "idleHours": 6.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 63,
+          "efficiency": 79,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 4.4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 44,
+          "efficiency": 89,
+          "normHours": 5.3,
+          "woCount": 3,
+          "idleHours": 6.7,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -614,46 +1874,466 @@
       },
       "calendar": [
         {
+          "date": "2026-03-01",
+          "loadPercent": 56,
+          "efficiency": 54,
+          "normHours": 6.7,
+          "woCount": 3,
+          "idleHours": 5.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 74,
+          "efficiency": 43,
+          "normHours": 8.9,
+          "woCount": 4,
+          "idleHours": 3.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 82,
+          "efficiency": 35,
+          "normHours": 9.8,
+          "woCount": 5,
+          "idleHours": 2.2,
+          "turboHours": 1
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 73,
+          "efficiency": 33,
+          "normHours": 8.8,
+          "woCount": 4,
+          "idleHours": 3.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 54,
+          "efficiency": 39,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 40,
+          "efficiency": 49,
+          "normHours": 4.8,
+          "woCount": 2,
+          "idleHours": 7.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 41,
+          "efficiency": 61,
+          "normHours": 4.9,
+          "woCount": 2,
+          "idleHours": 7.1,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 56,
+          "efficiency": 70,
+          "normHours": 6.7,
+          "woCount": 3,
+          "idleHours": 5.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 75,
+          "efficiency": 73,
+          "normHours": 9,
+          "woCount": 5,
+          "idleHours": 3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 82,
+          "efficiency": 69,
+          "normHours": 9.8,
+          "woCount": 5,
+          "idleHours": 2.2,
+          "turboHours": 1
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 73,
+          "efficiency": 60,
+          "normHours": 8.8,
+          "woCount": 4,
+          "idleHours": 3.2,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 54,
+          "efficiency": 48,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 40,
+          "efficiency": 38,
+          "normHours": 4.8,
+          "woCount": 2,
+          "idleHours": 7.2,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 41,
+          "efficiency": 33,
+          "normHours": 4.9,
+          "woCount": 2,
+          "idleHours": 7.1,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 57,
+          "efficiency": 35,
+          "normHours": 6.8,
+          "woCount": 3,
+          "idleHours": 5.2,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 75,
+          "efficiency": 44,
+          "normHours": 9,
+          "woCount": 5,
+          "idleHours": 3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 82,
+          "efficiency": 55,
+          "normHours": 9.8,
+          "woCount": 5,
+          "idleHours": 2.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 72,
+          "efficiency": 66,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 53,
+          "efficiency": 72,
+          "normHours": 6.4,
+          "woCount": 3,
+          "idleHours": 5.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 39,
+          "efficiency": 72,
+          "normHours": 4.7,
+          "woCount": 2,
+          "idleHours": 7.3,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 41,
+          "efficiency": 65,
+          "normHours": 4.9,
+          "woCount": 2,
+          "idleHours": 7.1,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 57,
+          "efficiency": 53,
+          "normHours": 6.8,
+          "woCount": 3,
+          "idleHours": 5.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 75,
+          "efficiency": 42,
+          "normHours": 9,
+          "woCount": 5,
+          "idleHours": 3,
+          "turboHours": 0.9
+        },
+        {
           "date": "2026-03-24",
-          "loadPercent": 90,
-          "efficiency": 82,
-          "normHours": 10.8
+          "loadPercent": 82,
+          "efficiency": 35,
+          "normHours": 9.8,
+          "woCount": 5,
+          "idleHours": 2.2,
+          "turboHours": 1
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 85,
-          "efficiency": 80,
-          "normHours": 10.2
+          "loadPercent": 72,
+          "efficiency": 33,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0.9
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 95,
-          "efficiency": 88,
-          "normHours": 11.4
+          "loadPercent": 53,
+          "efficiency": 39,
+          "normHours": 6.4,
+          "woCount": 3,
+          "idleHours": 5.6,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 70,
-          "efficiency": 75,
-          "normHours": 8.4
+          "loadPercent": 39,
+          "efficiency": 50,
+          "normHours": 4.7,
+          "woCount": 2,
+          "idleHours": 7.3,
+          "turboHours": 0.5
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 88,
-          "efficiency": 84,
-          "normHours": 10.6
+          "loadPercent": 41,
+          "efficiency": 61,
+          "normHours": 4.9,
+          "woCount": 2,
+          "idleHours": 7.1,
+          "turboHours": 0.5
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 92,
-          "efficiency": 79,
-          "normHours": 11
+          "loadPercent": 57,
+          "efficiency": 70,
+          "normHours": 6.8,
+          "woCount": 3,
+          "idleHours": 5.2,
+          "turboHours": 0.7
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 92,
-          "efficiency": 78,
-          "normHours": 11
+          "loadPercent": 76,
+          "efficiency": 73,
+          "normHours": 9.1,
+          "woCount": 5,
+          "idleHours": 2.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 82,
+          "efficiency": 69,
+          "normHours": 9.8,
+          "woCount": 5,
+          "idleHours": 2.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 40,
+          "efficiency": 42,
+          "normHours": 4.8,
+          "woCount": 2,
+          "idleHours": 7.2,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -761,46 +2441,466 @@
       },
       "calendar": [
         {
-          "date": "2026-03-24",
+          "date": "2026-03-01",
+          "loadPercent": 85,
+          "efficiency": 40,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 85,
+          "efficiency": 46,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 1
+        },
+        {
+          "date": "2026-03-03",
           "loadPercent": 70,
-          "efficiency": 88,
-          "normHours": 8.4
+          "efficiency": 56,
+          "normHours": 8.4,
+          "woCount": 4,
+          "idleHours": 3.6,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 51,
+          "efficiency": 68,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 43,
+          "efficiency": 77,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 51,
+          "efficiency": 80,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 70,
+          "efficiency": 76,
+          "normHours": 8.4,
+          "woCount": 4,
+          "idleHours": 3.6,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 85,
+          "efficiency": 67,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 1
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 85,
+          "efficiency": 55,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 70,
+          "efficiency": 45,
+          "normHours": 8.4,
+          "woCount": 4,
+          "idleHours": 3.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 51,
+          "efficiency": 40,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 43,
+          "efficiency": 42,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 52,
+          "efficiency": 51,
+          "normHours": 6.2,
+          "woCount": 3,
+          "idleHours": 5.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 70,
+          "efficiency": 62,
+          "normHours": 8.4,
+          "woCount": 4,
+          "idleHours": 3.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 85,
+          "efficiency": 73,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 85,
+          "efficiency": 79,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 69,
+          "efficiency": 79,
+          "normHours": 8.3,
+          "woCount": 4,
+          "idleHours": 3.7,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 51,
+          "efficiency": 72,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 43,
+          "efficiency": 60,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 52,
+          "efficiency": 49,
+          "normHours": 6.2,
+          "woCount": 3,
+          "idleHours": 5.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 71,
+          "efficiency": 42,
+          "normHours": 8.5,
+          "woCount": 4,
+          "idleHours": 3.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 85,
+          "efficiency": 40,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 1
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 84,
+          "efficiency": 46,
+          "normHours": 10.1,
+          "woCount": 5,
+          "idleHours": 1.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-24",
+          "loadPercent": 69,
+          "efficiency": 57,
+          "normHours": 8.3,
+          "woCount": 4,
+          "idleHours": 3.7,
+          "turboHours": 0.8
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 65,
-          "efficiency": 82,
-          "normHours": 7.8
+          "loadPercent": 50,
+          "efficiency": 68,
+          "normHours": 6,
+          "woCount": 3,
+          "idleHours": 6,
+          "turboHours": 0
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 85,
-          "efficiency": 90,
-          "normHours": 10.2
+          "loadPercent": 43,
+          "efficiency": 77,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0.5
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 55,
-          "efficiency": 78,
-          "normHours": 6.6
+          "loadPercent": 52,
+          "efficiency": 80,
+          "normHours": 6.2,
+          "woCount": 3,
+          "idleHours": 5.8,
+          "turboHours": 0
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 78,
-          "efficiency": 86,
-          "normHours": 9.4
+          "loadPercent": 71,
+          "efficiency": 76,
+          "normHours": 8.5,
+          "woCount": 4,
+          "idleHours": 3.5,
+          "turboHours": 0
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 60,
-          "efficiency": 83,
-          "normHours": 7.2
+          "loadPercent": 85,
+          "efficiency": 66,
+          "normHours": 10.2,
+          "woCount": 5,
+          "idleHours": 1.8,
+          "turboHours": 1
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 63,
-          "efficiency": 85,
-          "normHours": 7.5
+          "loadPercent": 84,
+          "efficiency": 54,
+          "normHours": 10.1,
+          "woCount": 5,
+          "idleHours": 1.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 68,
+          "efficiency": 44,
+          "normHours": 8.2,
+          "woCount": 4,
+          "idleHours": 3.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 54,
+          "efficiency": 51,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -908,46 +3008,466 @@
       },
       "calendar": [
         {
+          "date": "2026-03-01",
+          "loadPercent": 55,
+          "efficiency": 75,
+          "normHours": 6.6,
+          "woCount": 3,
+          "idleHours": 5.4,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 36,
+          "efficiency": 84,
+          "normHours": 4.3,
+          "woCount": 2,
+          "idleHours": 7.7,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 21,
+          "efficiency": 87,
+          "normHours": 2.5,
+          "woCount": 1,
+          "idleHours": 9.5,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 20,
+          "efficiency": 83,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 34,
+          "efficiency": 74,
+          "normHours": 4.1,
+          "woCount": 2,
+          "idleHours": 7.9,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 53,
+          "efficiency": 62,
+          "normHours": 6.4,
+          "woCount": 3,
+          "idleHours": 5.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 62,
+          "efficiency": 52,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 54,
+          "efficiency": 47,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 36,
+          "efficiency": 49,
+          "normHours": 4.3,
+          "woCount": 2,
+          "idleHours": 7.7,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 20,
+          "efficiency": 58,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 20,
+          "efficiency": 69,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0.2
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 35,
+          "efficiency": 80,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 53,
+          "efficiency": 86,
+          "normHours": 6.4,
+          "woCount": 3,
+          "idleHours": 5.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 62,
+          "efficiency": 86,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 54,
+          "efficiency": 79,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 35,
+          "efficiency": 67,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 20,
+          "efficiency": 56,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0.2
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 20,
+          "efficiency": 49,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0.2
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 35,
+          "efficiency": 47,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 54,
+          "efficiency": 53,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 62,
+          "efficiency": 64,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 54,
+          "efficiency": 75,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 35,
+          "efficiency": 84,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0.4
+        },
+        {
           "date": "2026-03-24",
-          "loadPercent": 40,
-          "efficiency": 68,
-          "normHours": 4.8
+          "loadPercent": 20,
+          "efficiency": 87,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0.2
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 35,
-          "efficiency": 60,
-          "normHours": 4.2
+          "loadPercent": 20,
+          "efficiency": 83,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0.2
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 55,
-          "efficiency": 72,
-          "normHours": 6.6
+          "loadPercent": 35,
+          "efficiency": 73,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0.4
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 30,
-          "efficiency": 58,
-          "normHours": 3.6
+          "loadPercent": 54,
+          "efficiency": 61,
+          "normHours": 6.5,
+          "woCount": 3,
+          "idleHours": 5.5,
+          "turboHours": 0.7
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 50,
-          "efficiency": 70,
-          "normHours": 6
+          "loadPercent": 62,
+          "efficiency": 51,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0.7
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 45,
-          "efficiency": 67,
-          "normHours": 5.4
+          "loadPercent": 53,
+          "efficiency": 47,
+          "normHours": 6.4,
+          "woCount": 3,
+          "idleHours": 5.6,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 33,
-          "efficiency": 65,
-          "normHours": 4
+          "loadPercent": 35,
+          "efficiency": 50,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 7.8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 20,
+          "efficiency": 58,
+          "normHours": 2.4,
+          "woCount": 1,
+          "idleHours": 9.6,
+          "turboHours": 0.2
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 48,
+          "efficiency": 85,
+          "normHours": 5.8,
+          "woCount": 3,
+          "idleHours": 6.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -1049,46 +3569,466 @@
       },
       "calendar": [
         {
-          "date": "2026-03-24",
-          "loadPercent": 60,
+          "date": "2026-03-01",
+          "loadPercent": 33,
+          "efficiency": 90,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 23,
+          "efficiency": 81,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 30,
+          "efficiency": 69,
+          "normHours": 3.6,
+          "woCount": 2,
+          "idleHours": 8.4,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 48,
+          "efficiency": 59,
+          "normHours": 5.8,
+          "woCount": 3,
+          "idleHours": 6.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 64,
+          "efficiency": 54,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 4.3,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 66,
+          "efficiency": 56,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 52,
+          "efficiency": 65,
+          "normHours": 6.2,
+          "woCount": 3,
+          "idleHours": 5.8,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 33,
+          "efficiency": 76,
+          "normHours": 4,
+          "woCount": 2,
+          "idleHours": 8,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 23,
+          "efficiency": 87,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 30,
+          "efficiency": 93,
+          "normHours": 3.6,
+          "woCount": 2,
+          "idleHours": 8.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 48,
+          "efficiency": 93,
+          "normHours": 5.8,
+          "woCount": 3,
+          "idleHours": 6.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 64,
+          "efficiency": 86,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 4.3,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 65,
+          "efficiency": 74,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 51,
+          "efficiency": 63,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 32,
+          "efficiency": 56,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 23,
+          "efficiency": 54,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 30,
+          "efficiency": 60,
+          "normHours": 3.6,
+          "woCount": 2,
+          "idleHours": 8.4,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 49,
+          "efficiency": 71,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 6.1,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 64,
           "efficiency": 82,
-          "normHours": 7.2
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 4.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 65,
+          "efficiency": 91,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 51,
+          "efficiency": 94,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 32,
+          "efficiency": 90,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 23,
+          "efficiency": 80,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-24",
+          "loadPercent": 31,
+          "efficiency": 68,
+          "normHours": 3.7,
+          "woCount": 2,
+          "idleHours": 8.3,
+          "turboHours": 0
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 55,
-          "efficiency": 78,
-          "normHours": 6.6
+          "loadPercent": 49,
+          "efficiency": 58,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 6.1,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 75,
-          "efficiency": 85,
-          "normHours": 9
+          "loadPercent": 64,
+          "efficiency": 54,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 4.3,
+          "turboHours": 0.8
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 48,
-          "efficiency": 73,
-          "normHours": 5.8
+          "loadPercent": 65,
+          "efficiency": 57,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0.8
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 68,
-          "efficiency": 80,
-          "normHours": 8.2
+          "loadPercent": 51,
+          "efficiency": 65,
+          "normHours": 6.1,
+          "woCount": 3,
+          "idleHours": 5.9,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 62,
-          "efficiency": 81,
-          "normHours": 7.4
+          "loadPercent": 32,
+          "efficiency": 77,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0.4
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 58,
-          "efficiency": 80,
-          "normHours": 7
+          "loadPercent": 23,
+          "efficiency": 88,
+          "normHours": 2.8,
+          "woCount": 1,
+          "idleHours": 9.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 31,
+          "efficiency": 94,
+          "normHours": 3.7,
+          "woCount": 2,
+          "idleHours": 8.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 65,
+          "efficiency": 68,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -1148,46 +4088,466 @@
       },
       "calendar": [
         {
+          "date": "2026-03-01",
+          "loadPercent": 29,
+          "efficiency": 41,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 42,
+          "efficiency": 36,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 61,
+          "efficiency": 38,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 4.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 72,
+          "efficiency": 47,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 66,
+          "efficiency": 58,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 48,
+          "efficiency": 69,
+          "normHours": 5.8,
+          "woCount": 3,
+          "idleHours": 6.2,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 32,
+          "efficiency": 75,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 8.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 29,
+          "efficiency": 75,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 42,
+          "efficiency": 68,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 62,
+          "efficiency": 56,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 72,
+          "efficiency": 45,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 66,
+          "efficiency": 38,
+          "normHours": 7.9,
+          "woCount": 4,
+          "idleHours": 4.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 48,
+          "efficiency": 36,
+          "normHours": 5.8,
+          "woCount": 3,
+          "idleHours": 6.2,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 31,
+          "efficiency": 42,
+          "normHours": 3.7,
+          "woCount": 2,
+          "idleHours": 8.3,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 29,
+          "efficiency": 53,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 43,
+          "efficiency": 64,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 62,
+          "efficiency": 73,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 72,
+          "efficiency": 76,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0.9
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 65,
+          "efficiency": 72,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 47,
+          "efficiency": 62,
+          "normHours": 5.6,
+          "woCount": 3,
+          "idleHours": 6.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 31,
+          "efficiency": 50,
+          "normHours": 3.7,
+          "woCount": 2,
+          "idleHours": 8.3,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 29,
+          "efficiency": 40,
+          "normHours": 3.5,
+          "woCount": 2,
+          "idleHours": 8.5,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 43,
+          "efficiency": 36,
+          "normHours": 5.2,
+          "woCount": 3,
+          "idleHours": 6.8,
+          "turboHours": 0.5
+        },
+        {
           "date": "2026-03-24",
-          "loadPercent": 20,
-          "efficiency": 55,
-          "normHours": 2.4
+          "loadPercent": 62,
+          "efficiency": 39,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0.7
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 25,
-          "efficiency": 60,
-          "normHours": 3
+          "loadPercent": 72,
+          "efficiency": 47,
+          "normHours": 8.6,
+          "woCount": 4,
+          "idleHours": 3.4,
+          "turboHours": 0
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 45,
-          "efficiency": 70,
-          "normHours": 5.4
+          "loadPercent": 65,
+          "efficiency": 59,
+          "normHours": 7.8,
+          "woCount": 4,
+          "idleHours": 4.2,
+          "turboHours": 0.8
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 15,
-          "efficiency": 50,
-          "normHours": 1.8
+          "loadPercent": 47,
+          "efficiency": 70,
+          "normHours": 5.6,
+          "woCount": 3,
+          "idleHours": 6.4,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 38,
-          "efficiency": 65,
-          "normHours": 4.6
+          "loadPercent": 31,
+          "efficiency": 76,
+          "normHours": 3.7,
+          "woCount": 2,
+          "idleHours": 8.3,
+          "turboHours": 0.4
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 22,
-          "efficiency": 58,
-          "normHours": 2.6
+          "loadPercent": 30,
+          "efficiency": 75,
+          "normHours": 3.6,
+          "woCount": 2,
+          "idleHours": 8.4,
+          "turboHours": 0
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 17,
+          "loadPercent": 44,
+          "efficiency": 67,
+          "normHours": 5.3,
+          "woCount": 3,
+          "idleHours": 6.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 62,
+          "efficiency": 56,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 4.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 63,
+          "efficiency": 43,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 4.4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
           "efficiency": 0,
-          "normHours": 2
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -1290,46 +4650,466 @@
       },
       "calendar": [
         {
+          "date": "2026-03-01",
+          "loadPercent": 56,
+          "efficiency": 54,
+          "normHours": 5.6,
+          "woCount": 3,
+          "idleHours": 4.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 73,
+          "efficiency": 65,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 2.7,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 76,
+          "efficiency": 76,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 2.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 64,
+          "efficiency": 82,
+          "normHours": 6.4,
+          "woCount": 3,
+          "idleHours": 3.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 45,
+          "efficiency": 82,
+          "normHours": 4.5,
+          "woCount": 2,
+          "idleHours": 5.5,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 33,
+          "efficiency": 75,
+          "normHours": 3.3,
+          "woCount": 2,
+          "idleHours": 6.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 38,
+          "efficiency": 63,
+          "normHours": 3.8,
+          "woCount": 2,
+          "idleHours": 6.2,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 56,
+          "efficiency": 52,
+          "normHours": 5.6,
+          "woCount": 3,
+          "idleHours": 4.4,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 73,
+          "efficiency": 45,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 2.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 76,
+          "efficiency": 43,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 2.4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 63,
+          "efficiency": 49,
+          "normHours": 6.3,
+          "woCount": 3,
+          "idleHours": 3.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 44,
+          "efficiency": 60,
+          "normHours": 4.4,
+          "woCount": 2,
+          "idleHours": 5.6,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 33,
+          "efficiency": 71,
+          "normHours": 3.3,
+          "woCount": 2,
+          "idleHours": 6.7,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 39,
+          "efficiency": 80,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 56,
+          "efficiency": 83,
+          "normHours": 5.6,
+          "woCount": 3,
+          "idleHours": 4.4,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 73,
+          "efficiency": 79,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 2.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 76,
+          "efficiency": 69,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 2.4,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 63,
+          "efficiency": 57,
+          "normHours": 6.3,
+          "woCount": 3,
+          "idleHours": 3.7,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 44,
+          "efficiency": 47,
+          "normHours": 4.4,
+          "woCount": 2,
+          "idleHours": 5.6,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 33,
+          "efficiency": 43,
+          "normHours": 3.3,
+          "woCount": 2,
+          "idleHours": 6.7,
+          "turboHours": 0.3
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 39,
+          "efficiency": 46,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 57,
+          "efficiency": 54,
+          "normHours": 5.7,
+          "woCount": 3,
+          "idleHours": 4.3,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 73,
+          "efficiency": 66,
+          "normHours": 7.3,
+          "woCount": 4,
+          "idleHours": 2.7,
+          "turboHours": 0
+        },
+        {
           "date": "2026-03-24",
-          "loadPercent": 55,
-          "efficiency": 90,
-          "normHours": 5.5
+          "loadPercent": 76,
+          "efficiency": 77,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 2.4,
+          "turboHours": 0
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 50,
-          "efficiency": 88,
-          "normHours": 5
+          "loadPercent": 63,
+          "efficiency": 83,
+          "normHours": 6.3,
+          "woCount": 3,
+          "idleHours": 3.7,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 65,
-          "efficiency": 92,
-          "normHours": 6.5
+          "loadPercent": 44,
+          "efficiency": 82,
+          "normHours": 4.4,
+          "woCount": 2,
+          "idleHours": 5.6,
+          "turboHours": 0
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 35,
-          "efficiency": 80,
-          "normHours": 3.5
+          "loadPercent": 33,
+          "efficiency": 74,
+          "normHours": 3.3,
+          "woCount": 2,
+          "idleHours": 6.7,
+          "turboHours": 0.3
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 60,
-          "efficiency": 90,
-          "normHours": 6
+          "loadPercent": 39,
+          "efficiency": 63,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0.4
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 48,
-          "efficiency": 85,
-          "normHours": 4.8
+          "loadPercent": 57,
+          "efficiency": 51,
+          "normHours": 5.7,
+          "woCount": 3,
+          "idleHours": 4.3,
+          "turboHours": 0.6
         },
         {
           "date": "2026-03-30",
+          "loadPercent": 74,
+          "efficiency": 44,
+          "normHours": 7.4,
+          "woCount": 4,
+          "idleHours": 2.6,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 76,
+          "efficiency": 44,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 2.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
           "loadPercent": 50,
-          "efficiency": 88,
-          "normHours": 5
+          "efficiency": 80,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 5,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     },
@@ -1389,46 +5169,466 @@
       },
       "calendar": [
         {
+          "date": "2026-03-01",
+          "loadPercent": 81,
+          "efficiency": 89,
+          "normHours": 8.1,
+          "woCount": 4,
+          "idleHours": 1.9,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-02",
+          "loadPercent": 77,
+          "efficiency": 89,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 2.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-03",
+          "loadPercent": 60,
+          "efficiency": 82,
+          "normHours": 6,
+          "woCount": 3,
+          "idleHours": 4,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-04",
+          "loadPercent": 43,
+          "efficiency": 70,
+          "normHours": 4.3,
+          "woCount": 2,
+          "idleHours": 5.7,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-05",
+          "loadPercent": 39,
+          "efficiency": 59,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-06",
+          "loadPercent": 50,
+          "efficiency": 52,
+          "normHours": 5,
+          "woCount": 3,
+          "idleHours": 5,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-07",
+          "loadPercent": 70,
+          "efficiency": 50,
+          "normHours": 7,
+          "woCount": 4,
+          "idleHours": 3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-08",
+          "loadPercent": 81,
+          "efficiency": 56,
+          "normHours": 8.1,
+          "woCount": 4,
+          "idleHours": 1.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-09",
+          "loadPercent": 77,
+          "efficiency": 67,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 2.3,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-10",
+          "loadPercent": 60,
+          "efficiency": 78,
+          "normHours": 6,
+          "woCount": 3,
+          "idleHours": 4,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-11",
+          "loadPercent": 43,
+          "efficiency": 87,
+          "normHours": 4.3,
+          "woCount": 2,
+          "idleHours": 5.7,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-03-12",
+          "loadPercent": 39,
+          "efficiency": 90,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-13",
+          "loadPercent": 51,
+          "efficiency": 86,
+          "normHours": 5.1,
+          "woCount": 3,
+          "idleHours": 4.9,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-14",
+          "loadPercent": 70,
+          "efficiency": 76,
+          "normHours": 7,
+          "woCount": 4,
+          "idleHours": 3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-15",
+          "loadPercent": 82,
+          "efficiency": 64,
+          "normHours": 8.2,
+          "woCount": 4,
+          "idleHours": 1.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-16",
+          "loadPercent": 77,
+          "efficiency": 54,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 2.3,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-17",
+          "loadPercent": 59,
+          "efficiency": 50,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 4.1,
+          "turboHours": 0.6
+        },
+        {
+          "date": "2026-03-18",
+          "loadPercent": 42,
+          "efficiency": 53,
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 5.8,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-19",
+          "loadPercent": 39,
+          "efficiency": 61,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-20",
+          "loadPercent": 51,
+          "efficiency": 73,
+          "normHours": 5.1,
+          "woCount": 3,
+          "idleHours": 4.9,
+          "turboHours": 0.5
+        },
+        {
+          "date": "2026-03-21",
+          "loadPercent": 70,
+          "efficiency": 84,
+          "normHours": 7,
+          "woCount": 4,
+          "idleHours": 3,
+          "turboHours": 0.7
+        },
+        {
+          "date": "2026-03-22",
+          "loadPercent": 82,
+          "efficiency": 90,
+          "normHours": 8.2,
+          "woCount": 4,
+          "idleHours": 1.8,
+          "turboHours": 0.8
+        },
+        {
+          "date": "2026-03-23",
+          "loadPercent": 77,
+          "efficiency": 89,
+          "normHours": 7.7,
+          "woCount": 4,
+          "idleHours": 2.3,
+          "turboHours": 0.8
+        },
+        {
           "date": "2026-03-24",
-          "loadPercent": 40,
-          "efficiency": 75,
-          "normHours": 4
+          "loadPercent": 59,
+          "efficiency": 81,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 4.1,
+          "turboHours": 0
         },
         {
           "date": "2026-03-25",
-          "loadPercent": 30,
+          "loadPercent": 42,
           "efficiency": 70,
-          "normHours": 3
+          "normHours": 4.2,
+          "woCount": 2,
+          "idleHours": 5.8,
+          "turboHours": 0
         },
         {
           "date": "2026-03-26",
-          "loadPercent": 55,
-          "efficiency": 82,
-          "normHours": 5.5
+          "loadPercent": 39,
+          "efficiency": 58,
+          "normHours": 3.9,
+          "woCount": 2,
+          "idleHours": 6.1,
+          "turboHours": 0
         },
         {
           "date": "2026-03-27",
-          "loadPercent": 20,
-          "efficiency": 60,
-          "normHours": 2
+          "loadPercent": 51,
+          "efficiency": 51,
+          "normHours": 5.1,
+          "woCount": 3,
+          "idleHours": 4.9,
+          "turboHours": 0.5
         },
         {
           "date": "2026-03-28",
-          "loadPercent": 45,
-          "efficiency": 78,
-          "normHours": 4.5
+          "loadPercent": 71,
+          "efficiency": 51,
+          "normHours": 7.1,
+          "woCount": 4,
+          "idleHours": 2.9,
+          "turboHours": 0.7
         },
         {
           "date": "2026-03-29",
-          "loadPercent": 35,
-          "efficiency": 72,
-          "normHours": 3.5
+          "loadPercent": 82,
+          "efficiency": 57,
+          "normHours": 8.2,
+          "woCount": 4,
+          "idleHours": 1.8,
+          "turboHours": 0
         },
         {
           "date": "2026-03-30",
-          "loadPercent": 30,
+          "loadPercent": 76,
+          "efficiency": 67,
+          "normHours": 7.6,
+          "woCount": 4,
+          "idleHours": 2.4,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-03-31",
+          "loadPercent": 59,
+          "efficiency": 79,
+          "normHours": 5.9,
+          "woCount": 3,
+          "idleHours": 4.1,
+          "turboHours": 0
+        },
+        {
+          "date": "2026-04-01",
+          "loadPercent": 41,
+          "efficiency": 69,
+          "normHours": 4.1,
+          "woCount": 2,
+          "idleHours": 5.9,
+          "turboHours": 0.4
+        },
+        {
+          "date": "2026-04-02",
+          "loadPercent": 0,
           "efficiency": 0,
-          "normHours": 3
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-03",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-04",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-05",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-06",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-07",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-08",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-09",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-10",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-11",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-12",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-13",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-14",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-15",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-16",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-17",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-18",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-19",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-20",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-21",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-22",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-23",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-24",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-25",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-26",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-27",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-28",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-29",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
+        },
+        {
+          "date": "2026-04-30",
+          "loadPercent": 0,
+          "efficiency": 0,
+          "normHours": 0
         }
       ]
     }
