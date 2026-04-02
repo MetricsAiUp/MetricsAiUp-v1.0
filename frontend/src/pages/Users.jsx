@@ -25,6 +25,7 @@ const ROLE_ICONS = { admin: Shield, manager: UserCog, viewer: Eye, mechanic: Wre
 
 export default function Users() {
   const { i18n } = useTranslation();
+  const { user: currentUser, updateCurrentUser } = useAuth();
   const isRu = i18n.language === 'ru';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,17 +35,17 @@ export default function Users() {
   useEffect(() => {
     // Try backend server first, then localStorage, then static JSON
     const loadData = async () => {
-      // Always try fresh JSON first, localStorage as fallback
+      // localStorage first (has user edits), JSON mock as fallback
+      const saved = localStorage.getItem('usersData');
+      if (saved) {
+        try { setData(JSON.parse(saved)); setLoading(false); return; } catch { /* ignore */ }
+      }
       try {
         const d = await fetchApi('users');
         setData(d);
         setLoading(false);
         return;
       } catch { /* fallback */ }
-      const saved = localStorage.getItem('usersData');
-      if (saved) {
-        try { setData(JSON.parse(saved)); setLoading(false); return; } catch { /* ignore */ }
-      }
       setLoading(false);
     };
     loadData();
@@ -82,6 +83,11 @@ export default function Users() {
     }
     persistUsers(newData);
     setData(newData);
+    // If editing current logged-in user, update their session
+    const savedUser = newData.users.find(u => u.email?.toLowerCase() === currentUser?.email?.toLowerCase());
+    if (savedUser) {
+      updateCurrentUser(savedUser);
+    }
     setEditUser(null);
     setShowNew(false);
   };

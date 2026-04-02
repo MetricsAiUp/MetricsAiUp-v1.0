@@ -11,23 +11,23 @@ import {
 const BASE = import.meta.env.BASE_URL || './';
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', permission: 'view_dashboard' },
-  { path: '/dashboard-posts', icon: CalendarClock, labelKey: 'nav.dashboardPosts', permission: 'view_dashboard' },
-  { path: '/posts-detail', icon: Columns, labelKey: 'nav.postsDetail', permission: 'view_dashboard', hasSub: true },
-  { path: '/map', icon: Map, labelKey: 'nav.map', permission: 'view_zones' },
-  { path: '/sessions', icon: Car, labelKey: 'nav.sessions', permission: 'view_sessions' },
-  { path: '/work-orders', icon: ClipboardList, labelKey: 'nav.workOrders', permission: 'view_work_orders' },
-  { path: '/events', icon: ScrollText, labelKey: 'nav.events', permission: 'view_events' },
-  { path: '/analytics', icon: BarChart3, labelKey: 'nav.analytics', permission: 'view_analytics' },
-  { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', permission: 'view_cameras' },
-  { path: '/camera-mapping', icon: Focus, labelKey: 'nav.cameraMapping', permission: 'manage_cameras' },
-  { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', permission: 'view_work_orders' },
-  { path: '/users', icon: Users, labelKey: 'nav.users', permission: 'manage_users' },
+  { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', pageId: 'dashboard' },
+  { path: '/dashboard-posts', icon: CalendarClock, labelKey: 'nav.dashboardPosts', pageId: 'dashboard-posts' },
+  { path: '/posts-detail', icon: Columns, labelKey: 'nav.postsDetail', pageId: 'posts-detail', hasSub: true },
+  { path: '/map', icon: Map, labelKey: 'nav.map', pageId: 'map' },
+  { path: '/sessions', icon: Car, labelKey: 'nav.sessions', pageId: 'sessions' },
+  { path: '/work-orders', icon: ClipboardList, labelKey: 'nav.workOrders', pageId: 'work-orders' },
+  { path: '/events', icon: ScrollText, labelKey: 'nav.events', pageId: 'events' },
+  { path: '/analytics', icon: BarChart3, labelKey: 'nav.analytics', pageId: 'analytics' },
+  { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', pageId: 'cameras' },
+  { path: '/camera-mapping', icon: Focus, labelKey: 'nav.cameraMapping', pageId: 'camera-mapping' },
+  { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', pageId: 'data-1c' },
+  { path: '/users', icon: Users, labelKey: 'nav.users', pageId: 'users' },
 ];
 
 export default function Sidebar() {
   const { t } = useTranslation();
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [postsOpen, setPostsOpen] = useState(false);
@@ -62,7 +62,7 @@ export default function Sidebar() {
         {navItems.map(item => {
           const Icon = item.icon;
 
-          if (!hasPermission(item.permission)) return null;
+          if (!user?.pages?.includes(item.pageId) && user?.role !== 'admin') return null;
 
           // Posts with submenu
           if (item.hasSub) {

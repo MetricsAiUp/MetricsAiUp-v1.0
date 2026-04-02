@@ -115,10 +115,10 @@ export function AuthProvider({ children }) {
       } catch { /* ignore */ }
     }
 
-    // JSON is source of truth; localStorage only adds users not in JSON
+    // localStorage has priority (user edits), JSON is fallback for unedited users
     const userMap = {};
-    lsUsers.forEach(u => { userMap[u.email.toLowerCase()] = u; }); // localStorage first
-    jsonUsers.forEach(u => { userMap[u.email.toLowerCase()] = u; }); // JSON overwrites
+    jsonUsers.forEach(u => { userMap[u.email.toLowerCase()] = u; }); // JSON base
+    lsUsers.forEach(u => { userMap[u.email.toLowerCase()] = u; }); // localStorage overwrites
     const users = Object.values(userMap);
     if (users.length === 0) throw new Error('Cannot load users');
 
@@ -149,8 +149,23 @@ export function AuthProvider({ children }) {
 
   const hasPermission = (key) => user?.permissions?.includes(key) || false;
 
+  const updateCurrentUser = (updatedUser) => {
+    const permissions = buildPermissions(updatedUser.pages, updatedUser.role);
+    const userData = {
+      ...user,
+      pages: updatedUser.pages,
+      role: updatedUser.role,
+      roles: [updatedUser.role],
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      permissions,
+    };
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, hasPermission, api }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, hasPermission, updateCurrentUser, api }}>
       {children}
     </AuthContext.Provider>
   );
