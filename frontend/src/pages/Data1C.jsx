@@ -445,47 +445,59 @@ export default function Data1C() {
 
   useEffect(() => {
     api.get('/api/1c-stats').then(r => setStats(r.data)).catch(console.error);
-    api.get('/api/1c-planning').then(r => {
-      const base = r.data || [];
-      const saved = localStorage.getItem('1c-imported-planning');
-      const imported = saved ? JSON.parse(saved) : [];
-      setPlanning([...imported, ...base]);
-    }).catch(console.error);
-    api.get('/api/1c-workers').then(r => {
-      const base = r.data || [];
-      const saved = localStorage.getItem('1c-imported-workers');
-      const imported = saved ? JSON.parse(saved) : [];
-      setWorkers([...imported, ...base]);
-    }).catch(console.error);
+    // localStorage overrides mock JSON if present, no merging to avoid duplicates
+    const savedPlanning = localStorage.getItem('1c-imported-planning');
+    if (savedPlanning) {
+      setPlanning(JSON.parse(savedPlanning));
+    } else {
+      api.get('/api/1c-planning').then(r => setPlanning(r.data || [])).catch(console.error);
+    }
+    const savedWorkers = localStorage.getItem('1c-imported-workers');
+    if (savedWorkers) {
+      setWorkers(JSON.parse(savedWorkers));
+    } else {
+      api.get('/api/1c-workers').then(r => setWorkers(r.data || [])).catch(console.error);
+    }
   }, []);
 
   const handleProcessFiles = ({ planning: newPlanning, workers: newWorkers }) => {
-    // Show parsed data in tables but don't save yet
+    let addedP = 0, addedW = 0;
+
     if (newPlanning.length) {
-      setPlanning(p => [...newPlanning, ...p]);
-      setUnsavedPlanning(prev => [...prev, ...newPlanning]);
+      setPlanning(prev => {
+        const existingKeys = new Set(prev.map(r => `${r.number}|${r.workStation}|${r.startTime}`));
+        const unique = newPlanning.filter(r => !existingKeys.has(`${r.number}|${r.workStation}|${r.startTime}`));
+        addedP = unique.length;
+        setUnsavedPlanning(u => [...u, ...unique]);
+        return [...unique, ...prev];
+      });
     }
     if (newWorkers.length) {
-      setWorkers(w => [...newWorkers, ...w]);
-      setUnsavedWorkers(prev => [...prev, ...newWorkers]);
+      setWorkers(prev => {
+        const existingKeys = new Set(prev.map(r => `${r.number}|${r.worker}|${r.startDate}`));
+        const unique = newWorkers.filter(r => !existingKeys.has(`${r.number}|${r.worker}|${r.startDate}`));
+        addedW = unique.length;
+        setUnsavedWorkers(u => [...u, ...unique]);
+        return [...unique, ...prev];
+      });
     }
 
-    const total = newPlanning.length + newWorkers.length;
-    setImportResult({ count: total, planning: newPlanning.length, workers: newWorkers.length });
+    const skippedP = newPlanning.length - addedP;
+    const skippedW = newWorkers.length - addedW;
+    setImportResult({ count: addedP + addedW, planning: addedP, workers: addedW, skippedP, skippedW });
     setSaved(false);
     setShowUpload(false);
-    if (newPlanning.length > 0) setTab('planning');
-    else if (newWorkers.length > 0) setTab('workers');
+    if (addedP > 0) setTab('planning');
+    else if (addedW > 0) setTab('workers');
   };
 
   const handleSave = () => {
-    if (unsavedPlanning.length) {
-      const prev = JSON.parse(localStorage.getItem('1c-imported-planning') || '[]');
-      localStorage.setItem('1c-imported-planning', JSON.stringify([...unsavedPlanning, ...prev]));
+    // Save full current state — replaces any previous data
+    if (planning.length) {
+      localStorage.setItem('1c-imported-planning', JSON.stringify(planning));
     }
-    if (unsavedWorkers.length) {
-      const prev = JSON.parse(localStorage.getItem('1c-imported-workers') || '[]');
-      localStorage.setItem('1c-imported-workers', JSON.stringify([...unsavedWorkers, ...prev]));
+    if (workers.length) {
+      localStorage.setItem('1c-imported-workers', JSON.stringify(workers));
     }
     setUnsavedPlanning([]);
     setUnsavedWorkers([]);
@@ -539,8 +551,8 @@ export default function Data1C() {
               {saved
                 ? (isRu ? 'Данные сохранены' : 'Data saved')
                 : isRu
-                  ? `Загружено ${importResult.count} записей (планирование: ${importResult.planning}, выработка: ${importResult.workers})`
-                  : `Loaded ${importResult.count} records (planning: ${importResult.planning}, output: ${importResult.workers})`}
+                  ? `Добавлено ${importResult.count} новых (планирование: ${importResult.planning}, выработка: ${importResult.workers})${(importResult.skippedP || 0) + (importResult.skippedW || 0) > 0 ? `, пропущено дублей: ${(importResult.skippedP || 0) + (importResult.skippedW || 0)}` : ''}`
+                  : `Added ${importResult.count} new (planning: ${importResult.planning}, output: ${importResult.workers})${(importResult.skippedP || 0) + (importResult.skippedW || 0) > 0 ? `, skipped duplicates: ${(importResult.skippedP || 0) + (importResult.skippedW || 0)}` : ''}`}
             </span>
           </div>
           {hasUnsaved && (

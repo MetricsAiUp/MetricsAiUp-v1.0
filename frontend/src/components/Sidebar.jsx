@@ -34,7 +34,7 @@ export default function Sidebar() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    fetch(`${BASE}api/posts-analytics.json?t=${Date.now()}`)
+    fetch(`${BASE}data/posts-analytics.json?t=${Date.now()}`)
       .then(r => r.json())
       .then(d => setPosts(d.posts || []))
       .catch(() => {});

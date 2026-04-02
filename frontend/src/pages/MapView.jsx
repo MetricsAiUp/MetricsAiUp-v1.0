@@ -79,7 +79,7 @@ function CameraStreamModal({ camNum, isRu, isDark, onClose }) {
 
 const BASE = import.meta.env.BASE_URL || './';
 const fetchApi = async (path) => {
-  const res = await fetch(`${BASE}api/${path}.json?t=${Date.now()}`);
+  const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 };
