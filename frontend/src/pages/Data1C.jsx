@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import * as XLSX from 'xlsx';
 
@@ -103,15 +103,20 @@ function StatsTab({ stats, lang }) {
   );
 }
 
+const PAGE_SIZES = [25, 50, 100];
+
 function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', defaultDir = 'asc', renderCell }) {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState(defaultSort);
   const [sortDir, setSortDir] = useState(defaultDir);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
   const isRu = lang === 'ru';
 
   const toggleSort = (col) => {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortBy(col); setSortDir('asc'); }
+    setPage(0);
   };
   const si = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
@@ -131,10 +136,27 @@ function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', 
     return 0;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageData = filtered.slice(safePage * pageSize, (safePage + 1) * pageSize);
+  const from = filtered.length ? safePage * pageSize + 1 : 0;
+  const to = Math.min((safePage + 1) * pageSize, filtered.length);
+
+  const handleSearchChange = (e) => { setSearch(e.target.value); setPage(0); };
+  const handlePageSize = (e) => { setPageSize(Number(e.target.value)); setPage(0); };
+
+  const PgBtn = ({ onClick, disabled, children }) => (
+    <button onClick={onClick} disabled={disabled}
+      className="p-1 rounded-md transition-all disabled:opacity-30"
+      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+      {children}
+    </button>
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2 items-center">
-        <input value={search} onChange={e => setSearch(e.target.value)}
+        <input value={search} onChange={handleSearchChange}
           placeholder={isRu ? 'Поиск...' : 'Search...'}
           className="px-3 py-1.5 rounded-lg text-xs outline-none flex-1 min-w-[180px]"
           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
@@ -156,7 +178,7 @@ function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', 
               </tr>
             </thead>
             <tbody>
-              {filtered.slice(0, 100).map(r => (
+              {pageData.map(r => (
                 <tr key={r.id} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
                   {columns.map(col => (
                     <td key={col.key} className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)', maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis' }}
@@ -168,6 +190,29 @@ function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', 
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {from}–{to} {isRu ? 'из' : 'of'} {filtered.length}
+          </span>
+          <select value={pageSize} onChange={handlePageSize}
+            className="text-xs px-2 py-1 rounded-md outline-none cursor-pointer"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+            {PAGE_SIZES.map(s => <option key={s} value={s}>{s} / {isRu ? 'стр' : 'page'}</option>)}
+          </select>
+        </div>
+        <div className="flex items-center gap-1">
+          <PgBtn onClick={() => setPage(0)} disabled={safePage === 0}><ChevronsLeft size={14} /></PgBtn>
+          <PgBtn onClick={() => setPage(p => Math.max(0, p - 1))} disabled={safePage === 0}><ChevronLeft size={14} /></PgBtn>
+          <span className="text-xs px-2 font-medium" style={{ color: 'var(--text-primary)' }}>
+            {safePage + 1} / {totalPages}
+          </span>
+          <PgBtn onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1}><ChevronRight size={14} /></PgBtn>
+          <PgBtn onClick={() => setPage(totalPages - 1)} disabled={safePage >= totalPages - 1}><ChevronsRight size={14} /></PgBtn>
         </div>
       </div>
     </div>
