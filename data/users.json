@@ -1,0 +1,197 @@
+{
+  "users": [
+    {
+      "id": "user-1",
+      "email": "admin@metricsai.up",
+      "password": "demo123",
+      "firstName": "Admin",
+      "lastName": "MetricsAI",
+      "role": "admin",
+      "isActive": true,
+      "createdAt": "2026-01-15",
+      "pages": [
+        "dashboard",
+        "dashboard-posts",
+        "posts-detail",
+        "map",
+        "sessions",
+        "work-orders",
+        "events",
+        "analytics",
+        "cameras",
+        "camera-mapping",
+        "data-1c",
+        "users"
+      ]
+    },
+    {
+      "id": "user-2",
+      "email": "demo@metricsai.up",
+      "password": "demo12345",
+      "firstName": "Генри",
+      "lastName": "Форд",
+      "role": "manager",
+      "isActive": true,
+      "createdAt": "2026-03-20",
+      "pages": [
+        "dashboard-posts",
+        "posts-detail",
+        "data-1c"
+      ]
+    },
+    {
+      "id": "user-3",
+      "email": "manager@metricsai.up",
+      "password": "demo123",
+      "firstName": "Сергей",
+      "lastName": "Петров",
+      "role": "manager",
+      "isActive": true,
+      "createdAt": "2026-02-10",
+      "pages": [
+        "dashboard",
+        "dashboard-posts",
+        "posts-detail",
+        "map",
+        "sessions",
+        "work-orders",
+        "analytics"
+      ]
+    },
+    {
+      "id": "user-4",
+      "email": "mechanic@metricsai.up",
+      "password": "demo123",
+      "firstName": "Иван",
+      "lastName": "Козлов",
+      "role": "mechanic",
+      "isActive": false,
+      "createdAt": "2026-03-01",
+      "pages": [
+        "dashboard",
+        "dashboard-posts",
+        "map"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "admin",
+      "name": {
+        "ru": "Администратор",
+        "en": "Administrator"
+      },
+      "color": "#6366f1"
+    },
+    {
+      "id": "manager",
+      "name": {
+        "ru": "Менеджер",
+        "en": "Manager"
+      },
+      "color": "#22c55e"
+    },
+    {
+      "id": "viewer",
+      "name": {
+        "ru": "Наблюдатель",
+        "en": "Viewer"
+      },
+      "color": "#3b82f6"
+    },
+    {
+      "id": "mechanic",
+      "name": {
+        "ru": "Механик",
+        "en": "Mechanic"
+      },
+      "color": "#f59e0b"
+    }
+  ],
+  "availablePages": [
+    {
+      "id": "dashboard",
+      "label": {
+        "ru": "Дашборд",
+        "en": "Dashboard"
+      }
+    },
+    {
+      "id": "dashboard-posts",
+      "label": {
+        "ru": "Дашборд постов",
+        "en": "Posts Dashboard"
+      }
+    },
+    {
+      "id": "posts-detail",
+      "label": {
+        "ru": "Посты",
+        "en": "Posts"
+      }
+    },
+    {
+      "id": "map",
+      "label": {
+        "ru": "Карта СТО",
+        "en": "STO Map"
+      }
+    },
+    {
+      "id": "sessions",
+      "label": {
+        "ru": "Сессии авто",
+        "en": "Sessions"
+      }
+    },
+    {
+      "id": "work-orders",
+      "label": {
+        "ru": "Заказ-наряды",
+        "en": "Work Orders"
+      }
+    },
+    {
+      "id": "events",
+      "label": {
+        "ru": "Журнал событий",
+        "en": "Events"
+      }
+    },
+    {
+      "id": "analytics",
+      "label": {
+        "ru": "Аналитика",
+        "en": "Analytics"
+      }
+    },
+    {
+      "id": "cameras",
+      "label": {
+        "ru": "Камеры",
+        "en": "Cameras"
+      }
+    },
+    {
+      "id": "camera-mapping",
+      "label": {
+        "ru": "Разметка камер",
+        "en": "Camera Mapping"
+      }
+    },
+    {
+      "id": "data-1c",
+      "label": {
+        "ru": "Данные 1С",
+        "en": "1C Data"
+      }
+    },
+    {
+      "id": "users",
+      "label": {
+        "ru": "Пользователи",
+        "en": "Users"
+      }
+    }
+  ]
+}

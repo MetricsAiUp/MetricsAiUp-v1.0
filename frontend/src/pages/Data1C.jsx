@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import * as XLSX from 'xlsx';
 
@@ -103,11 +103,10 @@ function StatsTab({ stats, lang }) {
   );
 }
 
-function PlanningTab({ data, lang }) {
+function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', defaultDir = 'asc', renderCell }) {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('startTime');
-  const [sortDir, setSortDir] = useState('desc');
+  const [sortBy, setSortBy] = useState(defaultSort);
+  const [sortDir, setSortDir] = useState(defaultDir);
   const isRu = lang === 'ru';
 
   const toggleSort = (col) => {
@@ -117,18 +116,16 @@ function PlanningTab({ data, lang }) {
   const si = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
   const filtered = data.filter(r => {
-    if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return (r.document || '').toLowerCase().includes(q) || (r.plateNumber || '').toLowerCase().includes(q) ||
-        (r.number || '').toLowerCase().includes(q) || (r.workStation || '').toLowerCase().includes(q);
-    }
-    return true;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (searchFields || columns.map(c => c.key)).some(k => (r[k] ?? '').toString().toLowerCase().includes(q));
   }).sort((a, b) => {
     let va = a[sortBy] ?? '', vb = b[sortBy] ?? '';
-    if (typeof va === 'number' || typeof vb === 'number') { va = Number(va) || 0; vb = Number(vb) || 0; }
-    if (typeof va === 'string') va = va.toLowerCase();
-    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (typeof va === 'number' && typeof vb === 'number') {
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    va = va.toString().toLowerCase();
+    vb = vb.toString().toLowerCase();
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ? 1 : -1;
     return 0;
@@ -141,33 +138,16 @@ function PlanningTab({ data, lang }) {
           placeholder={isRu ? 'Поиск...' : 'Search...'}
           className="px-3 py-1.5 rounded-lg text-xs outline-none flex-1 min-w-[180px]"
           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
-        <div className="flex gap-1">
-          {['all', 'in_progress', 'waiting', 'completed', 'scheduled'].map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className="px-2 py-1 rounded-lg text-xs transition-all"
-              style={{ background: statusFilter === s ? 'var(--accent)' : 'var(--bg-glass)', color: statusFilter === s ? 'white' : 'var(--text-muted)' }}>
-              {s === 'all' ? (isRu ? 'Все' : 'All') : (STATUS_LABELS[s]?.[lang] || s)}
-            </button>
-          ))}
-        </div>
         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{filtered.length}/{data.length}</span>
       </div>
 
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" style={{ minWidth: columns.length * 120 }}>
             <thead>
               <tr style={{ background: 'var(--bg-glass)' }}>
-                {[
-                  { key: 'number', label: isRu ? 'Номер' : 'Number' },
-                  { key: 'plateNumber', label: isRu ? 'Госномер' : 'Plate' },
-                  { key: 'workStation', label: isRu ? 'Пост' : 'Post' },
-                  { key: 'startTime', label: isRu ? 'Начало' : 'Start' },
-                  { key: 'endTime', label: isRu ? 'Конец' : 'End' },
-                  { key: 'durationHours', label: isRu ? 'Часы' : 'Hours' },
-                  { key: 'status', label: isRu ? 'Статус' : 'Status' },
-                ].map(col => (
-                  <th key={col.key} className="text-left px-3 py-2 text-xs font-medium cursor-pointer hover:opacity-80"
+                {columns.map(col => (
+                  <th key={col.key} className="text-left px-3 py-2 text-xs font-medium cursor-pointer hover:opacity-80 whitespace-nowrap"
                     style={{ color: sortBy === col.key ? 'var(--accent)' : 'var(--text-muted)' }}
                     onClick={() => toggleSort(col.key)}>
                     {col.label}{si(col.key)}
@@ -176,22 +156,16 @@ function PlanningTab({ data, lang }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.slice(0, 50).map(r => {
-                const info = STATUS_LABELS[r.status] || STATUS_LABELS.unknown;
-                return (
-                  <tr key={r.id} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
-                    <td className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--accent)' }}>{r.number}</td>
-                    <td className="px-3 py-2 font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{r.plateNumber || '—'}</td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-primary)' }}>{r.workStation}</td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{r.startTime || '—'}</td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{r.endTime || '—'}</td>
-                    <td className="px-3 py-2 text-sm font-medium text-right" style={{ color: 'var(--accent)' }}>{r.durationHours}</td>
-                    <td className="px-3 py-2">
-                      <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: info.color + '18', color: info.color }}>{info[lang]}</span>
+              {filtered.slice(0, 100).map(r => (
+                <tr key={r.id} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
+                  {columns.map(col => (
+                    <td key={col.key} className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-primary)', maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      title={(r[col.key] ?? '').toString()}>
+                      {renderCell ? renderCell(col.key, r[col.key], r) : (r[col.key] ?? '—')}
                     </td>
-                  </tr>
-                );
-              })}
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -200,88 +174,73 @@ function PlanningTab({ data, lang }) {
   );
 }
 
-function WorkersTab({ data, lang }) {
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('number');
-  const [sortDir, setSortDir] = useState('asc');
+function PlanningTab({ data, lang }) {
   const isRu = lang === 'ru';
+  const columns = [
+    { key: 'document', label: isRu ? 'Документ' : 'Document' },
+    { key: 'master', label: isRu ? 'Мастер' : 'Master' },
+    { key: 'author', label: isRu ? 'Автор' : 'Author' },
+    { key: 'organization', label: isRu ? 'Организация' : 'Organization' },
+    { key: 'vehicle', label: isRu ? 'Автомобиль' : 'Vehicle' },
+    { key: 'number', label: isRu ? 'Номер' : 'Number' },
+    { key: 'plateNumber', label: isRu ? 'Гос. номер' : 'Plate' },
+    { key: 'vin', label: 'VIN' },
+    { key: 'startTime', label: isRu ? 'Начало' : 'Start' },
+    { key: 'endTime', label: isRu ? 'Конец' : 'End' },
+    { key: 'workStation', label: isRu ? 'Рабочее место' : 'Workstation' },
+    { key: 'executor', label: isRu ? 'Исполнитель' : 'Executor' },
+    { key: 'durationHours', label: isRu ? 'Часы' : 'Hours' },
+    { key: 'notRelevant', label: isRu ? 'Не актуален' : 'Not relevant' },
+    { key: 'planObject', label: isRu ? 'Объект планирования' : 'Plan object' },
+    { key: 'objectView', label: isRu ? 'Представление объекта' : 'Object view' },
+  ];
 
-  const toggleSort = (col) => {
-    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortBy(col); setSortDir('asc'); }
+  const renderCell = (key, value, row) => {
+    if (key === 'durationHours') return <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{value}</span>;
+    if (key === 'number') return <span className="font-mono" style={{ color: 'var(--accent)' }}>{value || '—'}</span>;
+    if (key === 'document') return <span style={{ maxWidth: 220, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</span>;
+    return value || '—';
   };
-  const si = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
-  const filtered = data.filter(r => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (r.worker || '').toLowerCase().includes(q) || (r.brand || '').toLowerCase().includes(q) ||
-      (r.number || '').toLowerCase().includes(q) || (r.repairType || '').toLowerCase().includes(q);
-  }).sort((a, b) => {
-    let va = a[sortBy] ?? '', vb = b[sortBy] ?? '';
-    if (typeof va === 'number' || typeof vb === 'number') { va = Number(va) || 0; vb = Number(vb) || 0; }
-    if (typeof va === 'string') va = va.toLowerCase();
-    if (typeof vb === 'string') vb = vb.toLowerCase();
-    if (va < vb) return sortDir === 'asc' ? -1 : 1;
-    if (va > vb) return sortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  return <SortableTable data={data} columns={columns} lang={lang} defaultSort="startTime" defaultDir="desc"
+    searchFields={['document', 'number', 'plateNumber', 'workStation', 'master', 'executor', 'vehicle']}
+    renderCell={renderCell} />;
+}
 
-  return (
-    <div className="space-y-3">
-      <div className="flex gap-2 items-center">
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder={isRu ? 'Поиск...' : 'Search...'}
-          className="px-3 py-1.5 rounded-lg text-xs outline-none flex-1"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
-        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{filtered.length}/{data.length}</span>
-      </div>
+function WorkersTab({ data, lang }) {
+  const isRu = lang === 'ru';
+  const columns = [
+    { key: 'repairType', label: isRu ? 'Вид ремонта' : 'Repair type' },
+    { key: 'number', label: isRu ? 'Номер' : 'Number' },
+    { key: 'vin', label: 'VIN' },
+    { key: 'brand', label: isRu ? 'Марка' : 'Brand' },
+    { key: 'model', label: isRu ? 'Модель' : 'Model' },
+    { key: 'year', label: isRu ? 'Год выпуска' : 'Year' },
+    { key: 'workOrder', label: isRu ? 'Заказ-наряд' : 'Work order' },
+    { key: 'worker', label: isRu ? 'Сотрудник' : 'Worker' },
+    { key: 'startDate', label: isRu ? 'Дата начала' : 'Start date' },
+    { key: 'endDate', label: isRu ? 'Дата окончания' : 'End date' },
+    { key: 'closeDate', label: isRu ? 'Дата закрытия' : 'Close date' },
+    { key: 'orderStatus', label: isRu ? 'Состояние' : 'Status' },
+    { key: 'master', label: isRu ? 'Мастер' : 'Master' },
+    { key: 'dispatcher', label: isRu ? 'Диспетчер' : 'Dispatcher' },
+    { key: 'normHours', label: isRu ? 'Нормочасы' : 'Norm hours' },
+  ];
 
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: 'var(--bg-glass)' }}>
-                {[
-                  { key: 'number', label: isRu ? 'Номер ЗН' : 'WO#' },
-                  { key: 'repairType', label: isRu ? 'Вид ремонта' : 'Type' },
-                  { key: 'brand', label: isRu ? 'Марка' : 'Brand' },
-                  { key: 'model', label: isRu ? 'Модель' : 'Model' },
-                  { key: 'worker', label: isRu ? 'Исполнитель' : 'Worker' },
-                  { key: 'orderStatus', label: isRu ? 'Статус' : 'Status' },
-                  { key: 'normHours', label: isRu ? 'Н/ч' : 'N/h' },
-                ].map(col => (
-                  <th key={col.key} className="text-left px-3 py-2 text-xs font-medium cursor-pointer hover:opacity-80"
-                    style={{ color: sortBy === col.key ? 'var(--accent)' : 'var(--text-muted)' }}
-                    onClick={() => toggleSort(col.key)}>
-                    {col.label}{si(col.key)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.slice(0, 50).map(r => {
-                const sc = r.orderStatus?.includes('Закрыт') ? '#10b981' : r.orderStatus?.includes('В работе') ? '#f59e0b' : '#94a3b8';
-                return (
-                  <tr key={r.id} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
-                    <td className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--accent)' }}>{r.number}</td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{r.repairType}</td>
-                    <td className="px-3 py-2 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{r.brand}</td>
-                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{r.model}</td>
-                    <td className="px-3 py-2 text-sm" style={{ color: 'var(--text-primary)' }}>{r.worker}</td>
-                    <td className="px-3 py-2">
-                      <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: sc + '18', color: sc }}>{r.orderStatus}</span>
-                    </td>
-                    <td className="px-3 py-2 text-sm font-bold text-right" style={{ color: 'var(--accent)' }}>{r.normHours}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+  const renderCell = (key, value, row) => {
+    if (key === 'normHours') return <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{value}</span>;
+    if (key === 'number') return <span className="font-mono" style={{ color: 'var(--accent)' }}>{value || '—'}</span>;
+    if (key === 'orderStatus') {
+      const sc = value?.includes('Закрыт') ? '#10b981' : value?.includes('В работе') ? '#f59e0b' : '#94a3b8';
+      return <span className="px-2 py-0.5 rounded-full" style={{ background: sc + '18', color: sc, fontSize: '11px' }}>{value || '—'}</span>;
+    }
+    if (key === 'workOrder') return <span style={{ maxWidth: 200, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</span>;
+    return value || '—';
+  };
+
+  return <SortableTable data={data} columns={columns} lang={lang} defaultSort="number" defaultDir="asc"
+    searchFields={['number', 'worker', 'brand', 'model', 'repairType', 'master', 'vin']}
+    renderCell={renderCell} />;
 }
 
 function FileUploadZone({ lang, onProcess }) {
@@ -319,51 +278,54 @@ function FileUploadZone({ lang, onProcess }) {
         const isPlan = header.some(h => h.includes('Рабочее место') || h.includes('Продолжительность'));
 
         if (isPlan) {
-          // Planning columns: Документ(0), Номер(7), Гос.номер(8), VIN(9), Начало(10), Конец(11), Раб.место(12), Продолж(14), Статус from Документ
+          // Планирование: Документ(0), Мастер(1), Автор(2), Организация(3), Автомобиль(4), Номер(5), Гос.номер(6), VIN(7), Начало(8), Конец(9), Раб.место(10), Исполнитель(11), Продолж(12), Не актуален(13), Объект планирования(14), Представление объекта(15)
           for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
             if (!r || !r[0]) continue;
-            const doc = (r[0] || '').toString();
-            let status = 'unknown';
-            if (doc.includes('Закрыт')) status = 'completed';
-            else if (doc.includes('В работе')) status = 'in_progress';
-            else if (doc.includes('Ожидание')) status = 'waiting';
-            else if (doc.includes('записан') || doc.includes('Записан')) status = 'scheduled';
-            const durSec = parseFloat(r[14]) || 0;
+            const durSec = parseFloat(r[12]) || 0;
             allPlanning.push({
               id: `imp-p-${Date.now()}-${i}`,
-              document: doc,
-              number: (r[7] || '').toString(),
-              plateNumber: (r[8] || '').toString() || null,
-              vin: (r[9] || '').toString() || null,
-              startTime: (r[10] || '').toString(),
-              endTime: (r[11] || '').toString(),
-              workStation: (r[12] || '').toString(),
+              document: (r[0] || '').toString(),
+              master: (r[1] || '').toString(),
+              author: (r[2] || '').toString(),
+              organization: (r[3] || '').toString(),
+              vehicle: (r[4] || '').toString(),
+              number: (r[5] || '').toString(),
+              plateNumber: (r[6] || '').toString(),
+              vin: (r[7] || '').toString(),
+              startTime: (r[8] || '').toString(),
+              endTime: (r[9] || '').toString(),
+              workStation: (r[10] || '').toString(),
+              executor: (r[11] || '').toString(),
+              durationSec: durSec,
               durationHours: Math.round(durSec / 3600 * 10) / 10,
-              isActive: (r[15] || '') !== 'Да',
-              status,
-              docType: 'work_order',
+              notRelevant: (r[13] || '').toString(),
+              planObject: (r[14] || '').toString(),
+              objectView: (r[15] || '').toString().replace(/\r?\n/g, ' / '),
             });
           }
         } else {
-          // Workers columns: Вид ремонта(1), Номер(2), VIN(4), Марка(5), Модель(6), Заказ-наряд(8), Сотрудник(9), Дата начала(10), Дата окончания(11), Состояние(13), Мастер(14), Нормочасы(16)
+          // Выработка: Вид ремонта(0), Номер(1), VIN(2), Марка(3), Модель(4), Год(5), Заказ-наряд(6), Сотрудник(7), Дата начала(8), Дата окончания(9), Дата закрытия(10), Состояние(11), Мастер(12), Диспетчер(13), Нормочасы(14)
           for (let i = 2; i < rows.length; i++) { // skip header + subheader
             const r = rows[i];
-            if (!r || !r[2]) continue;
-            const nh = parseFloat(r[16]) || 0;
-            if (nh === 0 && !r[9]) continue;
+            if (!r) continue;
+            const nh = parseFloat(r[14]) || 0;
             allWorkers.push({
               id: `imp-w-${Date.now()}-${i}`,
-              repairType: (r[1] || '').toString(),
-              number: (r[2] || '').toString(),
-              vin: (r[4] || '').toString(),
-              brand: (r[5] || '').toString(),
-              model: (r[6] || '').toString(),
-              worker: (r[9] || '').toString(),
-              startDate: (r[10] || '').toString(),
-              endDate: (r[11] || '').toString(),
-              orderStatus: (r[13] || '').toString(),
-              master: (r[14] || '').toString(),
+              repairType: (r[0] || '').toString(),
+              number: (r[1] || '').toString(),
+              vin: (r[2] || '').toString(),
+              brand: (r[3] || '').toString(),
+              model: (r[4] || '').toString(),
+              year: (r[5] || '').toString(),
+              workOrder: (r[6] || '').toString(),
+              worker: (r[7] || '').toString(),
+              startDate: (r[8] || '').toString(),
+              endDate: (r[9] || '').toString(),
+              closeDate: (r[10] || '').toString(),
+              orderStatus: (r[11] || '').toString(),
+              master: (r[12] || '').toString(),
+              dispatcher: (r[13] || '').toString(),
               normHours: nh,
             });
           }
@@ -427,13 +389,17 @@ export default function Data1C() {
   const [workers, setWorkers] = useState([]);
   const [showUpload, setShowUpload] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [unsavedPlanning, setUnsavedPlanning] = useState([]);
+  const [unsavedWorkers, setUnsavedWorkers] = useState([]);
+  const [saved, setSaved] = useState(false);
 
   const lang = i18n.language;
   const isRu = lang === 'ru';
 
+  const hasUnsaved = unsavedPlanning.length > 0 || unsavedWorkers.length > 0;
+
   useEffect(() => {
     api.get('/api/1c-stats').then(r => setStats(r.data)).catch(console.error);
-    // Load base data, then merge with imported from localStorage
     api.get('/api/1c-planning').then(r => {
       const base = r.data || [];
       const saved = localStorage.getItem('1c-imported-planning');
@@ -449,24 +415,37 @@ export default function Data1C() {
   }, []);
 
   const handleProcessFiles = ({ planning: newPlanning, workers: newWorkers }) => {
-    // Save imported data to localStorage so it persists across reloads
+    // Show parsed data in tables but don't save yet
     if (newPlanning.length) {
-      const prev = JSON.parse(localStorage.getItem('1c-imported-planning') || '[]');
-      localStorage.setItem('1c-imported-planning', JSON.stringify([...newPlanning, ...prev]));
       setPlanning(p => [...newPlanning, ...p]);
+      setUnsavedPlanning(prev => [...prev, ...newPlanning]);
     }
     if (newWorkers.length) {
-      const prev = JSON.parse(localStorage.getItem('1c-imported-workers') || '[]');
-      localStorage.setItem('1c-imported-workers', JSON.stringify([...newWorkers, ...prev]));
       setWorkers(w => [...newWorkers, ...w]);
+      setUnsavedWorkers(prev => [...prev, ...newWorkers]);
     }
 
     const total = newPlanning.length + newWorkers.length;
     setImportResult({ count: total, planning: newPlanning.length, workers: newWorkers.length });
+    setSaved(false);
     setShowUpload(false);
     if (newPlanning.length > 0) setTab('planning');
     else if (newWorkers.length > 0) setTab('workers');
-    setTimeout(() => setImportResult(null), 8000);
+  };
+
+  const handleSave = () => {
+    if (unsavedPlanning.length) {
+      const prev = JSON.parse(localStorage.getItem('1c-imported-planning') || '[]');
+      localStorage.setItem('1c-imported-planning', JSON.stringify([...unsavedPlanning, ...prev]));
+    }
+    if (unsavedWorkers.length) {
+      const prev = JSON.parse(localStorage.getItem('1c-imported-workers') || '[]');
+      localStorage.setItem('1c-imported-workers', JSON.stringify([...unsavedWorkers, ...prev]));
+    }
+    setUnsavedPlanning([]);
+    setUnsavedWorkers([]);
+    setSaved(true);
+    setTimeout(() => { setSaved(false); setImportResult(null); }, 4000);
   };
 
   const tabs = [
@@ -506,15 +485,27 @@ export default function Data1C() {
         </div>
       )}
 
-      {/* Import result notification */}
+      {/* Import result notification + Save button */}
       {importResult && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}>
-          <Check size={14} style={{ color: '#10b981' }} />
-          <span className="text-xs font-medium" style={{ color: '#10b981' }}>
-            {isRu
-              ? `Импортировано ${importResult.count} записей (планирование: ${importResult.planning}, выработка: ${importResult.workers})`
-              : `Imported ${importResult.count} records (planning: ${importResult.planning}, output: ${importResult.workers})`}
-          </span>
+        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: hasUnsaved ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', border: `1px solid ${hasUnsaved ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}` }}>
+          <div className="flex items-center gap-2">
+            <Check size={14} style={{ color: hasUnsaved ? '#f59e0b' : '#10b981' }} />
+            <span className="text-xs font-medium" style={{ color: hasUnsaved ? '#f59e0b' : '#10b981' }}>
+              {saved
+                ? (isRu ? 'Данные сохранены' : 'Data saved')
+                : isRu
+                  ? `Загружено ${importResult.count} записей (планирование: ${importResult.planning}, выработка: ${importResult.workers})`
+                  : `Loaded ${importResult.count} records (planning: ${importResult.planning}, output: ${importResult.workers})`}
+            </span>
+          </div>
+          {hasUnsaved && (
+            <button onClick={handleSave}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-all"
+              style={{ background: '#10b981' }}>
+              <Save size={12} />
+              {isRu ? 'Сохранить' : 'Save'}
+            </button>
+          )}
         </div>
       )}
 

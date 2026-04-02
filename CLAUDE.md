@@ -82,3 +82,13 @@ Nginx раздаёт из `/project/` автоматически.
 - i18n: все тексты через `t('key')`, оба языка (ru.json + en.json)
 - Иконки: только Lucide React, без emoji
 - API: `fetchApi('name')` → fetch `api/name.json`
+
+## КРИТИЧНО: Frontend API URLs
+- Nginx на порту 8080 автоматически проксирует /api/* на backend (порт 3001, с fallback на 3000 и 3002)
+- Frontend ДОЛЖЕН использовать ОТНОСИТЕЛЬНЫЕ URL для API:
+  - Правильно: fetch("/api/users")
+  - НЕПРАВИЛЬНО: fetch("http://localhost:3001/api/users")
+  - НЕПРАВИЛЬНО: fetch(`http://${window.location.hostname}:3001/api/users`)
+- Socket.IO тоже через относительный путь: io("/", {...}) или io({ path: "/socket.io" })
+- Публичная ссылка: https://dev.metricsavto.com/p/metricsappartisom/
+- Если нужен другой порт: https://dev.metricsavto.com/p/metricsappartisom/3001/
