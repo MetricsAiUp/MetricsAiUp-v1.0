@@ -19,8 +19,12 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-    } catch {
-      setError(t('auth.loginError'));
+    } catch (err) {
+      const msg = err.message;
+      if (msg === 'User not found') setError(i18n.language === 'ru' ? 'Пользователь не найден' : msg);
+      else if (msg === 'Wrong password') setError(i18n.language === 'ru' ? 'Неверный пароль' : msg);
+      else if (msg === 'User is disabled') setError(i18n.language === 'ru' ? 'Пользователь отключён' : msg);
+      else setError(t('auth.loginError'));
     } finally {
       setLoading(false);
     }
@@ -113,6 +117,13 @@ export default function Login() {
             style={{ color: 'var(--text-muted)' }}
           >
             {i18n.language === 'ru' ? 'EN' : 'RU'}
+          </button>
+          <button
+            onClick={() => { localStorage.clear(); window.location.reload(); }}
+            className="text-sm px-3 py-1 rounded-lg transition-all hover:opacity-80"
+            style={{ color: 'var(--text-muted)', fontSize: '10px' }}
+          >
+            {i18n.language === 'ru' ? 'Сброс' : 'Reset'}
           </button>
         </div>
       </div>

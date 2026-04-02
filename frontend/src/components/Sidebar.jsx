@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
   BarChart3, Camera, Focus, Database, CalendarClock, Columns,
-  ChevronDown,
+  ChevronDown, Users,
 } from 'lucide-react';
 
 const BASE = import.meta.env.BASE_URL || './';
@@ -22,6 +22,7 @@ const navItems = [
   { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', permission: 'view_cameras' },
   { path: '/camera-mapping', icon: Focus, labelKey: 'nav.cameraMapping', permission: 'manage_cameras' },
   { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', permission: 'view_work_orders' },
+  { path: '/users', icon: Users, labelKey: 'nav.users', permission: 'manage_users' },
 ];
 
 export default function Sidebar() {

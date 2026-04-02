@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import * as XLSX from 'xlsx';
 
 const STATUS_LABELS = {
   in_progress: { ru: 'В работе', en: 'In Progress', color: '#f59e0b' },
@@ -124,8 +125,10 @@ function PlanningTab({ data, lang }) {
     }
     return true;
   }).sort((a, b) => {
-    let va = a[sortBy] || '', vb = b[sortBy] || '';
-    if (sortBy === 'durationHours') { va = a.durationHours || 0; vb = b.durationHours || 0; }
+    let va = a[sortBy] ?? '', vb = b[sortBy] ?? '';
+    if (typeof va === 'number' || typeof vb === 'number') { va = Number(va) || 0; vb = Number(vb) || 0; }
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ? 1 : -1;
     return 0;
@@ -215,8 +218,10 @@ function WorkersTab({ data, lang }) {
     return (r.worker || '').toLowerCase().includes(q) || (r.brand || '').toLowerCase().includes(q) ||
       (r.number || '').toLowerCase().includes(q) || (r.repairType || '').toLowerCase().includes(q);
   }).sort((a, b) => {
-    let va = a[sortBy] || '', vb = b[sortBy] || '';
-    if (sortBy === 'normHours') { va = a.normHours || 0; vb = b.normHours || 0; }
+    let va = a[sortBy] ?? '', vb = b[sortBy] ?? '';
+    if (typeof va === 'number' || typeof vb === 'number') { va = Number(va) || 0; vb = Number(vb) || 0; }
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ? 1 : -1;
     return 0;
@@ -279,19 +284,101 @@ function WorkersTab({ data, lang }) {
   );
 }
 
-function FileUploadZone({ lang, onFiles }) {
+function FileUploadZone({ lang, onProcess }) {
   const [dragActive, setDragActive] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]); // { name, size, type, file, processed }
+  const [processing, setProcessing] = useState(false);
   const inputRef = useRef(null);
   const isRu = lang === 'ru';
-  const ACCEPTED = '.xlsx,.xls,.csv,.pdf';
+  const ACCEPTED = '.xlsx,.xls,.csv';
 
   const handleFiles = (files) => {
-    const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv|pdf)$/i));
+    const valid = Array.from(files).filter(f => f.name.match(/\.(xlsx|xls|csv)$/i));
     if (!valid.length) return;
-    setUploadedFiles(prev => [...prev, ...valid.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB', type: f.name.split('.').pop().toUpperCase() }))]);
-    onFiles?.(valid);
+    setUploadedFiles(prev => [...prev, ...valid.map(f => ({
+      name: f.name, size: (f.size / 1024).toFixed(1) + ' KB',
+      type: f.name.split('.').pop().toUpperCase(), file: f, processed: false,
+    }))]);
   };
+
+  const handleProcess = async () => {
+    setProcessing(true);
+    const allPlanning = [];
+    const allWorkers = [];
+
+    for (const uf of uploadedFiles) {
+      if (uf.processed) continue;
+      try {
+        const ab = await uf.file.arrayBuffer();
+        const wb = XLSX.read(ab, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        if (rows.length < 2) continue;
+
+        const header = rows[0].map(h => (h || '').toString().trim());
+        const isPlan = header.some(h => h.includes('Рабочее место') || h.includes('Продолжительность'));
+
+        if (isPlan) {
+          // Planning columns: Документ(0), Номер(7), Гос.номер(8), VIN(9), Начало(10), Конец(11), Раб.место(12), Продолж(14), Статус from Документ
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r || !r[0]) continue;
+            const doc = (r[0] || '').toString();
+            let status = 'unknown';
+            if (doc.includes('Закрыт')) status = 'completed';
+            else if (doc.includes('В работе')) status = 'in_progress';
+            else if (doc.includes('Ожидание')) status = 'waiting';
+            else if (doc.includes('записан') || doc.includes('Записан')) status = 'scheduled';
+            const durSec = parseFloat(r[14]) || 0;
+            allPlanning.push({
+              id: `imp-p-${Date.now()}-${i}`,
+              document: doc,
+              number: (r[7] || '').toString(),
+              plateNumber: (r[8] || '').toString() || null,
+              vin: (r[9] || '').toString() || null,
+              startTime: (r[10] || '').toString(),
+              endTime: (r[11] || '').toString(),
+              workStation: (r[12] || '').toString(),
+              durationHours: Math.round(durSec / 3600 * 10) / 10,
+              isActive: (r[15] || '') !== 'Да',
+              status,
+              docType: 'work_order',
+            });
+          }
+        } else {
+          // Workers columns: Вид ремонта(1), Номер(2), VIN(4), Марка(5), Модель(6), Заказ-наряд(8), Сотрудник(9), Дата начала(10), Дата окончания(11), Состояние(13), Мастер(14), Нормочасы(16)
+          for (let i = 2; i < rows.length; i++) { // skip header + subheader
+            const r = rows[i];
+            if (!r || !r[2]) continue;
+            const nh = parseFloat(r[16]) || 0;
+            if (nh === 0 && !r[9]) continue;
+            allWorkers.push({
+              id: `imp-w-${Date.now()}-${i}`,
+              repairType: (r[1] || '').toString(),
+              number: (r[2] || '').toString(),
+              vin: (r[4] || '').toString(),
+              brand: (r[5] || '').toString(),
+              model: (r[6] || '').toString(),
+              worker: (r[9] || '').toString(),
+              startDate: (r[10] || '').toString(),
+              endDate: (r[11] || '').toString(),
+              orderStatus: (r[13] || '').toString(),
+              master: (r[14] || '').toString(),
+              normHours: nh,
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Parse error:', uf.name, e);
+      }
+    }
+
+    setUploadedFiles(prev => prev.map(f => ({ ...f, processed: true })));
+    setProcessing(false);
+    onProcess?.({ planning: allPlanning, workers: allWorkers });
+  };
+
+  const removeFile = (idx) => setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
 
   return (
     <div className="space-y-2">
@@ -303,19 +390,30 @@ function FileUploadZone({ lang, onFiles }) {
         onClick={() => inputRef.current?.click()}>
         <Upload size={24} style={{ color: 'var(--accent)', margin: '0 auto 6px' }} />
         <p className="text-xs" style={{ color: 'var(--text-primary)' }}>{isRu ? 'Перетащите файлы или нажмите' : 'Drag files or click'}</p>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Excel, CSV, PDF</p>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Excel (.xlsx, .xls), CSV (.csv)</p>
         <input ref={inputRef} type="file" multiple accept={ACCEPTED} className="hidden" onChange={e => handleFiles(e.target.files)} />
       </div>
       {uploadedFiles.map((f, i) => (
         <div key={i} className="flex items-center justify-between px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
           <div className="flex items-center gap-2">
-            {f.type === 'PDF' ? <FileText size={14} style={{ color: '#ef4444' }} /> : <FileSpreadsheet size={14} style={{ color: '#10b981' }} />}
+            <FileSpreadsheet size={14} style={{ color: '#10b981' }} />
             <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{f.name}</span>
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{f.size}</span>
           </div>
-          <Check size={12} style={{ color: '#10b981' }} />
+          <div className="flex items-center gap-2">
+            {f.processed && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>{isRu ? 'Обработан' : 'Done'}</span>}
+            {!f.processed && <Check size={12} style={{ color: '#10b981' }} />}
+            <button onClick={() => removeFile(i)} className="hover:opacity-60"><X size={12} style={{ color: 'var(--text-muted)' }} /></button>
+          </div>
         </div>
       ))}
+      {uploadedFiles.length > 0 && !uploadedFiles.every(f => f.processed) && (
+        <button onClick={handleProcess} disabled={processing}
+          className="w-full py-2 rounded-lg text-xs font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
+          style={{ background: 'var(--accent)' }}>
+          {processing ? (isRu ? 'Обработка...' : 'Processing...') : (isRu ? 'Обработать и применить' : 'Process & Apply')}
+        </button>
+      )}
     </div>
   );
 }
@@ -328,15 +426,48 @@ export default function Data1C() {
   const [planning, setPlanning] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [showUpload, setShowUpload] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   const lang = i18n.language;
   const isRu = lang === 'ru';
 
   useEffect(() => {
     api.get('/api/1c-stats').then(r => setStats(r.data)).catch(console.error);
-    api.get('/api/1c-planning').then(r => setPlanning(r.data)).catch(console.error);
-    api.get('/api/1c-workers').then(r => setWorkers(r.data)).catch(console.error);
+    // Load base data, then merge with imported from localStorage
+    api.get('/api/1c-planning').then(r => {
+      const base = r.data || [];
+      const saved = localStorage.getItem('1c-imported-planning');
+      const imported = saved ? JSON.parse(saved) : [];
+      setPlanning([...imported, ...base]);
+    }).catch(console.error);
+    api.get('/api/1c-workers').then(r => {
+      const base = r.data || [];
+      const saved = localStorage.getItem('1c-imported-workers');
+      const imported = saved ? JSON.parse(saved) : [];
+      setWorkers([...imported, ...base]);
+    }).catch(console.error);
   }, []);
+
+  const handleProcessFiles = ({ planning: newPlanning, workers: newWorkers }) => {
+    // Save imported data to localStorage so it persists across reloads
+    if (newPlanning.length) {
+      const prev = JSON.parse(localStorage.getItem('1c-imported-planning') || '[]');
+      localStorage.setItem('1c-imported-planning', JSON.stringify([...newPlanning, ...prev]));
+      setPlanning(p => [...newPlanning, ...p]);
+    }
+    if (newWorkers.length) {
+      const prev = JSON.parse(localStorage.getItem('1c-imported-workers') || '[]');
+      localStorage.setItem('1c-imported-workers', JSON.stringify([...newWorkers, ...prev]));
+      setWorkers(w => [...newWorkers, ...w]);
+    }
+
+    const total = newPlanning.length + newWorkers.length;
+    setImportResult({ count: total, planning: newPlanning.length, workers: newWorkers.length });
+    setShowUpload(false);
+    if (newPlanning.length > 0) setTab('planning');
+    else if (newWorkers.length > 0) setTab('workers');
+    setTimeout(() => setImportResult(null), 8000);
+  };
 
   const tabs = [
     { key: 'stats', label: isRu ? 'Статистика' : 'Statistics' },
@@ -371,7 +502,19 @@ export default function Data1C() {
             <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{isRu ? 'Загрузка из 1С' : 'Upload from 1C'}</span>
             <button onClick={() => setShowUpload(false)} className="hover:opacity-60"><X size={14} style={{ color: 'var(--text-muted)' }} /></button>
           </div>
-          <FileUploadZone lang={lang} onFiles={(f) => console.log('Files:', f.map(f => f.name))} />
+          <FileUploadZone lang={lang} onProcess={handleProcessFiles} />
+        </div>
+      )}
+
+      {/* Import result notification */}
+      {importResult && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}>
+          <Check size={14} style={{ color: '#10b981' }} />
+          <span className="text-xs font-medium" style={{ color: '#10b981' }}>
+            {isRu
+              ? `Импортировано ${importResult.count} записей (планирование: ${importResult.planning}, выработка: ${importResult.workers})`
+              : `Imported ${importResult.count} records (planning: ${importResult.planning}, output: ${importResult.workers})`}
+          </span>
         </div>
       )}
 

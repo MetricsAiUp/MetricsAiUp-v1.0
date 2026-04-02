@@ -14,6 +14,7 @@ import Cameras from './pages/Cameras';
 import CameraMapping from './pages/CameraMapping';
 import DashboardPosts from './pages/DashboardPosts';
 import PostsDetail from './pages/PostsDetail';
+import Users from './pages/Users';
 import './i18n';
 
 function ProtectedRoute({ children }) {
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="data-1c" element={<Data1C />} />
         <Route path="cameras" element={<Cameras />} />
         <Route path="camera-mapping" element={<CameraMapping />} />
+        <Route path="users" element={<Users />} />
       </Route>
     </Routes>
   );
