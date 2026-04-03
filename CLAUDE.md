@@ -7,48 +7,120 @@
 - Node.js 20, Python 3.11, PHP 8.2, Go 1.22, git, curl, wget
 
 ## Публичные URL
-- **Основной:** `https://dev.metricsavto.com/p//`
-- **Другой порт:** `https://dev.metricsavto.com/p//{PORT}/`
+- **Основной:** `https://dev.metricsavto.com/p/metricsappartisom/`
+- **Другой порт:** `https://dev.metricsavto.com/p/metricsappartisom/{PORT}/`
 - WebSocket проксируется. Авторизация не нужна.
 
 ## Стек проекта
-- **Frontend:** React 18 + Vite, Tailwind CSS, Recharts, react-konva, react-i18next (RU/EN)
-- **Роутинг:** HashRouter (React Router v6)
-- **Иконки:** Lucide React (SVG)
+- **Frontend:** React 19 + Vite 8, Tailwind CSS 4, Recharts 3, react-konva 19, react-i18next (RU/EN)
+- **Backend (готов, не запущен):** Express 4 + Prisma ORM + SQLite (переход на PostgreSQL по плану)
+- **Роутинг:** HashRouter (React Router v7)
+- **Иконки:** Lucide React (SVG), без emoji
 - **Дизайн:** Glassmorphism, тёмная + светлая тема (CSS Variables)
-- **API:** Статичные JSON файлы в `/project/api/`, Nginx раздаёт
 - **Состояние:** React Context (Auth, Theme) + localStorage
-- **Карта СТО:** react-konva (Canvas)
+- **Карта СТО:** react-konva (Canvas), 860x460px
+- **Excel-парсинг:** xlsx (SheetJS) — загрузка файлов из 1С Альфа-Авто
 
 ## Архитектура
 ```
 /project
 ├── frontend/src/
-│   ├── App.jsx              # Роутинг
+│   ├── App.jsx              # HashRouter, 13 маршрутов + ProtectedRoute
+│   ├── main.jsx             # React.StrictMode + createRoot
 │   ├── components/
-│   │   ├── Layout.jsx       # Sidebar + Header + Outlet
-│   │   ├── Sidebar.jsx      # Навигация (permission-based)
-│   │   ├── STOMap.jsx        # Карта СТО (react-konva)
-│   │   └── HelpButton.jsx
+│   │   ├── Layout.jsx       # Sidebar + Header (тема, язык, юзер) + Outlet
+│   │   ├── Sidebar.jsx      # Навигация, фильтрация по user.pages
+│   │   ├── STOMap.jsx        # Карта СТО (react-konva), 10 постов, 10 камер
+│   │   └── HelpButton.jsx   # Контекстная справка (9 разделов)
 │   ├── pages/
-│   │   ├── Dashboard.jsx     # Главный дашборд (KPI, рекомендации, события)
-│   │   ├── DashboardPosts.jsx # Дашборд постов (Gantt-таймлайн ЗН)
-│   │   ├── PostsDetail.jsx   # Аналитика по постам (master-detail)
-│   │   ├── MapView.jsx       # Карта СТО + модальное окно поста
-│   │   ├── Sessions.jsx      # Сессии авто
-│   │   ├── WorkOrders.jsx    # Заказ-наряды
-│   │   ├── Events.jsx        # Журнал событий
-│   │   ├── Analytics.jsx     # Аналитика (Recharts)
-│   │   ├── Data1C.jsx        # Данные из 1С Альфа-Авто
-│   │   ├── Cameras.jsx       # Камеры
-│   │   └── CameraMapping.jsx # Разметка камер
-│   ├── contexts/             # AuthContext, ThemeContext
-│   ├── hooks/useSocket.js    # usePolling
-│   └── i18n/                 # ru.json, en.json
-├── api/                      # 20+ JSON файлов (моки)
-├── assets/                   # Билд-ассеты
-└── index.html                # Entry point (Vite build)
+│   │   ├── Dashboard.jsx     # KPI-карточки, рекомендации, события (usePolling 5с)
+│   │   ├── DashboardPosts.jsx # Gantt-таймлайн ЗН по постам (963 LOC)
+│   │   ├── PostsDetail.jsx   # Аналитика по постам, master-detail (1169 LOC)
+│   │   ├── MapView.jsx       # Карта СТО + модальные окна постов и камер
+│   │   ├── Sessions.jsx      # Сессии авто с модалкой деталей
+│   │   ├── WorkOrders.jsx    # Заказ-наряды из 1С
+│   │   ├── Events.jsx        # Журнал событий с фильтрами
+│   │   ├── Analytics.jsx     # 6 графиков Recharts (area, bar, pie)
+│   │   ├── Data1C.jsx        # Данные 1С: Excel-импорт, 3 таба, пагинация, сортировка
+│   │   ├── Cameras.jsx       # 10 камер, зоны покрытия
+│   │   ├── CameraMapping.jsx # Маппинг камера↔зона, приоритеты
+│   │   ├── Users.jsx         # CRUD пользователей, роли, доступ к страницам
+│   │   └── Login.jsx         # Авторизация
+│   ├── contexts/
+│   │   ├── AuthContext.jsx   # Авторизация, API-клиент, permissions, updateCurrentUser
+│   │   └── ThemeContext.jsx  # Тема dark/light → CSS class + localStorage
+│   ├── hooks/useSocket.js    # usePolling(callback, interval) — интервальный опрос
+│   ├── utils/translate.js    # translateZone(), translatePost() — перевод названий
+│   └── i18n/                 # ru.json, en.json (~197 ключей каждый)
+├── backend/
+│   ├── src/
+│   │   ├── index.js          # Express сервер (порт 3001)
+│   │   ├── routes/           # auth, zones, posts, events, sessions, workOrders, recommendations, dashboard
+│   │   ├── middleware/auth.js # JWT верификация
+│   │   ├── services/         # eventProcessor, recommendationEngine
+│   │   └── config/           # socket.js, database.js (Prisma)
+│   └── prisma/               # schema.prisma, миграции, seed
+├── data/                     # 25 JSON файлов (моки) ← FRONTEND ЧИТАЕТ ОТСЮДА
+├── api/                      # 22 JSON файлов (копия data/, НЕ используется фронтом)
+├── assets/                   # Vite билд-ассеты (JS ~1.56MB, CSS ~24KB)
+├── server.js                 # HLS-стриминг камер (порт 8181, FFmpeg RTSP→HLS)
+└── index.html                # Entry point
 ```
+
+## КРИТИЧНО: Загрузка данных (data flow)
+
+### Два способа загрузки JSON:
+1. **Через AuthContext `api.get()`** — трансформирует URL:
+   - `/api/dashboard/overview` → `data/dashboard-overview.json`
+   - `/api/sessions?status=completed` → `data/sessions-completed.json`
+   - `/api/dashboard/metrics?period=7d` → `data/dashboard-metrics-7d.json`
+2. **Через локальный `fetchApi()`** — прямой fetch:
+   - `fetchApi('dashboard-posts')` → `data/dashboard-posts.json`
+   - Используется в: DashboardPosts, PostsDetail, MapView, Users, Sidebar
+
+### Кто как загружает:
+| Страница | Источник данных |
+|----------|----------------|
+| Dashboard | `api.get('/api/dashboard/overview')`, `api.get('/api/recommendations')`, `api.get('/api/events')` |
+| DashboardPosts | `fetchApi('dashboard-posts')` |
+| PostsDetail | `fetchApi('posts-analytics')`, `fetchApi('dashboard-posts')` |
+| MapView | `fetchApi('dashboard-posts')`, `fetchApi('posts')` |
+| Sessions | `api.get('/api/sessions?status=...')`, `api.get('/api/work-orders')` |
+| WorkOrders | `api.get('/api/work-orders')` |
+| Analytics | `api.get('/api/analytics-history')` |
+| Events | `api.get('/api/events?limit=50')` |
+| Data1C | `api.get('/api/1c-stats')`, `api.get('/api/1c-planning')`, `api.get('/api/1c-workers')` + localStorage |
+| Users | `fetchApi('users')` с fallback на localStorage |
+| CameraMapping | Только localStorage (`cameraMappingData`) |
+| Sidebar | `fetch('data/posts-analytics.json')` |
+
+### ВАЖНО: JSON моки в `/project/data/`, НЕ в `/project/api/`!
+- Nginx проксирует `/api/*` на backend (порты 3001→3000→3002)
+- Backend не запущен → `/api/` возвращает ошибку
+- Frontend читает из `/data/*.json` через `fetchJson()` с `BASE = './'`
+- **При добавлении нового JSON мока — класть в `/project/data/`**
+
+## localStorage ключи
+| Ключ | Что хранит | Где используется |
+|------|------------|------------------|
+| `token` | JWT-токен (fake, base64) | AuthContext |
+| `currentUser` | Объект текущего пользователя (pages, permissions) | AuthContext |
+| `usersData` | Отредактированные пользователи (перезаписывает мок) | Users.jsx, AuthContext.login |
+| `language` | `ru` / `en` | i18n, Login, Header |
+| `theme` | `dark` / `light` | ThemeContext |
+| `1c-imported-planning` | Импортированные данные планирования | Data1C.jsx |
+| `1c-imported-workers` | Импортированные данные выработки | Data1C.jsx |
+| `cameraMappingData` | Маппинг камер по зонам | CameraMapping.jsx |
+| `dashboardPostsSettings` | Настройки таймлайна (смена, кол-во постов) | DashboardPosts.jsx |
+
+**Приоритет:** localStorage > JSON мок (для users, 1C data). При сохранении пользователя через UI — обновляется и `usersData`, и `currentUser` (если это текущий юзер).
+
+## Система доступа (RBAC)
+- **Роли:** admin, manager, viewer, mechanic
+- **Доступ к страницам:** массив `pages` у каждого пользователя
+- **Sidebar** фильтрует по `user.pages.includes(pageId)` (admin видит всё)
+- **При редактировании пользователя:** `updateCurrentUser()` обновляет сессию без перелогина
+- **Маппинг pages → permissions:** `PAGE_PERMISSIONS` в AuthContext (для hasPermission)
 
 ## Карта СТО (STOMap.jsx)
 - Верхний ряд постов: 5, 6, 7, 8, 9
@@ -59,36 +131,48 @@
 - Камеры 10шт в зоне проезда и на стенах
 - По клику на пост — модальное окно с инфой + кнопка перехода на страницу Посты
 
-## API (моки в /project/api/)
-- `auth-login.json`, `auth-me.json` — авторизация
-- `posts.json`, `zones.json`, `sessions.json`, `events.json` — основные данные
-- `work-orders.json` — заказ-наряды из 1С
-- `dashboard-posts.json` — данные для Gantt-таймлайна
-- `posts-analytics.json` — аналитика по постам
-- `1c-planning.json`, `1c-workers.json`, `1c-stats.json` — данные Альфа-Авто
-- `analytics-history.json`, `cameras.json`, `zones-cameras.json` и др.
+## Данные 1С (Data1C.jsx)
+- **3 таба:** Статистика, Планирование (60 записей, 16 колонок), Выработка (866 записей, 15 колонок)
+- **Excel-импорт:** загрузка .xlsx через drag-n-drop, парсинг xlsx, проверка дублей, кнопка "Сохранить"
+- **Дедупликация:** планирование по (номер + рабочее место + начало), выработка по (номер + сотрудник + дата начала)
+- **Пагинация:** 25/50/100 строк на страницу, сортировка по всем колонкам
 
 ## Билд и деплой
 ```bash
 cd /project/frontend && npm run build
 cp -r dist/* /project/
 ```
-Nginx раздаёт из `/project/` автоматически.
+Nginx раздаёт из `/project/` автоматически. Новый билд — новые хеши в assets/.
 
 ## Правила
 - **НЕ делай git commit и git push без прямой команды пользователя**
 - Все файлы только в `/project`
 - Dev server на `0.0.0.0`
-- i18n: все тексты через `t('key')`, оба языка (ru.json + en.json)
+- i18n: все тексты через `t('key')`, оба языка (ru.json + en.json, ~197 ключей)
 - Иконки: только Lucide React, без emoji
-- API: `fetchApi('name')` → fetch `api/name.json`
+- JSON моки: класть в `/project/data/`, НЕ в `/project/api/`
+- fetchJson: `${BASE}data/${path}.json` (BASE = './')
+- При создании нового `fetchApi()` в компоненте — использовать путь `data/`, не `api/`
 
-## КРИТИЧНО: Frontend API URLs
-- Nginx на порту 8080 автоматически проксирует /api/* на backend (порт 3001, с fallback на 3000 и 3002)
-- Frontend ДОЛЖЕН использовать ОТНОСИТЕЛЬНЫЕ URL для API:
-  - Правильно: fetch("/api/users")
-  - НЕПРАВИЛЬНО: fetch("http://localhost:3001/api/users")
-  - НЕПРАВИЛЬНО: fetch(`http://${window.location.hostname}:3001/api/users`)
-- Socket.IO тоже через относительный путь: io("/", {...}) или io({ path: "/socket.io" })
-- Публичная ссылка: https://dev.metricsavto.com/p/metricsappartisom/
-- Если нужен другой порт: https://dev.metricsavto.com/p/metricsappartisom/3001/
+## Nginx конфигурация (/etc/nginx/sites-enabled/default)
+- **Нет прав записи** (owner: root) — редактировать нельзя
+- `/api/*` → proxy на backend (3001 → 3000 → 3002 fallback)
+- `/socket.io/` → WebSocket proxy (тот же каскад портов)
+- `/` → SPA fallback (`try_files $uri $uri/ /index.html`)
+- `*.php` → PHP-FPM
+- **Статические JSON в `/data/` не конфликтуют с proxy** (только `/api/` проксируется)
+
+## Backend (готов, не активен)
+- Express 4 + Prisma ORM + SQLite (`backend/.env: DATABASE_URL=file:./dev.db`)
+- JWT авторизация (bcryptjs, jsonwebtoken)
+- Socket.IO для real-time
+- 8 модулей маршрутов: auth, zones, posts, events, sessions, workOrders, recommendations, dashboard
+- Порт: 3001 (настраивается через `.env`)
+- Запуск: `cd /project/backend && npm run dev`
+
+## Крупные файлы (кандидаты на рефакторинг)
+- `PostsDetail.jsx` — 1169 LOC
+- `DashboardPosts.jsx` — 963 LOC
+- `Data1C.jsx` — 585 LOC
+- `CameraMapping.jsx` — 458 LOC
+- `STOMap.jsx` — 455 LOC

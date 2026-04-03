@@ -3,19 +3,13 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 const BASE = import.meta.env.BASE_URL || './';
+
+// Fallback: load static JSON mock
 const fetchJson = async (path) => {
   const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 };
-
-function getBackendUrl() {
-  if (typeof window === 'undefined') return 'http://localhost:3002';
-  const loc = window.location;
-  if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') return `http://${loc.hostname}:3002`;
-  const base = loc.href.split('/preview/')[0];
-  return base ? `${base}/preview/3002` : `http://${loc.hostname}:3002`;
-}
 
 const PAGE_PERMISSIONS = {
   'dashboard': ['view_dashboard'],
@@ -45,47 +39,100 @@ function buildPermissions(pages, role) {
   return [...perms];
 }
 
-const api = {
-  get: async (url) => {
-    let clean = url.replace(/^\/api\//, '');
-    const qIdx = clean.indexOf('?');
-    let suffix = '';
-    if (qIdx !== -1) {
-      const params = new URLSearchParams(clean.slice(qIdx));
-      clean = clean.slice(0, qIdx);
-      if (params.get('status') === 'completed') suffix = '-completed';
-      if (params.get('period')) suffix = `-${params.get('period')}`;
-    }
-    clean = clean.replace(/\//g, '-') + suffix;
-    const data = await fetchJson(clean);
-    return { data };
-  },
-  post: async (url, body) => {
-    if (url.includes('auth/login')) {
-      const data = await fetchJson('auth-login');
+// Map URL to JSON mock filename for fallback
+function urlToMockPath(url) {
+  let clean = url.replace(/^\/api\//, '');
+  const qIdx = clean.indexOf('?');
+  let suffix = '';
+  if (qIdx !== -1) {
+    const params = new URLSearchParams(clean.slice(qIdx));
+    clean = clean.slice(0, qIdx);
+    if (params.get('status') === 'completed') suffix = '-completed';
+    if (params.get('period')) suffix = `-${params.get('period')}`;
+  }
+  return clean.replace(/\//g, '-') + suffix;
+}
+
+function createApi(getToken) {
+  const headers = (extra = {}) => {
+    const h = { 'Content-Type': 'application/json', ...extra };
+    const t = getToken();
+    if (t) h['Authorization'] = `Bearer ${t}`;
+    return h;
+  };
+
+  return {
+    get: async (url) => {
+      try {
+        const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, { headers: headers() });
+        if (res.ok) {
+          const data = await res.json();
+          return { data };
+        }
+        // Auth error — don't fallback, propagate
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(res.status === 401 ? 'Unauthorized' : 'Forbidden');
+        }
+      } catch (err) {
+        if (err.message === 'Unauthorized' || err.message === 'Forbidden') throw err;
+        // Network error or backend down — fallback to mock
+      }
+      // Fallback to static JSON
+      const mockPath = urlToMockPath(url);
+      const data = await fetchJson(mockPath);
       return { data };
-    }
-    try {
-      const res = await fetch(`http://${window.location.hostname}:3001${url}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    },
+
+    post: async (url, body) => {
+      const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, {
+        method: 'POST', headers: headers(), body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || err.message || res.statusText);
+      }
       return { data: await res.json() };
-    } catch { return { data: {} }; }
-  },
-  put: async (url, body) => {
-    try {
-      const res = await fetch(`http://${window.location.hostname}:3001${url}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    },
+
+    put: async (url, body) => {
+      const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, {
+        method: 'PUT', headers: headers(), body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || err.message || res.statusText);
+      }
       return { data: await res.json() };
-    } catch { return { data: {} }; }
-  },
+    },
+
+    delete: async (url) => {
+      const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, {
+        method: 'DELETE', headers: headers(),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || err.message || res.statusText);
+      }
+      return { data: await res.json() };
+    },
+  };
+}
+
+// Default pages per role (used when backend doesn't return pages)
+const ROLE_DEFAULT_PAGES = {
+  admin: Object.keys(PAGE_PERMISSIONS),
+  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'data-1c'],
+  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
+  mechanic: ['dashboard', 'dashboard-posts', 'map'],
+  viewer: ['dashboard', 'posts-detail', 'map'],
 };
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+
+  const api = createApi(() => token);
 
   useEffect(() => {
     if (token) {
@@ -98,35 +145,63 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    // Load users from JSON (source of truth), localStorage adds new users only
-    let jsonUsers = [];
+    // Try real backend first
     try {
-      const usersData = await fetchJson('users');
-      jsonUsers = usersData.users || [];
-    } catch { /* json unavailable */ }
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const realToken = data.token;
+        // Fetch full user profile with permissions
+        const meRes = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${realToken}` },
+        });
+        let role = 'viewer', pages = [], permissions = [];
+        if (meRes.ok) {
+          const me = await meRes.json();
+          role = me.roles?.[0] || 'viewer';
+          permissions = me.permissions || [];
+          pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
+        }
+        const userData = {
+          id: data.user.id, email: data.user.email,
+          firstName: data.user.firstName, lastName: data.user.lastName,
+          role, roles: [role], pages, permissions,
+        };
+        localStorage.setItem('token', realToken);
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        setToken(realToken);
+        setUser(userData);
+        return userData;
+      }
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Login failed');
+    } catch (fetchErr) {
+      // If network error (backend down), fallback to mock login
+      if (fetchErr.message === 'Failed to fetch' || fetchErr.message === 'NetworkError') {
+        return mockLogin(email, password);
+      }
+      throw fetchErr;
+    }
+  };
 
-    // localStorage may contain users created via UI (not in JSON)
-    let lsUsers = [];
+  // Fallback mock login (when backend is down)
+  const mockLogin = async (email, password) => {
+    let users = [];
     const saved = localStorage.getItem('usersData');
     if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.users?.length > 0) lsUsers = parsed.users;
-      } catch { /* ignore */ }
+      try { users = JSON.parse(saved).users || []; } catch { /* ignore */ }
     }
-
-    // localStorage has priority (user edits), JSON is fallback for unedited users
-    const userMap = {};
-    jsonUsers.forEach(u => { userMap[u.email.toLowerCase()] = u; }); // JSON base
-    lsUsers.forEach(u => { userMap[u.email.toLowerCase()] = u; }); // localStorage overwrites
-    const users = Object.values(userMap);
-    if (users.length === 0) throw new Error('Cannot load users');
-
+    if (!users.length) {
+      try { users = (await fetchJson('users')).users || []; } catch { /* ignore */ }
+    }
     const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!found) throw new Error('User not found');
     if (!found.isActive) throw new Error('User is disabled');
     if (found.password && found.password !== password) throw new Error('Wrong password');
-
     const permissions = buildPermissions(found.pages, found.role);
     const userData = {
       id: found.id, email: found.email, firstName: found.firstName, lastName: found.lastName,

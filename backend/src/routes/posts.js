@@ -70,4 +70,18 @@ router.put('/:id', authenticate, requirePermission('manage_zones'), async (req, 
   }
 });
 
+// DELETE /api/posts/:id (soft delete)
+router.delete('/:id', authenticate, requirePermission('manage_zones'), async (req, res) => {
+  try {
+    const post = await prisma.post.update({
+      where: { id: req.params.id },
+      data: { isActive: false },
+    });
+    res.json({ message: 'Post deactivated', id: post.id });
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Post not found' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

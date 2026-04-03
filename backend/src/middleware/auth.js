@@ -41,12 +41,26 @@ async function authenticate(req, res, next) {
       }
     }
 
+    const roleNames = user.roles.map((ur) => ur.role.name);
+    const primaryRole = roleNames[0] || 'viewer';
+
+    // Derive pages from role (matches frontend PAGE_PERMISSIONS)
+    const ROLE_PAGES = {
+      admin: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c', 'users'],
+      director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
+      manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'data-1c'],
+      mechanic: ['dashboard', 'dashboard-posts', 'map'],
+      viewer: ['dashboard', 'posts-detail', 'map'],
+    };
+
     req.user = {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      roles: user.roles.map((ur) => ur.role.name),
+      roles: roleNames,
+      role: primaryRole,
+      pages: ROLE_PAGES[primaryRole] || ['dashboard'],
       permissions: [...permissions],
     };
 

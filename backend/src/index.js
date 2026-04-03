@@ -18,6 +18,8 @@ const sessionRoutes = require('./routes/sessions');
 const workOrderRoutes = require('./routes/workOrders');
 const recommendationRoutes = require('./routes/recommendations');
 const dashboardRoutes = require('./routes/dashboard');
+const cameraRoutes = require('./routes/cameras');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +40,8 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/work-orders', workOrderRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/cameras', cameraRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

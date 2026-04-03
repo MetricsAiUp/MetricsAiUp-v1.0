@@ -110,8 +110,35 @@ async function main() {
     create: { userId: adminUser.id, roleId: roles.admin.id },
   });
 
+  // Additional users (matching frontend mock data)
+  const additionalUsers = [
+    { email: 'demo@metricsai.up', password: 'demo12345', firstName: 'Генри', lastName: 'Форд', role: 'manager' },
+    { email: 'manager@metricsai.up', password: 'demo123', firstName: 'Сергей', lastName: 'Петров', role: 'manager' },
+    { email: 'mechanic@metricsai.up', password: 'demo123', firstName: 'Иван', lastName: 'Козлов', role: 'mechanic', isActive: false },
+  ];
+
+  for (const u of additionalUsers) {
+    const hashed = await bcrypt.hash(u.password, 10);
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        email: u.email,
+        password: hashed,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        isActive: u.isActive !== false,
+      },
+    });
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId: roles[u.role].id } },
+      update: {},
+      create: { userId: user.id, roleId: roles[u.role].id },
+    });
+  }
+
   console.log('Seed completed!');
-  console.log('Admin login: admin@metricsai.up / admin123');
+  console.log('Users: admin@metricsai.up/admin123, demo@metricsai.up/demo12345, manager@metricsai.up/demo123, mechanic@metricsai.up/demo123');
 }
 
 main()
