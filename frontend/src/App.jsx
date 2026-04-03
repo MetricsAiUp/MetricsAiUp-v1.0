@@ -1,22 +1,36 @@
+import { lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import MapView from './pages/MapView';
-import Sessions from './pages/Sessions';
-import WorkOrders from './pages/WorkOrders';
-import Events from './pages/Events';
-import Analytics from './pages/Analytics';
-import Data1C from './pages/Data1C';
-import Cameras from './pages/Cameras';
-import CameraMapping from './pages/CameraMapping';
-import DashboardPosts from './pages/DashboardPosts';
-import PostsDetail from './pages/PostsDetail';
-import Users from './pages/Users';
 import './i18n';
+
+// Lazy-loaded pages (code splitting)
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const DashboardPosts = lazy(() => import('./pages/DashboardPosts'));
+const PostsDetail = lazy(() => import('./pages/PostsDetail'));
+const MapView = lazy(() => import('./pages/MapView'));
+const Sessions = lazy(() => import('./pages/Sessions'));
+const WorkOrders = lazy(() => import('./pages/WorkOrders'));
+const Events = lazy(() => import('./pages/Events'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Data1C = lazy(() => import('./pages/Data1C'));
+const Cameras = lazy(() => import('./pages/Cameras'));
+const CameraMapping = lazy(() => import('./pages/CameraMapping'));
+const Users = lazy(() => import('./pages/Users'));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center p-12" style={{ color: 'var(--text-muted)' }}>
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+        <span className="text-sm">Loading...</span>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -31,23 +45,25 @@ function AppRoutes() {
   if (loading) return null;
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard-posts" element={<DashboardPosts />} />
-        <Route path="posts-detail" element={<PostsDetail />} />
-        <Route path="map" element={<MapView />} />
-        <Route path="sessions" element={<Sessions />} />
-        <Route path="work-orders" element={<WorkOrders />} />
-        <Route path="events" element={<Events />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="data-1c" element={<Data1C />} />
-        <Route path="cameras" element={<Cameras />} />
-        <Route path="camera-mapping" element={<CameraMapping />} />
-        <Route path="users" element={<Users />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard-posts" element={<DashboardPosts />} />
+          <Route path="posts-detail" element={<PostsDetail />} />
+          <Route path="map" element={<MapView />} />
+          <Route path="sessions" element={<Sessions />} />
+          <Route path="work-orders" element={<WorkOrders />} />
+          <Route path="events" element={<Events />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="data-1c" element={<Data1C />} />
+          <Route path="cameras" element={<Cameras />} />
+          <Route path="camera-mapping" element={<CameraMapping />} />
+          <Route path="users" element={<Users />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 
