@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { usePolling } from '../hooks/useSocket';
 import STOMap from '../components/STOMap';
 import { translateZone, translatePost } from '../utils/translate';
+import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
 import {
   X, Car, Clock, Timer, User, Wrench, FileText, AlertTriangle,
@@ -24,59 +25,6 @@ const ALL_CAMERAS = [
   { num: '09', loc: { ru: 'Въезд/Выезд', en: 'Entry/Exit' }, covers: { ru: 'Въезд, Выезд, Парковка', en: 'Entry, Exit, Parking' } },
   { num: '10', loc: { ru: 'Правая стена, низ', en: 'Right wall, lower' }, covers: { ru: 'Пост 10', en: 'Post 10' } },
 ];
-
-function CameraStreamModal({ camNum, isRu, isDark, onClose }) {
-  const name = (isRu ? 'КАМ' : 'CAM') + camNum;
-  const camData = ALL_CAMERAS.find(c => c.num === camNum);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
-      onClick={onClose}>
-      <div className="w-full max-w-4xl" onClick={e => e.stopPropagation()}>
-        <div className="relative rounded-t-xl overflow-hidden" style={{ aspectRatio: '16/9', background: '#000' }}>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Camera size={56} style={{ color: 'rgba(148,163,184,0.25)' }} />
-            <span className="text-sm" style={{ color: 'rgba(148,163,184,0.5)' }}>
-              {isRu ? 'Подключение к камере...' : 'Connecting to camera...'}
-            </span>
-          </div>
-          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3"
-            style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-white font-bold text-sm">{name}</span>
-              <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}>LIVE</span>
-            </div>
-            <button onClick={onClose} className="p-1 rounded hover:bg-white/10"><X size={16} color="white" /></button>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2"
-            style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-            <span className="text-xs text-white/60 font-mono">{new Date().toLocaleTimeString()}</span>
-            <span className="text-xs text-white/40">{camData?.loc?.[isRu ? 'ru' : 'en'] || ''}</span>
-          </div>
-        </div>
-        <div className="rounded-b-xl p-4 flex items-center justify-between"
-          style={{ background: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)', border: '1px solid var(--border-glass)', borderTop: 'none' }}>
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{name}</p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{camData?.loc?.[isRu ? 'ru' : 'en'] || ''}</p>
-          </div>
-          {camData && (
-            <div className="flex flex-wrap gap-1">
-              {camData.covers[isRu ? 'ru' : 'en'].split(', ').map(z => (
-                <span key={z} className="px-2 py-0.5 rounded text-xs"
-                  style={{ background: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.08)', color: 'var(--accent)' }}>
-                  {z}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 
 import { POST_STATUS_COLORS as statusColors } from '../constants';
 
@@ -341,14 +289,21 @@ export default function MapView() {
         />
       )}
 
-      {selectedCam && (
-        <CameraStreamModal
-          camNum={selectedCam}
-          isRu={isRu}
-          isDark={isDark}
-          onClose={() => setSelectedCam(null)}
-        />
-      )}
+      {selectedCam && (() => {
+        const camData = ALL_CAMERAS.find(c => c.num === selectedCam);
+        const lang = isRu ? 'ru' : 'en';
+        return (
+          <CameraStreamModal
+            camId={`cam${selectedCam}`}
+            camName={(isRu ? 'КАМ' : 'CAM') + selectedCam}
+            camLocation={camData?.loc?.[lang] || ''}
+            camCovers={camData?.covers?.[lang] || ''}
+            isRu={isRu}
+            isDark={isDark}
+            onClose={() => setSelectedCam(null)}
+          />
+        );
+      })()}
 
       {/* STO summary stats */}
       {(() => {

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Camera, DoorOpen, Wrench, Search, ParkingCircle, X, Maximize2 } from 'lucide-react';
+import { Camera, DoorOpen, Wrench, Search, ParkingCircle } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import CameraStreamModal from '../components/CameraStreamModal';
 
 // Камеры хранятся по номерам, prefix (КАМ/CAM) добавляется по языку
 const camName = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
@@ -60,84 +61,6 @@ const TYPE_LABELS_RU = {
   diag: 'Диагностика',
   parking: 'Парковка',
 };
-
-// Modal for camera stream
-function CameraStreamModal({ camNum, isRu, isDark, onClose }) {
-  const name = camName(camNum, isRu);
-  const camData = ALL_CAMERAS.find(c => c.num === camNum);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
-      onClick={onClose}>
-      <div className="w-full max-w-4xl" onClick={e => e.stopPropagation()}>
-        {/* Video area */}
-        <div className="relative rounded-t-xl overflow-hidden"
-          style={{ aspectRatio: '16/9', background: '#000' }}>
-
-          {/* Placeholder — ready for HLS <video> */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Camera size={56} style={{ color: 'rgba(148,163,184,0.25)' }} />
-            <span className="text-sm" style={{ color: 'rgba(148,163,184,0.5)' }}>
-              {isRu ? 'Подключение к камере...' : 'Connecting to camera...'}
-            </span>
-            <span className="text-xs" style={{ color: 'rgba(148,163,184,0.3)' }}>
-              {isRu ? 'Стрим будет доступен после подключения CV-системы' : 'Stream available after CV system connection'}
-            </span>
-          </div>
-
-          {/* Top bar */}
-          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3"
-            style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-white font-bold text-sm">{name}</span>
-              <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}>
-                LIVE
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="p-1 rounded hover:bg-white/10"><Maximize2 size={16} color="white" /></button>
-              <button onClick={onClose} className="p-1 rounded hover:bg-white/10"><X size={16} color="white" /></button>
-            </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2"
-            style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%)' }}>
-            <span className="text-xs text-white/60 font-mono">
-              {new Date().toLocaleTimeString()}
-            </span>
-            <span className="text-xs text-white/40">
-              {camData?.loc?.[isRu ? 'ru' : 'en'] || ''}
-            </span>
-          </div>
-        </div>
-
-        {/* Info bar below video */}
-        <div className="rounded-b-xl p-4 flex items-center justify-between"
-          style={{ background: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)', border: '1px solid var(--border-glass)', borderTop: 'none' }}>
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{name}</p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {camData?.loc?.[isRu ? 'ru' : 'en'] || ''}
-            </p>
-          </div>
-          {camData && (
-            <div className="flex flex-wrap gap-1">
-              {camData.covers[isRu ? 'ru' : 'en'].split(', ').map(z => (
-                <span key={z} className="px-2 py-0.5 rounded text-xs"
-                  style={{ background: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.08)', color: 'var(--accent)' }}>
-                  {z}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ZoneCameraCard({ zone, isDark, isRu, onCameraClick }) {
   const color = TYPE_COLORS[zone.type] || '#94a3b8';
@@ -357,14 +280,21 @@ export default function Cameras() {
       )}
 
       {/* Stream modal */}
-      {streamCam && (
-        <CameraStreamModal
-          camNum={streamCam}
-          isRu={isRu}
-          isDark={isDark}
-          onClose={() => setStreamCam(null)}
-        />
-      )}
+      {streamCam && (() => {
+        const camData = ALL_CAMERAS.find(c => c.num === streamCam);
+        const lang = isRu ? 'ru' : 'en';
+        return (
+          <CameraStreamModal
+            camId={`cam${streamCam}`}
+            camName={camName(streamCam, isRu)}
+            camLocation={camData?.loc?.[lang] || ''}
+            camCovers={camData?.covers?.[lang] || ''}
+            isRu={isRu}
+            isDark={isDark}
+            onClose={() => setStreamCam(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
