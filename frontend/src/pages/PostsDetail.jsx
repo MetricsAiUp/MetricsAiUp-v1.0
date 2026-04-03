@@ -2,13 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
-const BASE = import.meta.env.BASE_URL || './';
-const fetchApi = async (path) => {
-  const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-};
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend as RLegend,
 } from 'recharts';
@@ -682,6 +675,7 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
 export default function PostsDetail() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
+  const { api } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -699,10 +693,10 @@ export default function PostsDetail() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetchApi('posts-analytics'),
-      fetchApi('dashboard-posts'),
+      api.get('/api/posts-analytics'),
+      api.get('/api/dashboard-posts'),
     ])
-      .then(([res, dash]) => { setData(res); setDashData(dash); })
+      .then(([{ data: res }, { data: dash }]) => { setData(res); setDashData(dash); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

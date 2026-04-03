@@ -1,13 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-
-const BASE = import.meta.env.BASE_URL || './';
-const fetchApi = async (path) => {
-  const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-};
 import {
   Clock, Truck, Car, Wrench, AlertTriangle, Settings,
   ChevronDown, ChevronUp, X, User, FileText, Calendar,
@@ -713,6 +706,7 @@ function Legend({ t }) {
 export default function DashboardPosts() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
+  const { api } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -736,8 +730,8 @@ export default function DashboardPosts() {
 
   useEffect(() => {
     setLoading(true);
-    fetchApi('dashboard-posts')
-      .then((res) => {
+    api.get('/api/dashboard-posts')
+      .then(({ data: res }) => {
         setData(res);
         if (res.settings) {
           const saved = localStorage.getItem('dashboardPostsSettings');

@@ -6,26 +6,12 @@ import {
   ToggleLeft, ToggleRight, Pencil, Trash2,
 } from 'lucide-react';
 
-const BASE = import.meta.env.BASE_URL || './';
-function getBackendUrl() {
-  if (typeof window === 'undefined') return 'http://localhost:3002';
-  const loc = window.location;
-  if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') return `http://${loc.hostname}:3002`;
-  const base = loc.href.split('/preview/')[0];
-  return base ? `${base}/preview/3002` : `http://${loc.hostname}:3002`;
-}
-const BACKEND_URL = getBackendUrl();
-const fetchApi = async (path) => {
-  const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-};
 
 const ROLE_ICONS = { admin: Shield, manager: UserCog, viewer: Eye, mechanic: Wrench };
 
 export default function Users() {
   const { i18n } = useTranslation();
-  const { user: currentUser, updateCurrentUser } = useAuth();
+  const { user: currentUser, updateCurrentUser, api } = useAuth();
   const isRu = i18n.language === 'ru';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +27,7 @@ export default function Users() {
         try { setData(JSON.parse(saved)); setLoading(false); return; } catch { /* ignore */ }
       }
       try {
-        const d = await fetchApi('users');
+        const { data: d } = await api.get('/api/users');
         setData(d);
         setLoading(false);
         return;

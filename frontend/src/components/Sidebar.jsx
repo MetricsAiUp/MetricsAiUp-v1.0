@@ -8,7 +8,6 @@ import {
   ChevronDown, Users,
 } from 'lucide-react';
 
-const BASE = import.meta.env.BASE_URL || './';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', pageId: 'dashboard' },
@@ -27,16 +26,15 @@ const navItems = [
 
 export default function Sidebar() {
   const { t } = useTranslation();
-  const { user, hasPermission } = useAuth();
+  const { user, hasPermission, api } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [postsOpen, setPostsOpen] = useState(false);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    fetch(`${BASE}data/posts-analytics.json?t=${Date.now()}`)
-      .then(r => r.json())
-      .then(d => setPosts(d.posts || []))
+    api.get('/api/posts-analytics')
+      .then(({ data: d }) => setPosts(d.posts || []))
       .catch(() => {});
   }, []);
 
