@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { connectSocket, disconnectSocket } from '../hooks/useSocket';
 
 const AuthContext = createContext();
 
@@ -265,10 +266,18 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
+  // Connect Socket.IO when user is authenticated
+  useEffect(() => {
+    if (user && tokenRef.current) {
+      connectSocket(tokenRef.current);
+    }
+    return () => { if (!user) disconnectSocket(); };
+  }, [user]);
+
   const logout = () => {
-    // Clear refresh cookie on server
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     localStorage.removeItem('currentUser');
+    disconnectSocket();
     setToken(null);
     setUser(null);
   };

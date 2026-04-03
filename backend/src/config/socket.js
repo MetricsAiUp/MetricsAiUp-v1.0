@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 let io = null;
 
 function initSocket(server) {
@@ -6,11 +8,23 @@ function initSocket(server) {
     cors: {
       origin: '*',
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
+  // JWT authentication middleware for Socket.IO
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(); // Allow anonymous for now (fallback)
+    try {
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = payload.userId;
+    } catch { /* invalid token — still allow connection for read-only */ }
+    next();
+  });
+
   io.on('connection', (socket) => {
-    console.log(`[Socket.IO] Client connected: ${socket.id}`);
+    console.log(`[Socket.IO] Client connected: ${socket.id}${socket.userId ? ` (user: ${socket.userId})` : ''}`);
 
     // Подписка на обновления зоны
     socket.on('subscribe:zone', (zoneId) => {

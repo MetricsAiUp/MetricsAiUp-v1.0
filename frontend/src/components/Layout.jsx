@@ -2,8 +2,21 @@ import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Globe, LogOut } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, Wifi, WifiOff } from 'lucide-react';
+import { useSocketStatus } from '../hooks/useSocket';
 import Sidebar from './Sidebar';
+
+function SocketIndicator() {
+  const connected = useSocketStatus();
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
+      style={{ color: connected ? 'var(--success)' : 'var(--text-muted)' }}
+      title={connected ? 'Real-time connected' : 'Real-time disconnected'}>
+      {connected ? <Wifi size={12} /> : <WifiOff size={12} />}
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: connected ? 'var(--success)' : 'var(--text-muted)' }} />
+    </div>
+  );
+}
 
 function Header() {
   const { i18n } = useTranslation();
@@ -46,6 +59,9 @@ function Header() {
         <Globe size={14} />
         <span>{isRu ? 'English' : 'Русский'}</span>
       </button>
+
+      {/* Socket status */}
+      <SocketIndicator />
 
       {/* Divider */}
       <div className="w-px h-6" style={{ background: 'var(--border-glass)' }} />
