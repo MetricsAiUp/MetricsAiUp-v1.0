@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import { Sun, Moon } from 'lucide-react';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const toast = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,13 +20,23 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      const userData = await login(email, password);
+      toast.success(i18n.language === 'ru' ? `Добро пожаловать, ${userData.firstName}!` : `Welcome, ${userData.firstName}!`);
     } catch (err) {
       const msg = err.message;
-      if (msg === 'User not found') setError(i18n.language === 'ru' ? 'Пользователь не найден' : msg);
-      else if (msg === 'Wrong password') setError(i18n.language === 'ru' ? 'Неверный пароль' : msg);
-      else if (msg === 'User is disabled') setError(i18n.language === 'ru' ? 'Пользователь отключён' : msg);
-      else setError(t('auth.loginError'));
+      const isRu = i18n.language === 'ru';
+      let errMsg;
+      if (msg.includes('Неверный') || msg === 'Wrong password' || msg === 'User not found') {
+        errMsg = isRu ? 'Неверный email или пароль' : 'Invalid email or password';
+      } else if (msg === 'User is disabled' || msg.includes('деактивирован')) {
+        errMsg = isRu ? 'Пользователь отключён' : 'User is disabled';
+      } else if (msg.includes('429') || msg.includes('Слишком много')) {
+        errMsg = isRu ? 'Слишком много попыток. Подождите минуту' : 'Too many attempts. Wait a minute';
+      } else {
+        errMsg = isRu ? 'Ошибка входа' : 'Login error';
+      }
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
