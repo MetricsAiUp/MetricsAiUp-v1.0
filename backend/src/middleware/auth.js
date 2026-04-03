@@ -11,6 +11,10 @@ async function authenticate(req, res, next) {
   try {
     const token = header.split(' ')[1];
     const payload = jwt.verify(token, process.env.JWT_SECRET);
+    // Reject refresh tokens used as access tokens
+    if (payload.type === 'refresh') {
+      return res.status(401).json({ error: 'Используйте access token' });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },

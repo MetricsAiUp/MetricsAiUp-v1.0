@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -53,7 +53,7 @@ function urlToMockPath(url) {
   return clean.replace(/\//g, '-') + suffix;
 }
 
-function createApi(getToken) {
+function createApi(getToken, onTokenRefreshed, onAuthFailed) {
   const headers = (extra = {}) => {
     const h = { 'Content-Type': 'application/json', ...extra };
     const t = getToken();
@@ -61,60 +61,57 @@ function createApi(getToken) {
     return h;
   };
 
+  // Try to refresh access token via refresh cookie
+  const tryRefresh = async () => {
+    try {
+      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        onTokenRefreshed?.(data.token);
+        return data.token;
+      }
+    } catch { /* refresh failed */ }
+    onAuthFailed?.();
+    return null;
+  };
+
+  const request = async (method, url, body, retry = true) => {
+    const opts = { method, headers: headers(), credentials: 'include' };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, opts);
+    // Auto-refresh on 401
+    if (res.status === 401 && retry) {
+      const newToken = await tryRefresh();
+      if (newToken) {
+        const retryOpts = { ...opts, headers: { ...opts.headers, Authorization: `Bearer ${newToken}` } };
+        const retryRes = await fetch(`/api/${url.replace(/^\/api\//, '')}`, retryOpts);
+        if (retryRes.ok) return { data: await retryRes.json() };
+        if (retryRes.status === 401) { onAuthFailed?.(); throw new Error('Unauthorized'); }
+      }
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || err.message || res.statusText);
+    }
+    return { data: await res.json() };
+  };
+
   return {
     get: async (url) => {
       try {
-        const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, { headers: headers() });
-        if (res.ok) {
-          const data = await res.json();
-          return { data };
-        }
-        // Auth error — don't fallback, propagate
-        if (res.status === 401 || res.status === 403) {
-          throw new Error(res.status === 401 ? 'Unauthorized' : 'Forbidden');
-        }
+        return await request('GET', url);
       } catch (err) {
         if (err.message === 'Unauthorized' || err.message === 'Forbidden') throw err;
         // Network error or backend down — fallback to mock
+        const mockPath = urlToMockPath(url);
+        const data = await fetchJson(mockPath);
+        return { data };
       }
-      // Fallback to static JSON
-      const mockPath = urlToMockPath(url);
-      const data = await fetchJson(mockPath);
-      return { data };
     },
-
-    post: async (url, body) => {
-      const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, {
-        method: 'POST', headers: headers(), body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || err.message || res.statusText);
-      }
-      return { data: await res.json() };
-    },
-
-    put: async (url, body) => {
-      const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, {
-        method: 'PUT', headers: headers(), body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || err.message || res.statusText);
-      }
-      return { data: await res.json() };
-    },
-
-    delete: async (url) => {
-      const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, {
-        method: 'DELETE', headers: headers(),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || err.message || res.statusText);
-      }
-      return { data: await res.json() };
-    },
+    post: (url, body) => request('POST', url, body),
+    put: (url, body) => request('PUT', url, body),
+    delete: (url) => request('DELETE', url),
   };
 }
 
@@ -129,40 +126,96 @@ const ROLE_DEFAULT_PAGES = {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const tokenRef = useRef(localStorage.getItem('token'));
 
-  const api = createApi(() => token);
+  const setToken = useCallback((t) => {
+    tokenRef.current = t;
+    if (t) localStorage.setItem('token', t);
+    else localStorage.removeItem('token');
+  }, []);
 
+  const api = createApi(
+    () => tokenRef.current,
+    (newToken) => setToken(newToken), // onTokenRefreshed
+    () => { setToken(null); setUser(null); localStorage.removeItem('currentUser'); }, // onAuthFailed
+  );
+
+  // On mount: try to restore session via /api/auth/me or savedUser
   useEffect(() => {
-    if (token) {
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        try { setUser(JSON.parse(savedUser)); } catch { logout(); }
+    const restore = async () => {
+      if (tokenRef.current) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${tokenRef.current}` },
+          });
+          if (res.ok) {
+            const me = await res.json();
+            const role = me.role || me.roles?.[0] || 'viewer';
+            const userData = {
+              id: me.id, email: me.email, firstName: me.firstName, lastName: me.lastName,
+              role, roles: me.roles || [role],
+              pages: me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'],
+              permissions: me.permissions || [],
+            };
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            setUser(userData);
+            setLoading(false);
+            return;
+          }
+          // Token expired — try refresh
+          const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+          if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            setToken(data.token);
+            // Retry /me
+            const meRetry = await fetch('/api/auth/me', {
+              headers: { Authorization: `Bearer ${data.token}` },
+            });
+            if (meRetry.ok) {
+              const me = await meRetry.json();
+              const role = me.role || me.roles?.[0] || 'viewer';
+              const userData = {
+                id: me.id, email: me.email, firstName: me.firstName, lastName: me.lastName,
+                role, roles: me.roles || [role],
+                pages: me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'],
+                permissions: me.permissions || [],
+              };
+              localStorage.setItem('currentUser', JSON.stringify(userData));
+              setUser(userData);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch { /* backend down — use cached */ }
+        // Fallback: use saved user from localStorage
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+          try { setUser(JSON.parse(savedUser)); } catch { /* ignore */ }
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+    restore();
   }, []);
 
   const login = async (email, password) => {
-    // Try real backend first
     try {
       const res = await fetch('/api/auth/login', {
-        method: 'POST',
+        method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
         const data = await res.json();
-        const realToken = data.token;
-        // Fetch full user profile with permissions
+        setToken(data.token);
         const meRes = await fetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${realToken}` },
+          headers: { Authorization: `Bearer ${data.token}` },
         });
         let role = 'viewer', pages = [], permissions = [];
         if (meRes.ok) {
           const me = await meRes.json();
-          role = me.roles?.[0] || 'viewer';
+          role = me.role || me.roles?.[0] || 'viewer';
           permissions = me.permissions || [];
           pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
         }
@@ -171,16 +224,13 @@ export function AuthProvider({ children }) {
           firstName: data.user.firstName, lastName: data.user.lastName,
           role, roles: [role], pages, permissions,
         };
-        localStorage.setItem('token', realToken);
         localStorage.setItem('currentUser', JSON.stringify(userData));
-        setToken(realToken);
         setUser(userData);
         return userData;
       }
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Login failed');
     } catch (fetchErr) {
-      // If network error (backend down), fallback to mock login
       if (fetchErr.message === 'Failed to fetch' || fetchErr.message === 'NetworkError') {
         return mockLogin(email, password);
       }
@@ -216,7 +266,8 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    // Clear refresh cookie on server
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     localStorage.removeItem('currentUser');
     setToken(null);
     setUser(null);
@@ -240,7 +291,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, hasPermission, updateCurrentUser, api }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, updateCurrentUser, api }}>
       {children}
     </AuthContext.Provider>
   );

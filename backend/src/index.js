@@ -4,6 +4,7 @@ const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 const { initSocket } = require('./config/socket');
@@ -30,6 +31,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(cookieParser());
 
 // API Routes
 app.use('/api/auth', authRoutes);
