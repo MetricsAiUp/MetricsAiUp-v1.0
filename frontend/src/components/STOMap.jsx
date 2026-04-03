@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Text, Group, Line, Circle, Arrow } from 'react-konva';
 import { useTranslation } from 'react-i18next';
+import { POST_STATUS_COLORS } from '../constants';
 
 const STATUS_LABELS = {
   free: { ru: 'Свободен', en: 'Free' },
@@ -9,12 +10,7 @@ const STATUS_LABELS = {
   active_work: { ru: 'В работе', en: 'Active' },
 };
 
-const STATUS_COLORS = {
-  free: '#10b981',
-  occupied: '#f59e0b',
-  occupied_no_work: '#ef4444',
-  active_work: '#6366f1',
-};
+const STATUS_COLORS = POST_STATUS_COLORS;
 
 const ZONE_COLORS = {
   entry: { fill: 'rgba(16, 185, 129, 0.08)', stroke: '#10b981' },

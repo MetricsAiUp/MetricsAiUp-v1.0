@@ -78,12 +78,7 @@ function CameraStreamModal({ camNum, isRu, isDark, onClose }) {
 }
 
 
-const statusColors = {
-  free: '#10b981',
-  occupied: '#f59e0b',
-  occupied_no_work: '#ef4444',
-  active_work: '#6366f1',
-};
+import { POST_STATUS_COLORS as statusColors } from '../constants';
 
 // Modal for post details on map click
 function PostModal({ post, dashboardData, onClose, onGoToPost, t, isRu }) {
