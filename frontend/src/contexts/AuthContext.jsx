@@ -5,6 +5,19 @@ const AuthContext = createContext();
 
 const BASE = import.meta.env.BASE_URL || './';
 
+// Build API base URL: direct to port 3001 via platform preview proxy
+function getApiBase() {
+  const loc = window.location;
+  if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
+    return `http://${loc.hostname}:3001`;
+  }
+  // Preview proxy: e.g. https://dev.metricsavto.com/p/metricsappartisom/ → .../3001/
+  const match = loc.href.match(/(https?:\/\/[^/]+\/p\/[^/]+\/)/);
+  if (match) return `${match[1]}3001`;
+  return `${loc.origin}`;
+}
+const API_BASE = getApiBase();
+
 // Fallback: load static JSON mock
 const fetchJson = async (path) => {
   const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
@@ -65,7 +78,7 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
   // Try to refresh access token via refresh cookie
   const tryRefresh = async () => {
     try {
-      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         onTokenRefreshed?.(data.token);
@@ -76,19 +89,11 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     return null;
   };
 
-  const request = async (method, url, body, retry = true) => {
+  const request = async (method, url, body) => {
     const opts = { method, headers: headers(), credentials: 'include' };
     if (body) opts.body = JSON.stringify(body);
-    const res = await fetch(`/api/${url.replace(/^\/api\//, '')}`, opts);
-    // Auto-refresh on 401
-    if (res.status === 401 && retry) {
-      const newToken = await tryRefresh();
-      if (newToken) {
-        const retryOpts = { ...opts, headers: { ...opts.headers, Authorization: `Bearer ${newToken}` } };
-        const retryRes = await fetch(`/api/${url.replace(/^\/api\//, '')}`, retryOpts);
-        if (retryRes.ok) return { data: await retryRes.json() };
-        if (retryRes.status === 401) { onAuthFailed?.(); throw new Error('Unauthorized'); }
-      }
+    const res = await fetch(`${API_BASE}/api/${url.replace(/^\/api\//, '')}`, opts);
+    if (res.status === 401) {
       throw new Error('Unauthorized');
     }
     if (!res.ok) {
@@ -102,12 +107,13 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     get: async (url) => {
       try {
         return await request('GET', url);
-      } catch (err) {
-        if (err.message === 'Unauthorized' || err.message === 'Forbidden') throw err;
-        // Network error or backend down — fallback to mock
-        const mockPath = urlToMockPath(url);
-        const data = await fetchJson(mockPath);
-        return { data };
+      } catch {
+        // Any error (401, network, backend down) — fallback to mock JSON
+        try {
+          const mockPath = urlToMockPath(url);
+          const data = await fetchJson(mockPath);
+          return { data };
+        } catch { return { data: null }; }
       }
     },
     post: (url, body) => request('POST', url, body),
@@ -142,67 +148,20 @@ export function AuthProvider({ children }) {
     () => { setToken(null); setUser(null); localStorage.removeItem('currentUser'); }, // onAuthFailed
   );
 
-  // On mount: try to restore session via /api/auth/me or savedUser
+  // On mount: restore session from localStorage (no API calls — avoids preview proxy issues)
   useEffect(() => {
-    const restore = async () => {
-      if (tokenRef.current) {
-        try {
-          const res = await fetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${tokenRef.current}` },
-          });
-          if (res.ok) {
-            const me = await res.json();
-            const role = me.role || me.roles?.[0] || 'viewer';
-            const userData = {
-              id: me.id, email: me.email, firstName: me.firstName, lastName: me.lastName,
-              role, roles: me.roles || [role],
-              pages: me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'],
-              permissions: me.permissions || [],
-            };
-            localStorage.setItem('currentUser', JSON.stringify(userData));
-            setUser(userData);
-            setLoading(false);
-            return;
-          }
-          // Token expired — try refresh
-          const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
-          if (refreshRes.ok) {
-            const data = await refreshRes.json();
-            setToken(data.token);
-            // Retry /me
-            const meRetry = await fetch('/api/auth/me', {
-              headers: { Authorization: `Bearer ${data.token}` },
-            });
-            if (meRetry.ok) {
-              const me = await meRetry.json();
-              const role = me.role || me.roles?.[0] || 'viewer';
-              const userData = {
-                id: me.id, email: me.email, firstName: me.firstName, lastName: me.lastName,
-                role, roles: me.roles || [role],
-                pages: me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'],
-                permissions: me.permissions || [],
-              };
-              localStorage.setItem('currentUser', JSON.stringify(userData));
-              setUser(userData);
-              setLoading(false);
-              return;
-            }
-          }
-        } catch { /* backend down — use cached */ }
-        // Fallback: use saved user from localStorage
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-          try { setUser(JSON.parse(savedUser)); } catch { /* ignore */ }
-        }
+    if (tokenRef.current) {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        try { setUser(JSON.parse(savedUser)); } catch { /* ignore */ }
       }
-      setLoading(false);
-    };
-    restore();
+    }
+    setLoading(false);
   }, []);
 
   const login = async (email, password) => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -210,7 +169,7 @@ export function AuthProvider({ children }) {
       if (res.ok) {
         const data = await res.json();
         setToken(data.token);
-        const meRes = await fetch('/api/auth/me', {
+        const meRes = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { Authorization: `Bearer ${data.token}` },
         });
         let role = 'viewer', pages = [], permissions = [];
@@ -229,13 +188,16 @@ export function AuthProvider({ children }) {
         setUser(userData);
         return userData;
       }
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Login failed');
+      // Backend returned error — fallback to mock login
+      return mockLogin(email, password);
     } catch (fetchErr) {
-      if (fetchErr.message === 'Failed to fetch' || fetchErr.message === 'NetworkError') {
-        return mockLogin(email, password);
+      // Fallback to mock login on any network/backend issue
+      try {
+        return await mockLogin(email, password);
+      } catch {
+        // Mock login also failed — throw original error
+        throw fetchErr;
       }
-      throw fetchErr;
     }
   };
 
@@ -275,7 +237,7 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const logout = () => {
-    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     localStorage.removeItem('currentUser');
     disconnectSocket();
     setToken(null);

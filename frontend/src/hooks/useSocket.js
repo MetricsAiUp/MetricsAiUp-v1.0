@@ -16,17 +16,21 @@ export function getSocket() {
 export function connectSocket(token) {
   if (socket?.connected) return socket;
 
-  // Determine URL: relative in production (Nginx proxies), explicit in dev
-  const url = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? `http://${window.location.hostname}:3001`
-    : undefined; // relative — Nginx proxies /socket.io/
+  const host = window.location.hostname;
+  const isLocal = host === 'localhost' || host === '127.0.0.1';
 
-  socket = io(url || '/', {
+  // On preview proxy (dev.metricsavto.com), Socket.IO not available — skip
+  if (!isLocal) {
+    console.log('[Socket.IO] Skipped on preview proxy (use polling fallback)');
+    return null;
+  }
+
+  socket = io(`http://${host}:3001`, {
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 2000,
     reconnectionDelayMax: 10000,
     timeout: 5000,
   });

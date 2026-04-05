@@ -17,10 +17,14 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setError(i18n.language === 'ru' ? 'Введите email и пароль' : 'Enter email and password');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const userData = await login(email, password);
+      const userData = await login(email.trim(), password);
       toast.success(i18n.language === 'ru' ? `Добро пожаловать, ${userData.firstName}!` : `Welcome, ${userData.firstName}!`);
     } catch (err) {
       const msg = err.message;
