@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer, Image as KonvaImage } from 'react-konva';
 import {
   MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus,
-  Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut,
+  Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
 } from 'lucide-react';
 
 const ELEMENT_DEFAULTS = {
@@ -16,7 +17,7 @@ const ELEMENT_DEFAULTS = {
   label:  { width: 100, height: 30, color: '#a855f7' },
 };
 
-const STORAGE_KEY = 'stoMapLayout';
+const DRAFT_KEY = 'stoMapLayout_draft';
 
 let idCounter = Date.now();
 const newId = () => `el-${idCounter++}`;
@@ -33,7 +34,8 @@ const TOOLS = [
 
 export default function MapEditor() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, api } = useAuth();
+  const toast = useToast();
 
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -44,6 +46,10 @@ export default function MapEditor() {
   const [stageSize, setStageSize] = useState({ width: 900, height: 600 });
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
+  const [layoutId, setLayoutId] = useState(null);
+  const [mapName, setMapName] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const containerRef = useRef(null);
   const stageRef = useRef(null);
@@ -77,17 +83,48 @@ export default function MapEditor() {
     trRef.current.getLayer()?.batchDraw();
   }, [selectedId, tool, elements]);
 
-  // Load saved layout on mount
+  // Load layout from API on mount, fallback to draft from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
+    let cancelled = false;
+    const loadFromApi = async () => {
+      setLoading(true);
       try {
-        const data = JSON.parse(saved);
-        if (data.elements) setElements(data.elements);
-        if (data.bgDataUrl) loadImageFromUrl(data.bgDataUrl);
-      } catch { /* ignore */ }
-    }
+        const { data } = await api.get('/api/map-layout');
+        if (!cancelled && data) {
+          setLayoutId(data.id || null);
+          setMapName(data.name || '');
+          if (data.elements) setElements(data.elements);
+          if (data.bgImage) loadImageFromUrl(data.bgImage);
+          setLoading(false);
+          return;
+        }
+      } catch { /* API unavailable, fall through to draft */ }
+      // Fallback: load draft from localStorage
+      if (!cancelled) {
+        const saved = localStorage.getItem(DRAFT_KEY);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.elements) setElements(data.elements);
+            if (data.mapName) setMapName(data.mapName);
+            if (data.bgDataUrl) loadImageFromUrl(data.bgDataUrl);
+          } catch { /* ignore */ }
+        }
+      }
+      if (!cancelled) setLoading(false);
+    };
+    loadFromApi();
+    return () => { cancelled = true; };
   }, []);
+
+  // Draft autosave to localStorage every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const draft = { elements, bgDataUrl, mapName };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [elements, bgDataUrl, mapName]);
 
   const loadImageFromUrl = useCallback((dataUrl) => {
     setBgDataUrl(dataUrl);
@@ -106,22 +143,54 @@ export default function MapEditor() {
     e.target.value = '';
   };
 
-  // Save to localStorage
-  const handleSave = () => {
-    const data = { elements, bgDataUrl };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  // Save to API
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        name: mapName || 'Untitled',
+        width: stageSize.width,
+        height: stageSize.height,
+        bgImage: bgDataUrl,
+        elements,
+      };
+      let res;
+      if (layoutId) {
+        res = await api.put('/api/map-layout/' + layoutId, payload);
+      } else {
+        res = await api.post('/api/map-layout', payload);
+      }
+      if (res.data?.id) setLayoutId(res.data.id);
+      toast.success(t('mapEditor.saveSuccess') || 'Layout saved');
+      // Clear draft after successful save
+      localStorage.removeItem(DRAFT_KEY);
+    } catch (err) {
+      toast.error((t('mapEditor.saveError') || 'Save failed') + ': ' + (err.message || 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // Load from localStorage
-  const handleLoad = () => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
+  // Load from API
+  const handleLoad = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/api/map-layout');
+      if (data) {
+        setLayoutId(data.id || null);
+        setMapName(data.name || '');
         setElements(data.elements || []);
-        if (data.bgDataUrl) loadImageFromUrl(data.bgDataUrl);
+        if (data.bgImage) loadImageFromUrl(data.bgImage);
+        else { setBgImage(null); setBgDataUrl(null); }
         setSelectedId(null);
-      } catch { /* ignore */ }
+        toast.success(t('mapEditor.loadSuccess') || 'Layout loaded');
+      } else {
+        toast.info(t('mapEditor.noLayout') || 'No saved layout found');
+      }
+    } catch (err) {
+      toast.error((t('mapEditor.loadError') || 'Load failed') + ': ' + (err.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,7 +207,8 @@ export default function MapEditor() {
   // Clear all
   const handleClear = () => {
     setElements([]); setSelectedId(null); setBgImage(null); setBgDataUrl(null);
-    localStorage.removeItem(STORAGE_KEY);
+    setLayoutId(null); setMapName('');
+    localStorage.removeItem(DRAFT_KEY);
   };
 
   // Click on stage to add element
@@ -280,15 +350,24 @@ export default function MapEditor() {
       <div className="glass-static flex items-center gap-2 px-3 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-glass)' }}>
         <h2 className="text-sm font-semibold mr-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.title')}</h2>
 
+        <input
+          type="text"
+          value={mapName}
+          onChange={e => setMapName(e.target.value)}
+          placeholder={t('mapEditor.mapName') || 'Map name'}
+          className="px-2 py-1 rounded text-xs border outline-none"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)', width: 160 }}
+        />
+
         <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleBgUpload} />
         <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           <Upload size={13} /> {t('mapEditor.uploadBg')}
         </button>
-        <button onClick={handleSave} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--accent)', color: '#fff' }}>
-          <Save size={13} /> {t('common.save')}
+        <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
+          <Save size={13} /> {saving ? '...' : t('common.save')}
         </button>
-        <button onClick={handleLoad} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-          <Download size={13} /> {t('mapEditor.load')}
+        <button onClick={handleLoad} disabled={loading} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          <RefreshCw size={13} /> {loading ? '...' : t('mapEditor.load')}
         </button>
         <button onClick={handleExport} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           <Download size={13} /> {t('mapEditor.exportJson')}

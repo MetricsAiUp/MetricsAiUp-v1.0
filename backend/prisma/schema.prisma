@@ -297,3 +297,20 @@ model Recommendation {
 
   @@map("recommendations")
 }
+
+// ==========================================
+// Map Layout (STO floor plan editor)
+// ==========================================
+model MapLayout {
+  id        String   @id @default(uuid())
+  name      String
+  width     Float    @default(46540) // mm
+  height    Float    @default(30690) // mm
+  bgImage   String?  // path to background image
+  elements  String   @default("[]") // JSON array of map elements
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("map_layouts")
+}

@@ -23,6 +23,7 @@ const recommendationRoutes = require('./routes/recommendations');
 const dashboardRoutes = require('./routes/dashboard');
 const cameraRoutes = require('./routes/cameras');
 const userRoutes = require('./routes/users');
+const mapLayoutRoutes = require('./routes/mapLayout');
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/map-layout', mapLayoutRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

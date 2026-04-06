@@ -16,6 +16,7 @@
     "dashboardPosts": "Posts Dashboard",
     "postsDetail": "Posts",
     "users": "Users",
+    "mapView2": "STO Map v2",
     "mapEditor": "Map Editor",
     "settings": "Settings",
     "logout": "Logout"
@@ -290,7 +291,13 @@
     "elColor": "Color",
     "rotation": "Rotation",
     "noSelection": "Select an element",
-    "elements": "Elements"
+    "elements": "Elements",
+    "mapName": "Map name",
+    "saveSuccess": "Layout saved successfully",
+    "saveError": "Failed to save layout",
+    "loadSuccess": "Layout loaded successfully",
+    "loadError": "Failed to load layout",
+    "noLayout": "No saved layout found"
   },
   "events": {
     "title": "Event Log",

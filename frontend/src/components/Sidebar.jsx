@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
   BarChart3, Camera, Focus, Database, CalendarClock, Columns,
-  ChevronDown, Users, PenTool,
+  ChevronDown, Users, PenTool, MapPin,
 } from 'lucide-react';
 
 
@@ -22,6 +22,7 @@ const navItems = [
   { path: '/camera-mapping', icon: Focus, labelKey: 'nav.cameraMapping', pageId: 'camera-mapping' },
   { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', pageId: 'data-1c' },
   { path: '/users', icon: Users, labelKey: 'nav.users', pageId: 'users' },
+  { path: '/map-view', icon: MapPin, labelKey: 'nav.mapView2', pageId: 'map-view' },
   { path: '/map-editor', icon: PenTool, labelKey: 'nav.mapEditor', pageId: 'map-editor' },
 ];
 

@@ -28,6 +28,7 @@ const PAGE_PERMISSIONS = {
   'camera-mapping': ['manage_cameras'],
   'data-1c': ['view_work_orders'],
   'users': ['manage_users'],
+  'map-view': ['view_zones'],
   'map-editor': ['manage_zones'],
 };
 

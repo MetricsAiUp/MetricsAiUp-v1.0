@@ -1,0 +1,1 @@
+var e={free:`#10b981`,occupied:`#f59e0b`,occupied_no_work:`#ef4444`,active_work:`#6366f1`};export{e as t};

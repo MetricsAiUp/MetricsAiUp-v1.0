@@ -16,6 +16,7 @@
     "dashboardPosts": "Дашборд постов",
     "postsDetail": "Посты",
     "users": "Пользователи",
+    "mapView2": "Карта СТО v2",
     "mapEditor": "Редактор карты",
     "settings": "Настройки",
     "logout": "Выйти"
@@ -290,7 +291,13 @@
     "elColor": "Цвет",
     "rotation": "Поворот",
     "noSelection": "Выберите элемент",
-    "elements": "Элементы"
+    "elements": "Элементы",
+    "mapName": "Название карты",
+    "saveSuccess": "Макет сохранён",
+    "saveError": "Ошибка сохранения",
+    "loadSuccess": "Макет загружен",
+    "loadError": "Ошибка загрузки",
+    "noLayout": "Сохранённый макет не найден"
   },
   "events": {
     "title": "Журнал событий",
