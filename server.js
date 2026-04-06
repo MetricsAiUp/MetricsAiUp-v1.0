@@ -1,4 +1,4 @@
-const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
@@ -116,8 +116,11 @@ function jsonResponse(res, status, data) {
     res.end(JSON.stringify(data));
 }
 
-// HTTP server
-const server = http.createServer((req, res) => {
+// HTTPS server
+const server = https.createServer({
+    cert: fs.readFileSync('/project/.ssl/fullchain.pem'),
+    key: fs.readFileSync('/project/.ssl/privkey.pem'),
+}, (req, res) => {
     let urlPath = req.url.split('?')[0];
 
     // CORS preflight
@@ -196,7 +199,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Server running on https://artisom.dev.metricsavto.com:${PORT}/`);
 });
 
 process.on('SIGINT', () => {

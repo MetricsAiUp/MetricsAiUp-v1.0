@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -23,11 +25,25 @@ const cameraRoutes = require('./routes/cameras');
 const userRoutes = require('./routes/users');
 
 const app = express();
-const server = http.createServer(app);
+
+// HTTPS with SSL certificates
+const SSL_CERT = '/project/.ssl/fullchain.pem';
+const SSL_KEY = '/project/.ssl/privkey.pem';
+let server;
+if (fs.existsSync(SSL_CERT) && fs.existsSync(SSL_KEY)) {
+  server = https.createServer({
+    cert: fs.readFileSync(SSL_CERT),
+    key: fs.readFileSync(SSL_KEY),
+  }, app);
+  console.log('[Server] SSL certificates loaded');
+} else {
+  server = http.createServer(app);
+  console.log('[Server] No SSL certificates found, using HTTP');
+}
 const io = initSocket(server);
 
 // Middleware
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({ contentSecurityPolicy: false, frameguard: false }));
 app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
@@ -50,16 +66,19 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve React frontend
-app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+// Serve frontend + static files from /project (data/*.json, assets/*)
+const projectRoot = path.join(__dirname, '../..');
+app.use(express.static(projectRoot));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  res.sendFile(path.join(projectRoot, 'index.html'));
 });
 
 const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Server] Running on http://0.0.0.0:${PORT}`);
+  const proto = fs.existsSync(SSL_CERT) ? 'https' : 'http';
+  console.log(`[Server] Running on ${proto}://0.0.0.0:${PORT}`);
+  console.log(`[Server] External: https://artisom.dev.metricsavto.com:${PORT}/`);
   console.log(`[Socket.IO] Ready for connections`);
 });
 

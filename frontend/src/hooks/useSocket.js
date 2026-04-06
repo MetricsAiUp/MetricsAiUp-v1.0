@@ -16,16 +16,8 @@ export function getSocket() {
 export function connectSocket(token) {
   if (socket?.connected) return socket;
 
-  const host = window.location.hostname;
-  const isLocal = host === 'localhost' || host === '127.0.0.1';
-
-  // On preview proxy (dev.metricsavto.com), Socket.IO not available — skip
-  if (!isLocal) {
-    console.log('[Socket.IO] Skipped on preview proxy (use polling fallback)');
-    return null;
-  }
-
-  socket = io(`http://${host}:3001`, {
+  // Same origin — Express serves both frontend and WebSocket
+  socket = io({
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,

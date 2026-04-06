@@ -5,18 +5,8 @@ const AuthContext = createContext();
 
 const BASE = import.meta.env.BASE_URL || './';
 
-// Build API base URL: direct to port 3001 via platform preview proxy
-function getApiBase() {
-  const loc = window.location;
-  if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
-    return `http://${loc.hostname}:3001`;
-  }
-  // Preview proxy: e.g. https://dev.metricsavto.com/p/metricsappartisom/ → .../3001/
-  const match = loc.href.match(/(https?:\/\/[^/]+\/p\/[^/]+\/)/);
-  if (match) return `${match[1]}3001`;
-  return `${loc.origin}`;
-}
-const API_BASE = getApiBase();
+// API on same origin (Express serves both frontend and API)
+const API_BASE = '';
 
 // Fallback: load static JSON mock
 const fetchJson = async (path) => {
@@ -38,6 +28,7 @@ const PAGE_PERMISSIONS = {
   'camera-mapping': ['manage_cameras'],
   'data-1c': ['view_work_orders'],
   'users': ['manage_users'],
+  'map-editor': ['manage_zones'],
 };
 
 function buildPermissions(pages, role) {

@@ -5,13 +5,11 @@ import Hls from 'hls.js';
 const STREAM_PORT = 8181;
 
 function getStreamUrl(camId) {
-  const host = window.location.hostname;
-  return `http://${host}:${STREAM_PORT}/hls/${camId}/stream.m3u8`;
+  return `https://artisom.dev.metricsavto.com:${STREAM_PORT}/hls/${camId}/stream.m3u8`;
 }
 
 function getApiUrl(path) {
-  const host = window.location.hostname;
-  return `http://${host}:${STREAM_PORT}${path}`;
+  return `https://artisom.dev.metricsavto.com:${STREAM_PORT}${path}`;
 }
 
 export default function CameraStreamModal({ camId, camName, camLocation, camCovers, isRu, isDark, onClose }) {

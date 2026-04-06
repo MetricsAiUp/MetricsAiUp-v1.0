@@ -20,6 +20,7 @@ const Data1C = lazy(() => import('./pages/Data1C'));
 const Cameras = lazy(() => import('./pages/Cameras'));
 const CameraMapping = lazy(() => import('./pages/CameraMapping'));
 const Users = lazy(() => import('./pages/Users'));
+const MapEditor = lazy(() => import('./pages/MapEditor'));
 
 function PageLoader() {
   return (
@@ -61,6 +62,7 @@ function AppRoutes() {
           <Route path="cameras" element={<Cameras />} />
           <Route path="camera-mapping" element={<CameraMapping />} />
           <Route path="users" element={<Users />} />
+          <Route path="map-editor" element={<MapEditor />} />
         </Route>
       </Routes>
     </Suspense>

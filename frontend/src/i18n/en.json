@@ -16,6 +16,7 @@
     "dashboardPosts": "Posts Dashboard",
     "postsDetail": "Posts",
     "users": "Users",
+    "mapEditor": "Map Editor",
     "settings": "Settings",
     "logout": "Logout"
   },
@@ -275,6 +276,21 @@
     "userDisabled": "User is disabled",
     "tooManyAttempts": "Too many attempts. Wait a minute",
     "invalidCredentials": "Invalid email or password"
+  },
+  "mapEditor": {
+    "title": "STO Map Editor",
+    "uploadBg": "Background",
+    "load": "Load",
+    "exportJson": "Export JSON",
+    "clear": "Clear",
+    "grid": "Grid",
+    "properties": "Properties",
+    "elName": "Name",
+    "elType": "Type",
+    "elColor": "Color",
+    "rotation": "Rotation",
+    "noSelection": "Select an element",
+    "elements": "Elements"
   },
   "events": {
     "title": "Event Log",

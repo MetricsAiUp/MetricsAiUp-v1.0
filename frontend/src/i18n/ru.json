@@ -16,6 +16,7 @@
     "dashboardPosts": "Дашборд постов",
     "postsDetail": "Посты",
     "users": "Пользователи",
+    "mapEditor": "Редактор карты",
     "settings": "Настройки",
     "logout": "Выйти"
   },
@@ -275,6 +276,21 @@
     "userDisabled": "Пользователь отключён",
     "tooManyAttempts": "Слишком много попыток. Подождите минуту",
     "invalidCredentials": "Неверный email или пароль"
+  },
+  "mapEditor": {
+    "title": "Редактор карты СТО",
+    "uploadBg": "Фон",
+    "load": "Загрузить",
+    "exportJson": "Экспорт JSON",
+    "clear": "Очистить",
+    "grid": "Сетка",
+    "properties": "Свойства",
+    "elName": "Название",
+    "elType": "Тип",
+    "elColor": "Цвет",
+    "rotation": "Поворот",
+    "noSelection": "Выберите элемент",
+    "elements": "Элементы"
   },
   "events": {
     "title": "Журнал событий",
