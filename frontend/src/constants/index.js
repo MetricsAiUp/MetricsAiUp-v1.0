@@ -37,18 +37,23 @@ export const EVENT_TYPES = {
   plate_recognized: { ru: 'Номер распознан', en: 'Plate recognized', color: '#06b6d4' },
 };
 
-// --- All cameras (10 cameras at STO) ---
+// --- All cameras (15 cameras at STO, cam01 & cam06 outside building) ---
 export const ALL_CAMERAS = [
-  { id: 'cam01', name: 'Камера 1 — Въезд', location: 'Въезд', coverage: 'Въезд/выезд' },
-  { id: 'cam02', name: 'Камера 2 — Выезд', location: 'Выезд', coverage: 'Въезд/выезд' },
-  { id: 'cam03', name: 'Камера 3 — Проезд L', location: 'Проезд (лево)', coverage: 'Посты 1-3' },
-  { id: 'cam04', name: 'Камера 4 — Проезд R', location: 'Проезд (право)', coverage: 'Посты 4-5' },
-  { id: 'cam05', name: 'Камера 5 — Проезд C', location: 'Проезд (центр)', coverage: 'Посты 5-7' },
-  { id: 'cam06', name: 'Камера 6 — Верх L', location: 'Стена (верх лево)', coverage: 'Посты 5-6' },
-  { id: 'cam07', name: 'Камера 7 — Верх R', location: 'Стена (верх право)', coverage: 'Посты 8-9' },
-  { id: 'cam08', name: 'Камера 8 — Низ L', location: 'Стена (низ лево)', coverage: 'Посты 1-2' },
-  { id: 'cam09', name: 'Камера 9 — Низ R', location: 'Стена (низ право)', coverage: 'Посты 3-4, 10' },
-  { id: 'cam10', name: 'Камера 10 — Парковка', location: 'Парковка', coverage: 'Зона ожидания' },
+  { id: 'cam01', name: 'cam 01', location: 'За пределами СТО', coverage: 'Внешняя территория' },
+  { id: 'cam02', name: 'cam 02', location: 'Верхний ряд, лево', coverage: 'ПОСТ 06, ПОСТ 05' },
+  { id: 'cam03', name: 'cam 03', location: 'Нижний ряд, лево', coverage: 'ПОСТ 07, Свободная зона 07' },
+  { id: 'cam04', name: 'cam 04', location: 'Нижний ряд, центр', coverage: 'ПОСТ 08, ПОСТ 09' },
+  { id: 'cam05', name: 'cam 05', location: 'Нижний ряд, лево', coverage: 'Свободная зона 04' },
+  { id: 'cam06', name: 'cam 06', location: 'За пределами СТО', coverage: 'Внешняя территория' },
+  { id: 'cam07', name: 'cam 07', location: 'Нижний ряд, право', coverage: 'ПОСТ 10' },
+  { id: 'cam08', name: 'cam 08', location: 'Проезд, лево', coverage: 'Свободная зона 05, ПОСТ 07' },
+  { id: 'cam09', name: 'cam 09', location: 'Верхний ряд, центр', coverage: 'ПОСТ 04, ПОСТ 05' },
+  { id: 'cam10', name: 'cam 10', location: 'Проезд, центр', coverage: 'Свободная зона 05, 06' },
+  { id: 'cam11', name: 'cam 11', location: 'Верхний ряд, центр-право', coverage: 'ПОСТ 03, Свободная зона 06' },
+  { id: 'cam12', name: 'cam 12', location: 'Верхний ряд, право', coverage: 'ПОСТ 02, ПОСТ 03' },
+  { id: 'cam13', name: 'cam 13', location: 'Верхний ряд, центр-право', coverage: 'Свободная зона 06' },
+  { id: 'cam14', name: 'cam 14', location: 'Правая стена', coverage: 'ПОСТ 01, Свободная зона 01' },
+  { id: 'cam15', name: 'cam 15', location: 'Верхний ряд, дальний', coverage: 'Свободная зона 02, ПОСТ 02' },
 ];
 
 // --- Zone type colors (for Cameras, CameraMapping) ---
