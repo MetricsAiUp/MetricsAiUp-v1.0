@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Stage, Layer, Rect, Circle, Text, Group } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Text, Group, Line } from 'react-konva';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePolling } from '../hooks/useSocket';
@@ -313,6 +313,15 @@ export default function MapViewer() {
 
             {/* Render elements by type */}
             {elements.map(el => {
+              if (el.type === 'building') return (
+                <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
+                  stroke="#22c55e" strokeWidth={2} fill="transparent" dash={[8, 4]} />
+              );
+              if (el.type === 'driveway') return (
+                <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
+                  rotation={el.rotation || 0} fill="rgba(148,163,184,0.12)"
+                  stroke="#94a3b8" strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
+              );
               if (el.type === 'wall') return <WallEl key={el.id} el={el} />;
               if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} />;
               if (el.type === 'door') return <DoorEl key={el.id} el={el} isDark={isDark} />;
@@ -411,12 +420,25 @@ function ZoneEl({ el, isDark, zonesData }) {
 
 function CameraEl({ el, isDark, onClick }) {
   const fill = '#ef4444';
+  const cx = (el.width || 24) / 2, cy = (el.height || 24) / 2;
+  const dir = (el.data?.direction || 0) * Math.PI / 180;
+  const fov = (el.data?.fov || 90) * Math.PI / 180;
+  const range = el.data?.range || 80;
+  const lx = cx + Math.cos(dir - fov / 2) * range;
+  const ly = cy + Math.sin(dir - fov / 2) * range;
+  const rx = cx + Math.cos(dir + fov / 2) * range;
+  const ry = cy + Math.sin(dir + fov / 2) * range;
+  const mx = cx + Math.cos(dir) * range;
+  const my = cy + Math.sin(dir) * range;
   return (
     <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
-      <Circle x={12} y={12} radius={12} fill={fill} opacity={0.85}
-        shadowBlur={4} shadowColor={fill} shadowOpacity={0.4} />
-      <Text x={-6} y={5} text={el.camNum || '?'} fontSize={10}
-        fontStyle="bold" fill="#fff" width={36} align="center" />
+      <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
+        fill={fill} opacity={0.1} stroke={fill} strokeWidth={0.5} dash={[4, 2]} />
+      <Circle x={cx} y={cy} radius={10} fill={fill} opacity={0.9}
+        shadowBlur={6} shadowColor={fill} shadowOpacity={0.5} />
+      <Circle x={cx} y={cy} radius={3} fill="#fff" />
+      <Text x={cx - 18} y={cy + 12} text={el.name || ''} fontSize={8}
+        fill={fill} width={36} align="center" />
     </Group>
   );
 }

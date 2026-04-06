@@ -4,14 +4,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer, Image as KonvaImage } from 'react-konva';
 import {
-  MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus,
+  MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus, Maximize2, ArrowRightLeft,
   Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
 } from 'lucide-react';
 
 const ELEMENT_DEFAULTS = {
+  building: { width: 930, height: 614, color: '#22c55e' },
+  driveway: { width: 300, height: 40, color: '#94a3b8' },
   post:   { width: 120, height: 80, color: '#3b82f6' },
   zone:   { width: 160, height: 100, color: '#22c55e' },
-  camera: { width: 24, height: 24, color: '#ef4444' },
+  camera: { width: 24, height: 24, color: '#ef4444', data: { direction: 0, fov: 90, range: 80 } },
   door:   { width: 60, height: 8, color: '#f59e0b' },
   wall:   { width: 200, height: 6, color: '#6b7280' },
   label:  { width: 100, height: 30, color: '#a855f7' },
@@ -23,17 +25,28 @@ let idCounter = Date.now();
 const newId = () => `el-${idCounter++}`;
 
 const TOOLS = [
-  { id: 'select', icon: MousePointer2, label: 'Select' },
-  { id: 'post', icon: Square, label: 'Post' },
-  { id: 'zone', icon: Hexagon, label: 'Zone' },
-  { id: 'camera', icon: Camera, label: 'Camera' },
-  { id: 'door', icon: DoorOpen, label: 'Door' },
-  { id: 'wall', icon: Minus, label: 'Wall' },
-  { id: 'label', icon: Type, label: 'Label' },
+  { id: 'select', icon: MousePointer2, label: 'Select',
+    tip: { ru: 'Выбор и перемещение элементов. Кликните на элемент для редактирования, перетащите для перемещения.', en: 'Select and move elements. Click to edit, drag to move.' } },
+  { id: 'building', icon: Maximize2, label: 'Building',
+    tip: { ru: 'Внешние границы здания СТО. Определяет общий контур. Кликните на canvas чтобы разместить.', en: 'STO building outline. Defines the outer boundary. Click canvas to place.' } },
+  { id: 'post', icon: Square, label: 'Post',
+    tip: { ru: 'Рабочий пост (подъёмник). Привязывается к реальному посту по номеру. На карте показывает статус и авто.', en: 'Work post (lift). Links to real post by number. Shows status and vehicle on map.' } },
+  { id: 'zone', icon: Hexagon, label: 'Zone',
+    tip: { ru: 'Свободная зона / зона ожидания. Показывает количество автомобилей в зоне.', en: 'Free zone / waiting area. Shows vehicle count in the zone.' } },
+  { id: 'camera', icon: Camera, label: 'Camera',
+    tip: { ru: 'Камера видеонаблюдения. По клику на карте откроется стрим с камеры.', en: 'Surveillance camera. Clicking on map opens the camera stream.' } },
+  { id: 'driveway', icon: ArrowRightLeft, label: 'Driveway',
+    tip: { ru: 'Проезд / проезжая часть. Рисует границы проезда для автомобилей между постами и зонами. Можно растягивать и поворачивать.', en: 'Driveway / roadway. Draws driveway boundaries between posts and zones. Can be resized and rotated.' } },
+  { id: 'door', icon: DoorOpen, label: 'Door',
+    tip: { ru: 'Дверь / ворота / въезд. Визуальный элемент для обозначения входов.', en: 'Door / gate / entrance. Visual element marking entry points.' } },
+  { id: 'wall', icon: Minus, label: 'Wall',
+    tip: { ru: 'Стена / перегородка. Визуальный элемент для обозначения границ.', en: 'Wall / partition. Visual element marking boundaries.' } },
+  { id: 'label', icon: Type, label: 'Label',
+    tip: { ru: 'Текстовая подпись. Добавьте название зоны, направление или примечание.', en: 'Text label. Add zone name, direction or note.' } },
 ];
 
 export default function MapEditor() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, api } = useAuth();
   const toast = useToast();
 
@@ -228,7 +241,7 @@ export default function MapEditor() {
       x: x - defaults.width / 2, y: y - defaults.height / 2,
       width: defaults.width, height: defaults.height,
       rotation: 0, name: `${tool}-${elements.filter(e => e.type === tool).length + 1}`,
-      color: defaults.color, data: {},
+      color: defaults.color, data: defaults.data ? { ...defaults.data } : {},
     };
     setElements(prev => [...prev, el]);
     setSelectedId(el.id);
@@ -286,14 +299,20 @@ export default function MapEditor() {
   const zoomOut = () => setStageScale(s => Math.max(0.1, s / 1.2));
   const resetView = () => { setStageScale(1); setStagePos({ x: 0, y: 0 }); };
 
-  // Grid lines
+  // Grid lines (small 20px + bold every 100px)
   const gridLines = [];
   if (showGrid) {
-    const step = 50;
+    const step = 20;
     const w = stageSize.width / stageScale + Math.abs(stagePos.x / stageScale);
     const h = stageSize.height / stageScale + Math.abs(stagePos.y / stageScale);
-    for (let i = 0; i < w; i += step) gridLines.push(<Line key={`gv${i}`} points={[i, 0, i, h]} stroke="#555" strokeWidth={0.5} opacity={0.3} />);
-    for (let i = 0; i < h; i += step) gridLines.push(<Line key={`gh${i}`} points={[0, i, w, i]} stroke="#555" strokeWidth={0.5} opacity={0.3} />);
+    for (let i = 0; i < w; i += step) {
+      const bold = i % 100 === 0;
+      gridLines.push(<Line key={`gv${i}`} points={[i, 0, i, h]} stroke="#555" strokeWidth={bold ? 0.8 : 0.3} opacity={bold ? 0.4 : 0.2} />);
+    }
+    for (let i = 0; i < h; i += step) {
+      const bold = i % 100 === 0;
+      gridLines.push(<Line key={`gh${i}`} points={[0, i, w, i]} stroke="#555" strokeWidth={bold ? 0.8 : 0.3} opacity={bold ? 0.4 : 0.2} />);
+    }
   }
 
   // Render element on canvas
@@ -308,10 +327,24 @@ export default function MapEditor() {
       onTransformEnd: (e) => handleTransformEnd(el.id, e),
     };
     if (el.type === 'camera') {
+      const cx = el.width / 2, cy = el.height / 2;
+      const dir = (el.data?.direction || 0) * Math.PI / 180;
+      const fov = (el.data?.fov || 90) * Math.PI / 180;
+      const range = el.data?.range || 80;
+      // FOV cone points: center → left edge → right edge
+      const lx = cx + Math.cos(dir - fov / 2) * range;
+      const ly = cy + Math.sin(dir - fov / 2) * range;
+      const rx = cx + Math.cos(dir + fov / 2) * range;
+      const ry = cy + Math.sin(dir + fov / 2) * range;
+      // Mid-arc points for smoother cone
+      const mx = cx + Math.cos(dir) * range;
+      const my = cy + Math.sin(dir) * range;
       return (
         <Group key={el.id} {...common}>
-          <Circle x={el.width / 2} y={el.height / 2} radius={el.width / 2} fill={el.color} opacity={0.85} stroke={isSelected ? '#fff' : 'transparent'} strokeWidth={2} />
-          <Text text={el.name} x={-20} y={el.height + 4} width={el.width + 40} fontSize={10} fill={el.color} align="center" />
+          <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed fill={el.color} opacity={0.15} stroke={el.color} strokeWidth={1} dash={[4, 2]} />
+          <Circle x={cx} y={cy} radius={el.width / 2} fill={el.color} opacity={0.9} stroke={isSelected ? '#fff' : '#000'} strokeWidth={isSelected ? 2 : 1} />
+          <Circle x={cx} y={cy} radius={3} fill="#fff" />
+          <Text text={el.name} x={-20} y={el.height + 4} width={el.width + 40} fontSize={9} fill={el.color} align="center" />
         </Group>
       );
     }
@@ -390,18 +423,64 @@ export default function MapEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Toolbar */}
         <div className="glass-static flex flex-col gap-1 p-2 flex-shrink-0" style={{ width: 52, borderRight: '1px solid var(--border-glass)' }}>
-          {TOOLS.map(t => {
-            const Icon = t.icon;
-            const active = tool === t.id;
+          {TOOLS.map(tl => {
+            const Icon = tl.icon;
+            const active = tool === tl.id;
+            const isRu = i18n.language === 'ru';
             return (
-              <button key={t.id} onClick={() => setTool(t.id)} title={t.label}
-                className="flex items-center justify-center w-9 h-9 rounded-lg transition-all"
-                style={{ background: active ? 'var(--accent)' : 'transparent', color: active ? '#fff' : 'var(--text-secondary)' }}>
-                <Icon size={16} />
-              </button>
+              <div key={tl.id} className="relative group">
+                <button onClick={() => setTool(tl.id)}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg transition-all"
+                  style={{ background: active ? 'var(--accent)' : 'transparent', color: active ? '#fff' : 'var(--text-secondary)' }}>
+                  <Icon size={16} />
+                </button>
+                <div className="absolute left-12 top-0 z-50 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg"
+                  style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px', whiteSpace: 'nowrap', minWidth: 180, maxWidth: 280, whiteSpace: 'normal' }}>
+                  <div className="font-bold text-xs mb-1" style={{ color: 'var(--accent)' }}>{tl.label}</div>
+                  {tl.tip?.[isRu ? 'ru' : 'en']}
+                </div>
+              </div>
             );
           })}
           <div className="flex-1" />
+          <div className="relative group">
+            <button className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 14 }}>?</span>
+            </button>
+            <div className="absolute left-12 bottom-0 z-50 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px', minWidth: 220, maxWidth: 300 }}>
+              <div className="font-bold text-xs mb-2" style={{ color: 'var(--accent)' }}>
+                {i18n.language === 'ru' ? 'Как пользоваться' : 'How to use'}
+              </div>
+              <div className="space-y-1" style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                {i18n.language === 'ru' ? (<>
+                  <div>1. Загрузите фон (план СТО в PNG)</div>
+                  <div>2. Выберите инструмент слева</div>
+                  <div>3. Кликните на canvas для размещения</div>
+                  <div>4. Перетаскивайте и меняйте размер</div>
+                  <div>5. Правая панель — свойства элемента</div>
+                  <div>6. Сохраните через кнопку «Сохранить»</div>
+                  <div className="mt-1 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                    <b>Колесо мыши</b> — масштаб<br/>
+                    <b>Delete</b> — удалить выбранный<br/>
+                    <b>Перетаскивание</b> — перемещение canvas
+                  </div>
+                </>) : (<>
+                  <div>1. Upload background (STO plan PNG)</div>
+                  <div>2. Select a tool from the left</div>
+                  <div>3. Click on canvas to place element</div>
+                  <div>4. Drag and resize elements</div>
+                  <div>5. Right panel — element properties</div>
+                  <div>6. Save via the "Save" button</div>
+                  <div className="mt-1 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                    <b>Mouse wheel</b> — zoom<br/>
+                    <b>Delete</b> — remove selected<br/>
+                    <b>Drag canvas</b> — pan view
+                  </div>
+                </>)}
+              </div>
+            </div>
+          </div>
           <span className="text-center text-xs" style={{ color: 'var(--text-muted)', fontSize: 9 }}>{elements.length}</span>
         </div>
 
@@ -464,6 +543,40 @@ export default function MapEditor() {
                 <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.rotation')}</label>
                 <input type="number" value={Math.round(selected.rotation)} onChange={e => updateProp('rotation', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
               </div>
+              {selected.type === 'camera' && (
+                <div className="space-y-2 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                  <label className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
+                    {i18n.language === 'ru' ? 'Поле зрения камеры' : 'Camera FOV'}
+                  </label>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Направление (0-360°)' : 'Direction (0-360°)'}
+                    </label>
+                    <input type="range" min="0" max="360" value={selected.data?.direction || 0}
+                      onChange={e => updateProp('data', { ...selected.data, direction: +e.target.value })}
+                      className="w-full" />
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.data?.direction || 0}°</span>
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Угол обзора (°)' : 'FOV angle (°)'}
+                    </label>
+                    <input type="range" min="10" max="180" value={selected.data?.fov || 90}
+                      onChange={e => updateProp('data', { ...selected.data, fov: +e.target.value })}
+                      className="w-full" />
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.data?.fov || 90}°</span>
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Дальность (px)' : 'Range (px)'}
+                    </label>
+                    <input type="range" min="20" max="200" value={selected.data?.range || 80}
+                      onChange={e => updateProp('data', { ...selected.data, range: +e.target.value })}
+                      className="w-full" />
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.data?.range || 80}px</span>
+                  </div>
+                </div>
+              )}
               <button onClick={deleteSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
                 <Trash2 size={12} /> {t('common.delete')}
               </button>

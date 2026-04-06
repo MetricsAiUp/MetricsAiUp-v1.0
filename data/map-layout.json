@@ -5,13 +5,27 @@
   "bgImage": "/data/sto-plan.png",
   "elements": [
     {
-      "id": "el-1",
+      "id": "el-001",
+      "type": "building",
+      "name": "Здание СТО",
+      "x": 0,
+      "y": 0,
+      "width": 930,
+      "height": 614,
+      "rotation": 0,
+      "color": "#22c55e",
+      "data": {
+        "type": "building"
+      }
+    },
+    {
+      "id": "el-002",
       "type": "post",
       "name": "ПОСТ 06",
-      "x": 78,
-      "y": 72,
-      "width": 80,
-      "height": 55,
+      "x": 0,
+      "y": 24,
+      "width": 114,
+      "height": 68,
       "rotation": 0,
       "color": "#3b82f6",
       "data": {
@@ -20,88 +34,13 @@
       }
     },
     {
-      "id": "el-2",
-      "type": "post",
-      "name": "ПОСТ 05",
-      "x": 230,
-      "y": 55,
-      "width": 65,
-      "height": 72,
-      "rotation": 0,
-      "color": "#3b82f6",
-      "data": {
-        "number": 5,
-        "type": "light"
-      }
-    },
-    {
-      "id": "el-3",
-      "type": "post",
-      "name": "ПОСТ 04",
-      "x": 365,
-      "y": 25,
-      "width": 95,
-      "height": 50,
-      "rotation": 0,
-      "color": "#3b82f6",
-      "data": {
-        "number": 4,
-        "type": "heavy"
-      }
-    },
-    {
-      "id": "el-4",
-      "type": "post",
-      "name": "ПОСТ 03",
-      "x": 490,
-      "y": 25,
-      "width": 70,
-      "height": 50,
-      "rotation": 0,
-      "color": "#3b82f6",
-      "data": {
-        "number": 3,
-        "type": "light"
-      }
-    },
-    {
-      "id": "el-5",
-      "type": "post",
-      "name": "ПОСТ 02",
-      "x": 680,
-      "y": 25,
-      "width": 60,
-      "height": 45,
-      "rotation": 0,
-      "color": "#3b82f6",
-      "data": {
-        "number": 2,
-        "type": "light"
-      }
-    },
-    {
-      "id": "el-6",
-      "type": "post",
-      "name": "ПОСТ 01",
-      "x": 810,
-      "y": 130,
-      "width": 75,
-      "height": 100,
-      "rotation": 0,
-      "color": "#3b82f6",
-      "data": {
-        "number": 1,
-        "type": "light"
-      }
-    },
-    {
-      "id": "el-7",
+      "id": "el-003",
       "type": "post",
       "name": "ПОСТ 07",
-      "x": 50,
-      "y": 260,
-      "width": 80,
-      "height": 65,
+      "x": 0,
+      "y": 152,
+      "width": 114,
+      "height": 68,
       "rotation": 0,
       "color": "#3b82f6",
       "data": {
@@ -110,13 +49,88 @@
       }
     },
     {
-      "id": "el-8",
+      "id": "el-004",
+      "type": "post",
+      "name": "ПОСТ 05",
+      "x": 261,
+      "y": 24,
+      "width": 85,
+      "height": 152,
+      "rotation": 0,
+      "color": "#3b82f6",
+      "data": {
+        "number": 5,
+        "type": "heavy"
+      }
+    },
+    {
+      "id": "el-005",
+      "type": "post",
+      "name": "ПОСТ 04",
+      "x": 346,
+      "y": 24,
+      "width": 68,
+      "height": 119,
+      "rotation": 0,
+      "color": "#3b82f6",
+      "data": {
+        "number": 4,
+        "type": "heavy"
+      }
+    },
+    {
+      "id": "el-006",
+      "type": "post",
+      "name": "ПОСТ 03",
+      "x": 450,
+      "y": 24,
+      "width": 120,
+      "height": 119,
+      "rotation": 0,
+      "color": "#3b82f6",
+      "data": {
+        "number": 3,
+        "type": "heavy"
+      }
+    },
+    {
+      "id": "el-007",
+      "type": "post",
+      "name": "ПОСТ 02",
+      "x": 601,
+      "y": 24,
+      "width": 86,
+      "height": 119,
+      "rotation": 0,
+      "color": "#3b82f6",
+      "data": {
+        "number": 2,
+        "type": "light"
+      }
+    },
+    {
+      "id": "el-008",
+      "type": "post",
+      "name": "ПОСТ 01",
+      "x": 810,
+      "y": 252,
+      "width": 80,
+      "height": 116,
+      "rotation": 0,
+      "color": "#3b82f6",
+      "data": {
+        "number": 1,
+        "type": "light"
+      }
+    },
+    {
+      "id": "el-009",
       "type": "post",
       "name": "ПОСТ 08",
-      "x": 50,
-      "y": 370,
-      "width": 80,
-      "height": 50,
+      "x": 0,
+      "y": 314,
+      "width": 114,
+      "height": 80,
       "rotation": 0,
       "color": "#3b82f6",
       "data": {
@@ -125,13 +139,13 @@
       }
     },
     {
-      "id": "el-9",
+      "id": "el-010",
       "type": "post",
       "name": "ПОСТ 09",
-      "x": 200,
-      "y": 370,
-      "width": 65,
-      "height": 55,
+      "x": 0,
+      "y": 434,
+      "width": 114,
+      "height": 90,
       "rotation": 0,
       "color": "#3b82f6",
       "data": {
@@ -140,13 +154,13 @@
       }
     },
     {
-      "id": "el-10",
+      "id": "el-011",
       "type": "post",
       "name": "ПОСТ 10",
-      "x": 200,
-      "y": 475,
-      "width": 80,
-      "height": 45,
+      "x": 140,
+      "y": 524,
+      "width": 90,
+      "height": 54,
       "rotation": 0,
       "color": "#3b82f6",
       "data": {
@@ -155,41 +169,13 @@
       }
     },
     {
-      "id": "el-11",
-      "type": "zone",
-      "name": "Свободная зона 01",
-      "x": 790,
-      "y": 290,
-      "width": 90,
-      "height": 110,
-      "rotation": 0,
-      "color": "#22c55e",
-      "data": {
-        "type": "free"
-      }
-    },
-    {
-      "id": "el-12",
-      "type": "zone",
-      "name": "Свободная зона 02",
-      "x": 730,
-      "y": 85,
-      "width": 70,
-      "height": 120,
-      "rotation": 0,
-      "color": "#22c55e",
-      "data": {
-        "type": "free"
-      }
-    },
-    {
-      "id": "el-13",
+      "id": "el-012",
       "type": "zone",
       "name": "Свободная зона 03",
-      "x": 810,
-      "y": 25,
-      "width": 80,
-      "height": 80,
+      "x": 727,
+      "y": 24,
+      "width": 68,
+      "height": 128,
       "rotation": 0,
       "color": "#22c55e",
       "data": {
@@ -197,13 +183,13 @@
       }
     },
     {
-      "id": "el-14",
+      "id": "el-013",
       "type": "zone",
-      "name": "Свободная зона 04",
-      "x": 148,
-      "y": 425,
-      "width": 50,
-      "height": 70,
+      "name": "Свободная зона 02",
+      "x": 843,
+      "y": 152,
+      "width": 84,
+      "height": 100,
       "rotation": 0,
       "color": "#22c55e",
       "data": {
@@ -211,13 +197,27 @@
       }
     },
     {
-      "id": "el-15",
+      "id": "el-014",
+      "type": "zone",
+      "name": "Свободная зона 01",
+      "x": 810,
+      "y": 368,
+      "width": 80,
+      "height": 116,
+      "rotation": 0,
+      "color": "#22c55e",
+      "data": {
+        "type": "free"
+      }
+    },
+    {
+      "id": "el-015",
       "type": "zone",
       "name": "Свободная зона 05",
-      "x": 310,
-      "y": 195,
-      "width": 100,
-      "height": 80,
+      "x": 170,
+      "y": 248,
+      "width": 132,
+      "height": 92,
       "rotation": 0,
       "color": "#22c55e",
       "data": {
@@ -225,13 +225,13 @@
       }
     },
     {
-      "id": "el-16",
+      "id": "el-016",
       "type": "zone",
       "name": "Свободная зона 06",
-      "x": 430,
-      "y": 195,
-      "width": 90,
-      "height": 80,
+      "x": 302,
+      "y": 248,
+      "width": 80,
+      "height": 92,
       "rotation": 0,
       "color": "#22c55e",
       "data": {
@@ -239,11 +239,11 @@
       }
     },
     {
-      "id": "el-17",
+      "id": "el-017",
       "type": "zone",
-      "name": "Свободная зона 07",
-      "x": 105,
-      "y": 295,
+      "name": "Свободная зона 04",
+      "x": 114,
+      "y": 340,
       "width": 70,
       "height": 60,
       "rotation": 0,
@@ -253,148 +253,162 @@
       }
     },
     {
-      "id": "el-18",
+      "id": "el-018",
+      "type": "zone",
+      "name": "Свободная зона 07",
+      "x": 114,
+      "y": 220,
+      "width": 58,
+      "height": 68,
+      "rotation": 0,
+      "color": "#22c55e",
+      "data": {
+        "type": "free"
+      }
+    },
+    {
+      "id": "el-019",
       "type": "camera",
       "name": "cam 01",
-      "x": 20,
-      "y": 580,
-      "width": 20,
-      "height": 20,
+      "x": 12,
+      "y": 592,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam01",
-        "location": "За пределами СТО"
+        "location": "За пределами СТО (юг)"
       }
     },
     {
-      "id": "el-19",
+      "id": "el-020",
       "type": "camera",
       "name": "cam 02",
-      "x": 120,
-      "y": 135,
-      "width": 20,
-      "height": 20,
+      "x": 122,
+      "y": 92,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam02",
-        "location": "Верхний ряд, лево"
+        "location": "ПОСТ 06, верх-лево"
       }
     },
     {
-      "id": "el-20",
+      "id": "el-021",
       "type": "camera",
       "name": "cam 03",
-      "x": 210,
-      "y": 310,
-      "width": 20,
-      "height": 20,
+      "x": 172,
+      "y": 272,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam03",
-        "location": "Нижний ряд, лево"
-      }
-    },
-    {
-      "id": "el-21",
-      "type": "camera",
-      "name": "cam 04",
-      "x": 170,
-      "y": 440,
-      "width": 20,
-      "height": 20,
-      "rotation": 0,
-      "color": "#ef4444",
-      "data": {
-        "camId": "cam04",
-        "location": "Нижний ряд, центр"
-      }
-    },
-    {
-      "id": "el-22",
-      "type": "camera",
-      "name": "cam 05",
-      "x": 120,
-      "y": 420,
-      "width": 20,
-      "height": 20,
-      "rotation": 0,
-      "color": "#ef4444",
-      "data": {
-        "camId": "cam05",
-        "location": "Нижний ряд, лево"
-      }
-    },
-    {
-      "id": "el-23",
-      "type": "camera",
-      "name": "cam 06",
-      "x": 20,
-      "y": 20,
-      "width": 20,
-      "height": 20,
-      "rotation": 0,
-      "color": "#ef4444",
-      "data": {
-        "camId": "cam06",
-        "location": "За пределами СТО"
-      }
-    },
-    {
-      "id": "el-24",
-      "type": "camera",
-      "name": "cam 07",
-      "x": 290,
-      "y": 475,
-      "width": 20,
-      "height": 20,
-      "rotation": 0,
-      "color": "#ef4444",
-      "data": {
-        "camId": "cam07",
-        "location": "Нижний ряд, право"
-      }
-    },
-    {
-      "id": "el-25",
-      "type": "camera",
-      "name": "cam 08",
-      "x": 210,
-      "y": 215,
-      "width": 20,
-      "height": 20,
-      "rotation": 0,
-      "color": "#ef4444",
-      "data": {
-        "camId": "cam08",
         "location": "Проезд, лево"
       }
     },
     {
-      "id": "el-26",
+      "id": "el-022",
+      "type": "camera",
+      "name": "cam 04",
+      "x": 142,
+      "y": 382,
+      "width": 16,
+      "height": 16,
+      "rotation": 0,
+      "color": "#ef4444",
+      "data": {
+        "camId": "cam04",
+        "location": "ПОСТ 08, низ"
+      }
+    },
+    {
+      "id": "el-023",
+      "type": "camera",
+      "name": "cam 05",
+      "x": 92,
+      "y": 362,
+      "width": 16,
+      "height": 16,
+      "rotation": 0,
+      "color": "#ef4444",
+      "data": {
+        "camId": "cam05",
+        "location": "Зона 04, лево-низ"
+      }
+    },
+    {
+      "id": "el-024",
+      "type": "camera",
+      "name": "cam 06",
+      "x": 12,
+      "y": 12,
+      "width": 16,
+      "height": 16,
+      "rotation": 0,
+      "color": "#ef4444",
+      "data": {
+        "camId": "cam06",
+        "location": "За пределами СТО (северо-запад)"
+      }
+    },
+    {
+      "id": "el-025",
+      "type": "camera",
+      "name": "cam 07",
+      "x": 212,
+      "y": 512,
+      "width": 16,
+      "height": 16,
+      "rotation": 0,
+      "color": "#ef4444",
+      "data": {
+        "camId": "cam07",
+        "location": "ПОСТ 10, низ"
+      }
+    },
+    {
+      "id": "el-026",
+      "type": "camera",
+      "name": "cam 08",
+      "x": 182,
+      "y": 182,
+      "width": 16,
+      "height": 16,
+      "rotation": 0,
+      "color": "#ef4444",
+      "data": {
+        "camId": "cam08",
+        "location": "Проезд, центр-лево"
+      }
+    },
+    {
+      "id": "el-027",
       "type": "camera",
       "name": "cam 09",
-      "x": 370,
-      "y": 100,
-      "width": 20,
-      "height": 20,
+      "x": 352,
+      "y": 102,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam09",
-        "location": "Верхний ряд, центр"
+        "location": "ПОСТ 05, верх"
       }
     },
     {
-      "id": "el-27",
+      "id": "el-028",
       "type": "camera",
       "name": "cam 10",
-      "x": 280,
-      "y": 220,
-      "width": 20,
-      "height": 20,
+      "x": 252,
+      "y": 192,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
@@ -403,58 +417,58 @@
       }
     },
     {
-      "id": "el-28",
+      "id": "el-029",
       "type": "camera",
       "name": "cam 11",
-      "x": 460,
-      "y": 100,
-      "width": 20,
-      "height": 20,
+      "x": 472,
+      "y": 102,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam11",
-        "location": "Верхний ряд, центр-право"
+        "location": "ПОСТ 03, верх"
       }
     },
     {
-      "id": "el-29",
+      "id": "el-030",
       "type": "camera",
       "name": "cam 12",
-      "x": 600,
-      "y": 105,
-      "width": 20,
-      "height": 20,
+      "x": 631,
+      "y": 102,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam12",
-        "location": "Верхний ряд, право"
+        "location": "ПОСТ 02, верх"
       }
     },
     {
-      "id": "el-30",
+      "id": "el-031",
       "type": "camera",
       "name": "cam 13",
-      "x": 540,
-      "y": 130,
-      "width": 20,
-      "height": 20,
+      "x": 552,
+      "y": 132,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam13",
-        "location": "Верхний ряд, центр-право"
+        "location": "Зона 06, верх"
       }
     },
     {
-      "id": "el-31",
+      "id": "el-032",
       "type": "camera",
       "name": "cam 14",
-      "x": 870,
-      "y": 235,
-      "width": 20,
-      "height": 20,
+      "x": 901,
+      "y": 252,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
@@ -463,111 +477,39 @@
       }
     },
     {
-      "id": "el-32",
+      "id": "el-033",
       "type": "camera",
       "name": "cam 15",
-      "x": 700,
-      "y": 90,
-      "width": 20,
-      "height": 20,
+      "x": 731,
+      "y": 82,
+      "width": 16,
+      "height": 16,
       "rotation": 0,
       "color": "#ef4444",
       "data": {
         "camId": "cam15",
-        "location": "Верхний ряд, дальний"
+        "location": "Зона 03, верх"
       }
     },
     {
-      "id": "el-33",
-      "type": "wall",
-      "name": "Стена север",
-      "x": 0,
-      "y": 0,
-      "width": 930,
-      "height": 5,
-      "rotation": 0,
-      "color": "#64748b",
-      "data": {}
-    },
-    {
-      "id": "el-34",
-      "type": "wall",
-      "name": "Стена юг",
-      "x": 0,
-      "y": 609,
-      "width": 930,
-      "height": 5,
-      "rotation": 0,
-      "color": "#64748b",
-      "data": {}
-    },
-    {
-      "id": "el-35",
-      "type": "wall",
-      "name": "Стена запад",
-      "x": 0,
-      "y": 0,
-      "width": 5,
-      "height": 614,
-      "rotation": 0,
-      "color": "#64748b",
-      "data": {}
-    },
-    {
-      "id": "el-36",
-      "type": "wall",
-      "name": "Стена восток",
-      "x": 925,
-      "y": 0,
-      "width": 5,
-      "height": 614,
-      "rotation": 0,
-      "color": "#64748b",
-      "data": {}
-    },
-    {
-      "id": "el-37",
+      "id": "el-034",
       "type": "door",
       "name": "Въезд/Выезд",
       "x": 0,
-      "y": 490,
-      "width": 15,
-      "height": 60,
-      "rotation": 0,
-      "color": "#ef4444",
-      "data": {}
-    },
-    {
-      "id": "el-38",
-      "type": "door",
-      "name": "Ворота верх",
-      "x": 0,
-      "y": 155,
-      "width": 15,
+      "y": 524,
+      "width": 10,
       "height": 50,
       "rotation": 0,
       "color": "#ef4444",
       "data": {}
     },
     {
-      "id": "el-39",
+      "id": "el-035",
       "type": "label",
       "name": "Проезд",
       "x": 400,
-      "y": 310,
+      "y": 350,
       "width": 80,
-      "height": 20,
-      "rotation": 0,
-      "color": "#94a3b8",
-      "data": {}
-    },
-    {
-      "id": "el-40",
-      "type": "label",
-      "name": "Парковка/Ожидание",
-      "x": 60,
-      "y": 540,
-      "width": 120,
       "height": 20,
       "rotation": 0,
       "color": "#94a3b8",
