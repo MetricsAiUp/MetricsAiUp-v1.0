@@ -1,0 +1,1 @@
+import{a as e}from"./useTranslation-vDhgWn7J.js";var t=e(`circle-parking`,[[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}],[`path`,{d:`M9 17V7h4a3 3 0 0 1 0 6H9`,key:`1dfk2c`}]]),n=e(`search`,[[`path`,{d:`m21 21-4.34-4.34`,key:`14j7rj`}],[`circle`,{cx:`11`,cy:`11`,r:`8`,key:`4ej97u`}]]);export{t as n,n as t};

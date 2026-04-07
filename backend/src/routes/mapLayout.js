@@ -2,8 +2,8 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
 
-// GET /api/map-layout — get active layout (or all with ?all=true)
-router.get('/', authenticate, async (req, res) => {
+// GET /api/map-layout — get active layout (public, no auth needed)
+router.get('/', async (req, res) => {
   try {
     if (req.query.all === 'true') {
       const layouts = await prisma.mapLayout.findMany({
@@ -23,8 +23,8 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/map-layout/:id
-router.get('/:id', authenticate, async (req, res) => {
+// GET /api/map-layout/:id (public)
+router.get('/:id', async (req, res) => {
   try {
     const layout = await prisma.mapLayout.findUnique({ where: { id: req.params.id } });
     if (!layout) return res.status(404).json({ error: 'Layout not found' });

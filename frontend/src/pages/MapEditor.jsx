@@ -146,14 +146,40 @@ export default function MapEditor() {
     img.src = dataUrl;
   }, []);
 
-  // Background upload
-  const handleBgUpload = (e) => {
+  // Background upload (supports images + PDF)
+  const handleBgUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => loadImageFromUrl(ev.target.result);
-    reader.readAsDataURL(file);
     e.target.value = '';
+
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      // PDF → render to canvas → PNG data URL
+      try {
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+        const scale = 2; // high-res
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const dataUrl = canvas.toDataURL('image/png');
+        loadImageFromUrl(dataUrl);
+        toast.success(i18n.language === 'ru' ? `PDF загружен (${canvas.width}×${canvas.height}px)` : `PDF loaded (${canvas.width}×${canvas.height}px)`);
+      } catch (err) {
+        console.error('PDF render error:', err);
+        toast.error(i18n.language === 'ru' ? 'Ошибка загрузки PDF' : 'PDF load error');
+      }
+    } else {
+      // Image file
+      const reader = new FileReader();
+      reader.onload = (ev) => loadImageFromUrl(ev.target.result);
+      reader.readAsDataURL(file);
+    }
   };
 
   // Save to API
@@ -392,9 +418,12 @@ export default function MapEditor() {
           style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)', width: 160 }}
         />
 
-        <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleBgUpload} />
+        <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.pdf,application/pdf" className="hidden" onChange={handleBgUpload} />
         <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           <Upload size={13} /> {t('mapEditor.uploadBg')}
+        </button>
+        <button onClick={() => loadImageFromUrl('/data/sto-plan.png')} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          {i18n.language === 'ru' ? 'План СТО' : 'STO Plan'}
         </button>
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
           <Save size={13} /> {saving ? '...' : t('common.save')}
