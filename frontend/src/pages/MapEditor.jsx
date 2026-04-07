@@ -510,9 +510,9 @@ export default function MapEditor() {
           <Line points={pts} closed fill={el.color} opacity={fillOpacity}
             stroke={el.color} strokeWidth={isSelected ? 3 : 2} dash={dash} />
           {isSelected && pts.length >= 2 && Array.from({ length: pts.length / 2 }, (_, i) => (
-            <Circle key={i} x={pts[i * 2]} y={pts[i * 2 + 1]} radius={7}
-              fill={vertexColor} stroke="#fff" strokeWidth={2}
-              shadowBlur={4} shadowColor={vertexColor} shadowOpacity={0.5} />
+            <Circle key={i} x={pts[i * 2]} y={pts[i * 2 + 1]} radius={10}
+              fill={vertexColor} stroke="#fff" strokeWidth={3}
+              shadowBlur={6} shadowColor={vertexColor} shadowOpacity={0.6} />
           ))}
           <Text text={el.name} x={pts[0] || 0} y={(pts[1] || 0) - 18} fontSize={11}
             fill={el.color} fontStyle="bold" />
@@ -744,15 +744,25 @@ export default function MapEditor() {
               {/* Drawing polygon preview */}
               {drawingPolygon && drawingPolygon.points.length >= 2 && (
                 <>
-                  <Line points={drawingPolygon.points}
-                    stroke="#22c55e" strokeWidth={2.5} dash={[6, 3]}
-                    fill="#22c55e" opacity={0.12} closed={false} />
+                  {/* Line connecting all placed points */}
+                  {drawingPolygon.points.length >= 4 && (
+                    <Line points={drawingPolygon.points}
+                      stroke="#22c55e" strokeWidth={3} dash={[8, 4]}
+                      fill="#22c55e" opacity={0.08} closed={false} />
+                  )}
+                  {/* Vertex dots */}
                   {Array.from({ length: drawingPolygon.points.length / 2 }, (_, i) => (
                     <Circle key={`dp${i}`}
                       x={drawingPolygon.points[i * 2]} y={drawingPolygon.points[i * 2 + 1]}
-                      radius={i === 0 ? 10 : 7}
-                      fill={i === 0 ? '#22c55e' : '#e11d48'} stroke="#fff" strokeWidth={2}
-                      shadowBlur={5} shadowColor={i === 0 ? '#22c55e' : '#e11d48'} shadowOpacity={0.6} />
+                      radius={i === 0 ? 12 : 10}
+                      fill={i === 0 ? '#22c55e' : '#e11d48'} stroke="#fff" strokeWidth={3}
+                      shadowBlur={8} shadowColor={i === 0 ? '#22c55e' : '#e11d48'} shadowOpacity={0.7} />
+                  ))}
+                  {/* Number labels on vertices */}
+                  {Array.from({ length: drawingPolygon.points.length / 2 }, (_, i) => (
+                    <Text key={`dpt${i}`}
+                      x={drawingPolygon.points[i * 2] - 4} y={drawingPolygon.points[i * 2 + 1] - 5}
+                      text={String(i + 1)} fontSize={10} fontStyle="bold" fill="#fff" />
                   ))}
                 </>
               )}
