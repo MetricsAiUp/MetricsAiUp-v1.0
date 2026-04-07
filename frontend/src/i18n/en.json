@@ -197,7 +197,8 @@
     "legendFree": "Free",
     "legendOccupied": "Occupied",
     "legendActiveWork": "Active work",
-    "legendIdle": "Idle"
+    "legendIdle": "Idle",
+    "layerInfoZone": "Info Zone"
   },
   "dashboardPosts": {
     "title": "Posts Dashboard",

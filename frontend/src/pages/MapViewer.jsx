@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Stage, Layer, Rect, Circle, Text, Group, Line } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Text, Group, Line, Label, Tag } from 'react-konva';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePolling } from '../hooks/useSocket';
@@ -183,16 +183,28 @@ export default function MapViewer() {
       const saved = localStorage.getItem('mapViewerLayers');
       if (saved) return JSON.parse(saved);
     } catch {}
-    return { building: true, driveway: true, post: true, zone: true, camera: true, door: true, wall: true, label: true };
+    return { building: true, driveway: true, post: true, zone: true, camera: true, door: true, wall: true, label: true, infozone: true };
   });
 
   const isDark = theme === 'dark';
 
-  // Load layout
+  // Load layout (API → localStorage fallback)
   useEffect(() => {
     api.get('/api/map-layout').then(({ data }) => {
       if (data) setLayout(data);
-    }).catch(() => {});
+      else {
+        // Fallback: try localStorage
+        try {
+          const saved = localStorage.getItem('mapLayout');
+          if (saved) setLayout(JSON.parse(saved));
+        } catch {}
+      }
+    }).catch(() => {
+      try {
+        const saved = localStorage.getItem('mapLayout');
+        if (saved) setLayout(JSON.parse(saved));
+      } catch {}
+    });
   }, []);
 
   // Fetch real-time data
@@ -375,6 +387,7 @@ export default function MapViewer() {
                 { key: 'door', label: t('mapView.layerDoors') },
                 { key: 'wall', label: t('mapView.layerWalls') },
                 { key: 'label', label: t('mapView.layerLabels') },
+                { key: 'infozone', label: t('mapView.layerInfoZone') },
               ].map(l => (
                 <label key={l.key} className="flex items-center gap-2 px-1 py-0.5 rounded cursor-pointer hover:opacity-80 text-xs"
                   style={{ color: 'var(--text-secondary)' }}>
@@ -432,10 +445,36 @@ export default function MapViewer() {
 
             {/* Render elements by type */}
             {elements.map(el => {
-              if (el.type === 'building') return (
-                <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
-                  stroke="#22c55e" strokeWidth={2} fill="transparent" dash={[8, 4]} />
-              );
+              const isPolygon = el.shapeMode === 'polygon' && el.points?.length >= 4;
+
+              // ── Polygon mode for any area type ──
+              if (isPolygon && el.type !== 'post') {
+                const fillOpacity = el.type === 'building' ? 0 : 0.08;
+                const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4] : undefined;
+                const stroke = el.color || '#22c55e';
+                return (
+                  <Group key={el.id} x={el.x} y={el.y}>
+                    <Line points={el.points} closed fill={stroke} opacity={fillOpacity}
+                      stroke={stroke} strokeWidth={2} dash={dash} />
+                  </Group>
+                );
+              }
+
+              if (el.type === 'building') {
+                // Legacy building: polygon without shapeMode OR rectangle
+                if (el.points && el.points.length >= 4) {
+                  return (
+                    <Group key={el.id} x={el.x} y={el.y}>
+                      <Line points={el.points} closed fill="transparent"
+                        stroke="#22c55e" strokeWidth={2} dash={[8, 4]} />
+                    </Group>
+                  );
+                }
+                return (
+                  <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
+                    stroke="#22c55e" strokeWidth={2} fill="transparent" dash={[8, 4]} />
+                );
+              }
               if (el.type === 'driveway') return (
                 <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
                   rotation={el.rotation || 0} fill="rgba(148,163,184,0.12)"
@@ -456,6 +495,11 @@ export default function MapViewer() {
               if (el.type === 'camera') return (
                 <CameraEl key={el.id} el={el} isDark={isDark}
                   onClick={() => setSelectedCam(el.camNum)} />
+              );
+              if (el.type === 'infozone') return (
+                <InfoZoneEl key={el.id} el={el} isDark={isDark}
+                  stats={stats} isRu={isRu}
+                  statusColors={POST_STATUS_COLORS} />
               );
               return null;
             })}
@@ -586,5 +630,58 @@ function LabelEl({ el, fill }) {
   return (
     <Text x={el.x} y={el.y} text={el.name} fontSize={11}
       fill={fill} fontStyle="italic" opacity={0.6} />
+  );
+}
+
+function InfoZoneEl({ el, isDark, stats, isRu, statusColors }) {
+  const bgFill = isDark ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.85)';
+  const textColor = isDark ? '#e2e8f0' : '#1e293b';
+  const mutedColor = isDark ? '#94a3b8' : '#64748b';
+  const titleText = el.name || (isRu ? 'Информация' : 'Information');
+
+  const legendItems = [
+    { color: statusColors.free, label: isRu ? 'Свободен' : 'Free' },
+    { color: statusColors.occupied || '#94a3b8', label: isRu ? 'Занят' : 'Occupied' },
+    { color: statusColors.active_work, label: isRu ? 'В работе' : 'Active work' },
+    { color: statusColors.occupied_no_work || '#eab308', label: isRu ? 'Простой' : 'Idle' },
+  ];
+
+  const w = el.width || 200;
+  const h = el.height || 150;
+  const pad = 10;
+  let yOffset = pad;
+
+  return (
+    <Group x={el.x} y={el.y}>
+      <Rect width={w} height={h} fill={bgFill} cornerRadius={8}
+        stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth={1}
+        shadowBlur={8} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
+      {/* Title */}
+      <Text x={pad} y={yOffset} text={titleText} fontSize={12}
+        fontStyle="bold" fill={textColor} width={w - pad * 2} />
+      {/* Legend */}
+      {legendItems.map((item, i) => (
+        <Group key={i} x={pad} y={yOffset + 20 + i * 18}>
+          <Circle x={6} y={6} radius={5} fill={item.color} />
+          <Text x={16} y={0} text={item.label} fontSize={10} fill={mutedColor} />
+        </Group>
+      ))}
+      {/* Stats */}
+      {stats && stats.length > 0 && (() => {
+        const statsY = yOffset + 20 + legendItems.length * 18 + 8;
+        return (
+          <Group y={statsY}>
+            <Rect x={pad} y={0} width={w - pad * 2} height={1} fill={mutedColor} opacity={0.2} />
+            {stats.slice(0, 4).map((s, i) => (
+              <Group key={i} x={pad} y={8 + i * 16}>
+                <Text x={0} y={0} text={s.label} fontSize={10} fill={mutedColor} />
+                <Text x={w - pad * 2 - 30} y={0} text={String(s.value)} fontSize={10}
+                  fontStyle="bold" fill={s.color} width={30} align="right" />
+              </Group>
+            ))}
+          </Group>
+        );
+      })()}
+    </Group>
   );
 }

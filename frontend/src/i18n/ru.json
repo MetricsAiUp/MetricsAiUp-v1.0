@@ -197,7 +197,8 @@
     "legendFree": "Свободен",
     "legendOccupied": "Занят",
     "legendActiveWork": "В работе",
-    "legendIdle": "Простой"
+    "legendIdle": "Простой",
+    "layerInfoZone": "Инфо-зона"
   },
   "dashboardPosts": {
     "title": "Дашборд постов",

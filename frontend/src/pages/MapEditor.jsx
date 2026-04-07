@@ -6,12 +6,12 @@ import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer, Image as Ko
 import {
   MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus, Maximize2, ArrowRightLeft,
   Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
-  Magnet, Copy, Undo2, Redo2,
+  Magnet, Copy, Undo2, Redo2, PenTool, LayoutDashboard,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
 const ELEMENT_DEFAULTS = {
-  building: { width: 930, height: 614, color: '#22c55e' },
+  building: { width: 0, height: 0, color: '#22c55e', points: [] },
   driveway: { width: 300, height: 40, color: '#94a3b8' },
   post:   { width: 120, height: 80, color: '#3b82f6' },
   zone:   { width: 160, height: 100, color: '#22c55e' },
@@ -19,7 +19,10 @@ const ELEMENT_DEFAULTS = {
   door:   { width: 60, height: 8, color: '#f59e0b' },
   wall:   { width: 200, height: 6, color: '#6b7280' },
   label:  { width: 100, height: 30, color: '#a855f7' },
+  infozone: { width: 200, height: 150, color: '#8b5cf6' },
 };
+
+const AREA_TYPES = new Set(['building', 'post', 'zone', 'driveway', 'infozone']);
 
 const DRAFT_KEY = 'stoMapLayout_draft';
 const SNAP_STEP = 10;
@@ -33,8 +36,8 @@ const newId = () => `el-${idCounter++}`;
 const TOOLS = [
   { id: 'select', icon: MousePointer2, label: 'Select',
     tip: { ru: 'Выбор и перемещение элементов. Кликните на элемент для редактирования, перетащите для перемещения.', en: 'Select and move elements. Click to edit, drag to move.' } },
-  { id: 'building', icon: Maximize2, label: 'Building',
-    tip: { ru: 'Внешние границы здания СТО. Определяет общий контур. Кликните на canvas чтобы разместить.', en: 'STO building outline. Defines the outer boundary. Click canvas to place.' } },
+  { id: 'building', icon: PenTool, label: 'Building',
+    tip: { ru: 'Контур здания СТО (полигон). Кликайте для добавления точек, двойной клик — завершить. Esc — отмена.', en: 'STO building outline (polygon). Click to add points, double-click to finish. Esc to cancel.' } },
   { id: 'post', icon: Square, label: 'Post',
     tip: { ru: 'Рабочий пост (подъёмник). Привязывается к реальному посту по номеру. На карте показывает статус и авто.', en: 'Work post (lift). Links to real post by number. Shows status and vehicle on map.' } },
   { id: 'zone', icon: Hexagon, label: 'Zone',
@@ -49,6 +52,8 @@ const TOOLS = [
     tip: { ru: 'Стена / перегородка. Визуальный элемент для обозначения границ.', en: 'Wall / partition. Visual element marking boundaries.' } },
   { id: 'label', icon: Type, label: 'Label',
     tip: { ru: 'Текстовая подпись. Добавьте название зоны, направление или примечание.', en: 'Text label. Add zone name, direction or note.' } },
+  { id: 'infozone', icon: LayoutDashboard, label: 'Info Zone',
+    tip: { ru: 'Зона для легенды и доп. информации. На карте просмотра здесь отобразится легенда статусов и статистика.', en: 'Legend & info area. Shows status legend and stats on the map viewer.' } },
 ];
 
 export default function MapEditor() {
@@ -70,6 +75,7 @@ export default function MapEditor() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [snapEnabled, setSnapEnabled] = useState(false);
+  const [drawingPolygon, setDrawingPolygon] = useState(null); // { points: [x,y,...], elType: 'building'|... }
 
   const containerRef = useRef(null);
   const stageRef = useRef(null);
@@ -123,11 +129,13 @@ export default function MapEditor() {
     return () => window.removeEventListener('resize', resize);
   }, []);
 
-  // Attach transformer to selected node
+  // Attach transformer to selected node (skip for polygon-mode elements)
   useEffect(() => {
     if (!trRef.current || !stageRef.current) return;
     const stage = stageRef.current;
-    if (selectedId && tool === 'select') {
+    const sel = elements.find(e => e.id === selectedId);
+    const isPolygon = sel?.shapeMode === 'polygon';
+    if (selectedId && tool === 'select' && !isPolygon) {
       const node = stage.findOne(`#${selectedId}`);
       if (node) { trRef.current.nodes([node]); trRef.current.getLayer().batchDraw(); return; }
     }
@@ -174,7 +182,7 @@ export default function MapEditor() {
     pushHistory(elements);
   }, [elements, pushHistory]);
 
-  // Keyboard shortcuts: Ctrl+Z, Ctrl+Shift+Z, Ctrl+D, Delete
+  // Keyboard shortcuts: Ctrl+Z, Ctrl+Shift+Z, Ctrl+D, Delete, Escape
   useEffect(() => {
     const handler = (e) => {
       if (e.ctrlKey && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
@@ -182,10 +190,11 @@ export default function MapEditor() {
       if (e.ctrlKey && e.key === 'Z') { e.preventDefault(); redo(); }
       if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); duplicateSelected(); }
       if (e.key === 'Delete' && selectedId) { e.preventDefault(); deleteSelected(); }
+      if (e.key === 'Escape' && drawingPolygon) { e.preventDefault(); setDrawingPolygon(null); setTool('select'); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, selectedId, elements]);
+  }, [undo, redo, selectedId, elements, drawingPolygon]);
 
   // Draft autosave to localStorage every 30 seconds
   useEffect(() => {
@@ -239,17 +248,17 @@ export default function MapEditor() {
     }
   };
 
-  // Save to API
+  // Save to API with fallback to localStorage + data/map-layout.json
   const handleSave = async () => {
     setSaving(true);
+    const payload = {
+      name: mapName || 'Untitled',
+      width: stageSize.width,
+      height: stageSize.height,
+      bgImage: bgDataUrl,
+      elements,
+    };
     try {
-      const payload = {
-        name: mapName || 'Untitled',
-        width: stageSize.width,
-        height: stageSize.height,
-        bgImage: bgDataUrl,
-        elements,
-      };
       let res;
       if (layoutId) {
         res = await api.put('/api/map-layout/' + layoutId, payload);
@@ -258,10 +267,18 @@ export default function MapEditor() {
       }
       if (res.data?.id) setLayoutId(res.data.id);
       toast.success(t('mapEditor.saveSuccess') || 'Layout saved');
-      // Clear draft after successful save
       localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
-      toast.error((t('mapEditor.saveError') || 'Save failed') + ': ' + (err.message || 'Unknown error'));
+      // Fallback: save to localStorage so MapViewer can read it
+      try {
+        const savePayload = { ...payload, bgImage: bgDataUrl ? '(stored in draft)' : null };
+        localStorage.setItem('mapLayout', JSON.stringify(payload));
+        // Also save draft
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ elements, bgDataUrl, mapName }));
+        toast.success((i18n.language === 'ru' ? 'Сохранено локально (API недоступен)' : 'Saved locally (API unavailable)'));
+      } catch (e2) {
+        toast.error((t('mapEditor.saveError') || 'Save failed') + ': ' + (err.message || 'Unknown error'));
+      }
     } finally {
       setSaving(false);
     }
@@ -307,28 +324,86 @@ export default function MapEditor() {
     localStorage.removeItem(DRAFT_KEY);
   };
 
+  // Finish polygon drawing — create element of given type
+  const finishPolygon = useCallback((pts, elType) => {
+    if (!pts || pts.length < 6) return; // need at least 3 points (6 coords)
+    const type = elType || 'building';
+    const xs = pts.filter((_, i) => i % 2 === 0);
+    const ys = pts.filter((_, i) => i % 2 === 1);
+    const minX = Math.min(...xs), minY = Math.min(...ys);
+    const maxX = Math.max(...xs), maxY = Math.max(...ys);
+    const relPoints = pts.map((v, i) => i % 2 === 0 ? v - minX : v - minY);
+    const defaults = ELEMENT_DEFAULTS[type] || {};
+    const el = {
+      id: newId(), type,
+      x: minX, y: minY,
+      width: maxX - minX, height: maxY - minY,
+      rotation: 0, name: `${type}-${elements.filter(e => e.type === type).length + 1}`,
+      color: defaults.color || '#22c55e',
+      points: relPoints, shapeMode: 'polygon',
+      data: defaults.data ? { ...defaults.data } : {},
+    };
+    setElements(prev => [...prev, el]);
+    setSelectedId(el.id);
+    setDrawingPolygon(null);
+    setTool('select');
+  }, [elements]);
+
+  // Check if currently in polygon drawing mode
+  const isPolygonDrawing = drawingPolygon !== null;
+
   // Click on stage to add element
   const handleStageClick = (e) => {
     if (tool === 'select') {
       if (e.target === e.target.getStage()) setSelectedId(null);
       return;
     }
-    const defaults = ELEMENT_DEFAULTS[tool];
-    if (!defaults) return;
+
     const stage = stageRef.current;
     const pointer = stage.getPointerPosition();
     const x = (pointer.x - stagePos.x) / stageScale;
     const y = (pointer.y - stagePos.y) / stageScale;
+    const px = snapEnabled ? snapToGrid(x) : x;
+    const py = snapEnabled ? snapToGrid(y) : y;
+
+    // Polygon drawing mode (building always, others when activated via drawingPolygon)
+    if (isPolygonDrawing || tool === 'building') {
+      const drawType = drawingPolygon?.elType || tool;
+      if (!drawingPolygon) {
+        setDrawingPolygon({ points: [px, py], elType: drawType });
+      } else {
+        const fp = drawingPolygon.points;
+        const dist = Math.hypot(px - fp[0], py - fp[1]);
+        if (fp.length >= 6 && dist < 15 / stageScale) {
+          finishPolygon(fp, drawingPolygon.elType);
+        } else {
+          setDrawingPolygon(prev => ({ ...prev, points: [...prev.points, px, py] }));
+        }
+      }
+      return;
+    }
+
+    const defaults = ELEMENT_DEFAULTS[tool];
+    if (!defaults) return;
     const el = {
       id: newId(), type: tool,
-      x: x - defaults.width / 2, y: y - defaults.height / 2,
+      x: px - defaults.width / 2, y: py - defaults.height / 2,
       width: defaults.width, height: defaults.height,
       rotation: 0, name: `${tool}-${elements.filter(e => e.type === tool).length + 1}`,
-      color: defaults.color, data: defaults.data ? { ...defaults.data } : {},
+      color: defaults.color, shapeMode: 'rect',
+      data: defaults.data ? { ...defaults.data } : {},
     };
     setElements(prev => [...prev, el]);
     setSelectedId(el.id);
     setTool('select');
+  };
+
+  // Double-click to finish polygon
+  const handleStageDblClick = (e) => {
+    if (drawingPolygon && drawingPolygon.points.length >= 6) {
+      e.evt?.preventDefault();
+      finishPolygon(drawingPolygon.points, drawingPolygon.elType);
+    }
   };
 
   // Zoom with wheel
@@ -352,15 +427,16 @@ export default function MapEditor() {
     setElements(prev => prev.map(el => el.id === id ? { ...el, x, y } : el));
   };
 
-  // Transform element (with optional snap)
+  // Transform element (with optional snap) — use stored el.width/height, NOT node.width()
   const handleTransformEnd = (id, e) => {
     const node = e.target;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     node.scaleX(1); node.scaleY(1);
     let x = node.x(), y = node.y();
-    let w = Math.max(10, node.width() * scaleX);
-    let h = Math.max(10, node.height() * scaleY);
+    const currentEl = elements.find(el => el.id === id);
+    let w = Math.max(10, (currentEl?.width || 100) * scaleX);
+    let h = Math.max(10, (currentEl?.height || 100) * scaleY);
     if (snapEnabled) { x = snapToGrid(x); y = snapToGrid(y); w = snapToGrid(w); h = snapToGrid(h); node.x(x); node.y(y); }
     setElements(prev => prev.map(el => el.id === id ? {
       ...el, x, y, width: w, height: h, rotation: node.rotation(),
@@ -421,24 +497,70 @@ export default function MapEditor() {
   const renderElement = (el) => {
     const isSelected = el.id === selectedId;
     const common = {
-      id: el.id, x: el.x, y: el.y, rotation: el.rotation,
+      id: el.id, x: el.x, y: el.y, rotation: el.rotation || 0,
       draggable: tool === 'select',
       onClick: () => { if (tool === 'select') setSelectedId(el.id); },
       onTap: () => { if (tool === 'select') setSelectedId(el.id); },
       onDragEnd: (e) => handleDragEnd(el.id, e),
       onTransformEnd: (e) => handleTransformEnd(el.id, e),
     };
+
+    const isAreaType = AREA_TYPES.has(el.type);
+    const isPolygon = el.shapeMode === 'polygon' && el.points?.length >= 4;
+
+    // ── POLYGON MODE for any area type ──
+    if (isAreaType && isPolygon) {
+      const pts = el.points;
+      const vertexColor = '#e11d48';
+      const fillOpacity = el.type === 'building' ? 0.08 : el.type === 'zone' ? 0.2 : 0.15;
+      const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4] : undefined;
+      return (
+        <Group key={el.id} {...common}>
+          <Line points={pts} closed fill={el.color} opacity={fillOpacity}
+            stroke={el.color} strokeWidth={isSelected ? 3 : 2} dash={dash} />
+          {isSelected && pts.length >= 2 && Array.from({ length: pts.length / 2 }, (_, i) => (
+            <Circle key={i} x={pts[i * 2]} y={pts[i * 2 + 1]} radius={7}
+              fill={vertexColor} stroke="#fff" strokeWidth={2}
+              shadowBlur={4} shadowColor={vertexColor} shadowOpacity={0.5} />
+          ))}
+          <Text text={el.name} x={pts[0] || 0} y={(pts[1] || 0) - 18} fontSize={11}
+            fill={el.color} fontStyle="bold" />
+        </Group>
+      );
+    }
+
+    // ── RECT MODE for area types ──
+    if (isAreaType) {
+      const w = el.width || 100, h = el.height || 60;
+      const fillOpacity = el.type === 'building' ? 0.08 : el.type === 'zone' ? 0.35
+        : el.type === 'infozone' ? 0.1 : el.type === 'driveway' ? 0.12 : 0.75;
+      const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4]
+        : el.type === 'driveway' ? [6, 3] : undefined;
+      const cr = el.type === 'post' ? 4 : el.type === 'infozone' ? 8 : 0;
+      return (
+        <Group key={el.id} {...common}>
+          {/* Hit rect for proper Transformer sizing */}
+          <Rect width={w} height={h} fill={el.color} opacity={fillOpacity}
+            stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1}
+            cornerRadius={cr} dash={dash} />
+          <Text text={el.name} width={w} height={h} fontSize={11}
+            fill={el.type === 'building' || el.type === 'infozone' ? el.color : '#fff'}
+            fontStyle={el.type === 'building' || el.type === 'infozone' ? 'bold' : 'normal'}
+            align="center" verticalAlign="middle" padding={4} />
+        </Group>
+      );
+    }
+
+    // ── Camera ──
     if (el.type === 'camera') {
       const cx = el.width / 2, cy = el.height / 2;
       const dir = (el.data?.direction || 0) * Math.PI / 180;
       const fov = (el.data?.fov || 90) * Math.PI / 180;
       const range = el.data?.range || 80;
-      // FOV cone points: center → left edge → right edge
       const lx = cx + Math.cos(dir - fov / 2) * range;
       const ly = cy + Math.sin(dir - fov / 2) * range;
       const rx = cx + Math.cos(dir + fov / 2) * range;
       const ry = cy + Math.sin(dir + fov / 2) * range;
-      // Mid-arc points for smoother cone
       const mx = cx + Math.cos(dir) * range;
       const my = cy + Math.sin(dir) * range;
       return (
@@ -450,17 +572,21 @@ export default function MapEditor() {
         </Group>
       );
     }
+
+    // ── Label ──
     if (el.type === 'label') {
       return (
         <Group key={el.id} {...common}>
+          <Rect width={el.width} height={el.height} fill="transparent" />
           <Text text={el.name} width={el.width} height={el.height} fontSize={14} fill={el.color} align="center" verticalAlign="middle" />
         </Group>
       );
     }
-    // post, zone, door, wall — all rectangles
+
+    // ── Door, Wall ──
     return (
       <Group key={el.id} {...common}>
-        <Rect width={el.width} height={el.height} fill={el.color} opacity={el.type === 'zone' ? 0.35 : 0.75} stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1} cornerRadius={el.type === 'post' ? 4 : 0} />
+        <Rect width={el.width} height={el.height} fill={el.color} opacity={0.75} stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1} />
         {el.type !== 'wall' && (
           <Text text={el.name} width={el.width} height={el.height} fontSize={11} fill="#fff" align="center" verticalAlign="middle" padding={2} />
         )}
@@ -596,16 +722,49 @@ export default function MapEditor() {
         </div>
 
         {/* Canvas */}
-        <div ref={containerRef} className="flex-1 overflow-hidden" style={{ background: 'var(--bg-primary)', cursor: tool === 'select' ? 'default' : 'crosshair' }}>
+        <div ref={containerRef} className="flex-1 overflow-hidden relative" style={{ background: 'var(--bg-primary)', cursor: tool === 'select' ? 'default' : 'crosshair' }}>
+          {/* Polygon drawing indicator */}
+          {(tool === 'building' || isPolygonDrawing) && (
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg shadow-lg"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid #22c55e55', color: '#22c55e' }}>
+              <PenTool size={14} />
+              <span className="text-xs font-medium">
+                {drawingPolygon
+                  ? (i18n.language === 'ru'
+                    ? `Точек: ${drawingPolygon.points.length / 2} · Двойной клик или клик на первую точку — завершить · Esc — отмена`
+                    : `Points: ${drawingPolygon.points.length / 2} · Double-click or click first point to finish · Esc to cancel`)
+                  : (i18n.language === 'ru'
+                    ? 'Кликните для первой точки контура'
+                    : 'Click to place first point')}
+              </span>
+            </div>
+          )}
           <Stage ref={stageRef} width={stageSize.width} height={stageSize.height}
             scaleX={stageScale} scaleY={stageScale} x={stagePos.x} y={stagePos.y}
             draggable={tool === 'select'}
             onDragEnd={(e) => { if (e.target === stageRef.current) setStagePos({ x: e.target.x(), y: e.target.y() }); }}
-            onClick={handleStageClick} onTap={handleStageClick} onWheel={handleWheel}>
+            onClick={handleStageClick} onTap={handleStageClick}
+            onDblClick={handleStageDblClick} onDblTap={handleStageDblClick}
+            onWheel={handleWheel}>
             <Layer>
               {bgImage && <KonvaImage image={bgImage} x={0} y={0} width={bgImage.width} height={bgImage.height} />}
               {gridLines}
               {elements.map(renderElement)}
+              {/* Drawing polygon preview */}
+              {drawingPolygon && drawingPolygon.points.length >= 2 && (
+                <>
+                  <Line points={drawingPolygon.points}
+                    stroke="#22c55e" strokeWidth={2.5} dash={[6, 3]}
+                    fill="#22c55e" opacity={0.12} closed={false} />
+                  {Array.from({ length: drawingPolygon.points.length / 2 }, (_, i) => (
+                    <Circle key={`dp${i}`}
+                      x={drawingPolygon.points[i * 2]} y={drawingPolygon.points[i * 2 + 1]}
+                      radius={i === 0 ? 10 : 7}
+                      fill={i === 0 ? '#22c55e' : '#e11d48'} stroke="#fff" strokeWidth={2}
+                      shadowBlur={5} shadowColor={i === 0 ? '#22c55e' : '#e11d48'} shadowOpacity={0.6} />
+                  ))}
+                </>
+              )}
               {selectedId && tool === 'select' && <Transformer ref={trRef} rotateEnabled enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center']} boundBoxFunc={(oldBox, newBox) => { if (newBox.width < 10 || newBox.height < 10) return oldBox; return newBox; }} />}
             </Layer>
           </Stage>
@@ -630,30 +789,105 @@ export default function MapEditor() {
                 <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.elColor')}</label>
                 <input type="color" value={selected.color} onChange={e => updateProp('color', e.target.value)} className="w-full h-7 rounded cursor-pointer border-0" />
               </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>W</label>
-                  <input type="number" value={Math.round(selected.width)} onChange={e => updateProp('width', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+              {/* Shape mode toggle for area elements */}
+              {AREA_TYPES.has(selected.type) && (
+                <div className="space-y-1 mt-1 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {i18n.language === 'ru' ? 'Форма' : 'Shape'}
+                  </label>
+                  <div className="flex gap-1">
+                    <button onClick={() => {
+                      if (selected.shapeMode === 'rect') return;
+                      // Convert polygon → rect (use bounding box)
+                      updateProp('shapeMode', 'rect');
+                    }}
+                      className="flex-1 px-2 py-1 rounded text-xs font-medium transition-all"
+                      style={{
+                        background: selected.shapeMode !== 'polygon' ? 'var(--accent)' : 'var(--bg-card)',
+                        color: selected.shapeMode !== 'polygon' ? '#fff' : 'var(--text-secondary)',
+                        border: '1px solid var(--border-glass)',
+                      }}>
+                      <Square size={10} className="inline mr-1" style={{ verticalAlign: 'middle' }} />
+                      {i18n.language === 'ru' ? 'Прямоуг.' : 'Rect'}
+                    </button>
+                    <button onClick={() => {
+                      if (selected.shapeMode === 'polygon') return;
+                      // Start polygon drawing for this element type
+                      const elType = selected.type;
+                      setElements(prev => prev.filter(e => e.id !== selectedId));
+                      setSelectedId(null);
+                      setDrawingPolygon({ points: [], elType });
+                      setTool(elType);
+                    }}
+                      className="flex-1 px-2 py-1 rounded text-xs font-medium transition-all"
+                      style={{
+                        background: selected.shapeMode === 'polygon' ? 'var(--accent)' : 'var(--bg-card)',
+                        color: selected.shapeMode === 'polygon' ? '#fff' : 'var(--text-secondary)',
+                        border: '1px solid var(--border-glass)',
+                      }}>
+                      <PenTool size={10} className="inline mr-1" style={{ verticalAlign: 'middle' }} />
+                      {i18n.language === 'ru' ? 'Полигон' : 'Polygon'}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>H</label>
-                  <input type="number" value={Math.round(selected.height)} onChange={e => updateProp('height', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+              )}
+
+              {/* W/H/X/Y/Rotation — show for rect-mode elements */}
+              {selected.shapeMode !== 'polygon' && (<>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>W</label>
+                    <input type="number" value={Math.round(selected.width)} onChange={e => updateProp('width', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>H</label>
+                    <input type="number" value={Math.round(selected.height)} onChange={e => updateProp('height', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>X</label>
-                  <input type="number" value={Math.round(selected.x)} onChange={e => updateProp('x', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>X</label>
+                    <input type="number" value={Math.round(selected.x)} onChange={e => updateProp('x', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>Y</label>
+                    <input type="number" value={Math.round(selected.y)} onChange={e => updateProp('y', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>Y</label>
-                  <input type="number" value={Math.round(selected.y)} onChange={e => updateProp('y', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                <div>
+                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.rotation')}</label>
+                  <input type="number" value={Math.round(selected.rotation || 0)} onChange={e => updateProp('rotation', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
                 </div>
-              </div>
-              <div>
-                <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.rotation')}</label>
-                <input type="number" value={Math.round(selected.rotation)} onChange={e => updateProp('rotation', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
-              </div>
+              </>)}
+
+              {/* Polygon info: point count + redraw button */}
+              {selected.shapeMode === 'polygon' && selected.points?.length >= 4 && (
+                <div className="space-y-2 mt-1">
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {i18n.language === 'ru' ? 'Точек:' : 'Points:'} {selected.points.length / 2}
+                  </div>
+                  <div className="space-y-0.5 max-h-32 overflow-y-auto">
+                    {Array.from({ length: selected.points.length / 2 }, (_, i) => (
+                      <div key={i} className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <span className="w-4">{i + 1}.</span>
+                        <span>{Math.round(selected.points[i * 2])}, {Math.round(selected.points[i * 2 + 1])}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => {
+                    const elType = selected.type;
+                    setElements(prev => prev.filter(e => e.id !== selectedId));
+                    setSelectedId(null);
+                    setDrawingPolygon({ points: [], elType });
+                    setTool(elType);
+                  }}
+                    className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs hover:opacity-80 transition-opacity"
+                    style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
+                    <PenTool size={12} /> {i18n.language === 'ru' ? 'Перерисовать' : 'Redraw'}
+                  </button>
+                </div>
+              )}
+
               {selected.type === 'camera' && (
                 <div className="space-y-2 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
                   <label className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
