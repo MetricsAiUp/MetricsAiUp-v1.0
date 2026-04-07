@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Stage, Layer, Rect, Circle, Text, Group, Line, Label, Tag } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Text, Group, Line } from 'react-konva';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePolling } from '../hooks/useSocket';
@@ -192,7 +192,6 @@ export default function MapViewer() {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showLayersPanel, setShowLayersPanel] = useState(false);
-  const [showLegend, setShowLegend] = useState(true);
   const [visibleLayers, setVisibleLayers] = useState(() => {
     try {
       const saved = localStorage.getItem('mapViewerLayers');
@@ -225,18 +224,17 @@ export default function MapViewer() {
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
   usePolling(fetchRealtime, 5000);
 
-  // Responsive sizing — fit all elements into view
+  // Responsive sizing — fit all elements into available space
   useEffect(() => {
     const resize = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const cw = rect.width;
-      const ch = rect.height || window.innerHeight - 200;
+      const ch = window.innerHeight - rect.top - 20; // fill to bottom of viewport
 
       // Compute bounding box of all elements
       const els = layout?.elements || [];
-      let maxX = layout?.width || 900;
-      let maxY = layout?.height || 500;
+      let maxX = 100, maxY = 100;
       for (const el of els) {
         const ex = (el.x || 0) + (el.width || 0);
         const ey = (el.y || 0) + (el.height || 0);
@@ -244,8 +242,9 @@ export default function MapViewer() {
         if (ey > maxY) maxY = ey;
       }
 
-      const fitScale = Math.min(cw / maxX, ch / maxY, 1);
-      setStageSize({ width: cw, height: Math.max(maxY * fitScale, 300) });
+      // Scale to fit — no upper limit, fill available space
+      const fitScale = Math.min(cw / maxX, ch / maxY);
+      setStageSize({ width: cw, height: ch });
       setScale(fitScale);
       setPosition({ x: 0, y: 0 });
     };
@@ -355,6 +354,38 @@ export default function MapViewer() {
           <HelpButton pageKey="map" />
         </div>
         <div className="flex items-center gap-2">
+          {/* Layers dropdown */}
+          <div className="relative">
+            <button onClick={() => setShowLayersPanel(!showLayersPanel)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+              <Layers size={14} /> {t('mapView.layers')}
+              {showLayersPanel ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {showLayersPanel && (
+              <div className="absolute right-0 mt-1 p-2 rounded-lg shadow-lg space-y-1 z-20"
+                style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', minWidth: 140 }}>
+                {[
+                  { key: 'building', label: t('mapView.layerBuildings') },
+                  { key: 'post', label: t('mapView.layerPosts') },
+                  { key: 'zone', label: t('mapView.layerZones') },
+                  { key: 'camera', label: t('mapView.layerCameras') },
+                  { key: 'driveway', label: t('mapView.layerDriveways') },
+                  { key: 'door', label: t('mapView.layerDoors') },
+                  { key: 'wall', label: t('mapView.layerWalls') },
+                  { key: 'label', label: t('mapView.layerLabels') },
+                  { key: 'infozone', label: t('mapView.layerInfoZone') },
+                ].map(l => (
+                  <label key={l.key} className="flex items-center gap-2 px-1 py-0.5 rounded cursor-pointer hover:opacity-80 text-xs"
+                    style={{ color: 'var(--text-secondary)' }}>
+                    <input type="checkbox" checked={visibleLayers[l.key] !== false}
+                      onChange={() => toggleLayer(l.key)} className="rounded" />
+                    {l.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={handleExportPng}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
             style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
@@ -380,66 +411,7 @@ export default function MapViewer() {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="glass-static rounded-xl overflow-hidden relative" style={{ minHeight: 300 }}>
-        {/* Layers Panel */}
-        <div className="absolute top-2 right-2 z-10" style={{ minWidth: 140 }}>
-          <button onClick={() => setShowLayersPanel(!showLayersPanel)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity shadow-md"
-            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
-            <Layers size={14} /> {t('mapView.layers')}
-            {showLayersPanel ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
-          {showLayersPanel && (
-            <div className="mt-1 p-2 rounded-lg shadow-lg space-y-1"
-              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)' }}>
-              {[
-                { key: 'building', label: t('mapView.layerBuildings') },
-                { key: 'post', label: t('mapView.layerPosts') },
-                { key: 'zone', label: t('mapView.layerZones') },
-                { key: 'camera', label: t('mapView.layerCameras') },
-                { key: 'driveway', label: t('mapView.layerDriveways') },
-                { key: 'door', label: t('mapView.layerDoors') },
-                { key: 'wall', label: t('mapView.layerWalls') },
-                { key: 'label', label: t('mapView.layerLabels') },
-                { key: 'infozone', label: t('mapView.layerInfoZone') },
-              ].map(l => (
-                <label key={l.key} className="flex items-center gap-2 px-1 py-0.5 rounded cursor-pointer hover:opacity-80 text-xs"
-                  style={{ color: 'var(--text-secondary)' }}>
-                  <input type="checkbox" checked={visibleLayers[l.key] !== false}
-                    onChange={() => toggleLayer(l.key)} className="rounded" />
-                  {l.label}
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Legend Panel */}
-        <div className="absolute bottom-2 right-2 z-10">
-          <button onClick={() => setShowLegend(!showLegend)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity shadow-md"
-            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
-            {t('mapView.legend')}
-            {showLegend ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-          </button>
-          {showLegend && (
-            <div className="mt-1 p-2.5 rounded-lg shadow-lg space-y-1.5"
-              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', minWidth: 130 }}>
-              {[
-                { color: POST_STATUS_COLORS.free, label: t('mapView.legendFree') },
-                { color: POST_STATUS_COLORS.occupied || '#94a3b8', label: t('mapView.legendOccupied') },
-                { color: POST_STATUS_COLORS.active_work, label: t('mapView.legendActiveWork') },
-                { color: POST_STATUS_COLORS.occupied_no_work || '#eab308', label: t('mapView.legendIdle') },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+      <div ref={containerRef} className="glass-static rounded-xl overflow-hidden" style={{ minHeight: 300 }}>
         <Stage
           ref={stageRef}
           width={stageSize.width}
@@ -453,11 +425,11 @@ export default function MapViewer() {
           onWheel={handleWheel}
         >
           <Layer>
-            {/* Background — covers all elements */}
-            <Rect x={0} y={0}
-              width={Math.max(layout?.width || 900, ...allElements.map(el => (el.x || 0) + (el.width || 0)))}
-              height={Math.max(layout?.height || 500, ...allElements.map(el => (el.y || 0) + (el.height || 0)))}
-              fill={bgFill} cornerRadius={8} />
+            {/* Background — fill entire visible stage */}
+            <Rect x={-position.x / scale} y={-position.y / scale}
+              width={stageSize.width / scale} height={stageSize.height / scale}
+              fill={bgFill} />
+
 
             {/* Render elements by type */}
             {elements.map(el => {
@@ -557,47 +529,54 @@ export default function MapViewer() {
 function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, postLabel, onClick }) {
   const color = POST_STATUS_COLORS[status] || '#94a3b8';
   const fillBg = isDark ? 'rgba(30,30,60,0.85)' : 'rgba(255,255,255,0.9)';
+  const w = el.width || 120, h = el.height || 80;
+  // Scale font/stroke relative to element size
+  const s = Math.min(w, h);
+  const fs = Math.max(s * 0.14, 8);
+  const headerH = s * 0.25;
+  const sw = Math.max(s * 0.03, 2);
   return (
     <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
-      <Rect width={el.width} height={el.height} fill={fillBg}
-        stroke={color} strokeWidth={3} cornerRadius={6} shadowBlur={6}
+      <Rect width={w} height={h} fill={fillBg}
+        stroke={color} strokeWidth={sw} cornerRadius={s * 0.06} shadowBlur={s * 0.06}
         shadowColor={color} shadowOpacity={0.3} />
-      <Rect x={0} y={0} width={el.width} height={22} fill={color}
-        cornerRadius={[6, 6, 0, 0]} opacity={0.9} />
-      <Text x={6} y={4} text={postLabel} fontSize={12} fontStyle="bold" fill="#fff" />
-      <Text x={el.width - 60} y={5} text={statusLabel} fontSize={9} fill="#fff" width={54} align="right" />
+      <Rect x={0} y={0} width={w} height={headerH} fill={color}
+        cornerRadius={[s * 0.06, s * 0.06, 0, 0]} opacity={0.9} />
+      <Text x={s * 0.06} y={headerH * 0.2} text={postLabel} fontSize={fs} fontStyle="bold" fill="#fff" />
+      <Text x={w * 0.4} y={headerH * 0.25} text={statusLabel} fontSize={fs * 0.75} fill="#fff" width={w * 0.55} align="right" />
       {plate ? (
-        <Text x={6} y={30} text={plate} fontSize={13} fontFamily="monospace"
+        <Text x={s * 0.06} y={headerH + s * 0.1} text={plate} fontSize={fs * 1.1} fontFamily="monospace"
           fontStyle="bold" fill={textFill} />
       ) : (
-        <Text x={6} y={30} text="---" fontSize={13} fill={mutedFill} />
+        <Text x={s * 0.06} y={headerH + s * 0.1} text="---" fontSize={fs} fill={mutedFill} />
       )}
-      <Circle x={el.width - 14} y={el.height - 14} radius={5} fill={color} />
+      <Circle x={w - s * 0.15} y={h - s * 0.15} radius={s * 0.06} fill={color} />
     </Group>
   );
 }
 
 function ZoneEl({ el, isDark, zonesData }) {
-  const opacity = 0.12;
-  const strokeOpacity = 0.5;
   const fill = el.color || '#22c55e';
-  // count vehicles in this zone
   let vehicleCount = 0;
   for (const z of (zonesData || [])) {
     if (z.name === el.name) vehicleCount = z._count?.stays || 0;
   }
   const textColor = isDark ? '#cbd5e1' : '#475569';
+  const w = el.width || 160, h = el.height || 100;
+  const s = Math.min(w, h);
+  const fs = Math.max(s * 0.12, 8);
+  const sw = Math.max(s * 0.015, 1);
   return (
     <Group x={el.x} y={el.y}>
-      <Rect width={el.width} height={el.height} fill={fill} opacity={opacity}
-        stroke={fill} strokeWidth={1.5} cornerRadius={4}
-        dash={[6, 3]} />
-      <Text x={4} y={4} text={el.name} fontSize={10} fill={textColor} opacity={0.7} />
+      <Rect width={w} height={h} fill={fill} opacity={0.12}
+        stroke={fill} strokeWidth={sw} cornerRadius={s * 0.04}
+        dash={[s * 0.06, s * 0.03]} />
+      <Text x={s * 0.04} y={s * 0.04} text={el.name} fontSize={fs} fill={textColor} opacity={0.7} />
       {vehicleCount > 0 && (
         <>
-          <Circle x={el.width - 14} y={14} radius={10} fill={fill} opacity={strokeOpacity} />
-          <Text x={el.width - 20} y={8} text={String(vehicleCount)} fontSize={11}
-            fontStyle="bold" fill="#fff" width={12} align="center" />
+          <Circle x={w - s * 0.15} y={s * 0.15} radius={s * 0.12} fill={fill} opacity={0.5} />
+          <Text x={w - s * 0.25} y={s * 0.08} text={String(vehicleCount)} fontSize={fs}
+            fontStyle="bold" fill="#fff" width={s * 0.2} align="center" />
         </>
       )}
     </Group>
@@ -606,7 +585,8 @@ function ZoneEl({ el, isDark, zonesData }) {
 
 function CameraEl({ el, isDark, onClick }) {
   const fill = '#ef4444';
-  const cx = (el.width || 24) / 2, cy = (el.height || 24) / 2;
+  const w = el.width || 24, h = el.height || 24;
+  const cx = w / 2, cy = h / 2;
   const dir = (el.data?.direction || 0) * Math.PI / 180;
   const fov = (el.data?.fov || 90) * Math.PI / 180;
   const range = el.data?.range || 80;
@@ -616,15 +596,17 @@ function CameraEl({ el, isDark, onClick }) {
   const ry = cy + Math.sin(dir + fov / 2) * range;
   const mx = cx + Math.cos(dir) * range;
   const my = cy + Math.sin(dir) * range;
+  const r = Math.max(w * 0.4, 10);
+  const fs = Math.max(r * 0.7, 8);
   return (
     <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
-        fill={fill} opacity={0.1} stroke={fill} strokeWidth={0.5} dash={[4, 2]} />
-      <Circle x={cx} y={cy} radius={10} fill={fill} opacity={0.9}
-        shadowBlur={6} shadowColor={fill} shadowOpacity={0.5} />
-      <Circle x={cx} y={cy} radius={3} fill="#fff" />
-      <Text x={cx - 18} y={cy + 12} text={el.name || ''} fontSize={8}
-        fill={fill} width={36} align="center" />
+        fill={fill} opacity={0.1} stroke={fill} strokeWidth={1} dash={[8, 4]} />
+      <Circle x={cx} y={cy} radius={r} fill={fill} opacity={0.9}
+        shadowBlur={r * 0.5} shadowColor={fill} shadowOpacity={0.5} />
+      <Circle x={cx} y={cy} radius={r * 0.3} fill="#fff" />
+      <Text x={cx - r * 2} y={cy + r + 4} text={el.name || ''} fontSize={fs}
+        fill={fill} width={r * 4} align="center" fontStyle="bold" />
     </Group>
   );
 }
@@ -632,26 +614,31 @@ function CameraEl({ el, isDark, onClick }) {
 function DoorEl({ el, isDark }) {
   const fill = el.color || '#f59e0b';
   const textColor = isDark ? '#fcd34d' : '#92400e';
+  const s = Math.min(el.width || 60, el.height || 8);
+  const fs = Math.max(s * 0.8, 8);
   return (
     <Group x={el.x} y={el.y}>
       <Rect width={el.width} height={el.height} fill={fill} opacity={0.3}
-        stroke={fill} strokeWidth={1.5} cornerRadius={3} />
-      <Text x={4} y={el.height / 2 - 5} text={el.name} fontSize={9}
+        stroke={fill} strokeWidth={Math.max(s * 0.1, 1)} cornerRadius={s * 0.2} />
+      <Text x={4} y={el.height / 2 - fs / 2} text={el.name} fontSize={fs}
         fill={textColor} fontStyle="bold" />
     </Group>
   );
 }
 
 function WallEl({ el }) {
+  const s = Math.min(el.width || 200, el.height || 6);
   return (
     <Rect x={el.x} y={el.y} width={el.width} height={el.height}
-      fill={el.color || '#6b7280'} opacity={0.6} cornerRadius={1} />
+      fill={el.color || '#6b7280'} opacity={0.6} cornerRadius={s * 0.1} />
   );
 }
 
 function LabelEl({ el, fill }) {
+  const s = Math.min(el.width || 100, el.height || 30);
+  const fs = Math.max(s * 0.4, 8);
   return (
-    <Text x={el.x} y={el.y} text={el.name} fontSize={11}
+    <Text x={el.x} y={el.y} text={el.name} fontSize={fs}
       fill={fill} fontStyle="italic" opacity={0.6} />
   );
 }
@@ -669,37 +656,36 @@ function InfoZoneEl({ el, isDark, stats, isRu, statusColors }) {
     { color: statusColors.occupied_no_work || '#eab308', label: isRu ? 'Простой' : 'Idle' },
   ];
 
-  const w = el.width || 200;
-  const h = el.height || 150;
-  const pad = 10;
-  let yOffset = pad;
+  const w = el.width || 200, h = el.height || 150;
+  const s = Math.min(w, h);
+  const fs = Math.max(s * 0.08, 8);
+  const pad = s * 0.06;
+  const lineH = fs * 1.8;
+  const dotR = fs * 0.5;
 
   return (
     <Group x={el.x} y={el.y}>
-      <Rect width={w} height={h} fill={bgFill} cornerRadius={8}
-        stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth={1}
-        shadowBlur={8} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
-      {/* Title */}
-      <Text x={pad} y={yOffset} text={titleText} fontSize={12}
+      <Rect width={w} height={h} fill={bgFill} cornerRadius={s * 0.05}
+        stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth={Math.max(s * 0.01, 1)}
+        shadowBlur={s * 0.04} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
+      <Text x={pad} y={pad} text={titleText} fontSize={fs * 1.2}
         fontStyle="bold" fill={textColor} width={w - pad * 2} />
-      {/* Legend */}
       {legendItems.map((item, i) => (
-        <Group key={i} x={pad} y={yOffset + 20 + i * 18}>
-          <Circle x={6} y={6} radius={5} fill={item.color} />
-          <Text x={16} y={0} text={item.label} fontSize={10} fill={mutedColor} />
+        <Group key={i} x={pad} y={pad + fs * 1.8 + i * lineH}>
+          <Circle x={dotR} y={dotR} radius={dotR} fill={item.color} />
+          <Text x={dotR * 3} y={0} text={item.label} fontSize={fs} fill={mutedColor} />
         </Group>
       ))}
-      {/* Stats */}
       {stats && stats.length > 0 && (() => {
-        const statsY = yOffset + 20 + legendItems.length * 18 + 8;
+        const statsY = pad + fs * 1.8 + legendItems.length * lineH + pad;
         return (
           <Group y={statsY}>
             <Rect x={pad} y={0} width={w - pad * 2} height={1} fill={mutedColor} opacity={0.2} />
-            {stats.slice(0, 4).map((s, i) => (
-              <Group key={i} x={pad} y={8 + i * 16}>
-                <Text x={0} y={0} text={s.label} fontSize={10} fill={mutedColor} />
-                <Text x={w - pad * 2 - 30} y={0} text={String(s.value)} fontSize={10}
-                  fontStyle="bold" fill={s.color} width={30} align="right" />
+            {stats.slice(0, 4).map((s2, i) => (
+              <Group key={i} x={pad} y={pad + i * lineH}>
+                <Text x={0} y={0} text={s2.label} fontSize={fs} fill={mutedColor} />
+                <Text x={w - pad * 2 - fs * 3} y={0} text={String(s2.value)} fontSize={fs}
+                  fontStyle="bold" fill={s2.color} width={fs * 3} align="right" />
               </Group>
             ))}
           </Group>
