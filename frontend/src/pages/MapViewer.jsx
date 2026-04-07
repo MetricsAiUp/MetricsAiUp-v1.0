@@ -139,6 +139,21 @@ function PostModal({ postNum, dashboardData, onClose, onGoToPost, t }) {
   );
 }
 
+// Extract post number from element (supports postNumber, data.number, or name like "Пост 06")
+function getPostNum(el) {
+  if (el.postNumber) return el.postNumber;
+  if (el.data?.number) return el.data.number;
+  const m = el.name?.match(/\d+/);
+  return m ? parseInt(m[0], 10) : null;
+}
+
+// Extract camera number from element (supports camNum or name like "cam 02")
+function getCamNum(el) {
+  if (el.camNum) return el.camNum;
+  const m = el.name?.match(/\d+/);
+  return m ? m[0].padStart(2, '0') : null;
+}
+
 function findPostInZones(postNum, zonesData) {
   for (const z of (zonesData || []))
     for (const p of (z.posts || []))
@@ -210,16 +225,27 @@ export default function MapViewer() {
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
   usePolling(fetchRealtime, 5000);
 
-  // Responsive sizing
+  // Responsive sizing — fit all elements into view
   useEffect(() => {
     const resize = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const cw = rect.width;
-      const lw = layout?.width || 900;
-      const lh = layout?.height || 500;
-      const fitScale = Math.min(cw / lw, 1);
-      setStageSize({ width: cw, height: lh * fitScale });
+      const ch = rect.height || window.innerHeight - 200;
+
+      // Compute bounding box of all elements
+      const els = layout?.elements || [];
+      let maxX = layout?.width || 900;
+      let maxY = layout?.height || 500;
+      for (const el of els) {
+        const ex = (el.x || 0) + (el.width || 0);
+        const ey = (el.y || 0) + (el.height || 0);
+        if (ex > maxX) maxX = ex;
+        if (ey > maxY) maxY = ey;
+      }
+
+      const fitScale = Math.min(cw / maxX, ch / maxY, 1);
+      setStageSize({ width: cw, height: Math.max(maxY * fitScale, 300) });
       setScale(fitScale);
       setPosition({ x: 0, y: 0 });
     };
@@ -427,8 +453,10 @@ export default function MapViewer() {
           onWheel={handleWheel}
         >
           <Layer>
-            {/* Background */}
-            <Rect x={0} y={0} width={layout?.width || 900} height={layout?.height || 500}
+            {/* Background — covers all elements */}
+            <Rect x={0} y={0}
+              width={Math.max(layout?.width || 900, ...allElements.map(el => (el.x || 0) + (el.width || 0)))}
+              height={Math.max(layout?.height || 500, ...allElements.map(el => (el.y || 0) + (el.height || 0)))}
               fill={bgFill} cornerRadius={8} />
 
             {/* Render elements by type */}
@@ -472,18 +500,25 @@ export default function MapViewer() {
               if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} />;
               if (el.type === 'door') return <DoorEl key={el.id} el={el} isDark={isDark} />;
               if (el.type === 'label') return <LabelEl key={el.id} el={el} fill={mutedFill} />;
-              if (el.type === 'post') return (
-                <PostEl key={el.id} el={el} isDark={isDark} textFill={textFill} mutedFill={mutedFill}
-                  status={postStatusFromData(el.postNumber, dashboardData, zonesData)}
-                  plate={vehiclePlateFromData(el.postNumber, dashboardData, zonesData)}
-                  statusLabel={t(`posts.${postStatusFromData(el.postNumber, dashboardData, zonesData)}`)}
-                  postLabel={t(`posts.post${el.postNumber}`)}
-                  onClick={() => setSelectedPost(el.postNumber)} />
-              );
-              if (el.type === 'camera') return (
-                <CameraEl key={el.id} el={el} isDark={isDark}
-                  onClick={() => setSelectedCam(el.camNum)} />
-              );
+              if (el.type === 'post') {
+                const pn = getPostNum(el);
+                if (!pn) return null;
+                return (
+                  <PostEl key={el.id} el={el} isDark={isDark} textFill={textFill} mutedFill={mutedFill}
+                    status={postStatusFromData(pn, dashboardData, zonesData)}
+                    plate={vehiclePlateFromData(pn, dashboardData, zonesData)}
+                    statusLabel={t(`posts.${postStatusFromData(pn, dashboardData, zonesData)}`)}
+                    postLabel={t(`posts.post${pn}`)}
+                    onClick={() => setSelectedPost(pn)} />
+                );
+              }
+              if (el.type === 'camera') {
+                const cn = getCamNum(el);
+                return (
+                  <CameraEl key={el.id} el={el} isDark={isDark}
+                    onClick={() => cn && setSelectedCam(cn)} />
+                );
+              }
               if (el.type === 'infozone') return (
                 <InfoZoneEl key={el.id} el={el} isDark={isDark}
                   stats={stats} isRu={isRu}
