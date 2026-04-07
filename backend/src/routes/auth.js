@@ -7,13 +7,13 @@ const { validate } = require('../middleware/validate');
 const { loginSchema, registerSchema } = require('../schemas/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '24h';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 // --- Rate limiting (in-memory, per-IP) ---
 const loginAttempts = new Map(); // ip → { count, firstAttempt }
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX = 5; // 5 attempts per minute
+const RATE_LIMIT_MAX = 20; // 20 attempts per minute
 
 function checkRateLimit(ip) {
   const now = Date.now();

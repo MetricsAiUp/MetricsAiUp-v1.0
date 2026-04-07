@@ -936,7 +936,7 @@ export default function MapEditor() {
 
           {/* Elements list */}
           <h3 className="text-xs font-semibold mt-4 mb-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.elements')}</h3>
-          <div className="space-y-0.5 overflow-y-auto flex-1" style={{ maxHeight: 300 }}>
+          <div className="space-y-0.5 overflow-y-auto flex-1">
             {elements.map(el => (
               <button key={el.id} onClick={() => { setSelectedId(el.id); setTool('select'); }}
                 className="w-full text-left px-2 py-1 rounded text-xs truncate transition-all"

@@ -69,20 +69,6 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     return h;
   };
 
-  // Try to refresh access token via refresh cookie
-  const tryRefresh = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        onTokenRefreshed?.(data.token);
-        return data.token;
-      }
-    } catch { /* refresh failed */ }
-    onAuthFailed?.();
-    return null;
-  };
-
   const request = async (method, url, body) => {
     const opts = { method, headers: headers(), credentials: 'include' };
     if (body) opts.body = JSON.stringify(body);
@@ -182,16 +168,17 @@ export function AuthProvider({ children }) {
         setUser(userData);
         return userData;
       }
-      // Backend returned error — fallback to mock login
-      return mockLogin(email, password);
+      // Backend returned error (401, 429, etc.) — show the real error, don't fallback to mock
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || errData.message || `Login failed (${res.status})`);
     } catch (fetchErr) {
-      // Fallback to mock login on any network/backend issue
-      try {
-        return await mockLogin(email, password);
-      } catch {
-        // Mock login also failed — throw original error
-        throw fetchErr;
+      // Network error (backend unreachable) — fallback to mock login
+      if (fetchErr.name === 'TypeError' || fetchErr.message?.includes('fetch')) {
+        try {
+          return await mockLogin(email, password);
+        } catch { /* mock also failed */ }
       }
+      throw fetchErr;
     }
   };
 

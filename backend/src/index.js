@@ -110,6 +110,14 @@ if (httpsServer) {
   });
 }
 
+// Keep alive — don't crash on uncaught errors
+process.on('uncaughtException', (err) => {
+  console.error('[Server] Uncaught exception:', err.message);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('[Server] Unhandled rejection:', err?.message || err);
+});
+
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await prisma.$disconnect();
