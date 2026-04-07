@@ -31,21 +31,22 @@ const { startFileWatcher } = require('./services/sync1C');
 
 const app = express();
 
-// HTTPS with SSL certificates
+// Create HTTP server (for nginx proxy on localhost)
+const server = http.createServer(app);
+const io = initSocket(server);
+
+// Also create HTTPS server if SSL certs available (for direct external access)
 const SSL_CERT = '/project/.ssl/fullchain.pem';
 const SSL_KEY = '/project/.ssl/privkey.pem';
-let server;
+let httpsServer;
 if (fs.existsSync(SSL_CERT) && fs.existsSync(SSL_KEY)) {
-  server = https.createServer({
+  httpsServer = https.createServer({
     cert: fs.readFileSync(SSL_CERT),
     key: fs.readFileSync(SSL_KEY),
   }, app);
+  initSocket(httpsServer);
   console.log('[Server] SSL certificates loaded');
-} else {
-  server = http.createServer(app);
-  console.log('[Server] No SSL certificates found, using HTTP');
 }
-const io = initSocket(server);
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false, frameguard: false }));
@@ -85,14 +86,19 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, '0.0.0.0', () => {
-  const proto = fs.existsSync(SSL_CERT) ? 'https' : 'http';
-  console.log(`[Server] Running on ${proto}://0.0.0.0:${PORT}`);
-  console.log(`[Server] External: https://artisom.dev.metricsavto.com:${PORT}/`);
+  console.log(`[Server] HTTP running on http://0.0.0.0:${PORT}`);
   console.log(`[Socket.IO] Ready for connections`);
-
-  // Start 1C file watcher (checks /project/data/1c-import/ every 5 minutes)
   startFileWatcher();
 });
+
+// HTTPS on PORT+443 offset (e.g. 3001 → 3444) for direct external access
+if (httpsServer) {
+  const HTTPS_PORT = parseInt(PORT) + 443;
+  httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
+    console.log(`[Server] HTTPS running on https://0.0.0.0:${HTTPS_PORT}`);
+    console.log(`[Server] External: https://artisom.dev.metricsavto.com:${HTTPS_PORT}/`);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

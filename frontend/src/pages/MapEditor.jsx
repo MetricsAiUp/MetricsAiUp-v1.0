@@ -248,7 +248,7 @@ export default function MapEditor() {
     }
   };
 
-  // Save to API with fallback to localStorage + data/map-layout.json
+  // Save to API
   const handleSave = async () => {
     setSaving(true);
     const payload = {
@@ -269,16 +269,7 @@ export default function MapEditor() {
       toast.success(t('mapEditor.saveSuccess') || 'Layout saved');
       localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
-      // Fallback: save to localStorage so MapViewer can read it
-      try {
-        const savePayload = { ...payload, bgImage: bgDataUrl ? '(stored in draft)' : null };
-        localStorage.setItem('mapLayout', JSON.stringify(payload));
-        // Also save draft
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ elements, bgDataUrl, mapName }));
-        toast.success((i18n.language === 'ru' ? 'Сохранено локально (API недоступен)' : 'Saved locally (API unavailable)'));
-      } catch (e2) {
-        toast.error((t('mapEditor.saveError') || 'Save failed') + ': ' + (err.message || 'Unknown error'));
-      }
+      toast.error((t('mapEditor.saveError') || 'Save failed') + ': ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }

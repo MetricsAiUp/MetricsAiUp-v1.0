@@ -188,23 +188,11 @@ export default function MapViewer() {
 
   const isDark = theme === 'dark';
 
-  // Load layout (API → localStorage fallback)
+  // Load layout from API
   useEffect(() => {
     api.get('/api/map-layout').then(({ data }) => {
       if (data) setLayout(data);
-      else {
-        // Fallback: try localStorage
-        try {
-          const saved = localStorage.getItem('mapLayout');
-          if (saved) setLayout(JSON.parse(saved));
-        } catch {}
-      }
-    }).catch(() => {
-      try {
-        const saved = localStorage.getItem('mapLayout');
-        if (saved) setLayout(JSON.parse(saved));
-      } catch {}
-    });
+    }).catch(() => {});
   }, []);
 
   // Fetch real-time data
