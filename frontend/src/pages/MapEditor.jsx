@@ -155,6 +155,13 @@ export default function MapEditor() {
           setMapName(data.name || '');
           if (data.elements) setElements(data.elements);
           if (data.bgImage) loadImageFromUrl(data.bgImage);
+          else if (data.width && data.height && containerRef.current) {
+            // Fit layout to canvas even without background image
+            const rect = containerRef.current.getBoundingClientRect();
+            const fitScale = Math.min(rect.width / data.width, rect.height / data.height, 1);
+            setStageScale(fitScale);
+            setStagePos({ x: 0, y: 0 });
+          }
           setLoading(false);
           return;
         }
@@ -208,7 +215,16 @@ export default function MapEditor() {
   const loadImageFromUrl = useCallback((dataUrl) => {
     setBgDataUrl(dataUrl);
     const img = new window.Image();
-    img.onload = () => setBgImage(img);
+    img.onload = () => {
+      setBgImage(img);
+      // Fit image into canvas view
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const fitScale = Math.min(rect.width / img.width, rect.height / img.height, 1);
+        setStageScale(fitScale);
+        setStagePos({ x: 0, y: 0 });
+      }
+    };
     img.src = dataUrl;
   }, []);
 
