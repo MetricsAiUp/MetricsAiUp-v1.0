@@ -92,7 +92,28 @@ router.get('/', requirePermission('manage_users'), async (req, res) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(users.map(formatUser));
+    // Return in format expected by frontend: { users, roles, availablePages }
+    const ROLES = [
+      { id: 'admin', name: { ru: 'Администратор', en: 'Administrator' }, color: '#6366f1' },
+      { id: 'manager', name: { ru: 'Менеджер', en: 'Manager' }, color: '#22c55e' },
+      { id: 'viewer', name: { ru: 'Наблюдатель', en: 'Viewer' }, color: '#3b82f6' },
+      { id: 'mechanic', name: { ru: 'Механик', en: 'Mechanic' }, color: '#f59e0b' },
+    ];
+    const AVAILABLE_PAGES = [
+      { id: 'dashboard', label: { ru: 'Дашборд', en: 'Dashboard' } },
+      { id: 'dashboard-posts', label: { ru: 'Дашборд постов', en: 'Posts Dashboard' } },
+      { id: 'posts-detail', label: { ru: 'Посты (детали)', en: 'Posts Detail' } },
+      { id: 'map', label: { ru: 'Карта СТО', en: 'STO Map' } },
+      { id: 'sessions', label: { ru: 'Сессии', en: 'Sessions' } },
+      { id: 'work-orders', label: { ru: 'Заказ-наряды', en: 'Work Orders' } },
+      { id: 'analytics', label: { ru: 'Аналитика', en: 'Analytics' } },
+      { id: 'events', label: { ru: 'События', en: 'Events' } },
+      { id: 'data-1c', label: { ru: 'Данные 1С', en: '1C Data' } },
+      { id: 'cameras', label: { ru: 'Камеры', en: 'Cameras' } },
+      { id: 'camera-mapping', label: { ru: 'Маппинг камер', en: 'Camera Mapping' } },
+      { id: 'users', label: { ru: 'Пользователи', en: 'Users' } },
+    ];
+    res.json({ users: users.map(formatUser), roles: ROLES, availablePages: AVAILABLE_PAGES });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

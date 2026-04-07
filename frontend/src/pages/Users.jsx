@@ -146,13 +146,13 @@ export default function Users() {
 
               {/* Pages count */}
               <div className="text-center flex-shrink-0" style={{ minWidth: 60 }}>
-                <div className="text-lg font-bold" style={{ color: 'var(--accent)' }}>{user.pages.length}</div>
+                <div className="text-lg font-bold" style={{ color: 'var(--accent)' }}>{(user.pages || []).length}</div>
                 <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'разделов' : 'pages'}</div>
               </div>
 
               {/* Pages preview */}
               <div className="flex flex-wrap gap-1 flex-1" style={{ maxWidth: 300 }}>
-                {user.pages.slice(0, 5).map(p => {
+                {(user.pages || []).slice(0, 5).map(p => {
                   const pg = availablePages.find(ap => ap.id === p);
                   return (
                     <span key={p} className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
@@ -160,7 +160,7 @@ export default function Users() {
                     </span>
                   );
                 })}
-                {user.pages.length > 5 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>+{user.pages.length - 5}</span>}
+                {(user.pages || []).length > 5 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>+{(user.pages || []).length - 5}</span>}
               </div>
 
               {/* Actions */}
