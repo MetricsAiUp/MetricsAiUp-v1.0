@@ -39,8 +39,8 @@ describe('EVENT_TYPES', () => {
 });
 
 describe('ALL_CAMERAS', () => {
-  it('has 10 cameras', () => {
-    expect(ALL_CAMERAS).toHaveLength(10);
+  it('has 15 cameras', () => {
+    expect(ALL_CAMERAS).toHaveLength(15);
   });
 
   it('each camera has required fields', () => {
