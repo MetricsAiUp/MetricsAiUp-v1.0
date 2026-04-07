@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Sun, Moon, Globe, LogOut, Wifi, WifiOff, Menu, X } from 'lucide-react';
+import { Sun, Moon, Globe, LogOut, Wifi, WifiOff, Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useSocketStatus } from '../hooks/useSocket';
 import Sidebar from './Sidebar';
 import NotificationCenter from './NotificationCenter';
@@ -20,7 +20,7 @@ function SocketIndicator() {
   );
 }
 
-function Header({ onToggleSidebar }) {
+function Header({ onToggleSidebar, onToggleCollapse, collapsed }) {
   const { i18n } = useTranslation();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -42,11 +42,18 @@ function Header({ onToggleSidebar }) {
         WebkitBackdropFilter: 'blur(var(--blur))',
       }}
     >
-      {/* Hamburger (mobile only) */}
-      <button onClick={onToggleSidebar} className="md:hidden p-2 rounded-lg hover:opacity-80"
-        style={{ color: 'var(--text-primary)' }}>
-        <Menu size={20} />
-      </button>
+      <div className="flex items-center gap-1">
+        {/* Hamburger (mobile only) */}
+        <button onClick={onToggleSidebar} className="md:hidden p-2 rounded-lg hover:opacity-80"
+          style={{ color: 'var(--text-primary)' }}>
+          <Menu size={20} />
+        </button>
+        {/* Sidebar toggle (desktop) */}
+        <button onClick={onToggleCollapse} className="hidden md:flex p-2 rounded-lg hover:opacity-80"
+          style={{ color: 'var(--text-secondary)' }} title={collapsed ? 'Show sidebar' : 'Hide sidebar'}>
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+      </div>
 
       <div className="flex items-center gap-2 md:gap-4">
         {/* Theme toggle */}
@@ -108,6 +115,7 @@ function Header({ onToggleSidebar }) {
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
 
   // Close sidebar on navigation (mobile)
@@ -118,9 +126,11 @@ export default function Layout() {
   return (
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
+      {!sidebarCollapsed && (
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+      )}
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -139,7 +149,9 @@ export default function Layout() {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          collapsed={sidebarCollapsed} />
         <main className="flex-1 p-3 md:p-6 overflow-auto">
           <Outlet />
         </main>

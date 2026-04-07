@@ -657,7 +657,7 @@ export default function MapEditor() {
             const isRu = i18n.language === 'ru';
             return (
               <div key={tl.id} className="relative group">
-                <button onClick={() => setTool(tl.id)}
+                <button onClick={() => { setTool(tl.id); if (tl.id !== 'select') setSelectedId(null); }}
                   className="flex items-center justify-center w-9 h-9 rounded-lg transition-all"
                   style={{ background: active ? 'var(--accent)' : 'transparent', color: active ? '#fff' : 'var(--text-secondary)' }}>
                   <Icon size={16} />
@@ -772,7 +772,7 @@ export default function MapEditor() {
         </div>
 
         {/* Right Properties Panel */}
-        <div className="glass-static flex flex-col p-3 flex-shrink-0 overflow-y-auto" style={{ width: 200, borderLeft: '1px solid var(--border-glass)' }}>
+        <div className="glass-static flex flex-col p-2 flex-shrink-0 overflow-y-auto" style={{ width: 160, borderLeft: '1px solid var(--border-glass)' }}>
           <h3 className="text-xs font-semibold mb-3" style={{ color: 'var(--accent)' }}>{t('mapEditor.properties')}</h3>
           {selected ? (
             <div className="space-y-2">
@@ -923,7 +923,10 @@ export default function MapEditor() {
                   </div>
                 </div>
               )}
-              <button onClick={duplicateSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity" style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
+              <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
+                <Save size={12} /> {saving ? '...' : t('common.save')}
+              </button>
+              <button onClick={duplicateSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
                 <Copy size={12} /> {t('mapEditor.duplicate')} <span className="opacity-50 ml-1">Ctrl+D</span>
               </button>
               <button onClick={deleteSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
