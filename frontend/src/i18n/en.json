@@ -20,7 +20,8 @@
     "mapEditor": "Map Editor",
     "settings": "Settings",
     "logout": "Logout",
-    "shifts": "Shifts"
+    "shifts": "Shifts",
+    "audit": "Audit Log"
   },
   "shifts": {
     "title": "Shift Management",
@@ -180,7 +181,23 @@
     "placedAt": "Placed at",
     "estimatedEnd": "Estimated end",
     "note": "Note",
-    "goToPost": "Go to post"
+    "goToPost": "Go to post",
+    "layers": "Layers",
+    "layerBuildings": "Buildings",
+    "layerPosts": "Posts",
+    "layerZones": "Zones",
+    "layerCameras": "Cameras",
+    "layerDoors": "Doors",
+    "layerWalls": "Walls",
+    "layerLabels": "Labels",
+    "layerDriveways": "Driveways",
+    "exportPng": "Download PNG",
+    "exportPdf": "Download PDF",
+    "legend": "Legend",
+    "legendFree": "Free",
+    "legendOccupied": "Occupied",
+    "legendActiveWork": "Active work",
+    "legendIdle": "Idle"
   },
   "dashboardPosts": {
     "title": "Posts Dashboard",
@@ -346,7 +363,11 @@
     "saveError": "Failed to save layout",
     "loadSuccess": "Layout loaded successfully",
     "loadError": "Failed to load layout",
-    "noLayout": "No saved layout found"
+    "noLayout": "No saved layout found",
+    "snap": "Snap",
+    "duplicate": "Duplicate",
+    "undo": "Undo",
+    "redo": "Redo"
   },
   "events": {
     "title": "Event Log",
@@ -357,6 +378,10 @@
     "confidence": "conf"
   },
   "analytics": {
+    "heatmapTitle": "Post Load Heatmap",
+    "heatmapHour": "Hour",
+    "heatmapOccupancy": "Occupancy",
+    "heatmapVehicles": "Vehicles",
     "exportExcel": "Export Excel",
     "exportPdf": "Export PDF",
     "downloadPng": "Download as PNG",
@@ -366,5 +391,8 @@
     "details": "Details",
     "exportSuccess": "Export completed",
     "exportError": "Export failed"
+  },
+  "audit": {
+    "title": "Audit Log"
   }
 }

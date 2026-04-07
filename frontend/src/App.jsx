@@ -23,6 +23,7 @@ const Users = lazy(() => import('./pages/Users'));
 const MapEditor = lazy(() => import('./pages/MapEditor'));
 const MapViewer = lazy(() => import('./pages/MapViewer'));
 const Shifts = lazy(() => import('./pages/Shifts'));
+const Audit = lazy(() => import('./pages/Audit'));
 
 function PageLoader() {
   return (
@@ -67,6 +68,7 @@ function AppRoutes() {
           <Route path="map-editor" element={<MapEditor />} />
           <Route path="map-view" element={<MapViewer />} />
           <Route path="shifts" element={<Shifts />} />
+          <Route path="audit" element={<Audit />} />
         </Route>
       </Routes>
     </Suspense>

@@ -191,6 +191,27 @@ export default function Analytics() {
     [isRu ? 'Факт (ч)' : 'Actual (h)']: p.actualH,
   }));
 
+  // Heatmap data: 10 posts x 12 hours (8-19)
+  const heatmapData = useMemo(() => {
+    if (!filteredPosts.length) return [];
+    return filteredPosts.map((post, pi) => {
+      const hours = [];
+      for (let h = 8; h <= 19; h++) {
+        let totalOcc = 0, totalVeh = 0, count = 0;
+        post.days.forEach(day => {
+          const hd = day.hourly?.find(hr => hr.hour === h);
+          if (hd) { totalOcc += hd.occupancy; totalVeh += hd.vehicles; count++; }
+        });
+        hours.push({
+          hour: h,
+          occupancy: count > 0 ? +(totalOcc / count * 100).toFixed(0) : 0,
+          vehicles: count > 0 ? +(totalVeh / count).toFixed(1) : 0,
+        });
+      }
+      return { id: post.id, name: isRu ? post.name : post.nameEn, hours, color: POST_COLORS[pi] };
+    });
+  }, [filteredPosts, isRu]);
+
   // Selected post detail
   const selPost = selectedPost ? filteredPosts.find(p => p.id === selectedPost) : null;
   const selSummary = selectedPost ? postSummaries.find(p => p.id === selectedPost) : null;
@@ -448,6 +469,67 @@ export default function Analytics() {
           </table>
         </div>
       </ChartCard>
+
+      {/* Heatmap */}
+      {heatmapData.length > 0 && (
+        <ChartCard title={t('analytics.heatmapTitle')}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs" style={{ minWidth: 600 }}>
+              <thead>
+                <tr>
+                  <th className="text-left px-2 py-1.5" style={{ color: 'var(--text-muted)', width: 80 }}>{isRu ? 'Пост' : 'Post'}</th>
+                  {Array.from({ length: 12 }, (_, i) => i + 8).map(h => (
+                    <th key={h} className="text-center px-1 py-1.5" style={{ color: 'var(--text-muted)', minWidth: 36 }}>{h}:00</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {heatmapData.map(post => (
+                  <tr key={post.id}>
+                    <td className="px-2 py-1 font-medium whitespace-nowrap" style={{ color: post.color }}>{post.name}</td>
+                    {post.hours.map((h, hi) => {
+                      const pct = h.occupancy;
+                      const bg = pct >= 80 ? 'rgba(239,68,68,0.6)'
+                        : pct >= 60 ? 'rgba(239,68,68,0.35)'
+                        : pct >= 40 ? 'rgba(234,179,8,0.4)'
+                        : pct >= 20 ? 'rgba(34,197,94,0.3)'
+                        : 'rgba(34,197,94,0.1)';
+                      return (
+                        <td key={hi} className="text-center px-1 py-1 relative group">
+                          <div className="rounded" style={{ background: bg, padding: '3px 2px', fontWeight: 600, color: 'var(--text-primary)', fontSize: 10 }}>
+                            {pct}%
+                          </div>
+                          <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
+                            style={{ background: 'rgba(15,23,42,0.95)', color: '#f1f5f9', fontSize: 10, border: '1px solid rgba(148,163,184,0.2)' }}>
+                            <div className="font-bold">{post.name} — {h.hour}:00</div>
+                            <div>{t('analytics.heatmapOccupancy')}: {pct}%</div>
+                            <div>{t('analytics.heatmapVehicles')}: {h.vehicles}</div>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center gap-3 mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span>{isRu ? 'Шкала:' : 'Scale:'}</span>
+            {[
+              { bg: 'rgba(34,197,94,0.1)', label: '0-20%' },
+              { bg: 'rgba(34,197,94,0.3)', label: '20-40%' },
+              { bg: 'rgba(234,179,8,0.4)', label: '40-60%' },
+              { bg: 'rgba(239,68,68,0.35)', label: '60-80%' },
+              { bg: 'rgba(239,68,68,0.6)', label: '80-100%' },
+            ].map((s, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <div className="w-4 h-3 rounded" style={{ background: s.bg }} />
+                <span>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </ChartCard>
+      )}
 
       {/* Selected post detail */}
       {selPost && selSummary && (

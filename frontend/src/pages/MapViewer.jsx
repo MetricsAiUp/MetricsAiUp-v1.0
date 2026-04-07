@@ -10,8 +10,9 @@ import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
 import {
   X, Car, Clock, Timer, User, FileText, AlertTriangle,
-  ArrowRight, MapPin,
+  ArrowRight, MapPin, Layers, Download, ChevronDown, ChevronUp, Image, FileDown,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const ALL_CAMERAS = [
   { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
@@ -175,6 +176,15 @@ export default function MapViewer() {
   const [stageSize, setStageSize] = useState({ width: 900, height: 500 });
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [showLayersPanel, setShowLayersPanel] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
+  const [visibleLayers, setVisibleLayers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mapViewerLayers');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { building: true, driveway: true, post: true, zone: true, camera: true, door: true, wall: true, label: true };
+  });
 
   const isDark = theme === 'dark';
 
@@ -238,6 +248,44 @@ export default function MapViewer() {
     });
   };
 
+  // Save layers to localStorage
+  useEffect(() => {
+    localStorage.setItem('mapViewerLayers', JSON.stringify(visibleLayers));
+  }, [visibleLayers]);
+
+  const toggleLayer = (layer) => {
+    setVisibleLayers(prev => ({ ...prev, [layer]: !prev[layer] }));
+  };
+
+  // Export PNG
+  const handleExportPng = () => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const uri = stage.toDataURL({ pixelRatio: 2 });
+    const a = document.createElement('a');
+    a.href = uri;
+    a.download = `sto-map-${new Date().toISOString().slice(0, 10)}.png`;
+    a.click();
+  };
+
+  // Export PDF
+  const handleExportPdf = () => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const uri = stage.toDataURL({ pixelRatio: 2 });
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    pdf.setFontSize(14);
+    pdf.text(isRu ? 'Карта СТО' : 'STO Map', pageW / 2, 10, { align: 'center' });
+    pdf.setFontSize(8);
+    pdf.text(new Date().toLocaleString(), pageW / 2, 16, { align: 'center' });
+    const imgW = pageW - 20;
+    const imgH = pageH - 30;
+    pdf.addImage(uri, 'PNG', 10, 22, imgW, imgH);
+    pdf.save(`sto-map-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   const handleGoToPost = (postNum) => {
     setSelectedPost(null);
     navigate(`/posts-detail?post=post-${postNum}`);
@@ -263,7 +311,8 @@ export default function MapViewer() {
     { label: isRu ? 'Загрузка' : 'Load', value: `${loadPct}%`, color: loadPct >= 70 ? 'var(--success)' : loadPct >= 30 ? 'var(--warning)' : 'var(--danger)' },
   ];
 
-  const elements = layout?.elements || [];
+  const allElements = layout?.elements || [];
+  const elements = allElements.filter(el => visibleLayers[el.type] !== false);
   const bgFill = isDark ? '#1a1a2e' : '#f0f4f8';
   const textFill = isDark ? '#e2e8f0' : '#1e293b';
   const mutedFill = isDark ? '#94a3b8' : '#64748b';
@@ -279,6 +328,18 @@ export default function MapViewer() {
           </h2>
           <HelpButton pageKey="map" />
         </div>
+        <div className="flex items-center gap-2">
+          <button onClick={handleExportPng}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            <Image size={14} /> {t('mapView.exportPng')}
+          </button>
+          <button onClick={handleExportPdf}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            <FileDown size={14} /> {t('mapView.exportPdf')}
+          </button>
+        </div>
       </div>
 
       {/* Stats bar */}
@@ -293,7 +354,65 @@ export default function MapViewer() {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="glass-static rounded-xl overflow-hidden" style={{ minHeight: 300 }}>
+      <div ref={containerRef} className="glass-static rounded-xl overflow-hidden relative" style={{ minHeight: 300 }}>
+        {/* Layers Panel */}
+        <div className="absolute top-2 right-2 z-10" style={{ minWidth: 140 }}>
+          <button onClick={() => setShowLayersPanel(!showLayersPanel)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity shadow-md"
+            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+            <Layers size={14} /> {t('mapView.layers')}
+            {showLayersPanel ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+          {showLayersPanel && (
+            <div className="mt-1 p-2 rounded-lg shadow-lg space-y-1"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)' }}>
+              {[
+                { key: 'building', label: t('mapView.layerBuildings') },
+                { key: 'post', label: t('mapView.layerPosts') },
+                { key: 'zone', label: t('mapView.layerZones') },
+                { key: 'camera', label: t('mapView.layerCameras') },
+                { key: 'driveway', label: t('mapView.layerDriveways') },
+                { key: 'door', label: t('mapView.layerDoors') },
+                { key: 'wall', label: t('mapView.layerWalls') },
+                { key: 'label', label: t('mapView.layerLabels') },
+              ].map(l => (
+                <label key={l.key} className="flex items-center gap-2 px-1 py-0.5 rounded cursor-pointer hover:opacity-80 text-xs"
+                  style={{ color: 'var(--text-secondary)' }}>
+                  <input type="checkbox" checked={visibleLayers[l.key] !== false}
+                    onChange={() => toggleLayer(l.key)} className="rounded" />
+                  {l.label}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Legend Panel */}
+        <div className="absolute bottom-2 right-2 z-10">
+          <button onClick={() => setShowLegend(!showLegend)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity shadow-md"
+            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+            {t('mapView.legend')}
+            {showLegend ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+          </button>
+          {showLegend && (
+            <div className="mt-1 p-2.5 rounded-lg shadow-lg space-y-1.5"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', minWidth: 130 }}>
+              {[
+                { color: POST_STATUS_COLORS.free, label: t('mapView.legendFree') },
+                { color: POST_STATUS_COLORS.occupied || '#94a3b8', label: t('mapView.legendOccupied') },
+                { color: POST_STATUS_COLORS.active_work, label: t('mapView.legendActiveWork') },
+                { color: POST_STATUS_COLORS.occupied_no_work || '#eab308', label: t('mapView.legendIdle') },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <Stage
           ref={stageRef}
           width={stageSize.width}

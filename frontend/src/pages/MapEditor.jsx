@@ -6,6 +6,7 @@ import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer, Image as Ko
 import {
   MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus, Maximize2, ArrowRightLeft,
   Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
+  Magnet, Copy, Undo2, Redo2,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
@@ -21,6 +22,10 @@ const ELEMENT_DEFAULTS = {
 };
 
 const DRAFT_KEY = 'stoMapLayout_draft';
+const SNAP_STEP = 10;
+const HISTORY_LIMIT = 50;
+
+const snapToGrid = (value, step = SNAP_STEP) => Math.round(value / step) * step;
 
 let idCounter = Date.now();
 const newId = () => `el-${idCounter++}`;
@@ -64,11 +69,44 @@ export default function MapEditor() {
   const [mapName, setMapName] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [snapEnabled, setSnapEnabled] = useState(false);
 
   const containerRef = useRef(null);
   const stageRef = useRef(null);
   const trRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Undo/Redo history
+  const historyRef = useRef([]);
+  const historyIndexRef = useRef(-1);
+  const isUndoRedoRef = useRef(false);
+
+  const pushHistory = useCallback((els) => {
+    if (isUndoRedoRef.current) return;
+    const h = historyRef.current;
+    const idx = historyIndexRef.current;
+    // Trim future states
+    historyRef.current = h.slice(0, idx + 1);
+    historyRef.current.push(JSON.stringify(els));
+    if (historyRef.current.length > HISTORY_LIMIT) historyRef.current.shift();
+    historyIndexRef.current = historyRef.current.length - 1;
+  }, []);
+
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current -= 1;
+    isUndoRedoRef.current = true;
+    setElements(JSON.parse(historyRef.current[historyIndexRef.current]));
+    isUndoRedoRef.current = false;
+  }, []);
+
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current += 1;
+    isUndoRedoRef.current = true;
+    setElements(JSON.parse(historyRef.current[historyIndexRef.current]));
+    isUndoRedoRef.current = false;
+  }, []);
 
   const selected = elements.find(e => e.id === selectedId) || null;
 
@@ -130,6 +168,24 @@ export default function MapEditor() {
     loadFromApi();
     return () => { cancelled = true; };
   }, []);
+
+  // Track element changes for undo/redo
+  useEffect(() => {
+    pushHistory(elements);
+  }, [elements, pushHistory]);
+
+  // Keyboard shortcuts: Ctrl+Z, Ctrl+Shift+Z, Ctrl+D, Delete
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if (e.ctrlKey && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
+      if (e.ctrlKey && e.key === 'Z') { e.preventDefault(); redo(); }
+      if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); duplicateSelected(); }
+      if (e.key === 'Delete' && selectedId) { e.preventDefault(); deleteSelected(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo, selectedId, elements]);
 
   // Draft autosave to localStorage every 30 seconds
   useEffect(() => {
@@ -289,22 +345,25 @@ export default function MapEditor() {
     setStagePos({ x: pointer.x - mousePointTo.x * clampedScale, y: pointer.y - mousePointTo.y * clampedScale });
   };
 
-  // Drag element
+  // Drag element (with optional snap)
   const handleDragEnd = (id, e) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, x: e.target.x(), y: e.target.y() } : el));
+    let x = e.target.x(), y = e.target.y();
+    if (snapEnabled) { x = snapToGrid(x); y = snapToGrid(y); e.target.x(x); e.target.y(y); }
+    setElements(prev => prev.map(el => el.id === id ? { ...el, x, y } : el));
   };
 
-  // Transform element
+  // Transform element (with optional snap)
   const handleTransformEnd = (id, e) => {
     const node = e.target;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     node.scaleX(1); node.scaleY(1);
+    let x = node.x(), y = node.y();
+    let w = Math.max(10, node.width() * scaleX);
+    let h = Math.max(10, node.height() * scaleY);
+    if (snapEnabled) { x = snapToGrid(x); y = snapToGrid(y); w = snapToGrid(w); h = snapToGrid(h); node.x(x); node.y(y); }
     setElements(prev => prev.map(el => el.id === id ? {
-      ...el, x: node.x(), y: node.y(),
-      width: Math.max(10, node.width() * scaleX),
-      height: Math.max(10, node.height() * scaleY),
-      rotation: node.rotation(),
+      ...el, x, y, width: w, height: h, rotation: node.rotation(),
     } : el));
   };
 
@@ -319,6 +378,22 @@ export default function MapEditor() {
     if (!selectedId) return;
     setElements(prev => prev.filter(e => e.id !== selectedId));
     setSelectedId(null);
+  };
+
+  // Duplicate selected element
+  const duplicateSelected = () => {
+    const el = elements.find(e => e.id === selectedId);
+    if (!el) return;
+    const copy = {
+      ...el,
+      id: newId(),
+      x: el.x + 20,
+      y: el.y + 20,
+      name: el.name + (i18n.language === 'ru' ? ' (копия)' : ' (copy)'),
+      data: el.data ? { ...el.data } : {},
+    };
+    setElements(prev => [...prev, copy]);
+    setSelectedId(copy.id);
   };
 
   // Zoom buttons
@@ -441,6 +516,12 @@ export default function MapEditor() {
 
         <div className="flex-1" />
 
+        <button onClick={undo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={t('mapEditor.undo') + ' (Ctrl+Z)'}><Undo2 size={16} /></button>
+        <button onClick={redo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={t('mapEditor.redo') + ' (Ctrl+Shift+Z)'}><Redo2 size={16} /></button>
+        <div style={{ width: 1, height: 20, background: 'var(--border-glass)' }} />
+        <button onClick={() => setSnapEnabled(!snapEnabled)} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: snapEnabled ? 'var(--accent)' : 'var(--bg-card)', color: snapEnabled ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+          <Magnet size={13} /> {t('mapEditor.snap')}
+        </button>
         <button onClick={() => setShowGrid(!showGrid)} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: showGrid ? 'var(--accent)' : 'var(--bg-card)', color: showGrid ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
           <Grid3X3 size={13} /> {t('mapEditor.grid')}
         </button>
@@ -607,7 +688,10 @@ export default function MapEditor() {
                   </div>
                 </div>
               )}
-              <button onClick={deleteSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
+              <button onClick={duplicateSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity" style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
+                <Copy size={12} /> {t('mapEditor.duplicate')} <span className="opacity-50 ml-1">Ctrl+D</span>
+              </button>
+              <button onClick={deleteSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
                 <Trash2 size={12} /> {t('common.delete')}
               </button>
             </div>

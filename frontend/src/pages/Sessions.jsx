@@ -302,8 +302,8 @@ export default function Sessions() {
         </span>
       </div>
 
-      <div className="glass-static overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="glass-static overflow-x-auto">
+        <table className="w-full text-sm" style={{ minWidth: 700 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
               <th className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:opacity-80"

@@ -20,7 +20,8 @@
     "mapEditor": "Редактор карты",
     "settings": "Настройки",
     "logout": "Выйти",
-    "shifts": "Смены"
+    "shifts": "Смены",
+    "audit": "Аудит-лог"
   },
   "shifts": {
     "title": "Управление сменами",
@@ -180,7 +181,23 @@
     "placedAt": "Установлен",
     "estimatedEnd": "Прогноз снятия",
     "note": "Примечание",
-    "goToPost": "Перейти к посту"
+    "goToPost": "Перейти к посту",
+    "layers": "Слои",
+    "layerBuildings": "Здания",
+    "layerPosts": "Посты",
+    "layerZones": "Зоны",
+    "layerCameras": "Камеры",
+    "layerDoors": "Двери",
+    "layerWalls": "Стены",
+    "layerLabels": "Подписи",
+    "layerDriveways": "Проезды",
+    "exportPng": "Скачать PNG",
+    "exportPdf": "Скачать PDF",
+    "legend": "Легенда",
+    "legendFree": "Свободен",
+    "legendOccupied": "Занят",
+    "legendActiveWork": "В работе",
+    "legendIdle": "Простой"
   },
   "dashboardPosts": {
     "title": "Дашборд постов",
@@ -346,7 +363,11 @@
     "saveError": "Ошибка сохранения",
     "loadSuccess": "Макет загружен",
     "loadError": "Ошибка загрузки",
-    "noLayout": "Сохранённый макет не найден"
+    "noLayout": "Сохранённый макет не найден",
+    "snap": "Привязка",
+    "duplicate": "Дублировать",
+    "undo": "Отменить",
+    "redo": "Повторить"
   },
   "events": {
     "title": "Журнал событий",
@@ -357,6 +378,10 @@
     "confidence": "увер."
   },
   "analytics": {
+    "heatmapTitle": "Тепловая карта загрузки постов",
+    "heatmapHour": "Час",
+    "heatmapOccupancy": "Загрузка",
+    "heatmapVehicles": "Авто",
     "exportExcel": "Экспорт Excel",
     "exportPdf": "Экспорт PDF",
     "downloadPng": "Скачать как PNG",
@@ -366,5 +391,8 @@
     "details": "Детали",
     "exportSuccess": "Экспорт завершён",
     "exportError": "Ошибка экспорта"
+  },
+  "audit": {
+    "title": "Аудит-лог"
   }
 }

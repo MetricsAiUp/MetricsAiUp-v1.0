@@ -26,6 +26,7 @@ const userRoutes = require('./routes/users');
 const mapLayoutRoutes = require('./routes/mapLayout');
 const data1cRoutes = require('./routes/data1c');
 const shiftsRoutes = require('./routes/shifts');
+const auditLogRoutes = require('./routes/auditLog');
 const { startFileWatcher } = require('./services/sync1C');
 
 const app = express();
@@ -67,6 +68,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/map-layout', mapLayoutRoutes);
 app.use('/api/1c', data1cRoutes);
 app.use('/api/shifts', shiftsRoutes);
+app.use('/api/audit-log', auditLogRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

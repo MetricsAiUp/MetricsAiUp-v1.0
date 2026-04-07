@@ -1,0 +1,17 @@
+{
+  "logs": [
+    { "id": "al-1", "userId": "u1", "userName": "Иванов Алексей", "action": "update", "entity": "user", "entityId": "u3", "oldData": "{\"role\":\"viewer\"}", "newData": "{\"role\":\"manager\"}", "ip": "192.168.1.10", "createdAt": "2026-04-07T10:15:00Z" },
+    { "id": "al-2", "userId": "u1", "userName": "Иванов Алексей", "action": "create", "entity": "shift", "entityId": "s12", "oldData": null, "newData": "{\"name\":\"Утренняя смена\",\"date\":\"2026-04-07\"}", "ip": "192.168.1.10", "createdAt": "2026-04-07T09:30:00Z" },
+    { "id": "al-3", "userId": "u2", "userName": "Петров Дмитрий", "action": "update", "entity": "post", "entityId": "post-3", "oldData": "{\"status\":\"free\"}", "newData": "{\"status\":\"occupied\"}", "ip": "192.168.1.15", "createdAt": "2026-04-07T08:45:00Z" },
+    { "id": "al-4", "userId": "u1", "userName": "Иванов Алексей", "action": "delete", "entity": "workOrder", "entityId": "wo-55", "oldData": "{\"orderNumber\":\"ЗН-2026-0055\",\"status\":\"cancelled\"}", "newData": null, "ip": "192.168.1.10", "createdAt": "2026-04-06T16:20:00Z" },
+    { "id": "al-5", "userId": "u2", "userName": "Петров Дмитрий", "action": "update", "entity": "zone", "entityId": "z2", "oldData": "{\"name\":\"Зона ожидания\"}", "newData": "{\"name\":\"Зона ожидания (расш.)\"}", "ip": "192.168.1.15", "createdAt": "2026-04-06T14:10:00Z" },
+    { "id": "al-6", "userId": "u1", "userName": "Иванов Алексей", "action": "create", "entity": "user", "entityId": "u5", "oldData": null, "newData": "{\"email\":\"novikov@sto.ru\",\"role\":\"mechanic\"}", "ip": "192.168.1.10", "createdAt": "2026-04-06T11:00:00Z" },
+    { "id": "al-7", "userId": "u1", "userName": "Иванов Алексей", "action": "update", "entity": "mapLayout", "entityId": "ml-1", "oldData": null, "newData": "{\"name\":\"Основной план\"}", "ip": "192.168.1.10", "createdAt": "2026-04-05T15:30:00Z" },
+    { "id": "al-8", "userId": "u3", "userName": "Сидорова Елена", "action": "update", "entity": "camera", "entityId": "cam-5", "oldData": "{\"name\":\"CAM05\"}", "newData": "{\"name\":\"CAM05-новая\"}", "ip": "192.168.1.20", "createdAt": "2026-04-05T12:00:00Z" },
+    { "id": "al-9", "userId": "u1", "userName": "Иванов Алексей", "action": "create", "entity": "workOrder", "entityId": "wo-60", "oldData": null, "newData": "{\"orderNumber\":\"ЗН-2026-0060\",\"plateNumber\":\"А123БВ777\"}", "ip": "192.168.1.10", "createdAt": "2026-04-05T09:45:00Z" },
+    { "id": "al-10", "userId": "u2", "userName": "Петров Дмитрий", "action": "update", "entity": "session", "entityId": "vs-100", "oldData": "{\"status\":\"active\"}", "newData": "{\"status\":\"completed\"}", "ip": "192.168.1.15", "createdAt": "2026-04-04T17:30:00Z" },
+    { "id": "al-11", "userId": "u1", "userName": "Иванов Алексей", "action": "delete", "entity": "shift", "entityId": "s10", "oldData": "{\"name\":\"Вечерняя смена\",\"status\":\"completed\"}", "newData": null, "ip": "192.168.1.10", "createdAt": "2026-04-04T16:00:00Z" },
+    { "id": "al-12", "userId": "u3", "userName": "Сидорова Елена", "action": "update", "entity": "user", "entityId": "u4", "oldData": "{\"isActive\":true}", "newData": "{\"isActive\":false}", "ip": "192.168.1.20", "createdAt": "2026-04-04T14:20:00Z" }
+  ],
+  "total": 12
+}
