@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { createMapLayoutSchema, updateMapLayoutSchema } = require('../schemas/mapLayout');
 
 // GET /api/map-layout — get active layout (public, no auth needed)
 router.get('/', async (req, res) => {
@@ -35,7 +37,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/map-layout — create new layout
-router.post('/', authenticate, requirePermission('manage_zones'), async (req, res) => {
+router.post('/', authenticate, requirePermission('manage_zones'), validate(createMapLayoutSchema), async (req, res) => {
   try {
     const { name, width, height, bgImage, elements, isActive } = req.body;
     if (!name) return res.status(400).json({ error: 'Name is required' });
@@ -62,7 +64,7 @@ router.post('/', authenticate, requirePermission('manage_zones'), async (req, re
 });
 
 // PUT /api/map-layout/:id — update layout
-router.put('/:id', authenticate, requirePermission('manage_zones'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('manage_zones'), validate(updateMapLayoutSchema), async (req, res) => {
   try {
     const { name, width, height, bgImage, elements, isActive } = req.body;
     const data = {};

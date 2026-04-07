@@ -1,10 +1,12 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { createEventSchema } = require('../schemas/events');
 const { processEvent } = require('../services/eventProcessor');
 
 // POST /api/events — приём событий от CV-системы
-router.post('/', async (req, res) => {
+router.post('/', validate(createEventSchema), async (req, res) => {
   try {
     const result = await processEvent(req.body);
     res.status(201).json(result);

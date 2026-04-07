@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { createCameraSchema, updateCameraSchema, setCameraZonesSchema } = require('../schemas/cameras');
 
 // GET /api/cameras — list all active cameras with zone mappings
 router.get('/', authenticate, async (req, res) => {
@@ -37,7 +39,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/cameras — create camera
-router.post('/', authenticate, requirePermission('manage_cameras'), async (req, res) => {
+router.post('/', authenticate, requirePermission('manage_cameras'), validate(createCameraSchema), async (req, res) => {
   try {
     const { name, rtspUrl } = req.body;
     if (!name || !rtspUrl) {
@@ -53,7 +55,7 @@ router.post('/', authenticate, requirePermission('manage_cameras'), async (req, 
 });
 
 // PUT /api/cameras/:id — update camera
-router.put('/:id', authenticate, requirePermission('manage_cameras'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('manage_cameras'), validate(updateCameraSchema), async (req, res) => {
   try {
     const { name, rtspUrl, isActive } = req.body;
     const camera = await prisma.camera.update({
@@ -93,15 +95,11 @@ router.delete('/:id', authenticate, requirePermission('manage_cameras'), async (
 });
 
 // POST /api/cameras/:id/zones — set zone mappings (replaces all existing)
-// Body: [{ zoneId: string, priority: number }]
-router.post('/:id/zones', authenticate, requirePermission('manage_cameras'), async (req, res) => {
+// Body: { zones: [{ zoneId: number, priority: number }] }
+router.post('/:id/zones', authenticate, requirePermission('manage_cameras'), validate(setCameraZonesSchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const mappings = req.body;
-
-    if (!Array.isArray(mappings)) {
-      return res.status(400).json({ error: 'Body must be an array of { zoneId, priority }' });
-    }
+    const { zones: mappings } = req.body;
 
     // Verify camera exists
     const camera = await prisma.camera.findUnique({ where: { id } });

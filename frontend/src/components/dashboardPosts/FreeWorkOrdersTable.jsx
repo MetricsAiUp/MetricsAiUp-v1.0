@@ -1,9 +1,33 @@
-import { useState } from 'react';
-import { Truck, Car, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Truck, Car, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 
-// Free work orders table
+// Free work orders table — rows are draggable onto the timeline
 export default function FreeWorkOrdersTable({ orders, t }) {
   const [expanded, setExpanded] = useState(true);
+
+  const handleDragStart = useCallback((e, wo) => {
+    e.dataTransfer.effectAllowed = 'move';
+    const dragData = {
+      type: 'free-work-order',
+      itemId: wo.id,
+      fromPostId: null,
+      workOrderNumber: wo.workOrderNumber,
+      plateNumber: wo.plateNumber,
+      brand: wo.brand,
+      model: wo.model,
+      workType: wo.workType,
+      normHours: wo.normHours,
+      postType: wo.postType,
+      client: wo.client,
+      note: wo.note,
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.currentTarget.style.opacity = '0.4';
+  }, []);
+
+  const handleDragEnd = useCallback((e) => {
+    e.currentTarget.style.opacity = '1';
+  }, []);
 
   if (!orders || orders.length === 0) return null;
 
@@ -33,6 +57,7 @@ export default function FreeWorkOrdersTable({ orders, t }) {
           <table className="w-full">
             <thead>
               <tr style={{ background: 'var(--bg-glass)' }}>
+                <th className="w-8" />
                 <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                   {t('workOrders.orderNumber')}
                 </th>
@@ -62,9 +87,15 @@ export default function FreeWorkOrdersTable({ orders, t }) {
                 return (
                   <tr
                     key={wo.id}
-                    className="border-t hover:opacity-80 transition-opacity"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, wo)}
+                    onDragEnd={handleDragEnd}
+                    className="border-t hover:opacity-80 transition-opacity cursor-grab"
                     style={{ borderColor: 'var(--border-glass)' }}
                   >
+                    <td className="px-1 py-2.5 text-center">
+                      <GripVertical size={14} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
+                    </td>
                     <td className="px-3 py-2.5 font-mono font-medium text-sm" style={{ color: 'var(--accent)' }}>
                       {wo.workOrderNumber}
                     </td>

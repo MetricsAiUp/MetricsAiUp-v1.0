@@ -188,6 +188,7 @@ const HELP_CONTENT = {
         { heading: 'Статистика', text: 'Сводка: количество записей, общее время, топ исполнителей, марки авто, виды ремонта. Графики-бары.' },
         { heading: 'Планирование ремонта', text: 'Таблица из регистра 1С: документ, номер, госномер, VIN, период, рабочее место, продолжительность, статус. Поиск + фильтр по статусу + сортировка.' },
         { heading: 'Выработка исполнителей', text: 'Детализация по работникам: номер ЗН, вид ремонта, марка/модель, исполнитель, даты, нормочасы. Поиск + сортировка.' },
+        { heading: 'Синхронизация', text: 'Таб "Синхронизация" — импорт xlsx через API, экспорт завершённых ЗН, история операций синхронизации с 1С.' },
       ],
     },
     en: {
@@ -198,6 +199,125 @@ const HELP_CONTENT = {
         { heading: 'Statistics', text: 'Summary: record counts, total hours, top workers, car brands, repair types. Bar charts.' },
         { heading: 'Repair Planning', text: '1C register table: document, number, plate, VIN, period, post, duration, status. Search + filter + sort.' },
         { heading: 'Worker Output', text: 'Worker details: WO number, repair type, brand/model, worker, dates, norm hours. Search + sort.' },
+        { heading: 'Synchronization', text: '"Sync" tab — import xlsx via API, export completed WOs, sync operation history with 1C.' },
+      ],
+    },
+  },
+  users: {
+    ru: {
+      title: 'Пользователи',
+      sections: [
+        { heading: 'Назначение', text: 'Управление пользователями системы. Создание, редактирование, деактивация учётных записей.' },
+        { heading: 'Роли', text: 'Четыре роли: Администратор (полный доступ), Менеджер (аналитика, ЗН, сессии), Механик (дашборд, карта), Наблюдатель (только просмотр).' },
+        { heading: 'Доступ к страницам', text: 'Каждому пользователю назначаются доступные страницы. Sidebar показывает только разрешённые разделы.' },
+        { heading: 'Создание', text: 'Кнопка "Создать" — новый пользователь с email, именем, ролью и набором страниц.' },
+        { heading: 'Редактирование', text: 'Клик на пользователя — редактирование профиля, смена роли, настройка доступа к страницам. Изменения применяются мгновенно.' },
+      ],
+    },
+    en: {
+      title: 'Users',
+      sections: [
+        { heading: 'Purpose', text: 'System user management. Create, edit, deactivate accounts.' },
+        { heading: 'Roles', text: 'Four roles: Admin (full access), Manager (analytics, WOs, sessions), Mechanic (dashboard, map), Viewer (read-only).' },
+        { heading: 'Page Access', text: 'Each user gets assigned pages. Sidebar shows only permitted sections.' },
+        { heading: 'Create', text: '"Create" button — new user with email, name, role, and page set.' },
+        { heading: 'Edit', text: 'Click user to edit profile, change role, configure page access. Changes apply instantly.' },
+      ],
+    },
+  },
+  postsDetail: {
+    ru: {
+      title: 'Детализация по постам',
+      sections: [
+        { heading: 'Назначение', text: 'Подробная аналитика по каждому посту: загрузка, эффективность, простои, история заказ-нарядов.' },
+        { heading: 'Период', text: 'Выбор периода: Сегодня, Вчера, Неделя, Месяц. Все метрики пересчитываются.' },
+        { heading: 'Обзор постов', text: 'Карточки постов с ключевыми метриками: загрузка, эффективность, количество авто, среднее время. Цветовая индикация статуса.' },
+        { heading: 'Детали поста', text: 'Клик на пост открывает детализацию: графики по дням (загрузка, эффективность, присутствие работника), таблица ЗН за период.' },
+        { heading: 'Таблица ЗН', text: 'Список заказ-нарядов на выбранном посту: номер, госномер, тип работ, время, статус. Сортировка по колонкам.' },
+        { heading: 'Сравнение', text: 'Режим сравнения постов — выберите несколько постов для параллельного анализа метрик.' },
+      ],
+    },
+    en: {
+      title: 'Post Details',
+      sections: [
+        { heading: 'Purpose', text: 'Detailed analytics per post: occupancy, efficiency, idle time, work order history.' },
+        { heading: 'Period', text: 'Select period: Today, Yesterday, Week, Month. All metrics recalculate.' },
+        { heading: 'Post Overview', text: 'Post cards with key metrics: occupancy, efficiency, vehicle count, avg time. Color-coded status.' },
+        { heading: 'Post Details', text: 'Click a post for details: daily charts (occupancy, efficiency, worker presence), WO table for period.' },
+        { heading: 'WO Table', text: 'Work orders on selected post: number, plate, work type, time, status. Column sorting.' },
+        { heading: 'Comparison', text: 'Post comparison mode — select multiple posts for side-by-side metric analysis.' },
+      ],
+    },
+  },
+  shifts: {
+    ru: {
+      title: 'Управление сменами',
+      sections: [
+        { heading: 'Назначение', text: 'Планирование и управление сменами СТО. Календарь на неделю с назначением работников на посты.' },
+        { heading: 'Календарь', text: 'Недельный вид: 7 дней с карточками смен. Навигация стрелками влево/вправо. Цвет статуса: синий — запланирована, зелёный — активна, серый — завершена.' },
+        { heading: 'Создание смены', text: 'Кнопка "Новая смена" — укажите название, дату, время начала/окончания, добавьте работников с ролями и постами.' },
+        { heading: 'Работники', text: 'Каждый работник в смене имеет роль (механик, мастер, диагност) и может быть назначен на конкретный пост.' },
+        { heading: 'Завершение смены', text: 'Кнопка "Завершить" у активной смены открывает акт передачи: состояние постов, итоги по ЗН, заметки для следующей смены.' },
+        { heading: 'Акт передачи', text: 'При завершении формируется акт: статус каждого поста, количество выполненных ЗН, незавершённые работы. Информация для приходящей смены.' },
+      ],
+    },
+    en: {
+      title: 'Shift Management',
+      sections: [
+        { heading: 'Purpose', text: 'Plan and manage STO shifts. Weekly calendar with worker-to-post assignments.' },
+        { heading: 'Calendar', text: 'Weekly view: 7 days with shift cards. Navigate with arrows. Status colors: blue — planned, green — active, gray — completed.' },
+        { heading: 'Create Shift', text: '"New Shift" button — set name, date, start/end time, add workers with roles and posts.' },
+        { heading: 'Workers', text: 'Each shift worker has a role (mechanic, master, diagnostician) and can be assigned to a specific post.' },
+        { heading: 'Complete Shift', text: '"Complete" button on active shift opens handover act: post status, WO summary, notes for next shift.' },
+        { heading: 'Handover Act', text: 'On completion: status of each post, completed WO count, unfinished work. Info for incoming shift.' },
+      ],
+    },
+  },
+  dashboardPosts: {
+    ru: {
+      title: 'Таймлайн постов',
+      sections: [
+        { heading: 'Назначение', text: 'Gantt-таймлайн заказ-нарядов по постам за смену. Визуализация загрузки постов в реальном времени.' },
+        { heading: 'Таймлайн', text: 'Горизонтальная шкала — время смены. Каждая строка — пост. Цветные блоки — заказ-наряды. Красная линия — текущее время.' },
+        { heading: 'Цвета блоков', text: 'Зелёный — завершён. Синий — в работе. Жёлтый — запланирован. Красный контур — просрочен.' },
+        { heading: 'Drag-n-drop', text: 'Перетаскивайте блоки ЗН: горизонтально — изменить время (шаг 15 мин), вертикально — перенести на другой пост. Красная обводка — конфликт времени.' },
+        { heading: 'Свободные ЗН', text: 'Таблица внизу — нераспределённые заказ-наряды. Перетащите на таймлайн для назначения на пост.' },
+        { heading: 'Сохранение', text: 'Кнопка "Сохранить расписание" появляется при наличии изменений. Сохраняет все перемещения одним запросом.' },
+        { heading: 'Настройки', text: 'Шестерёнка — настройка времени смены, количества постов, режима (демо/live).' },
+      ],
+    },
+    en: {
+      title: 'Posts Timeline',
+      sections: [
+        { heading: 'Purpose', text: 'Gantt timeline of work orders per post for the shift. Real-time post workload visualization.' },
+        { heading: 'Timeline', text: 'Horizontal scale — shift time. Each row — a post. Colored blocks — work orders. Red line — current time.' },
+        { heading: 'Block Colors', text: 'Green — completed. Blue — in progress. Yellow — scheduled. Red outline — overdue.' },
+        { heading: 'Drag-n-drop', text: 'Drag WO blocks: horizontally — change time (15 min snap), vertically — move to another post. Red outline — time conflict.' },
+        { heading: 'Free WOs', text: 'Bottom table — unassigned work orders. Drag onto timeline to assign to a post.' },
+        { heading: 'Save', text: '"Save Schedule" button appears when changes exist. Saves all moves in one request.' },
+        { heading: 'Settings', text: 'Gear icon — configure shift time, post count, mode (demo/live).' },
+      ],
+    },
+  },
+  mapEditor: {
+    ru: {
+      title: 'Редактор карты',
+      sections: [
+        { heading: 'Назначение', text: 'Визуальный редактор карты СТО. Создание и редактирование элементов: зоны, посты, камеры, стены, проезды.' },
+        { heading: 'Панель инструментов', text: 'Сверху — инструменты: курсор (выбор), рисование зон, добавление постов, камер, стен. Справа — свойства выбранного элемента.' },
+        { heading: 'Элементы', text: 'Зоны — прямоугольные области (ремонт, ожидание, въезд, парковка). Посты — рабочие места внутри зон. Камеры — точки наблюдения с углом обзора.' },
+        { heading: 'Редактирование', text: 'Клик — выбрать элемент. Перетаскивание — переместить. Углы — изменить размер. Delete — удалить.' },
+        { heading: 'Сохранение', text: 'Кнопка "Сохранить" — сохраняет текущий макет. "Экспорт JSON" — скачивает файл для резервного копирования. Можно загрузить JSON обратно.' },
+      ],
+    },
+    en: {
+      title: 'Map Editor',
+      sections: [
+        { heading: 'Purpose', text: 'Visual STO map editor. Create and edit elements: zones, posts, cameras, walls, passages.' },
+        { heading: 'Toolbar', text: 'Top bar — tools: cursor (select), draw zones, add posts, cameras, walls. Right panel — selected element properties.' },
+        { heading: 'Elements', text: 'Zones — rectangular areas (repair, waiting, entry, parking). Posts — workstations inside zones. Cameras — observation points with FOV.' },
+        { heading: 'Editing', text: 'Click — select element. Drag — move. Corners — resize. Delete — remove.' },
+        { heading: 'Save', text: '"Save" button — saves current layout. "Export JSON" — downloads backup file. Can re-import JSON.' },
       ],
     },
   },

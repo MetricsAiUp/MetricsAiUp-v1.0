@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { createZoneSchema, updateZoneSchema } = require('../schemas/zones');
 
 // GET /api/zones
 router.get('/', authenticate, async (req, res) => {
@@ -42,7 +44,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // POST /api/zones
-router.post('/', authenticate, requirePermission('manage_zones'), async (req, res) => {
+router.post('/', authenticate, requirePermission('manage_zones'), validate(createZoneSchema), async (req, res) => {
   try {
     const zone = await prisma.zone.create({ data: req.body });
     res.status(201).json(zone);
@@ -52,7 +54,7 @@ router.post('/', authenticate, requirePermission('manage_zones'), async (req, re
 });
 
 // PUT /api/zones/:id
-router.put('/:id', authenticate, requirePermission('manage_zones'), async (req, res) => {
+router.put('/:id', authenticate, requirePermission('manage_zones'), validate(updateZoneSchema), async (req, res) => {
   try {
     const zone = await prisma.zone.update({
       where: { id: req.params.id },

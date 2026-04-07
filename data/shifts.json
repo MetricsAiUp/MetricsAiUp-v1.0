@@ -1,0 +1,123 @@
+{
+  "shifts": [
+    {
+      "id": "shift-1",
+      "name": "Утренняя смена",
+      "date": "2026-04-06",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "completed",
+      "workers": [
+        { "id": "sw-1", "name": "Павлович А.В.", "role": "mechanic", "postId": "post-1" },
+        { "id": "sw-2", "name": "Романовский И.П.", "role": "mechanic", "postId": "post-2" },
+        { "id": "sw-3", "name": "Филипеня Д.С.", "role": "master", "postId": null }
+      ],
+      "notes": "Плановая смена, все работы выполнены",
+      "workOrdersCount": 8,
+      "completedCount": 6
+    },
+    {
+      "id": "shift-2",
+      "name": "Утренняя смена",
+      "date": "2026-04-07",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "active",
+      "workers": [
+        { "id": "sw-4", "name": "Козлов М.А.", "role": "mechanic", "postId": "post-1" },
+        { "id": "sw-5", "name": "Петров С.И.", "role": "mechanic", "postId": "post-3" },
+        { "id": "sw-6", "name": "Сидоров Д.В.", "role": "mechanic", "postId": "post-5" },
+        { "id": "sw-7", "name": "Иванов А.Н.", "role": "diagnostician", "postId": "post-7" },
+        { "id": "sw-8", "name": "Филипеня Д.С.", "role": "master", "postId": null }
+      ],
+      "notes": "Текущая смена",
+      "workOrdersCount": 12,
+      "completedCount": 4
+    },
+    {
+      "id": "shift-3",
+      "name": "Утренняя смена",
+      "date": "2026-04-08",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "workers": [
+        { "id": "sw-9", "name": "Павлович А.В.", "role": "mechanic", "postId": "post-1" },
+        { "id": "sw-10", "name": "Романовский И.П.", "role": "mechanic", "postId": "post-2" },
+        { "id": "sw-11", "name": "Козлов М.А.", "role": "mechanic", "postId": "post-4" },
+        { "id": "sw-12", "name": "Филипеня Д.С.", "role": "master", "postId": null }
+      ],
+      "notes": null,
+      "workOrdersCount": 10,
+      "completedCount": 0
+    },
+    {
+      "id": "shift-4",
+      "name": "Утренняя смена",
+      "date": "2026-04-09",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "workers": [
+        { "id": "sw-13", "name": "Петров С.И.", "role": "mechanic", "postId": "post-1" },
+        { "id": "sw-14", "name": "Сидоров Д.В.", "role": "mechanic", "postId": "post-3" },
+        { "id": "sw-15", "name": "Иванов А.Н.", "role": "diagnostician", "postId": "post-7" },
+        { "id": "sw-16", "name": "Козлов М.А.", "role": "mechanic", "postId": "post-5" },
+        { "id": "sw-17", "name": "Романовский И.П.", "role": "mechanic", "postId": "post-6" },
+        { "id": "sw-18", "name": "Филипеня Д.С.", "role": "master", "postId": null }
+      ],
+      "notes": "Расширенная смена",
+      "workOrdersCount": 15,
+      "completedCount": 0
+    },
+    {
+      "id": "shift-5",
+      "name": "Утренняя смена",
+      "date": "2026-04-10",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "workers": [
+        { "id": "sw-19", "name": "Павлович А.В.", "role": "mechanic", "postId": "post-2" },
+        { "id": "sw-20", "name": "Петров С.И.", "role": "mechanic", "postId": "post-4" },
+        { "id": "sw-21", "name": "Сидоров Д.В.", "role": "mechanic", "postId": "post-6" },
+        { "id": "sw-22", "name": "Филипеня Д.С.", "role": "master", "postId": null }
+      ],
+      "notes": null,
+      "workOrdersCount": 9,
+      "completedCount": 0
+    },
+    {
+      "id": "shift-6",
+      "name": "Утренняя смена",
+      "date": "2026-04-11",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "workers": [
+        { "id": "sw-23", "name": "Козлов М.А.", "role": "mechanic", "postId": "post-1" },
+        { "id": "sw-24", "name": "Романовский И.П.", "role": "mechanic", "postId": "post-3" },
+        { "id": "sw-25", "name": "Иванов А.Н.", "role": "diagnostician", "postId": "post-7" }
+      ],
+      "notes": "Сокращённая смена (суббота)",
+      "workOrdersCount": 6,
+      "completedCount": 0
+    },
+    {
+      "id": "shift-7",
+      "name": "Дежурная смена",
+      "date": "2026-04-12",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "status": "planned",
+      "workers": [
+        { "id": "sw-26", "name": "Павлович А.В.", "role": "mechanic", "postId": "post-1" },
+        { "id": "sw-27", "name": "Петров С.И.", "role": "mechanic", "postId": "post-2" },
+        { "id": "sw-28", "name": "Филипеня Д.С.", "role": "master", "postId": null }
+      ],
+      "notes": "Воскресенье — дежурная смена",
+      "workOrdersCount": 4,
+      "completedCount": 0
+    }
+  ]
+}

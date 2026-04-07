@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, Legend, CartesianGrid, Area, AreaChart,
 } from 'recharts';
+import { FileSpreadsheet, FileText } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import { exportToXlsx, exportToPdf, downloadChartAsPng } from '../utils/export';
 
 const POST_COLORS = ['#6366f1', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
 
@@ -26,9 +28,9 @@ function StatCard({ label, value, sub, color }) {
   );
 }
 
-function ChartCard({ title, children }) {
+function ChartCard({ title, children, chartRef, onContextMenu }) {
   return (
-    <div className="glass-static p-5">
+    <div className="glass-static p-5" ref={chartRef} onContextMenu={onContextMenu}>
       <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       {children}
     </div>
@@ -44,13 +46,49 @@ const customTooltipStyle = {
 };
 
 export default function Analytics() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { api } = useAuth();
   const [history, setHistory] = useState(null);
   const [period, setPeriod] = useState('30d');
   const [selectedPost, setSelectedPost] = useState(null);
+  const [ctxMenu, setCtxMenu] = useState(null);
+  const [exporting, setExporting] = useState(null);
+
+  const containerRef = useRef(null);
+  const chartRefs = useRef({});
 
   const isRu = i18n.language === 'ru';
+
+  const getChartRef = useCallback((key) => {
+    if (!chartRefs.current[key]) chartRefs.current[key] = { current: null };
+    return (el) => { chartRefs.current[key].current = el; };
+  }, []);
+
+  const handleChartContextMenu = useCallback((e, chartKey) => {
+    e.preventDefault();
+    setCtxMenu({ x: e.clientX, y: e.clientY, chartKey });
+  }, []);
+
+  const handleDownloadPng = useCallback(async () => {
+    if (!ctxMenu) return;
+    const el = chartRefs.current[ctxMenu.chartKey]?.current;
+    if (el) {
+      try {
+        await downloadChartAsPng(el, `${ctxMenu.chartKey}-${new Date().toISOString().slice(0, 10)}.png`);
+      } catch (err) {
+        console.error('PNG export failed:', err);
+      }
+    }
+    setCtxMenu(null);
+  }, [ctxMenu]);
+
+  // Close context menu on click anywhere
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [ctxMenu]);
 
   useEffect(() => {
     api.get('/api/analytics-history').then(r => setHistory(r.data)).catch(console.error);
@@ -157,10 +195,54 @@ export default function Analytics() {
   const selPost = selectedPost ? filteredPosts.find(p => p.id === selectedPost) : null;
   const selSummary = selectedPost ? postSummaries.find(p => p.id === selectedPost) : null;
 
+  const handleExportXlsx = async () => {
+    try {
+      setExporting('xlsx');
+      exportToXlsx(history, postSummaries, filteredPosts, filteredDaily, isRu);
+    } catch (err) {
+      console.error('XLSX export failed:', err);
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      setExporting('pdf');
+      await exportToPdf(containerRef, isRu);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setExporting(null);
+    }
+  };
+
   if (!history) return <div className="p-8 text-center" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Загрузка...' : 'Loading...'}</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={containerRef}>
+      {/* Context menu for chart PNG download */}
+      {ctxMenu && (
+        <div
+          className="fixed z-50 shadow-lg rounded-lg py-1 px-1"
+          style={{
+            left: ctxMenu.x,
+            top: ctxMenu.y,
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border-glass)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          <button
+            onClick={handleDownloadPng}
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm w-full hover:opacity-80 transition-opacity"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {t('analytics.downloadPng')}
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -169,7 +251,38 @@ export default function Analytics() {
           </h2>
           <HelpButton pageKey="analytics" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={handleExportXlsx}
+            disabled={exporting === 'xlsx'}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all hover:opacity-80"
+            style={{
+              background: 'var(--bg-glass)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-glass)',
+              opacity: exporting === 'xlsx' ? 0.6 : 1,
+            }}
+            title={t('analytics.exportExcel')}
+          >
+            <FileSpreadsheet size={16} />
+            <span className="hidden sm:inline">{t('analytics.exportExcel')}</span>
+          </button>
+          <button
+            onClick={handleExportPdf}
+            disabled={exporting === 'pdf'}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all hover:opacity-80"
+            style={{
+              background: 'var(--bg-glass)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-glass)',
+              opacity: exporting === 'pdf' ? 0.6 : 1,
+            }}
+            title={t('analytics.exportPdf')}
+          >
+            <FileText size={16} />
+            <span className="hidden sm:inline">{t('analytics.exportPdf')}</span>
+          </button>
+          <div className="w-px h-6" style={{ background: 'var(--border-glass)' }} />
           {[
             { key: 'today', label: isRu ? 'Сегодня' : 'Today' },
             { key: '7d', label: isRu ? '7 дней' : '7 days' },
@@ -200,7 +313,7 @@ export default function Analytics() {
 
       {/* Row 1: Occupancy trend + Vehicles trend */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title={isRu ? 'Загрузка постов по дням (%)' : 'Post Occupancy Trend (%)'}>
+        <ChartCard title={isRu ? 'Загрузка постов по дням (%)' : 'Post Occupancy Trend (%)'} chartRef={getChartRef('occupancy-trend')} onContextMenu={(e) => handleChartContextMenu(e, 'occupancy-trend')}>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
@@ -216,7 +329,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title={isRu ? 'Авто за день (все посты)' : 'Vehicles per Day (all posts)'}>
+        <ChartCard title={isRu ? 'Авто за день (все посты)' : 'Vehicles per Day (all posts)'} chartRef={getChartRef('vehicles-daily')} onContextMenu={(e) => handleChartContextMenu(e, 'vehicles-daily')}>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={vehiclesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
@@ -233,7 +346,7 @@ export default function Analytics() {
       {/* Row 2: Ranking + Pie */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ranking */}
-        <ChartCard title={isRu ? 'Рейтинг постов по загрузке' : 'Post Ranking by Occupancy'}>
+        <ChartCard title={isRu ? 'Рейтинг постов по загрузке' : 'Post Ranking by Occupancy'} chartRef={getChartRef('ranking')} onContextMenu={(e) => handleChartContextMenu(e, 'ranking')}>
           <div className="space-y-2">
             {rankingData.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3 cursor-pointer hover:opacity-80"
@@ -250,7 +363,7 @@ export default function Analytics() {
         </ChartCard>
 
         {/* Efficiency comparison */}
-        <ChartCard title={isRu ? 'Эффективность vs Занятость' : 'Efficiency vs Occupancy'}>
+        <ChartCard title={isRu ? 'Эффективность vs Занятость' : 'Efficiency vs Occupancy'} chartRef={getChartRef('efficiency')} onContextMenu={(e) => handleChartContextMenu(e, 'efficiency')}>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={efficiencyData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
@@ -264,7 +377,7 @@ export default function Analytics() {
         </ChartCard>
 
         {/* Pie chart */}
-        <ChartCard title={isRu ? 'Распределение загрузки' : 'Occupancy Distribution'}>
+        <ChartCard title={isRu ? 'Распределение загрузки' : 'Occupancy Distribution'} chartRef={getChartRef('pie')} onContextMenu={(e) => handleChartContextMenu(e, 'pie')}>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100}
@@ -281,7 +394,7 @@ export default function Analytics() {
       </div>
 
       {/* Row 3: Plan vs Fact */}
-      <ChartCard title={isRu ? 'План vs Факт по постам (часы)' : 'Plan vs Actual by Post (hours)'}>
+      <ChartCard title={isRu ? 'План vs Факт по постам (часы)' : 'Plan vs Actual by Post (hours)'} chartRef={getChartRef('plan-fact')} onContextMenu={(e) => handleChartContextMenu(e, 'plan-fact')}>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={planFactData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />

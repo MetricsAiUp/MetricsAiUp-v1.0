@@ -19,7 +19,41 @@
     "mapView2": "Карта СТО v2",
     "mapEditor": "Редактор карты",
     "settings": "Настройки",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "shifts": "Смены"
+  },
+  "shifts": {
+    "title": "Управление сменами",
+    "weekOf": "Неделя с",
+    "newShift": "Новая смена",
+    "editShift": "Редактировать смену",
+    "morning": "Утренняя смена",
+    "evening": "Вечерняя смена",
+    "night": "Ночная смена",
+    "planned": "Запланирована",
+    "active": "Активна",
+    "completed": "Завершена",
+    "workers": "Работники",
+    "worker": "Работник",
+    "role": "Роль",
+    "assignedPost": "Назначенный пост",
+    "mechanic": "Механик",
+    "master": "Мастер",
+    "diagnostician": "Диагност",
+    "completeShift": "Завершить смену",
+    "handoverAct": "Акт передачи",
+    "postStatus": "Состояние постов",
+    "confirmComplete": "Подтвердить и завершить",
+    "shiftCompleted": "Смена завершена",
+    "noShifts": "Нет смен",
+    "currentShift": "Текущая смена",
+    "addWorker": "Добавить работника",
+    "removeWorker": "Удалить работника",
+    "shiftNotes": "Заметки",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "deleteConfirm": "Удалить эту смену?"
   },
   "auth": {
     "login": "Войти",
@@ -180,7 +214,13 @@
     "status_completed": "Завершён",
     "status_in_progress": "В работе",
     "status_scheduled": "Запланирован",
-    "status_overdue": "Просрочен"
+    "status_overdue": "Просрочен",
+    "saveSchedule": "Сохранить расписание",
+    "unsavedChanges": "несохранённых изменений",
+    "conflict": "Конфликт времени",
+    "dragToMove": "Перетащите для перемещения",
+    "assignToPost": "Назначить на пост",
+    "saved": "Расписание сохранено"
   },
   "common": {
     "loading": "Загрузка...",
@@ -266,7 +306,16 @@
     "dragOrClick": "Перетащите файлы или нажмите",
     "processed": "Обработан",
     "added": "Добавлено",
-    "skippedDuplicates": "пропущено дублей"
+    "skippedDuplicates": "пропущено дублей",
+    "syncTab": "Синхронизация",
+    "syncHistory": "История синхронизации",
+    "importFile": "Импорт файла",
+    "exportData": "Экспорт данных",
+    "syncStatus": "Статус",
+    "syncRecords": "Записей",
+    "syncErrors": "Ошибок",
+    "syncSource": "Источник",
+    "noSyncHistory": "Нет истории синхронизации"
   },
   "auth": {
     "login": "Войти",
@@ -306,5 +355,16 @@
     "post": "Пост",
     "time": "Время",
     "confidence": "увер."
+  },
+  "analytics": {
+    "exportExcel": "Экспорт Excel",
+    "exportPdf": "Экспорт PDF",
+    "downloadPng": "Скачать как PNG",
+    "summary": "Сводка",
+    "posts": "Посты",
+    "daily": "По дням",
+    "details": "Детали",
+    "exportSuccess": "Экспорт завершён",
+    "exportError": "Ошибка экспорта"
   }
 }

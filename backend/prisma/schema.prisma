@@ -299,6 +299,24 @@ model Recommendation {
 }
 
 // ==========================================
+// Логи синхронизации 1С
+// ==========================================
+
+model SyncLog {
+  id        String   @id @default(uuid())
+  type      String   // "import" or "export"
+  source    String   // "manual", "auto", "api"
+  filename  String?
+  status    String   @default("pending") // pending, success, error
+  records   Int      @default(0)  // number of records processed
+  errors    Int      @default(0)  // number of errors
+  details   String?  // JSON string with details/errors
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("sync_logs")
+}
+
+// ==========================================
 // Map Layout (STO floor plan editor)
 // ==========================================
 model MapLayout {
@@ -313,4 +331,34 @@ model MapLayout {
   updatedAt DateTime @updatedAt
 
   @@map("map_layouts")
+}
+
+// ==========================================
+// Смены (Shifts)
+// ==========================================
+
+model Shift {
+  id          String   @id @default(uuid())
+  name        String
+  date        DateTime
+  startTime   String   @map("start_time")   // "08:00"
+  endTime     String   @map("end_time")     // "20:00"
+  status      String   @default("planned")  // planned, active, completed
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  workers     ShiftWorker[]
+
+  @@map("shifts")
+}
+
+model ShiftWorker {
+  id        String @id @default(uuid())
+  shiftId   String @map("shift_id")
+  name      String
+  role      String  // "mechanic", "master", "diagnostician"
+  postId    String? @map("post_id")  // assigned post
+  shift     Shift  @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@map("shift_workers")
 }

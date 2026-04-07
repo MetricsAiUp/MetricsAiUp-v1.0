@@ -5,6 +5,7 @@ import {
   Users as UsersIcon, Plus, X, Check, Shield, Eye, EyeOff, Wrench, UserCog,
   ToggleLeft, ToggleRight, Pencil, Trash2,
 } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 
 const ROLE_ICONS = { admin: Shield, manager: UserCog, viewer: Eye, mechanic: Wrench };
@@ -99,6 +100,7 @@ export default function Users() {
           <UsersIcon size={20} style={{ color: 'var(--accent)' }} />
           {isRu ? 'Пользователи' : 'Users'}
           <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>{users.length}</span>
+          <HelpButton pageKey="users" />
         </h2>
         <button onClick={() => setShowNew(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90"

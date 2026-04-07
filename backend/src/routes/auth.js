@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 const { authenticate } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { loginSchema, registerSchema } = require('../schemas/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -50,7 +52,7 @@ function setRefreshCookie(res, refreshToken) {
 }
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   const ip = req.ip || req.connection.remoteAddress;
   if (!checkRateLimit(ip)) {
     return res.status(429).json({ error: 'Слишком много попыток. Подождите минуту.' });
@@ -128,7 +130,7 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // POST /api/auth/register (admin only)
-router.post('/register', authenticate, async (req, res) => {
+router.post('/register', authenticate, validate(registerSchema), async (req, res) => {
   if (!req.user.permissions.includes('manage_users')) {
     return res.status(403).json({ error: 'Недостаточно прав' });
   }

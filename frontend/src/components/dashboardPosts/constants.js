@@ -65,3 +65,35 @@ export function getItemStatus(item) {
   }
   return item.status;
 }
+
+// Snap a timestamp to the nearest 15-minute interval
+export function snapTo15Min(ms) {
+  const d = new Date(ms);
+  const minutes = d.getMinutes();
+  const snapped = Math.round(minutes / 15) * 15;
+  d.setMinutes(snapped, 0, 0);
+  return d.getTime();
+}
+
+// Calculate time from a percentage position within the shift
+export function percentToTime(percent, shiftStart, shiftEnd) {
+  const { start, duration } = getShiftBounds(shiftStart, shiftEnd);
+  const ms = start + (percent / 100) * duration;
+  return snapTo15Min(ms);
+}
+
+// Detect time conflicts (overlapping blocks) in all posts
+export function detectConflicts(posts) {
+  const conflicts = [];
+  posts.forEach(post => {
+    const items = [...post.timeline].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    for (let i = 0; i < items.length - 1; i++) {
+      const endA = new Date(items[i].endTime || items[i].estimatedEnd || items[i].startTime).getTime();
+      const startB = new Date(items[i + 1].startTime).getTime();
+      if (endA > startB) {
+        conflicts.push({ postId: post.id, items: [items[i].id, items[i + 1].id] });
+      }
+    }
+  });
+  return conflicts;
+}

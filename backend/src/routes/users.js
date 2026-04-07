@@ -2,6 +2,8 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { createUserSchema, updateUserSchema } = require('../schemas/users');
 
 // Role-to-pages mapping (mirrors frontend PAGE_PERMISSIONS keys)
 const ROLE_DEFAULT_PAGES = {
@@ -119,7 +121,7 @@ router.get('/:id', requirePermission('manage_users'), async (req, res) => {
 // -------------------------------------------------------
 // POST /api/users — Create user
 // -------------------------------------------------------
-router.post('/', requirePermission('manage_users'), async (req, res) => {
+router.post('/', requirePermission('manage_users'), validate(createUserSchema), async (req, res) => {
   try {
     const { email, password, firstName, lastName, roleIds } = req.body;
 
@@ -158,7 +160,7 @@ router.post('/', requirePermission('manage_users'), async (req, res) => {
 // -------------------------------------------------------
 // PUT /api/users/:id — Update user
 // -------------------------------------------------------
-router.put('/:id', requirePermission('manage_users'), async (req, res) => {
+router.put('/:id', requirePermission('manage_users'), validate(updateUserSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { email, password, firstName, lastName, roleIds, isActive } = req.body;

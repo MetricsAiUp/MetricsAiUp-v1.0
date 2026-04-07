@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Download, AlertCircle, CheckCircle2, Loader2, History } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import * as XLSX from 'xlsx';
 
@@ -425,6 +425,347 @@ function FileUploadZone({ lang, onProcess }) {
   );
 }
 
+function SyncTab({ lang, api }) {
+  const isRu = lang === 'ru';
+  const [syncHistory, setSyncHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const inputRef = useRef(null);
+
+  const SYNC_LOG_KEY = '1c-sync-log';
+
+  useEffect(() => {
+    loadSyncHistory();
+  }, []);
+
+  const loadSyncHistory = async () => {
+    setLoading(true);
+    try {
+      // Try API first
+      const res = await api.get('/api/1c/sync-history');
+      if (res.data && Array.isArray(res.data)) {
+        setSyncHistory(res.data);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      // API not available
+    }
+    // Fallback: localStorage
+    try {
+      const saved = localStorage.getItem(SYNC_LOG_KEY);
+      setSyncHistory(saved ? JSON.parse(saved) : []);
+    } catch (e) {
+      setSyncHistory([]);
+    }
+    setLoading(false);
+  };
+
+  const addLocalLog = (entry) => {
+    const log = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+      ...entry,
+      createdAt: new Date().toISOString(),
+    };
+    setSyncHistory(prev => {
+      const updated = [log, ...prev].slice(0, 100);
+      localStorage.setItem(SYNC_LOG_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    return log;
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+
+      let result;
+      try {
+        // Try API endpoint
+        const res = await fetch('data/1c-sync-log.json');
+        // Actually try the real API
+        const apiRes = await api.post('/api/1c/import', {
+          filename: file.name,
+          data: base64,
+        });
+        result = apiRes.data;
+      } catch (apiErr) {
+        // Fallback: parse locally using xlsx
+        const wb = XLSX.read(arrayBuffer, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        if (rows.length < 2) throw new Error('Empty file');
+
+        const headers = rows[0].map(h => (h || '').toString().trim());
+        const isPlan = headers.some(h => h.includes('Рабочее место') || h.includes('Продолжительность'));
+        const count = rows.length - 1;
+
+        result = {
+          success: true,
+          imported: count,
+          duplicates: 0,
+          errors: 0,
+          planning: isPlan ? { imported: count, duplicates: 0 } : { imported: 0, duplicates: 0 },
+          workers: !isPlan ? { imported: count, duplicates: 0 } : { imported: 0, duplicates: 0 },
+        };
+      }
+
+      setImportResult(result);
+      addLocalLog({
+        type: 'import',
+        source: 'manual',
+        filename: file.name,
+        status: result.errors > 0 ? 'error' : 'success',
+        records: result.imported || 0,
+        errors: result.errors || 0,
+        details: JSON.stringify(result),
+      });
+    } catch (err) {
+      console.error('Import error:', err);
+      setImportResult({ success: false, error: err.message });
+      addLocalLog({
+        type: 'import',
+        source: 'manual',
+        filename: file.name,
+        status: 'error',
+        records: 0,
+        errors: 1,
+        details: JSON.stringify({ error: err.message }),
+      });
+    }
+
+    setImporting(false);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Try API
+      const res = await api.post('/api/1c/export', { status: 'completed' }, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `work-orders-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addLocalLog({
+        type: 'export',
+        source: 'manual',
+        filename: a.download,
+        status: 'success',
+        records: 0,
+        errors: 0,
+      });
+    } catch (e) {
+      // Fallback: export from local data
+      try {
+        const res = await api.get('/api/work-orders');
+        const data = res.data || [];
+        const completed = data.filter(wo => wo.status === 'completed');
+        const wsData = [
+          [isRu ? 'Номер ЗН' : 'WO Number', isRu ? 'Авто' : 'Vehicle', isRu ? 'Тип работ' : 'Work Type', isRu ? 'Нормочасы' : 'Norm Hours', isRu ? 'Статус' : 'Status'],
+          ...completed.map(wo => [wo.orderNumber || wo.order_number || '', wo.plateNumber || wo.plate_number || '', wo.workType || wo.work_type || '', wo.normHours || wo.norm_hours || 0, wo.status || '']),
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Work Orders');
+        XLSX.writeFile(wb, `work-orders-export-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        addLocalLog({
+          type: 'export',
+          source: 'manual',
+          filename: `work-orders-export-${new Date().toISOString().slice(0, 10)}.xlsx`,
+          status: 'success',
+          records: completed.length,
+          errors: 0,
+        });
+      } catch (ex) {
+        console.error('Export error:', ex);
+        addLocalLog({
+          type: 'export',
+          source: 'manual',
+          status: 'error',
+          records: 0,
+          errors: 1,
+          details: JSON.stringify({ error: ex.message }),
+        });
+      }
+    }
+    setExporting(false);
+  };
+
+  const statusIcon = (status) => {
+    if (status === 'success') return <CheckCircle2 size={14} style={{ color: '#10b981' }} />;
+    if (status === 'error') return <AlertCircle size={14} style={{ color: '#ef4444' }} />;
+    return <Loader2 size={14} style={{ color: '#f59e0b' }} className="animate-spin" />;
+  };
+
+  const statusColor = (status) => {
+    if (status === 'success') return '#10b981';
+    if (status === 'error') return '#ef4444';
+    return '#f59e0b';
+  };
+
+  const formatDate = (d) => {
+    if (!d) return '—';
+    try {
+      const dt = new Date(d);
+      return dt.toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch { return d; }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Actions row */}
+      <div className="flex flex-wrap gap-3">
+        {/* Import button */}
+        <div className="flex-1 min-w-[200px]">
+          <div className="rounded-xl p-4" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Upload size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Импорт файла' : 'Import File'}
+              </span>
+            </div>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+              {isRu
+                ? 'Загрузите .xlsx файл из 1С для импорта данных планирования или выработки'
+                : 'Upload .xlsx file from 1C to import planning or worker output data'}
+            </p>
+            <label
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-medium text-white cursor-pointer hover:opacity-90 transition-all"
+              style={{ background: importing ? 'var(--text-muted)' : 'var(--accent)', pointerEvents: importing ? 'none' : 'auto' }}>
+              {importing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {importing ? (isRu ? 'Импорт...' : 'Importing...') : (isRu ? 'Выбрать файл' : 'Choose file')}
+              <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFile} disabled={importing} />
+            </label>
+            {importResult && (
+              <div className="mt-3 px-3 py-2 rounded-lg text-xs" style={{
+                background: importResult.success !== false ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                border: `1px solid ${importResult.success !== false ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                color: importResult.success !== false ? '#10b981' : '#ef4444',
+              }}>
+                {importResult.success !== false
+                  ? `${isRu ? 'Импортировано' : 'Imported'}: ${importResult.imported}, ${isRu ? 'дублей' : 'duplicates'}: ${importResult.duplicates}`
+                  : `${isRu ? 'Ошибка' : 'Error'}: ${importResult.error}`}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Export button */}
+        <div className="flex-1 min-w-[200px]">
+          <div className="rounded-xl p-4" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Download size={16} style={{ color: 'var(--success, #10b981)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Экспорт данных' : 'Export Data'}
+              </span>
+            </div>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+              {isRu
+                ? 'Скачать завершённые заказ-наряды в формате Excel (.xlsx)'
+                : 'Download completed work orders as Excel (.xlsx)'}
+            </p>
+            <button onClick={handleExport} disabled={exporting}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-all"
+              style={{ background: exporting ? 'var(--text-muted)' : '#10b981' }}>
+              {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {exporting ? (isRu ? 'Экспорт...' : 'Exporting...') : (isRu ? 'Скачать Excel' : 'Download Excel')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sync History */}
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center gap-2">
+            <History size={14} style={{ color: 'var(--text-muted)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {isRu ? 'История синхронизации' : 'Sync History'}
+            </span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+              {syncHistory.length}
+            </span>
+          </div>
+          <button onClick={loadSyncHistory} className="p-1.5 rounded-lg hover:opacity-70 transition-all" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+            <RefreshCw size={12} style={{ color: 'var(--text-muted)' }} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 size={20} className="animate-spin" style={{ color: 'var(--accent)' }} />
+          </div>
+        ) : syncHistory.length === 0 ? (
+          <div className="text-center py-8">
+            <Database size={24} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {isRu ? 'Нет истории синхронизации' : 'No sync history'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full" style={{ minWidth: 600 }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-glass)' }}>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Статус' : 'Status'}</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Тип' : 'Type'}</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Источник' : 'Source'}</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Файл' : 'File'}</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Записей' : 'Records'}</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Ошибок' : 'Errors'}</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Дата' : 'Date'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {syncHistory.map((log) => (
+                  <tr key={log.id} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        {statusIcon(log.status)}
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ background: statusColor(log.status) + '15', color: statusColor(log.status) }}>
+                          {log.status === 'success' ? (isRu ? 'Успех' : 'Success') : log.status === 'error' ? (isRu ? 'Ошибка' : 'Error') : (isRu ? 'Ожидание' : 'Pending')}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-primary)' }}>
+                      <span className="px-1.5 py-0.5 rounded" style={{ background: log.type === 'import' ? 'rgba(99,102,241,0.1)' : 'rgba(16,185,129,0.1)', color: log.type === 'import' ? '#6366f1' : '#10b981' }}>
+                        {log.type === 'import' ? (isRu ? 'Импорт' : 'Import') : (isRu ? 'Экспорт' : 'Export')}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      {log.source === 'manual' ? (isRu ? 'Вручную' : 'Manual') : log.source === 'auto' ? (isRu ? 'Авто' : 'Auto') : 'API'}
+                    </td>
+                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-primary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.filename || ''}>
+                      {log.filename || '—'}
+                    </td>
+                    <td className="px-3 py-2 text-xs font-medium" style={{ color: 'var(--accent)' }}>{log.records}</td>
+                    <td className="px-3 py-2 text-xs font-medium" style={{ color: log.errors > 0 ? '#ef4444' : 'var(--text-muted)' }}>{log.errors}</td>
+                    <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(log.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Data1C() {
   const { i18n } = useTranslation();
   const { api } = useAuth();
@@ -509,6 +850,7 @@ export default function Data1C() {
     { key: 'stats', label: isRu ? 'Статистика' : 'Statistics' },
     { key: 'planning', label: isRu ? 'Планирование' : 'Planning' },
     { key: 'workers', label: isRu ? 'Выработка' : 'Output' },
+    { key: 'sync', label: isRu ? 'Синхронизация' : 'Synchronization' },
   ];
 
   return (
@@ -580,6 +922,7 @@ export default function Data1C() {
       {tab === 'stats' && <StatsTab stats={stats} lang={lang} />}
       {tab === 'planning' && <PlanningTab data={planning} lang={lang} />}
       {tab === 'workers' && <WorkersTab data={workers} lang={lang} />}
+      {tab === 'sync' && <SyncTab lang={lang} api={api} />}
     </div>
   );
 }

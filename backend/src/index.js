@@ -24,6 +24,9 @@ const dashboardRoutes = require('./routes/dashboard');
 const cameraRoutes = require('./routes/cameras');
 const userRoutes = require('./routes/users');
 const mapLayoutRoutes = require('./routes/mapLayout');
+const data1cRoutes = require('./routes/data1c');
+const shiftsRoutes = require('./routes/shifts');
+const { startFileWatcher } = require('./services/sync1C');
 
 const app = express();
 
@@ -62,6 +65,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/map-layout', mapLayoutRoutes);
+app.use('/api/1c', data1cRoutes);
+app.use('/api/shifts', shiftsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -82,6 +87,9 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] Running on ${proto}://0.0.0.0:${PORT}`);
   console.log(`[Server] External: https://artisom.dev.metricsavto.com:${PORT}/`);
   console.log(`[Socket.IO] Ready for connections`);
+
+  // Start 1C file watcher (checks /project/data/1c-import/ every 5 minutes)
+  startFileWatcher();
 });
 
 // Graceful shutdown

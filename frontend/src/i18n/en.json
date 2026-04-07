@@ -19,7 +19,41 @@
     "mapView2": "STO Map v2",
     "mapEditor": "Map Editor",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "shifts": "Shifts"
+  },
+  "shifts": {
+    "title": "Shift Management",
+    "weekOf": "Week of",
+    "newShift": "New Shift",
+    "editShift": "Edit Shift",
+    "morning": "Morning Shift",
+    "evening": "Evening Shift",
+    "night": "Night Shift",
+    "planned": "Planned",
+    "active": "Active",
+    "completed": "Completed",
+    "workers": "Workers",
+    "worker": "Worker",
+    "role": "Role",
+    "assignedPost": "Assigned Post",
+    "mechanic": "Mechanic",
+    "master": "Master",
+    "diagnostician": "Diagnostician",
+    "completeShift": "Complete Shift",
+    "handoverAct": "Handover Act",
+    "postStatus": "Post Status",
+    "confirmComplete": "Confirm & Complete",
+    "shiftCompleted": "Shift completed",
+    "noShifts": "No shifts",
+    "currentShift": "Current Shift",
+    "addWorker": "Add Worker",
+    "removeWorker": "Remove Worker",
+    "shiftNotes": "Notes",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this shift?"
   },
   "auth": {
     "login": "Sign In",
@@ -180,7 +214,13 @@
     "status_completed": "Completed",
     "status_in_progress": "In Progress",
     "status_scheduled": "Scheduled",
-    "status_overdue": "Overdue"
+    "status_overdue": "Overdue",
+    "saveSchedule": "Save Schedule",
+    "unsavedChanges": "unsaved changes",
+    "conflict": "Time conflict",
+    "dragToMove": "Drag to move",
+    "assignToPost": "Assign to post",
+    "saved": "Schedule saved"
   },
   "common": {
     "loading": "Loading...",
@@ -266,7 +306,16 @@
     "dragOrClick": "Drag files or click",
     "processed": "Done",
     "added": "Added",
-    "skippedDuplicates": "skipped duplicates"
+    "skippedDuplicates": "skipped duplicates",
+    "syncTab": "Synchronization",
+    "syncHistory": "Sync History",
+    "importFile": "Import File",
+    "exportData": "Export Data",
+    "syncStatus": "Status",
+    "syncRecords": "Records",
+    "syncErrors": "Errors",
+    "syncSource": "Source",
+    "noSyncHistory": "No sync history"
   },
   "auth": {
     "login": "Login",
@@ -306,5 +355,16 @@
     "post": "Post",
     "time": "Time",
     "confidence": "conf"
+  },
+  "analytics": {
+    "exportExcel": "Export Excel",
+    "exportPdf": "Export PDF",
+    "downloadPng": "Download as PNG",
+    "summary": "Summary",
+    "posts": "Posts",
+    "daily": "Daily",
+    "details": "Details",
+    "exportSuccess": "Export completed",
+    "exportError": "Export failed"
   }
 }

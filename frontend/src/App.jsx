@@ -22,6 +22,7 @@ const CameraMapping = lazy(() => import('./pages/CameraMapping'));
 const Users = lazy(() => import('./pages/Users'));
 const MapEditor = lazy(() => import('./pages/MapEditor'));
 const MapViewer = lazy(() => import('./pages/MapViewer'));
+const Shifts = lazy(() => import('./pages/Shifts'));
 
 function PageLoader() {
   return (
@@ -65,6 +66,7 @@ function AppRoutes() {
           <Route path="users" element={<Users />} />
           <Route path="map-editor" element={<MapEditor />} />
           <Route path="map-view" element={<MapViewer />} />
+          <Route path="shifts" element={<Shifts />} />
         </Route>
       </Routes>
     </Suspense>

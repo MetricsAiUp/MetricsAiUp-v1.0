@@ -1,16 +1,26 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Clock, AlertTriangle, Settings,
+  Clock, AlertTriangle, Settings, Save, Check,
   CircleDot, Timer, FileText, Calendar, ArrowRight,
 } from 'lucide-react';
-import { getShiftBounds } from '../components/dashboardPosts/constants';
+import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
 import GanttTimeline from '../components/dashboardPosts/GanttTimeline';
 import ShiftSettings from '../components/dashboardPosts/ShiftSettings';
 import WorkOrderModal from '../components/dashboardPosts/WorkOrderModal';
 import FreeWorkOrdersTable from '../components/dashboardPosts/FreeWorkOrdersTable';
 import Legend from '../components/dashboardPosts/Legend';
+import HelpButton from '../components/HelpButton';
+import { Link } from 'react-router-dom';
+import { Users } from 'lucide-react';
+
+const SHIFTS_BASE = import.meta.env.BASE_URL || './';
+const fetchShifts = async () => {
+  const res = await fetch(`${SHIFTS_BASE}data/shifts.json?t=${Date.now()}`);
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+};
 
 // Main component
 export default function DashboardPosts() {
@@ -22,6 +32,9 @@ export default function DashboardPosts() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState([]);
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
+  const [currentShift, setCurrentShift] = useState(null);
   const [settings, setSettings] = useState({
     shiftStart: '08:00',
     shiftEnd: '20:00',
@@ -36,6 +49,21 @@ export default function DashboardPosts() {
         setSettings(JSON.parse(saved));
       } catch (e) { /* ignore */ }
     }
+  }, []);
+
+  // Load current shift
+  useEffect(() => {
+    fetchShifts()
+      .then(d => {
+        const today = new Date().toISOString().split('T')[0];
+        const active = (d.shifts || []).find(s => s.date === today && s.status === 'active');
+        if (active) setCurrentShift(active);
+        else {
+          const todayShift = (d.shifts || []).find(s => s.date === today);
+          if (todayShift) setCurrentShift(todayShift);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -68,6 +96,154 @@ export default function DashboardPosts() {
     if (!data?.posts) return [];
     return data.posts.slice(0, settings.postsCount);
   }, [data, settings.postsCount]);
+
+  // Conflict detection
+  const conflicts = useMemo(() => detectConflicts(posts), [posts]);
+  const conflictItemIds = useMemo(() => {
+    const set = new Set();
+    conflicts.forEach(c => c.items.forEach(id => set.add(id)));
+    return set;
+  }, [conflicts]);
+
+  // Handle drop from timeline block or free work order
+  const handleDrop = useCallback((dropData) => {
+    if (!data) return;
+
+    const { type, itemId, fromPostId, toPostId, dropPercent } = dropData;
+    const newStartMs = percentToTime(dropPercent, settings.shiftStart, settings.shiftEnd);
+
+    setData(prev => {
+      const newData = JSON.parse(JSON.stringify(prev));
+      const targetPost = newData.posts.find(p => p.id === toPostId);
+      if (!targetPost) return prev;
+
+      if (type === 'timeline-block') {
+        // Moving an existing block
+        const sourcePost = newData.posts.find(p => p.id === fromPostId);
+        if (!sourcePost) return prev;
+
+        const itemIndex = sourcePost.timeline.findIndex(i => i.id === itemId);
+        if (itemIndex === -1) return prev;
+
+        const item = sourcePost.timeline[itemIndex];
+        const startMs = new Date(item.startTime).getTime();
+        const endMs = new Date(item.endTime || item.estimatedEnd || item.startTime).getTime();
+        const durationMs = endMs - startMs;
+
+        const newStart = new Date(newStartMs);
+        const newEnd = new Date(newStartMs + durationMs);
+
+        // Update item times
+        item.startTime = newStart.toISOString();
+        if (item.endTime) {
+          item.endTime = newEnd.toISOString();
+        }
+        if (item.estimatedEnd) {
+          item.estimatedEnd = newEnd.toISOString();
+        }
+
+        // Move between posts if needed
+        if (fromPostId !== toPostId) {
+          sourcePost.timeline.splice(itemIndex, 1);
+          targetPost.timeline.push(item);
+        }
+
+        // Record pending change
+        setPendingChanges(prev => {
+          const existing = prev.findIndex(c => c.workOrderId === item.workOrderId);
+          const change = {
+            workOrderId: item.workOrderId || itemId,
+            itemId,
+            postId: toPostId,
+            startTime: newStart.toISOString(),
+            endTime: newEnd.toISOString(),
+          };
+          if (existing >= 0) {
+            const updated = [...prev];
+            updated[existing] = change;
+            return updated;
+          }
+          return [...prev, change];
+        });
+
+      } else if (type === 'free-work-order') {
+        // Assign a free work order to a post
+        const durationMs = (dropData.normHours || 1) * 60 * 60 * 1000;
+        const newStart = new Date(newStartMs);
+        const newEnd = new Date(newStartMs + durationMs);
+
+        const newTimelineItem = {
+          id: `tl-dnd-${itemId}`,
+          workOrderNumber: dropData.workOrderNumber,
+          workOrderId: itemId,
+          plateNumber: dropData.plateNumber,
+          brand: dropData.brand,
+          model: dropData.model,
+          workType: dropData.workType,
+          status: 'scheduled',
+          startTime: newStart.toISOString(),
+          endTime: null,
+          normHours: dropData.normHours,
+          master: null,
+          worker: null,
+          estimatedEnd: newEnd.toISOString(),
+        };
+
+        targetPost.timeline.push(newTimelineItem);
+
+        // Remove from freeWorkOrders
+        newData.freeWorkOrders = (newData.freeWorkOrders || []).filter(wo => wo.id !== itemId);
+
+        // Record pending change
+        setPendingChanges(prev => [...prev, {
+          workOrderId: itemId,
+          itemId: newTimelineItem.id,
+          postId: toPostId,
+          startTime: newStart.toISOString(),
+          endTime: newEnd.toISOString(),
+          isNew: true,
+        }]);
+      }
+
+      return newData;
+    });
+  }, [data, settings.shiftStart, settings.shiftEnd]);
+
+  // Save schedule
+  const handleSave = useCallback(async () => {
+    if (pendingChanges.length === 0) return;
+    setSaveStatus('saving');
+
+    try {
+      // Try batch API
+      const assignments = pendingChanges.map(c => ({
+        workOrderId: c.workOrderId,
+        postId: c.postId,
+        startTime: c.startTime,
+        endTime: c.endTime,
+      }));
+      await api.post('/api/work-orders/schedule', { assignments });
+      setPendingChanges([]);
+      setSaveStatus('saved');
+    } catch {
+      // Backend not running — save to localStorage as fallback
+      try {
+        localStorage.setItem('dashboardPostsSchedule', JSON.stringify({
+          changes: pendingChanges,
+          savedAt: new Date().toISOString(),
+          posts: data?.posts,
+          freeWorkOrders: data?.freeWorkOrders,
+        }));
+        setPendingChanges([]);
+        setSaveStatus('saved');
+      } catch {
+        setSaveStatus('error');
+      }
+    }
+
+    // Reset status after 2s
+    setTimeout(() => setSaveStatus(null), 2000);
+  }, [pendingChanges, api, data]);
 
   // Summary stats
   const stats = useMemo(() => {
@@ -130,8 +306,9 @@ export default function DashboardPosts() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             {t('dashboardPosts.title')}
+            <HelpButton pageKey="dashboardPosts" />
           </h2>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             {t('dashboardPosts.subtitle')} · {settings.shiftStart} – {settings.shiftEnd}
@@ -144,6 +321,43 @@ export default function DashboardPosts() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Save button — only visible when there are pending changes */}
+          {pendingChanges.length > 0 && (
+            <button
+              onClick={handleSave}
+              disabled={saveStatus === 'saving'}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+              style={{
+                background: saveStatus === 'saved' ? 'var(--success)' : 'var(--accent)',
+                color: '#fff',
+                opacity: saveStatus === 'saving' ? 0.7 : 1,
+              }}
+            >
+              {saveStatus === 'saved' ? (
+                <Check size={14} />
+              ) : (
+                <Save size={14} />
+              )}
+              {saveStatus === 'saving'
+                ? (isRu ? 'Сохранение...' : 'Saving...')
+                : saveStatus === 'saved'
+                  ? t('dashboardPosts.saved')
+                  : `${t('dashboardPosts.saveSchedule')} (${pendingChanges.length})`
+              }
+            </button>
+          )}
+
+          {/* Conflict indicator */}
+          {conflicts.length > 0 && (
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium"
+              style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid var(--danger)' }}
+            >
+              <AlertTriangle size={13} />
+              {t('dashboardPosts.conflict')} ({conflicts.length})
+            </div>
+          )}
+
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <Calendar size={14} style={{ color: 'var(--accent)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -159,6 +373,33 @@ export default function DashboardPosts() {
           </button>
         </div>
       </div>
+
+      {/* Current Shift Indicator */}
+      {currentShift && (
+        <Link
+          to="/shifts"
+          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:opacity-90 transition-opacity"
+          style={{
+            background: currentShift.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-glass)',
+            border: `1px solid ${currentShift.status === 'active' ? 'rgba(34, 197, 94, 0.3)' : 'var(--border-glass)'}`,
+          }}
+        >
+          <Clock size={14} style={{ color: currentShift.status === 'active' ? 'var(--success)' : 'var(--accent)' }} />
+          <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+            {t('shifts.currentShift')}: {currentShift.name}
+          </span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {currentShift.startTime} - {currentShift.endTime}
+          </span>
+          <div className="flex items-center gap-1">
+            <Users size={12} style={{ color: 'var(--text-muted)' }} />
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {currentShift.workers?.length || 0}
+            </span>
+          </div>
+          <ArrowRight size={12} style={{ color: 'var(--accent)' }} />
+        </Link>
+      )}
 
       {/* Summary stats */}
       <div className="flex flex-wrap gap-2">
@@ -206,6 +447,8 @@ export default function DashboardPosts() {
         shiftStart={settings.shiftStart}
         shiftEnd={settings.shiftEnd}
         onBlockClick={handleBlockClick}
+        onDrop={handleDrop}
+        conflictItemIds={conflictItemIds}
       />
 
       {/* Free work orders */}

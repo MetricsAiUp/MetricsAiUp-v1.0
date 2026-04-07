@@ -1,0 +1,20 @@
+const { z } = require('zod');
+
+const createUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  roleIds: z.array(z.number().int()).optional(),
+});
+
+const updateUserSchema = z.object({
+  email: z.string().email().optional(),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  password: z.string().min(6).optional(),
+  roleIds: z.array(z.number().int()).optional(),
+  isActive: z.boolean().optional(),
+});
+
+module.exports = { createUserSchema, updateUserSchema };

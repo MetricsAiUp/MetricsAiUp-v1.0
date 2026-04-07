@@ -7,6 +7,7 @@ import {
   MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus, Maximize2, ArrowRightLeft,
   Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
 } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 const ELEMENT_DEFAULTS = {
   building: { width: 930, height: 614, color: '#22c55e' },
@@ -407,7 +408,7 @@ export default function MapEditor() {
     <div className="flex flex-col h-full overflow-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Top Bar */}
       <div className="glass-static flex items-center gap-2 px-3 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-glass)' }}>
-        <h2 className="text-sm font-semibold mr-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.title')}</h2>
+        <h2 className="text-sm font-semibold mr-2 flex items-center gap-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.title')} <HelpButton pageKey="mapEditor" /></h2>
 
         <input
           type="text"

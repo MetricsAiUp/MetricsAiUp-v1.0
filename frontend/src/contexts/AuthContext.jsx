@@ -26,6 +26,7 @@ const PAGE_PERMISSIONS = {
   'analytics': ['view_analytics'],
   'cameras': ['view_cameras'],
   'camera-mapping': ['manage_cameras'],
+  'shifts': ['view_shifts', 'manage_shifts'],
   'data-1c': ['view_work_orders'],
   'users': ['manage_users'],
   'map-view': ['view_zones'],
@@ -117,8 +118,8 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
 // Default pages per role (used when backend doesn't return pages)
 const ROLE_DEFAULT_PAGES = {
   admin: Object.keys(PAGE_PERMISSIONS),
-  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'data-1c'],
-  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
+  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'data-1c'],
+  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'cameras'],
   mechanic: ['dashboard', 'dashboard-posts', 'map'],
   viewer: ['dashboard', 'posts-detail', 'map'],
 };

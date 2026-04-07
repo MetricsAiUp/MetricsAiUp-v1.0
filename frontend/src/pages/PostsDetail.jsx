@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { X, User, AlertTriangle } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 import PostCardsView from '../components/postsDetail/PostCardsView';
 import PostTableView from '../components/postsDetail/PostTableView';
 import PostDetailPanel from '../components/postsDetail/PostDetailPanel';
@@ -109,7 +110,7 @@ export default function PostsDetail() {
           <div>
             {/* Header with period + view toggle */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')}</h2>
+              <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')} <HelpButton pageKey="postsDetail" /></h2>
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Period selector */}
                 <div className="flex items-center gap-1">

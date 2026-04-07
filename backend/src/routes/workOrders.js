@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { importCsvSchema, assignSchema, scheduleSchema } = require('../schemas/workOrders');
 const { parse } = require('csv-parse/sync');
 const fs = require('fs');
 
@@ -33,7 +35,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // POST /api/work-orders/import-csv — импорт из CSV
-router.post('/import-csv', authenticate, requirePermission('manage_work_orders'), async (req, res) => {
+router.post('/import-csv', authenticate, requirePermission('manage_work_orders'), validate(importCsvSchema), async (req, res) => {
   try {
     const { csvData } = req.body;
     if (!csvData) return res.status(400).json({ error: 'csvData обязателен' });
@@ -60,6 +62,56 @@ router.post('/import-csv', authenticate, requirePermission('manage_work_orders')
     }
 
     res.status(201).json({ imported: created.length, orders: created });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/work-orders/:id/assign — assign/move a work order to a post with specific time
+router.put('/:id/assign', authenticate, requirePermission('manage_work_orders'), validate(assignSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { postId, startTime, endTime } = req.body;
+
+    const order = await prisma.workOrder.update({
+      where: { id },
+      data: {
+        postId,
+        scheduledTime: new Date(startTime),
+        estimatedEnd: new Date(endTime),
+        status: 'scheduled',
+      },
+    });
+
+    res.json({ order });
+  } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: 'Work order not found' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/work-orders/schedule — batch update multiple work orders
+router.post('/schedule', authenticate, requirePermission('manage_work_orders'), validate(scheduleSchema), async (req, res) => {
+  try {
+    const { assignments } = req.body;
+    const results = [];
+
+    for (const assignment of assignments) {
+      const order = await prisma.workOrder.update({
+        where: { id: assignment.workOrderId },
+        data: {
+          postId: assignment.postId,
+          scheduledTime: new Date(assignment.startTime),
+          estimatedEnd: new Date(assignment.endTime),
+          status: 'scheduled',
+        },
+      });
+      results.push(order);
+    }
+
+    res.json({ updated: results.length, orders: results });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
