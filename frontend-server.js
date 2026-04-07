@@ -7,7 +7,7 @@ const path = require('path');
 const SSL_CERT = '/project/.ssl/fullchain.pem';
 const SSL_KEY = '/project/.ssl/privkey.pem';
 const PORT = 443;
-const BACKEND = 'https://127.0.0.1:3001';
+const BACKEND = 'http://127.0.0.1:3001';
 const ROOT = '/project';
 
 const MIME = {
@@ -31,9 +31,8 @@ const server = https.createServer({
       path: req.url,
       method: req.method,
       headers: { ...req.headers, host: 'localhost:3001' },
-      rejectUnauthorized: false, // self-signed OK for localhost
     };
-    const proxy = https.request(opts, (proxyRes) => {
+    const proxy = http.request(opts, (proxyRes) => {
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
       proxyRes.pipe(res);
     });
@@ -73,7 +72,7 @@ server.on('upgrade', (req, socket, head) => {
       headers: { ...req.headers, host: 'localhost:3001' },
       rejectUnauthorized: false,
     };
-    const proxy = https.request(opts);
+    const proxy = http.request(opts);
     proxy.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
       socket.write('HTTP/1.1 101 Switching Protocols\r\n' +
         Object.entries(proxyRes.headers).map(([k,v]) => `${k}: ${v}`).join('\r\n') + '\r\n\r\n');

@@ -83,7 +83,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(projectRoot, 'index.html'));
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3001;
+const PROXY_PORT = 8080; // VPS proxies artisom.dev.metricsavto.com → container:8080
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] HTTP running on http://0.0.0.0:${PORT}`);
@@ -91,12 +92,21 @@ server.listen(PORT, '0.0.0.0', () => {
   startFileWatcher();
 });
 
-// HTTPS on PORT+443 offset (e.g. 3001 → 3444) for direct external access
+// Also listen on 8080 for VPS proxy (same app, just another HTTP server)
+if (parseInt(PORT) !== PROXY_PORT) {
+  const proxyServer = http.createServer(app);
+  initSocket(proxyServer);
+  proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
+    console.log(`[Server] HTTP running on http://0.0.0.0:${PROXY_PORT} (VPS proxy)`);
+    console.log(`[Server] Frontend: https://artisom.dev.metricsavto.com/`);
+  });
+}
+
+// HTTPS for direct external access
 if (httpsServer) {
   const HTTPS_PORT = parseInt(PORT) + 443;
   httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
     console.log(`[Server] HTTPS running on https://0.0.0.0:${HTTPS_PORT}`);
-    console.log(`[Server] External: https://artisom.dev.metricsavto.com:${HTTPS_PORT}/`);
   });
 }
 
