@@ -16,7 +16,7 @@ const ELEMENT_DEFAULTS = {
   post:   { width: 120, height: 80, color: '#3b82f6' },
   zone:   { width: 160, height: 100, color: '#22c55e' },
   camera: { width: 24, height: 24, color: '#ef4444', data: { direction: 0, fov: 90, range: 80 } },
-  door:   { width: 60, height: 8, color: '#f59e0b' },
+  door:   { width: 60, height: 8, color: '#f59e0b', thickness: 8 },
   wall:   { width: 200, height: 6, color: '#6b7280', thickness: 6 },
   label:  { width: 100, height: 30, color: '#a855f7' },
   infozone: { width: 200, height: 150, color: '#8b5cf6' },
@@ -47,7 +47,7 @@ const TOOLS = [
   { id: 'driveway', icon: ArrowRightLeft, label: 'Driveway',
     tip: { ru: 'Проезд / проезжая часть. Рисует границы проезда для автомобилей между постами и зонами. Можно растягивать и поворачивать.', en: 'Driveway / roadway. Draws driveway boundaries between posts and zones. Can be resized and rotated.' } },
   { id: 'door', icon: DoorOpen, label: 'Door',
-    tip: { ru: 'Дверь / ворота / въезд. Визуальный элемент для обозначения входов.', en: 'Door / gate / entrance. Visual element marking entry points.' } },
+    tip: { ru: 'Дверь / ворота / въезд. Кликайте для добавления точек, Применить — завершить. Ширину можно настроить в свойствах.', en: 'Door / gate / entrance. Click to add points, Apply to finish. Width adjustable in properties.' } },
   { id: 'wall', icon: Minus, label: 'Wall',
     tip: { ru: 'Стена / перегородка. Кликайте для добавления точек, двойной клик — завершить. Толщину можно настроить в свойствах.', en: 'Wall / partition. Click to add points, double-click to finish. Thickness adjustable in properties.' } },
   { id: 'label', icon: Type, label: 'Label',
@@ -334,7 +334,7 @@ export default function MapEditor() {
   // Finish polygon drawing — create element of given type
   const finishPolygon = useCallback((pts, elType) => {
     const type = elType || 'building';
-    const minPts = type === 'wall' ? 4 : 6; // wall needs 2+ points, others 3+
+    const minPts = (type === 'wall' || type === 'door') ? 4 : 6; // wall/door needs 2+ points, others 3+
     if (!pts || pts.length < minPts) return;
     const xs = pts.filter((_, i) => i % 2 === 0);
     const ys = pts.filter((_, i) => i % 2 === 1);
@@ -374,20 +374,20 @@ export default function MapEditor() {
     const px = snapEnabled ? snapToGrid(x) : x;
     const py = snapEnabled ? snapToGrid(y) : y;
 
-    // Polygon drawing mode (building/wall always, others when activated via drawingPolygon)
-    if (isPolygonDrawing || tool === 'building' || tool === 'wall') {
+    // Polygon drawing mode (building/wall/door always, others when activated via drawingPolygon)
+    if (isPolygonDrawing || tool === 'building' || tool === 'wall' || tool === 'door') {
       const drawType = drawingPolygon?.elType || tool;
       if (!drawingPolygon) {
         setDrawingPolygon({ points: [px, py], elType: drawType });
       } else {
         const fp = drawingPolygon.points;
         const dist = Math.hypot(px - fp[0], py - fp[1]);
-        if (drawType !== 'wall' && fp.length >= 6 && dist < 15 / stageScale) {
+        if (drawType !== 'wall' && drawType !== 'door' && fp.length >= 6 && dist < 15 / stageScale) {
           finishPolygon(fp, drawingPolygon.elType);
         } else {
           let nx = px, ny = py;
-          // Wall: constrain to 90° angles (horizontal/vertical segments only)
-          if (drawType === 'wall' && fp.length >= 2) {
+          // Wall/Door: constrain to 90° angles (horizontal/vertical segments only)
+          if ((drawType === 'wall' || drawType === 'door') && fp.length >= 2) {
             const prevX = fp[fp.length - 2], prevY = fp[fp.length - 1];
             const dx = Math.abs(px - prevX), dy = Math.abs(py - prevY);
             if (dx >= dy) { ny = prevY; } else { nx = prevX; }
@@ -416,8 +416,8 @@ export default function MapEditor() {
   // Double-click to finish polygon
   const handleStageDblClick = (e) => {
     if (!drawingPolygon) return;
-    const minPts = drawingPolygon.elType === 'wall' ? 4 : 6;
-    if (drawingPolygon.points.length >= minPts) {
+    const dblMinPts = (drawingPolygon.elType === 'wall' || drawingPolygon.elType === 'door') ? 4 : 6;
+    if (drawingPolygon.points.length >= dblMinPts) {
       e.evt?.preventDefault();
       finishPolygon(drawingPolygon.points, drawingPolygon.elType);
     }
@@ -600,8 +600,8 @@ export default function MapEditor() {
       );
     }
 
-    // ── Wall (polygon mode) ──
-    if (el.type === 'wall' && el.shapeMode === 'polygon' && el.points?.length >= 4) {
+    // ── Wall / Door (polygon mode) ──
+    if ((el.type === 'wall' || el.type === 'door') && el.shapeMode === 'polygon' && el.points?.length >= 4) {
       const pts = el.points;
       const thickness = el.data?.thickness || 6;
       const vertexColor = '#e11d48';
@@ -763,7 +763,7 @@ export default function MapEditor() {
         {/* Canvas */}
         <div ref={containerRef} className="flex-1 overflow-hidden relative" style={{ background: 'var(--bg-primary)', cursor: tool === 'select' ? 'default' : 'crosshair' }}>
           {/* Polygon drawing toolbar */}
-          {(tool === 'building' || tool === 'wall' || isPolygonDrawing) && (
+          {(tool === 'building' || tool === 'wall' || tool === 'door' || isPolygonDrawing) && (
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg shadow-lg"
               style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid #22c55e55', color: '#22c55e' }}>
               <PenTool size={14} />
@@ -787,12 +787,12 @@ export default function MapEditor() {
                 </button>
                 {/* Apply / Finish */}
                 <button onClick={() => {
-                  const minPts = drawingPolygon.elType === 'wall' ? 4 : 6;
+                  const minPts = (drawingPolygon.elType === 'wall' || drawingPolygon.elType === 'door') ? 4 : 6;
                   if (drawingPolygon.points.length >= minPts) {
                     finishPolygon(drawingPolygon.points, drawingPolygon.elType);
                   }
                 }}
-                  disabled={drawingPolygon.points.length < (drawingPolygon.elType === 'wall' ? 4 : 6)}
+                  disabled={drawingPolygon.points.length < ((drawingPolygon.elType === 'wall' || drawingPolygon.elType === 'door') ? 4 : 6)}
                   className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-30"
                   style={{ background: '#22c55e', color: '#fff' }}>
                   <Check size={12} /> {i18n.language === 'ru' ? 'Применить' : 'Apply'}
@@ -943,11 +943,11 @@ export default function MapEditor() {
                 </div>
               </>)}
 
-              {/* Wall thickness */}
-              {selected.type === 'wall' && selected.shapeMode === 'polygon' && (
+              {/* Wall / Door thickness */}
+              {(selected.type === 'wall' || selected.type === 'door') && selected.shapeMode === 'polygon' && (
                 <div className="space-y-1 mt-1 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
                   <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
-                    {i18n.language === 'ru' ? 'Толщина' : 'Thickness'}
+                    {i18n.language === 'ru' ? (selected.type === 'door' ? 'Ширина' : 'Толщина') : (selected.type === 'door' ? 'Width' : 'Thickness')}
                   </label>
                   <input type="range" min="2" max="40" value={selected.data?.thickness || 6}
                     onChange={e => updateProp('data', { ...selected.data, thickness: +e.target.value })}

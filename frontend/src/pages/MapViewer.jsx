@@ -240,15 +240,31 @@ export default function MapViewer() {
       const cw = rect.width;
       const ch = window.innerHeight - rect.top - 20; // fill to bottom of viewport
 
-      // Compute bounding box of all elements
+      // Compute bounding box of all elements (including polygon points, camera range)
       const els = layout?.elements || [];
       let maxX = 100, maxY = 100;
       for (const el of els) {
-        const ex = (el.x || 0) + (el.width || 0);
-        const ey = (el.y || 0) + (el.height || 0);
+        let ex = (el.x || 0) + (el.width || 0);
+        let ey = (el.y || 0) + (el.height || 0);
+        // Polygon points
+        if (el.points?.length >= 2) {
+          for (let i = 0; i < el.points.length; i += 2) {
+            ex = Math.max(ex, (el.x || 0) + el.points[i]);
+            ey = Math.max(ey, (el.y || 0) + el.points[i + 1]);
+          }
+        }
+        // Camera FOV range
+        if (el.type === 'camera') {
+          const range = el.data?.range || 80;
+          ex = Math.max(ex, (el.x || 0) + (el.width || 24) + range);
+          ey = Math.max(ey, (el.y || 0) + (el.height || 24) + range);
+        }
         if (ex > maxX) maxX = ex;
         if (ey > maxY) maxY = ey;
       }
+      // Add padding
+      maxX += 20;
+      maxY += 20;
 
       // Scale to fit — no upper limit, fill available space
       const fitScale = Math.min(cw / maxX, ch / maxY);
@@ -443,10 +459,10 @@ export default function MapViewer() {
             {elements.map(el => {
               const isPolygon = el.shapeMode === 'polygon' && el.points?.length >= 4;
 
-              // ── Polygon mode for any area type ──
-              if (isPolygon && el.type !== 'post') {
+              // ── Polygon mode for area types (building, zone, driveway) — NOT wall/door/infozone/post ──
+              if (isPolygon && !['post', 'wall', 'door', 'infozone'].includes(el.type)) {
                 const fillOpacity = el.type === 'building' ? 0 : 0.08;
-                const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4] : undefined;
+                const dash = el.type === 'building' ? [8, 4] : undefined;
                 const stroke = el.color || '#22c55e';
                 return (
                   <Group key={el.id} x={el.x} y={el.y}>
@@ -544,7 +560,7 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   const headerH = s * 0.25;
   const sw = Math.max(s * 0.03, 2);
   return (
-    <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
+    <Group x={el.x} y={el.y} rotation={el.rotation || 0} onClick={onClick} onTap={onClick}>
       <Rect width={w} height={h} fill={fillBg}
         stroke={color} strokeWidth={sw} cornerRadius={s * 0.06} shadowBlur={s * 0.06}
         shadowColor={color} shadowOpacity={0.3} />
@@ -575,7 +591,7 @@ function ZoneEl({ el, isDark, zonesData }) {
   const fs = Math.max(s * 0.12, 8);
   const sw = Math.max(s * 0.015, 1);
   return (
-    <Group x={el.x} y={el.y}>
+    <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
       <Rect width={w} height={h} fill={fill} opacity={isDark ? ZONE_FILL_OPACITY.dark : ZONE_FILL_OPACITY.light}
         stroke={fill} strokeWidth={sw} cornerRadius={s * 0.04}
         dash={[s * 0.06, s * 0.03]} />
@@ -607,7 +623,9 @@ function CameraEl({ el, isDark, onClick }) {
   const r = Math.max(w * 0.4, 10);
   const fs = Math.max(r * 0.7, 8);
   return (
-    <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
+    <Group x={el.x} y={el.y} rotation={el.rotation || 0}
+      offsetX={w / 2} offsetY={h / 2}
+      onClick={onClick} onTap={onClick}>
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
         fill={fill} opacity={isDark ? CAMERA_FOV_OPACITY.dark : CAMERA_FOV_OPACITY.light} stroke={fill} strokeWidth={1} dash={[8, 4]} />
       <Circle x={cx} y={cy} radius={r} fill={fill} opacity={0.9}
@@ -620,17 +638,19 @@ function CameraEl({ el, isDark, onClick }) {
 }
 
 function DoorEl({ el, isDark }) {
+  if (el.shapeMode === 'polygon' && el.points?.length >= 4) {
+    const thickness = el.data?.thickness || 8;
+    return (
+      <Line x={el.x} y={el.y} points={el.points} closed={false}
+        stroke={el.color || '#f59e0b'} strokeWidth={thickness}
+        opacity={0.6} lineCap="round" lineJoin="round" />
+    );
+  }
   const fill = el.color || '#f59e0b';
-  const textColor = isDark ? '#fcd34d' : '#92400e';
-  const s = Math.min(el.width || 60, el.height || 8);
-  const fs = Math.max(s * 0.8, 8);
+  const w = el.width || 60, h = el.height || 8;
   return (
-    <Group x={el.x} y={el.y}>
-      <Rect width={el.width} height={el.height} fill={fill} opacity={0.3}
-        stroke={fill} strokeWidth={Math.max(s * 0.1, 1)} cornerRadius={s * 0.2} />
-      <Text x={4} y={el.height / 2 - fs / 2} text={el.name} fontSize={fs}
-        fill={textColor} fontStyle="bold" />
-    </Group>
+    <Rect x={el.x} y={el.y} width={w} height={h} rotation={el.rotation || 0}
+      fill={fill} opacity={0.5} stroke={fill} strokeWidth={1} cornerRadius={2} />
   );
 }
 
@@ -640,13 +660,13 @@ function WallEl({ el }) {
     return (
       <Line x={el.x} y={el.y} points={el.points} closed={false}
         stroke={el.color || '#6b7280'} strokeWidth={thickness}
-        opacity={0.6} lineCap="round" lineJoin="round" />
+        opacity={0.75} lineCap="round" lineJoin="round" />
     );
   }
-  const s = Math.min(el.width || 200, el.height || 6);
+  const w = el.width || 200, h = el.height || 6;
   return (
-    <Rect x={el.x} y={el.y} width={el.width} height={el.height}
-      fill={el.color || '#6b7280'} opacity={0.6} cornerRadius={s * 0.1} />
+    <Rect x={el.x} y={el.y} width={w} height={h} rotation={el.rotation || 0}
+      fill={el.color || '#6b7280'} opacity={0.75} />
   );
 }
 
@@ -680,7 +700,7 @@ function InfoZoneEl({ el, isDark, stats, isRu, statusColors }) {
   const dotR = fs * 0.5;
 
   return (
-    <Group x={el.x} y={el.y}>
+    <Group x={el.x} y={el.y} rotation={el.rotation || 0} clipX={0} clipY={0} clipWidth={w} clipHeight={h}>
       <Rect width={w} height={h} fill={bgFill} cornerRadius={s * 0.05}
         stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth={Math.max(s * 0.01, 1)}
         shadowBlur={s * 0.04} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
