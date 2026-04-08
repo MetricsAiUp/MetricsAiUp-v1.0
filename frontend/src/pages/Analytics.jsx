@@ -473,20 +473,20 @@ export default function Analytics() {
       {/* Heatmap */}
       {heatmapData.length > 0 && (
         <ChartCard title={t('analytics.heatmapTitle')}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs" style={{ minWidth: 600 }}>
+          <div>
+            <table className="w-full text-xs table-fixed">
               <thead>
                 <tr>
-                  <th className="text-left px-2 py-1.5" style={{ color: 'var(--text-muted)', width: 80 }}>{isRu ? 'Пост' : 'Post'}</th>
+                  <th className="text-left px-1 py-1" style={{ color: 'var(--text-muted)', width: '7%' }}>{isRu ? 'Пост' : 'Post'}</th>
                   {Array.from({ length: 12 }, (_, i) => i + 8).map(h => (
-                    <th key={h} className="text-center px-1 py-1.5" style={{ color: 'var(--text-muted)', minWidth: 36 }}>{h}:00</th>
+                    <th key={h} className="text-center px-0 py-1" style={{ color: 'var(--text-muted)', fontSize: 10 }}>{h}:00</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {heatmapData.map(post => (
                   <tr key={post.id}>
-                    <td className="px-2 py-1 font-medium whitespace-nowrap" style={{ color: post.color }}>{post.name}</td>
+                    <td className="px-1 py-0.5 font-medium truncate" style={{ color: post.color, fontSize: 10 }}>{post.name}</td>
                     {post.hours.map((h, hi) => {
                       const pct = h.occupancy;
                       const bg = pct >= 80 ? 'rgba(239,68,68,0.6)'
@@ -495,8 +495,8 @@ export default function Analytics() {
                         : pct >= 20 ? 'rgba(34,197,94,0.3)'
                         : 'rgba(34,197,94,0.1)';
                       return (
-                        <td key={hi} className="text-center px-1 py-1 relative group">
-                          <div className="rounded" style={{ background: bg, padding: '3px 2px', fontWeight: 600, color: 'var(--text-primary)', fontSize: 10 }}>
+                        <td key={hi} className="text-center px-0 py-0.5 relative group">
+                          <div className="rounded" style={{ background: bg, padding: '2px 0', fontWeight: 600, color: 'var(--text-primary)', fontSize: 9 }}>
                             {pct}%
                           </div>
                           <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
