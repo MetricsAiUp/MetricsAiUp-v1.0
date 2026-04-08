@@ -11,10 +11,18 @@ if (!fs.existsSync(PHOTOS_DIR)) {
   fs.mkdirSync(PHOTOS_DIR, { recursive: true });
 }
 
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+function sanitizePath(input) {
+  if (!input) return null;
+  return input.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
 // POST /api/photos — upload photo (base64 in body)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { sessionId, workOrderId, image, filename } = req.body;
+    const { sessionId, workOrderId, image } = req.body;
     if (!image) return res.status(400).json({ error: 'No image data' });
 
     // Decode base64
@@ -22,18 +30,23 @@ router.post('/', authenticate, async (req, res) => {
     if (!matches) return res.status(400).json({ error: 'Invalid image format' });
 
     const mimeType = matches[1];
+    if (!ALLOWED_MIME.has(mimeType)) return res.status(400).json({ error: 'Unsupported image type' });
+
     const buffer = Buffer.from(matches[2], 'base64');
+    if (buffer.length > MAX_SIZE) return res.status(400).json({ error: 'Image too large (max 10MB)' });
+
     const ext = mimeType.split('/')[1] || 'jpg';
-    const fname = filename || `photo-${Date.now()}.${ext}`;
+    const fname = `photo-${Date.now()}.${ext}`;
+    const safeSessionId = sanitizePath(sessionId);
 
     // Create session directory
-    const dir = sessionId ? path.join(PHOTOS_DIR, sessionId) : PHOTOS_DIR;
+    const dir = safeSessionId ? path.join(PHOTOS_DIR, safeSessionId) : PHOTOS_DIR;
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const filePath = path.join(dir, fname);
     fs.writeFileSync(filePath, buffer);
 
-    const relativePath = sessionId ? `photos/${sessionId}/${fname}` : `photos/${fname}`;
+    const relativePath = safeSessionId ? `photos/${safeSessionId}/${fname}` : `photos/${fname}`;
 
     const photo = await prisma.photo.create({
       data: {

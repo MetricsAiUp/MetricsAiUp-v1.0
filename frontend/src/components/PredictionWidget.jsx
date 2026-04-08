@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, Clock, BarChart3, RefreshCw } from 'lucide-react';
 
-const ML_API = 'https://artisom.dev.metricsavto.com:8282';
+const ML_API = import.meta.env.VITE_ML_API_URL || `${window.location.protocol}//${window.location.hostname}:8282`;
 
 export default function PredictionWidget() {
   const { t, i18n } = useTranslation();

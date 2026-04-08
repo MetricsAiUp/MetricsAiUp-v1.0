@@ -12,13 +12,17 @@ export default function QRBadge({ sessionId, plateNumber, entryTime, onClose }) 
     ? new Date(entryTime).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
     : '';
 
+  const escapeHtml = (str) => (str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
   const handlePrint = () => {
     const content = printRef.current;
     if (!content) return;
     const printWindow = window.open('', '_blank', 'width=400,height=500');
+    const safePlate = escapeHtml(plateNumber || '---');
+    const safeTime = escapeHtml(formattedTime);
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html><head><title>QR - ${plateNumber}</title>
+      <html><head><title>QR - ${safePlate}</title>
       <style>
         body { font-family: monospace; text-align: center; padding: 20px; }
         .plate { font-size: 28px; font-weight: bold; margin: 12px 0; letter-spacing: 2px;
@@ -26,8 +30,8 @@ export default function QRBadge({ sessionId, plateNumber, entryTime, onClose }) 
         .time { color: #666; font-size: 14px; margin-bottom: 16px; }
         svg { margin: 0 auto; }
       </style></head><body>
-        <div class="plate">${plateNumber || '---'}</div>
-        <div class="time">${formattedTime}</div>
+        <div class="plate">${safePlate}</div>
+        <div class="time">${safeTime}</div>
         ${content.querySelector('svg')?.outerHTML || ''}
         <script>window.onload=()=>{window.print();window.close();}<\/script>
       </body></html>

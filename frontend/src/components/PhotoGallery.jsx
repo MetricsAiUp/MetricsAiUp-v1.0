@@ -15,18 +15,20 @@ export default function PhotoGallery({ sessionId, workOrderId, photos = [], onPh
     if (!file) return;
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        await api.post('/api/photos', {
-          sessionId,
-          workOrderId,
-          image: reader.result,
-          filename: file.name,
-        });
-        onPhotosChange?.();
-      };
-      reader.readAsDataURL(file);
-    } catch { /* ignore */ }
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await api.post('/api/photos', {
+        sessionId,
+        workOrderId,
+        image: dataUrl,
+        filename: file.name,
+      });
+      onPhotosChange?.();
+    } catch { /* upload failed silently */ }
     setUploading(false);
   };
 

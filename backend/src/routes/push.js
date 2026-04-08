@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 
 let webpush;
 try {
@@ -46,8 +46,8 @@ router.post('/subscribe', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/push/send — send push to a user (admin)
-router.post('/send', authenticate, async (req, res) => {
+// POST /api/push/send — send push to a user (admin only)
+router.post('/send', authenticate, requirePermission('manage_users'), async (req, res) => {
   try {
     const { userId, title, body, url } = req.body;
     if (!webpush) return res.status(503).json({ error: 'Push not configured' });

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 MetricsAiUp — ML Predictive Analytics API
 FastAPI service for load forecasting and work order duration prediction.
