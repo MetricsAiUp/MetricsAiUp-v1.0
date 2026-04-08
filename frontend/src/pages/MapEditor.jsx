@@ -24,6 +24,10 @@ const ELEMENT_DEFAULTS = {
 
 const AREA_TYPES = new Set(['building', 'post', 'zone', 'driveway', 'infozone']);
 
+// Scale font size relative to element dimensions
+const calcFontSize = (w, h, base = 0.3, min = 10, max = 28) =>
+  Math.round(Math.max(min, Math.min(Math.min(w, h) * base, max)));
+
 const DRAFT_KEY = 'stoMapLayout_draft';
 const SNAP_STEP = 10;
 const HISTORY_LIMIT = 50;
@@ -540,8 +544,13 @@ export default function MapEditor() {
               fill={vertexColor} stroke="#fff" strokeWidth={3}
               shadowBlur={6} shadowColor={vertexColor} shadowOpacity={0.6} />
           ))}
-          <Text text={el.name} x={pts[0] || 0} y={(pts[1] || 0) - 18} fontSize={11}
-            fill={el.color} fontStyle="bold" />
+          {(() => {
+            const xs = pts.filter((_, i) => i % 2 === 0), ys = pts.filter((_, i) => i % 2 === 1);
+            const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys);
+            const fs = calcFontSize(bw || 100, bh || 60, 0.25, 11, 24);
+            return <Text text={el.name} x={Math.min(...xs)} y={Math.min(...ys) - fs - 4}
+              fontSize={fs} fill={el.color} fontStyle="bold" />;
+          })()}
         </Group>
       );
     }
@@ -560,9 +569,10 @@ export default function MapEditor() {
           <Rect width={w} height={h} fill={el.color} opacity={fillOpacity}
             stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1}
             cornerRadius={cr} dash={dash} />
-          <Text text={el.name} width={w} height={h} fontSize={11}
-            fill={el.type === 'building' || el.type === 'infozone' ? el.color : '#fff'}
-            fontStyle={el.type === 'building' || el.type === 'infozone' ? 'bold' : 'normal'}
+          <Text text={el.name} width={w} height={h}
+            fontSize={calcFontSize(w, h, el.type === 'driveway' ? 0.55 : 0.3, 11, 28)}
+            fill={el.type === 'building' || el.type === 'infozone' || el.type === 'driveway' ? el.color : '#fff'}
+            fontStyle={el.type === 'building' || el.type === 'infozone' || el.type === 'driveway' ? 'bold' : 'normal'}
             align="center" verticalAlign="middle" padding={4} />
         </Group>
       );
@@ -585,7 +595,8 @@ export default function MapEditor() {
           <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed fill={el.color} opacity={0.15} stroke={el.color} strokeWidth={1} dash={[4, 2]} />
           <Circle x={cx} y={cy} radius={el.width / 2} fill={el.color} opacity={0.9} stroke={isSelected ? '#fff' : '#000'} strokeWidth={isSelected ? 2 : 1} />
           <Circle x={cx} y={cy} radius={3} fill="#fff" />
-          <Text text={el.name} x={-20} y={el.height + 4} width={el.width + 40} fontSize={9} fill={el.color} align="center" />
+          <Text text={el.name} x={-20} y={el.height + 4} width={el.width + 40}
+            fontSize={Math.max(10, Math.round(el.width * 0.5))} fill={el.color} fontStyle="bold" align="center" />
         </Group>
       );
     }
@@ -595,7 +606,8 @@ export default function MapEditor() {
       return (
         <Group key={el.id} {...common}>
           <Rect width={el.width} height={el.height} fill="transparent" />
-          <Text text={el.name} width={el.width} height={el.height} fontSize={14} fill={el.color} align="center" verticalAlign="middle" />
+          <Text text={el.name} width={el.width} height={el.height}
+            fontSize={calcFontSize(el.width, el.height, 0.45, 12, 32)} fill={el.color} align="center" verticalAlign="middle" />
         </Group>
       );
     }
@@ -627,7 +639,8 @@ export default function MapEditor() {
       <Group key={el.id} {...common}>
         <Rect width={el.width} height={el.height} fill={el.color} opacity={0.75} stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1} />
         {el.type !== 'wall' && (
-          <Text text={el.name} width={el.width} height={el.height} fontSize={11} fill="#fff" align="center" verticalAlign="middle" padding={2} />
+          <Text text={el.name} width={el.width} height={el.height}
+            fontSize={calcFontSize(el.width, el.height, 0.4, 10, 24)} fill="#fff" align="center" verticalAlign="middle" padding={2} />
         )}
       </Group>
     );
