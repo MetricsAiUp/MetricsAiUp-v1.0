@@ -330,7 +330,26 @@ model MapLayout {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  versions MapLayoutVersion[]
+
   @@map("map_layouts")
+}
+
+model MapLayoutVersion {
+  id          String   @id @default(uuid())
+  layoutId    String   @map("layout_id")
+  version     Int
+  name        String
+  width       Float
+  height      Float
+  bgImage     String?
+  elements    String   @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  layout MapLayout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+
+  @@unique([layoutId, version])
+  @@map("map_layout_versions")
 }
 
 // ==========================================
@@ -373,6 +392,69 @@ model AuditLog {
   @@index([entity])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ==========================================
+// Фото фиксаци��
+// ==========================================
+
+model Photo {
+  id               String   @id @default(uuid())
+  sessionId        String?  @map("session_id")
+  workOrderId      String?  @map("work_order_id")
+  path             String
+  filename         String
+  mimeType         String   @default("image/jpeg") @map("mime_type")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@index([workOrderId])
+  @@map("photos")
+}
+
+// ==========================================
+// Push-подписки (PWA)
+// ==========================================
+
+model PushSubscription {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  endpoint   String   @unique
+  keys       String   // JSON {p256dh, auth}
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// ==========================================
+// Мультитенантность — Филиалы
+// ==========================================
+
+model Location {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  timezone  String   @default("Europe/Moscow")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("locations")
+}
+
+// ==========================================
+// Telegram привязка
+// ==========================================
+
+model TelegramLink {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  chatId    String   @map("chat_id")
+  username  String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("telegram_links")
 }
 
 model ShiftWorker {

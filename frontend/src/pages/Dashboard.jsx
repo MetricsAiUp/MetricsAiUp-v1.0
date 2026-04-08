@@ -5,6 +5,7 @@ import { usePolling } from '../hooks/useSocket';
 import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
 import { translateZone } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
+import PredictionWidget from '../components/PredictionWidget';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
@@ -139,6 +140,9 @@ export default function Dashboard() {
           color="var(--info)"
         />
       </div>
+
+      {/* ML Predictions */}
+      <PredictionWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recommendations */}

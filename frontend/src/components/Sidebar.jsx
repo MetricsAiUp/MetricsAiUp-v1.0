@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
   BarChart3, Camera, Focus, Database, CalendarClock, Columns,
-  ChevronDown, Users, PenTool, MapPin, Clock, Shield,
+  ChevronDown, Users, PenTool, MapPin, Clock, Shield, Wrench,
 } from 'lucide-react';
 
 
@@ -26,6 +26,7 @@ const navItems = [
   { path: '/map-view', icon: MapPin, labelKey: 'nav.mapView2', pageId: 'map-view' },
   { path: '/map-editor', icon: PenTool, labelKey: 'nav.mapEditor', pageId: 'map-editor' },
   { path: '/audit', icon: Shield, labelKey: 'nav.audit', pageId: 'audit' },
+  { path: '/my-post', icon: Wrench, labelKey: 'nav.myPost', pageId: 'my-post' },
 ];
 
 export default function Sidebar() {

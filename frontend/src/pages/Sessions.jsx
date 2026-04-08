@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera } from 'lucide-react';
+import { Camera, QrCode } from 'lucide-react';
 import { translateZone, translatePost } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
+import QRBadge from '../components/QRBadge';
 
 // Mock plate image — SVG генерирует "фото номера"
 function PlatePreview({ plate, small = false }) {
@@ -42,6 +43,7 @@ function CarOnPostPlaceholder({ postName, isRu }) {
 function SessionModal({ session, onClose, isRu, workOrders }) {
   const [editPlate, setEditPlate] = useState(session.plateNumber || '');
   const [saved, setSaved] = useState(false);
+  const [showQR, setShowQR] = useState(false);
 
   const zone = session.zoneStays?.[0]?.zone;
   const postStay = session.postStays?.[0];
@@ -71,9 +73,25 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
           <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
             {isRu ? 'Сессия автомобиля' : 'Vehicle Session'}
           </h3>
-          <button onClick={onClose} className="text-sm px-3 py-1 rounded-lg hover:opacity-80"
-            style={{ color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}>✕</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowQR(true)}
+              className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium hover:opacity-80"
+              style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--accent)' }}>
+              <QrCode size={14} /> QR
+            </button>
+            <button onClick={onClose} className="text-sm px-3 py-1 rounded-lg hover:opacity-80"
+              style={{ color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}>✕</button>
+          </div>
         </div>
+
+        {showQR && (
+          <QRBadge
+            sessionId={session.id}
+            plateNumber={session.plateNumber}
+            entryTime={session.entryTime}
+            onClose={() => setShowQR(false)}
+          />
+        )}
 
         {/* Photos row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">

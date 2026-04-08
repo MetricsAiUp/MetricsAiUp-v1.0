@@ -3,6 +3,7 @@ import {
   Timer, Package, CreditCard,
 } from 'lucide-react';
 import { STATUS_COLORS, formatTime } from './constants';
+import PostTimer from '../PostTimer';
 
 // Work order detail modal
 export default function WorkOrderModal({ item, post, onClose, t }) {
@@ -94,6 +95,17 @@ export default function WorkOrderModal({ item, post, onClose, t }) {
               {formatTime(item.endTime || item.estimatedEnd)}
             </div>
           </div>
+
+          {/* Live timer for in-progress items */}
+          {status === 'in_progress' && (item.endTime || item.estimatedEnd) && (
+            <div className="col-span-2 flex items-center justify-center">
+              <PostTimer
+                estimatedEnd={item.endTime || item.estimatedEnd}
+                startTime={item.startTime}
+                size="lg"
+              />
+            </div>
+          )}
 
           {/* Norm hours */}
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>

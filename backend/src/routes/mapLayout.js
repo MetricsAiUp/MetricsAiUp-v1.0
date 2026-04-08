@@ -63,9 +63,31 @@ router.post('/', authenticate, requirePermission('manage_zones'), validate(creat
   }
 });
 
-// PUT /api/map-layout/:id — update layout
+// PUT /api/map-layout/:id — update layout (saves previous version)
 router.put('/:id', authenticate, requirePermission('manage_zones'), validate(updateMapLayoutSchema), async (req, res) => {
   try {
+    // Save current state as a version before updating
+    const current = await prisma.mapLayout.findUnique({ where: { id: req.params.id } });
+    if (!current) return res.status(404).json({ error: 'Layout not found' });
+
+    const lastVersion = await prisma.mapLayoutVersion.findFirst({
+      where: { layoutId: req.params.id },
+      orderBy: { version: 'desc' },
+    });
+    const nextVersion = (lastVersion?.version || 0) + 1;
+
+    await prisma.mapLayoutVersion.create({
+      data: {
+        layoutId: req.params.id,
+        version: nextVersion,
+        name: current.name,
+        width: current.width,
+        height: current.height,
+        bgImage: current.bgImage,
+        elements: current.elements,
+      },
+    });
+
     const { name, width, height, bgImage, elements, isActive } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
@@ -90,6 +112,63 @@ router.put('/:id', authenticate, requirePermission('manage_zones'), validate(upd
     res.json({ ...layout, elements: JSON.parse(layout.elements) });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Layout not found' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/map-layout/:id/versions — list version history
+router.get('/:id/versions', async (req, res) => {
+  try {
+    const versions = await prisma.mapLayoutVersion.findMany({
+      where: { layoutId: req.params.id },
+      orderBy: { version: 'desc' },
+      select: { id: true, version: true, name: true, createdAt: true },
+    });
+    res.json(versions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/map-layout/:id/restore/:version — restore a version
+router.post('/:id/restore/:version', authenticate, requirePermission('manage_zones'), async (req, res) => {
+  try {
+    const ver = await prisma.mapLayoutVersion.findFirst({
+      where: { layoutId: req.params.id, version: parseInt(req.params.version, 10) },
+    });
+    if (!ver) return res.status(404).json({ error: 'Version not found' });
+
+    // Save current as new version first
+    const current = await prisma.mapLayout.findUnique({ where: { id: req.params.id } });
+    const lastVersion = await prisma.mapLayoutVersion.findFirst({
+      where: { layoutId: req.params.id },
+      orderBy: { version: 'desc' },
+    });
+    await prisma.mapLayoutVersion.create({
+      data: {
+        layoutId: req.params.id,
+        version: (lastVersion?.version || 0) + 1,
+        name: current.name,
+        width: current.width,
+        height: current.height,
+        bgImage: current.bgImage,
+        elements: current.elements,
+      },
+    });
+
+    // Restore
+    const layout = await prisma.mapLayout.update({
+      where: { id: req.params.id },
+      data: {
+        name: ver.name,
+        width: ver.width,
+        height: ver.height,
+        bgImage: ver.bgImage,
+        elements: ver.elements,
+      },
+    });
+    res.json({ ...layout, elements: JSON.parse(layout.elements) });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

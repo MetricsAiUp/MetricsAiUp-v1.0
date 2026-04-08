@@ -27,7 +27,11 @@ const mapLayoutRoutes = require('./routes/mapLayout');
 const data1cRoutes = require('./routes/data1c');
 const shiftsRoutes = require('./routes/shifts');
 const auditLogRoutes = require('./routes/auditLog');
+const pushRoutes = require('./routes/push');
+const photosRoutes = require('./routes/photos');
+const locationsRoutes = require('./routes/locations');
 const { startFileWatcher } = require('./services/sync1C');
+const { initTelegramBot } = require('./services/telegramBot');
 
 const app = express();
 
@@ -70,6 +74,9 @@ app.use('/api/map-layout', mapLayoutRoutes);
 app.use('/api/1c', data1cRoutes);
 app.use('/api/shifts', shiftsRoutes);
 app.use('/api/audit-log', auditLogRoutes);
+app.use('/api/push', pushRoutes);
+app.use('/api/photos', photosRoutes);
+app.use('/api/locations', locationsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -90,6 +97,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] HTTP running on http://0.0.0.0:${PORT}`);
   console.log(`[Socket.IO] Ready for connections`);
   startFileWatcher();
+  initTelegramBot();
 });
 
 // Also listen on 8080 for VPS proxy (same app, just another HTTP server)

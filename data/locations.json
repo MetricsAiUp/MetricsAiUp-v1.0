@@ -1,0 +1,9 @@
+[
+  {
+    "id": "loc-1",
+    "name": "СТО Колесникова 38",
+    "address": "ул. Колесникова, 38",
+    "timezone": "Europe/Moscow",
+    "isActive": true
+  }
+]

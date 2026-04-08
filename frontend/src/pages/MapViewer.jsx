@@ -13,6 +13,7 @@ import {
   ArrowRight, MapPin, Layers, Download, ChevronDown, ChevronUp, Image, FileDown,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import PostTimer from '../components/PostTimer';
 
 const ALL_CAMERAS = [
   { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
@@ -119,6 +120,12 @@ function PostModal({ postNum, dashboardData, onClose, onGoToPost, t }) {
               </div>
             </div>
           </div>
+          {/* Live timer */}
+          {currentWO && (currentWO.endTime || currentWO.estimatedEnd) && (
+            <div className="flex justify-center">
+              <PostTimer estimatedEnd={currentWO.endTime || currentWO.estimatedEnd} startTime={currentWO.startTime} size="lg" />
+            </div>
+          )}
           {currentWO?.note && (
             <div className="p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid var(--warning)' }}>
               <div className="flex items-center gap-1 mb-1">
@@ -465,8 +472,8 @@ export default function MapViewer() {
               }
               if (el.type === 'driveway') return (
                 <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
-                  rotation={el.rotation || 0} fill="rgba(148,163,184,0.12)"
-                  stroke="#94a3b8" strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
+                  rotation={el.rotation || 0} fill={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.06)'}
+                  stroke={isDark ? '#94a3b8' : '#9ca3af'} strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
               );
               if (el.type === 'wall') return <WallEl key={el.id} el={el} />;
               if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} />;
@@ -568,7 +575,7 @@ function ZoneEl({ el, isDark, zonesData }) {
   const sw = Math.max(s * 0.015, 1);
   return (
     <Group x={el.x} y={el.y}>
-      <Rect width={w} height={h} fill={fill} opacity={0.12}
+      <Rect width={w} height={h} fill={fill} opacity={isDark ? 0.18 : 0.08}
         stroke={fill} strokeWidth={sw} cornerRadius={s * 0.04}
         dash={[s * 0.06, s * 0.03]} />
       <Text x={s * 0.04} y={s * 0.04} text={el.name} fontSize={fs} fill={textColor} opacity={0.7} />
@@ -601,7 +608,7 @@ function CameraEl({ el, isDark, onClick }) {
   return (
     <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
-        fill={fill} opacity={0.1} stroke={fill} strokeWidth={1} dash={[8, 4]} />
+        fill={fill} opacity={isDark ? 0.18 : 0.08} stroke={fill} strokeWidth={1} dash={[8, 4]} />
       <Circle x={cx} y={cy} radius={r} fill={fill} opacity={0.9}
         shadowBlur={r * 0.5} shadowColor={fill} shadowOpacity={0.5} />
       <Circle x={cx} y={cy} radius={r * 0.3} fill="#fff" />

@@ -1,0 +1,18 @@
+{
+  "name": "MetricsAiUp - Мониторинг СТО",
+  "short_name": "MetricsAiUp",
+  "description": "Система мониторинга автосервиса",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

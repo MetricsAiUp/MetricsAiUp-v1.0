@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Text, Group, Line, Circle, Arrow } from 'react-konva';
 import { useTranslation } from 'react-i18next';
 import { POST_STATUS_COLORS } from '../constants';
+import { usePostTimerText } from './PostTimer';
 
 const STATUS_LABELS = {
   free: { ru: 'Свободен', en: 'Free' },
@@ -12,14 +13,23 @@ const STATUS_LABELS = {
 
 const STATUS_COLORS = POST_STATUS_COLORS;
 
-const ZONE_COLORS = {
-  entry: { fill: 'rgba(16, 185, 129, 0.08)', stroke: '#10b981' },
-  waiting: { fill: 'rgba(245, 158, 11, 0.08)', stroke: '#f59e0b' },
-  repair: { fill: 'rgba(99, 102, 241, 0.08)', stroke: '#6366f1' },
-  diagnostics: { fill: 'rgba(168, 85, 247, 0.08)', stroke: '#a855f7' },
-  driveway: { fill: 'rgba(107, 114, 128, 0.06)', stroke: '#6b7280' },
-  parking: { fill: 'rgba(59, 130, 246, 0.08)', stroke: '#3b82f6' },
-  free: { fill: 'rgba(148, 163, 184, 0.08)', stroke: '#94a3b8' },
+const ZONE_COLORS_DARK = {
+  entry: { fill: 'rgba(16, 185, 129, 0.15)', stroke: '#10b981' },
+  waiting: { fill: 'rgba(245, 158, 11, 0.15)', stroke: '#f59e0b' },
+  repair: { fill: 'rgba(99, 102, 241, 0.15)', stroke: '#6366f1' },
+  diagnostics: { fill: 'rgba(168, 85, 247, 0.15)', stroke: '#a855f7' },
+  driveway: { fill: 'rgba(107, 114, 128, 0.10)', stroke: '#6b7280' },
+  parking: { fill: 'rgba(59, 130, 246, 0.15)', stroke: '#3b82f6' },
+  free: { fill: 'rgba(148, 163, 184, 0.12)', stroke: '#94a3b8' },
+};
+const ZONE_COLORS_LIGHT = {
+  entry: { fill: 'rgba(16, 185, 129, 0.06)', stroke: '#059669' },
+  waiting: { fill: 'rgba(245, 158, 11, 0.06)', stroke: '#d97706' },
+  repair: { fill: 'rgba(99, 102, 241, 0.06)', stroke: '#4f46e5' },
+  diagnostics: { fill: 'rgba(168, 85, 247, 0.06)', stroke: '#7c3aed' },
+  driveway: { fill: 'rgba(107, 114, 128, 0.04)', stroke: '#9ca3af' },
+  parking: { fill: 'rgba(59, 130, 246, 0.06)', stroke: '#2563eb' },
+  free: { fill: 'rgba(148, 163, 184, 0.05)', stroke: '#94a3b8' },
 };
 
 // ─── РАСКЛАДКА v8 ──────────────────────────────────────────────────────────
@@ -97,6 +107,8 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
   if (layout.visible === false && !post) return null;
   const status = post?.status || 'free';
   const color = STATUS_COLORS[status];
+  const currentWOForTimer = dashPost?.timeline?.find(t => t.status === 'in_progress');
+  const timer = usePostTimerText(currentWOForTimer?.estimatedEnd || currentWOForTimer?.endTime, currentWOForTimer?.startTime);
   const vehicle = post?.stays?.[0]?.vehicleSession;
   const postLabel = isRu ? layout.label : (layout.labelEN || layout.label);
   const isLarge = layout.h >= 200; // diagnostic posts are larger
@@ -197,6 +209,24 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
         />
       )}
 
+      {/* Timer countdown */}
+      {timer.text && status !== 'free' && (
+        <Group>
+          <Rect
+            x={7} y={y + (currentVehicle ? 52 : 39)}
+            width={layout.w - 14} height={16}
+            fill={timer.color} cornerRadius={4} opacity={0.9}
+          />
+          <Text
+            x={7} y={y + (currentVehicle ? 53 : 40)}
+            width={layout.w - 14} height={14}
+            text={timer.text}
+            fontSize={10} fontStyle="bold" fill="#fff"
+            align="center" verticalAlign="middle"
+          />
+        </Group>
+      )}
+
       {/* Note (warning) — only on large posts (diagnostics) */}
       {note && layout.h >= 200 && (
         <Text
@@ -254,17 +284,17 @@ function CameraIcon({ cam, isDark, isRu, onClick }) {
       />
       <Line
         points={[0, 0, Math.cos((cam.angle - 25) * Math.PI / 180) * 22, Math.sin((cam.angle - 25) * Math.PI / 180) * 22]}
-        stroke="rgba(239, 68, 68, 0.25)" strokeWidth={1}
+        stroke={isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.2)'} strokeWidth={1}
       />
       <Line
         points={[0, 0, Math.cos((cam.angle + 25) * Math.PI / 180) * 22, Math.sin((cam.angle + 25) * Math.PI / 180) * 22]}
-        stroke="rgba(239, 68, 68, 0.25)" strokeWidth={1}
+        stroke={isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.2)'} strokeWidth={1}
       />
     </Group>
   );
 }
 
-export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark = true, dashboardData = null }) {
+export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark = true, dashboardData = null, bgImageOpacity }) {
   const { i18n } = useTranslation();
   const containerRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 860, height: 460 });
@@ -338,7 +368,8 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
 
           {/* Zones */}
           {MAP_LAYOUT.zones.map(zl => {
-            const colors = ZONE_COLORS[zl.type] || ZONE_COLORS.free;
+            const zoneTheme = isDark ? ZONE_COLORS_DARK : ZONE_COLORS_LIGHT;
+            const colors = zoneTheme[zl.type] || zoneTheme.free;
             const zoneData = zoneMap[zl.key];
             const vehicleCount = zoneData?._count?.stays || 0;
 

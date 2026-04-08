@@ -21,7 +21,8 @@
     "settings": "Settings",
     "logout": "Logout",
     "shifts": "Shifts",
-    "audit": "Audit Log"
+    "audit": "Audit Log",
+    "myPost": "My Post"
   },
   "shifts": {
     "title": "Shift Management",
@@ -395,5 +396,65 @@
   },
   "audit": {
     "title": "Audit Log"
+  },
+  "timer": {
+    "remaining": "Remaining",
+    "overtime": "Overtime"
+  },
+  "myPost": {
+    "title": "My Post",
+    "currentWO": "Current Work Order",
+    "noActiveWO": "No active work order",
+    "workTimer": "Work Timer",
+    "start": "Start",
+    "pause": "Pause",
+    "finish": "Finish",
+    "resume": "Resume",
+    "normHours": "Norm Hours",
+    "status": "Status",
+    "vehicle": "Vehicle",
+    "workType": "Work Type",
+    "assignedPost": "Assigned Post",
+    "noPost": "No post assigned"
+  },
+  "qr": {
+    "title": "QR Code",
+    "print": "Print QR",
+    "scan": "Scan"
+  },
+  "pwa": {
+    "install": "Install App",
+    "offline": "You are offline. Showing cached data.",
+    "newVersion": "New version available",
+    "update": "Update"
+  },
+  "photos": {
+    "title": "Photos",
+    "upload": "Upload Photo",
+    "takePhoto": "Take Photo",
+    "noPhotos": "No photos",
+    "gallery": "Gallery"
+  },
+  "location": {
+    "title": "Locations",
+    "switch": "Switch Location",
+    "all": "All Locations",
+    "summary": "Location Summary"
+  },
+  "predict": {
+    "title": "Forecast",
+    "loadForecast": "Load Forecast",
+    "freeIn": "Free in",
+    "accuracy": "Model Accuracy"
+  },
+  "mapVersions": {
+    "title": "Map Versions",
+    "version": "Version",
+    "restore": "Restore",
+    "diff": "Changes",
+    "current": "Current",
+    "added": "Added",
+    "removed": "Removed",
+    "modified": "Modified"
   }
 }
