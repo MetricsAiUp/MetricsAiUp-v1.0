@@ -14,22 +14,22 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 1",
         "type": "heavy",
-        "status": "occupied",
+        "status": "occupied_no_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "93334f09-9d9d-f9b4-34c4-296156bc58b1",
             "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
-            "vehicleSessionId": "7eec73da-0614-574d-198f-9a9a13c74f83",
-            "startTime": "2026-04-08T08:18:00",
+            "vehicleSessionId": "22a5f657-374e-9a3f-9e69-eceab9db64a8",
+            "startTime": "2026-04-08T11:34:00",
             "endTime": null,
-            "hasWorker": true,
+            "hasWorker": false,
             "isActive": false,
-            "activeTime": 3232,
-            "idleTime": 1385
+            "activeTime": 1240,
+            "idleTime": 531
           }
         ],
         "zone": {
@@ -48,24 +48,12 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 2",
         "type": "heavy",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
-        "stays": [
-          {
-            "id": "ca550bc5-cf8f-0faf-1d37-81844d6d0a6c",
-            "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
-            "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
-            "startTime": "2026-04-08T08:16:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 3316,
-            "idleTime": 1421
-          }
-        ],
+        "updatedAt": "2026-04-08T12:03:32",
+        "stays": [],
         "zone": {
           "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
           "name": "Ремонтная зона (посты 1-4)",
@@ -82,22 +70,22 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 3",
         "type": "heavy",
-        "status": "occupied",
+        "status": "active_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "6372a085-6195-38a1-388c-c404de369177",
             "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
-            "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-            "startTime": "2026-04-08T08:15:00",
+            "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
+            "startTime": "2026-04-08T08:10:00",
             "endTime": null,
             "hasWorker": true,
-            "isActive": false,
-            "activeTime": 3358,
-            "idleTime": 1439
+            "isActive": true,
+            "activeTime": 9808,
+            "idleTime": 4203
           }
         ],
         "zone": {
@@ -116,22 +104,22 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 4",
         "type": "heavy",
-        "status": "occupied",
+        "status": "active_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "52bc6701-d84e-8a68-743e-62ddc045ce01",
             "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
-            "vehicleSessionId": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
-            "startTime": "2026-04-08T09:19:00",
+            "vehicleSessionId": "e14becc6-0c4f-2299-d04e-75a476d055f4",
+            "startTime": "2026-04-08T11:36:00",
             "endTime": null,
             "hasWorker": true,
-            "isActive": false,
-            "activeTime": 670,
-            "idleTime": 287
+            "isActive": true,
+            "activeTime": 1156,
+            "idleTime": 495
           }
         ],
         "zone": {
@@ -153,7 +141,7 @@
           "name": "CAM 01",
           "rtspUrl": "rtsp://cam1"
         },
-        "priority": 6
+        "priority": 4
       },
       {
         "camera": {
@@ -161,7 +149,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 9
+        "priority": 5
       },
       {
         "camera": {
@@ -169,7 +157,7 @@
           "name": "CAM 03",
           "rtspUrl": "rtsp://cam3"
         },
-        "priority": 7
+        "priority": 4
       }
     ]
   },
@@ -192,18 +180,18 @@
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "b46c6275-3961-5b87-9476-5ad6659b72e6",
             "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
-            "vehicleSessionId": "a8c9129c-1ee7-bd10-4dc2-3c991b52a037",
-            "startTime": "2026-04-08T09:33:00",
+            "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+            "startTime": "2026-04-08T10:25:00",
             "endTime": null,
             "hasWorker": true,
             "isActive": true,
-            "activeTime": 82,
-            "idleTime": 35
+            "activeTime": 4138,
+            "idleTime": 1773
           }
         ],
         "zone": {
@@ -222,22 +210,22 @@
         "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
         "name": "Пост 6",
         "type": "light",
-        "status": "occupied_no_work",
+        "status": "active_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "746f5238-cbe9-fc51-8c11-92309cc59cfe",
             "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-            "vehicleSessionId": "f25b4b0f-f1db-0006-d460-cc9d6403f76d",
-            "startTime": "2026-04-08T08:10:00",
+            "vehicleSessionId": "571aed12-0414-233b-a581-2c0b9200fd58",
+            "startTime": "2026-04-08T11:11:00",
             "endTime": null,
-            "hasWorker": false,
-            "isActive": false,
-            "activeTime": 3568,
-            "idleTime": 1529
+            "hasWorker": true,
+            "isActive": true,
+            "activeTime": 2206,
+            "idleTime": 945
           }
         ],
         "zone": {
@@ -256,22 +244,22 @@
         "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
         "name": "Пост 7",
         "type": "light",
-        "status": "occupied",
+        "status": "active_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "93492b0f-e93e-b9d1-424e-7c36956351f3",
             "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
-            "vehicleSessionId": "571aed12-0414-233b-a581-2c0b9200fd58",
-            "startTime": "2026-04-08T08:06:00",
+            "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
+            "startTime": "2026-04-08T09:54:00",
             "endTime": null,
             "hasWorker": true,
-            "isActive": false,
-            "activeTime": 3736,
-            "idleTime": 1601
+            "isActive": true,
+            "activeTime": 5440,
+            "idleTime": 2331
           }
         ],
         "zone": {
@@ -290,12 +278,24 @@
         "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
         "name": "Пост 8",
         "type": "light",
-        "status": "free",
+        "status": "active_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
-        "stays": [],
+        "updatedAt": "2026-04-08T12:03:32",
+        "stays": [
+          {
+            "id": "94190d16-b437-ec39-8daf-7fe8cb3c56a3",
+            "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+            "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
+            "startTime": "2026-04-08T10:02:00",
+            "endTime": null,
+            "hasWorker": true,
+            "isActive": true,
+            "activeTime": 5104,
+            "idleTime": 2187
+          }
+        ],
         "zone": {
           "id": "8b416cdc-f285-e894-9378-3be648996ef6",
           "name": "Ремонтная зона (посты 5-8)",
@@ -315,7 +315,7 @@
           "name": "CAM 01",
           "rtspUrl": "rtsp://cam1"
         },
-        "priority": 8
+        "priority": 7
       },
       {
         "camera": {
@@ -323,7 +323,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 3
+        "priority": 9
       },
       {
         "camera": {
@@ -331,7 +331,7 @@
           "name": "CAM 03",
           "rtspUrl": "rtsp://cam3"
         },
-        "priority": 7
+        "priority": 4
       }
     ]
   },
@@ -354,18 +354,18 @@
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "81e582ad-0fbc-f060-4c3e-e0fbf71759da",
             "postId": "6cff9b6d-306f-de08-2265-79e420541253",
-            "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
-            "startTime": "2026-04-08T08:17:00",
+            "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
+            "startTime": "2026-04-08T08:14:00",
             "endTime": null,
             "hasWorker": true,
             "isActive": true,
-            "activeTime": 3274,
-            "idleTime": 1403
+            "activeTime": 9640,
+            "idleTime": 4131
           }
         ],
         "zone": {
@@ -384,22 +384,22 @@
         "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
         "name": "Пост 10",
         "type": "special",
-        "status": "occupied",
+        "status": "active_work",
         "coordinates": null,
         "isActive": true,
         "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T09:34:58",
+        "updatedAt": "2026-04-08T12:03:32",
         "stays": [
           {
             "id": "44766efe-bf49-81f8-b94c-67f4f643f0ca",
             "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-            "vehicleSessionId": "6d87d930-1f7f-eb9d-11f8-16f32a621bb6",
-            "startTime": "2026-04-08T09:33:00",
+            "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
+            "startTime": "2026-04-08T10:41:00",
             "endTime": null,
             "hasWorker": true,
-            "isActive": false,
-            "activeTime": 82,
-            "idleTime": 35
+            "isActive": true,
+            "activeTime": 3466,
+            "idleTime": 1485
           }
         ],
         "zone": {
@@ -421,7 +421,7 @@
           "name": "CAM 01",
           "rtspUrl": "rtsp://cam1"
         },
-        "priority": 9
+        "priority": 8
       },
       {
         "camera": {
@@ -429,7 +429,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 7
+        "priority": 5
       },
       {
         "camera": {
@@ -437,7 +437,7 @@
           "name": "CAM 03",
           "rtspUrl": "rtsp://cam3"
         },
-        "priority": 6
+        "priority": 3
       }
     ]
   },
@@ -458,7 +458,7 @@
           "name": "CAM 01",
           "rtspUrl": "rtsp://cam1"
         },
-        "priority": 7
+        "priority": 3
       },
       {
         "camera": {
@@ -466,7 +466,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 3
+        "priority": 4
       },
       {
         "camera": {
@@ -474,7 +474,7 @@
           "name": "CAM 03",
           "rtspUrl": "rtsp://cam3"
         },
-        "priority": 5
+        "priority": 9
       }
     ]
   },
@@ -503,7 +503,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 3
+        "priority": 9
       },
       {
         "camera": {
@@ -511,7 +511,7 @@
           "name": "CAM 03",
           "rtspUrl": "rtsp://cam3"
         },
-        "priority": 9
+        "priority": 3
       }
     ]
   }

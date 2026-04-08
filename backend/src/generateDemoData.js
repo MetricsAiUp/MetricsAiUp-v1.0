@@ -212,9 +212,12 @@ function generate() {
       let status, actualEnd, actualHours;
       if (plannedEnd < NOW && start < NOW) {
         // Completed — finished in the past
-        const deviation = randBetween(-0.3, 0.4);
+        // Keep actual within planned bounds to avoid overlaps with next WO
+        const deviation = randBetween(-0.3, 0.15);
         actualHours = roundTo(Math.max(0.3, normHours + deviation), 1);
         actualEnd = addHours(start, actualHours);
+        // Never exceed planned end (cursor) to prevent overlap
+        if (actualEnd > plannedEnd) actualEnd = new Date(plannedEnd);
         status = 'completed';
       } else if (start < NOW && plannedEnd >= NOW) {
         // In progress right now

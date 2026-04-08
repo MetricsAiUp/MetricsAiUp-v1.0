@@ -5,119 +5,119 @@
       "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
       "zoneName": "Ремонтная зона (посты 1-4)",
       "zoneType": "repair",
-      "avgDuration": 26111,
-      "vehicleCount": 139
+      "avgDuration": 20498,
+      "vehicleCount": 207
     },
     {
       "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
       "zoneName": "Ремонтная зона (посты 5-8)",
       "zoneType": "repair",
-      "avgDuration": 16879,
-      "vehicleCount": 171
+      "avgDuration": 11294,
+      "vehicleCount": 91
     },
     {
       "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
       "zoneName": "Диагностика (посты 9-10)",
       "zoneType": "repair",
-      "avgDuration": 28957,
-      "vehicleCount": 270
+      "avgDuration": 22681,
+      "vehicleCount": 233
     },
     {
       "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
       "zoneName": "Зона Ожидания / Парковка",
       "zoneType": "waiting",
-      "avgDuration": 11161,
-      "vehicleCount": 137
+      "avgDuration": 29799,
+      "vehicleCount": 132
     }
   ],
   "postMetrics": [
     {
       "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
       "postName": "Пост 1",
-      "activeTime": 229905,
-      "idleTime": 59796,
-      "vehicleCount": 32
+      "activeTime": 244330,
+      "idleTime": 100083,
+      "vehicleCount": 28
     },
     {
       "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
       "postName": "Пост 2",
-      "activeTime": 223900,
-      "idleTime": 93966,
-      "vehicleCount": 29
+      "activeTime": 241933,
+      "idleTime": 26004,
+      "vehicleCount": 27
     },
     {
       "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
       "postName": "Пост 3",
-      "activeTime": 211218,
-      "idleTime": 90462,
-      "vehicleCount": 27
+      "activeTime": 201831,
+      "idleTime": 69590,
+      "vehicleCount": 25
     },
     {
       "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
       "postName": "Пост 4",
-      "activeTime": 253177,
-      "idleTime": 99683,
-      "vehicleCount": 27
+      "activeTime": 252526,
+      "idleTime": 94983,
+      "vehicleCount": 40
     },
     {
       "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
       "postName": "Пост 5",
-      "activeTime": 318087,
-      "idleTime": 98321,
-      "vehicleCount": 35
+      "activeTime": 216824,
+      "idleTime": 65597,
+      "vehicleCount": 25
     },
     {
       "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
       "postName": "Пост 6",
-      "activeTime": 198926,
-      "idleTime": 25277,
-      "vehicleCount": 40
+      "activeTime": 186363,
+      "idleTime": 75994,
+      "vehicleCount": 29
     },
     {
       "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
       "postName": "Пост 7",
-      "activeTime": 148667,
-      "idleTime": 80993,
-      "vehicleCount": 36
+      "activeTime": 176776,
+      "idleTime": 53090,
+      "vehicleCount": 35
     },
     {
       "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
       "postName": "Пост 8",
-      "activeTime": 171890,
-      "idleTime": 45224,
-      "vehicleCount": 41
+      "activeTime": 347446,
+      "idleTime": 72211,
+      "vehicleCount": 33
     },
     {
       "postId": "6cff9b6d-306f-de08-2265-79e420541253",
       "postName": "Пост 9",
-      "activeTime": 171957,
-      "idleTime": 76089,
-      "vehicleCount": 32
+      "activeTime": 327336,
+      "idleTime": 34111,
+      "vehicleCount": 29
     },
     {
       "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
       "postName": "Пост 10",
-      "activeTime": 269406,
-      "idleTime": 87868,
-      "vehicleCount": 27
+      "activeTime": 193459,
+      "idleTime": 69194,
+      "vehicleCount": 40
     }
   ],
   "workOrderMetrics": [
     {
       "status": "completed",
-      "count": 186
+      "count": 185
     },
     {
       "status": "in_progress",
-      "count": 8
+      "count": 6
     },
     {
       "status": "scheduled",
-      "count": 7
+      "count": 6
     },
     {
       "status": "no_show",
-      "count": 23
+      "count": 12
     }
   ]
 }

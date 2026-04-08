@@ -353,6 +353,89 @@ async function main() {
     });
   }
 
+  // Sync logs — 1C synchronization history
+  const syncEntries = [
+    { type: 'import', source: 'manual', filename: 'Планирование ремонта март 2026.xlsx', status: 'success', records: 60, errors: 0, ago: 10080 },
+    { type: 'import', source: 'manual', filename: 'Выработка март 2026.xlsx', status: 'success', records: 866, errors: 3, ago: 10070 },
+    { type: 'export', source: 'api', filename: 'export_completed_2026-03-28.xlsx', status: 'success', records: 35, errors: 0, ago: 7200 },
+    { type: 'import', source: 'auto', filename: 'auto_sync_2026-03-31.json', status: 'success', records: 12, errors: 0, ago: 4320 },
+    { type: 'import', source: 'manual', filename: 'Планирование ремонта март новый 2026.xlsx', status: 'success', records: 60, errors: 2, ago: 2880 },
+    { type: 'import', source: 'manual', filename: 'Выработка март 2026 новый.xlsx', status: 'success', records: 866, errors: 0, ago: 2870 },
+    { type: 'export', source: 'api', filename: 'export_completed_2026-04-04.xlsx', status: 'success', records: 42, errors: 0, ago: 1440 },
+    { type: 'import', source: 'auto', filename: 'auto_sync_2026-04-07.json', status: 'error', records: 0, errors: 1, ago: 720 },
+    { type: 'import', source: 'auto', filename: 'auto_sync_2026-04-07_retry.json', status: 'success', records: 8, errors: 0, ago: 700 },
+    { type: 'import', source: 'manual', filename: 'Планирование_апрель_2026.xlsx', status: 'success', records: 45, errors: 1, ago: 240 },
+    { type: 'export', source: 'manual', filename: 'export_workers_april.xlsx', status: 'success', records: 23, errors: 0, ago: 120 },
+    { type: 'import', source: 'auto', filename: 'auto_sync_2026-04-08.json', status: 'success', records: 15, errors: 0, ago: 30 },
+  ];
+  for (const e of syncEntries) {
+    await prisma.syncLog.create({
+      data: {
+        type: e.type,
+        source: e.source,
+        filename: e.filename,
+        status: e.status,
+        records: e.records,
+        errors: e.errors,
+        createdAt: addMin(NOW, -e.ago),
+      },
+    });
+  }
+
+  // Audit logs — realistic admin activity
+  await prisma.auditLog.deleteMany();
+  const auditUsers = [
+    { name: 'Старинский Андрей Александрович', id: uuid('user-starinsky') },
+    { name: 'Крылатов Максим Геннадьевич', id: uuid('user-krylatov') },
+    { name: 'Эксузьян Андроник Андроникович', id: uuid('user-eksuzyan') },
+    { name: 'admin', id: uuid('user-admin') },
+  ];
+  const auditEntries = [
+    { action: 'create', entity: 'shift', detail: 'Создана дневная смена на ' + TODAY.toISOString().split('T')[0] },
+    { action: 'update', entity: 'shift', detail: 'Смена активирована' },
+    { action: 'create', entity: 'workOrder', detail: 'Импорт 12 ЗН из 1С' },
+    { action: 'update', entity: 'workOrder', detail: 'ЗН КОЛ00036200 → в работе' },
+    { action: 'update', entity: 'workOrder', detail: 'ЗН КОЛ00036205 → завершён' },
+    { action: 'update', entity: 'post', detail: 'Пост 1 → active_work' },
+    { action: 'update', entity: 'post', detail: 'Пост 3 → occupied' },
+    { action: 'update', entity: 'post', detail: 'Пост 8 → free' },
+    { action: 'create', entity: 'session', detail: 'Сессия А001ВС77 — въезд' },
+    { action: 'create', entity: 'session', detail: 'Сессия О456РС77 — въезд' },
+    { action: 'update', entity: 'session', detail: 'Сессия В234КМ50 — завершена' },
+    { action: 'create', entity: 'user', detail: 'Создан пользователь mechanic@metricsai.up' },
+    { action: 'update', entity: 'user', detail: 'Роль mechanic@metricsai.up → mechanic' },
+    { action: 'update', entity: 'camera', detail: 'CAM 03 — обновлён RTSP URL' },
+    { action: 'create', entity: 'mapLayout', detail: 'Сохранён макет карты v2' },
+    { action: 'update', entity: 'zone', detail: 'Ремонтная зона (посты 1-4) — обновлено описание' },
+    { action: 'delete', entity: 'workOrder', detail: 'Удалён дубликат ЗН КОЛ00036199' },
+    { action: 'update', entity: 'shift', detail: 'Добавлен работник Швец А.Б. в смену' },
+    { action: 'create', entity: 'workOrder', detail: 'ЗН КОЛ00036210 — создан вручную' },
+    { action: 'update', entity: 'post', detail: 'Пост 5 → occupied_no_work' },
+    { action: 'update', entity: 'workOrder', detail: 'ЗН КОЛ00036215 → в работе' },
+    { action: 'create', entity: 'session', detail: 'Сессия Р789ТУ97 — въезд' },
+    { action: 'update', entity: 'session', detail: 'Сессия Е567ОР77 — перемещение на Пост 6' },
+    { action: 'update', entity: 'shift', detail: 'Работник Бортник Я.К. назначен на Пост 5' },
+    { action: 'update', entity: 'camera', detail: 'CAM 07 — переключён приоритет зоны' },
+  ];
+  for (let i = 0; i < auditEntries.length; i++) {
+    const e = auditEntries[i];
+    const u = auditUsers[i % auditUsers.length];
+    const minutesAgo = (auditEntries.length - i) * Math.floor(randBetween(8, 25));
+    await prisma.auditLog.create({
+      data: {
+        userId: u.id,
+        userName: u.name,
+        action: e.action,
+        entity: e.entity,
+        entityId: uuid(`audit-entity-${i}`),
+        oldData: e.action === 'update' ? JSON.stringify({ status: 'previous_state' }) : null,
+        newData: JSON.stringify({ detail: e.detail }),
+        ip: `192.168.1.${10 + (i % 50)}`,
+        createdAt: addMin(NOW, -minutesAgo),
+      },
+    });
+  }
+
   // Counts
   const wos = await prisma.workOrder.count();
   const sessions = await prisma.vehicleSession.count();

@@ -80,7 +80,7 @@
       "status": "active",
       "notes": null,
       "createdAt": "2026-04-08T08:00:00",
-      "updatedAt": "2026-04-08T09:34:58",
+      "updatedAt": "2026-04-08T12:03:32",
       "workers": [
         {
           "id": "840ebbcf-ed92-804c-4144-c03f1e95a5dc",
@@ -153,8 +153,8 @@
           "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664"
         }
       ],
-      "workOrdersCount": 40,
-      "completedCount": 4
+      "workOrdersCount": 35,
+      "completedCount": 13
     },
     {
       "id": "b468e0df-2874-d741-1329-4e064470c112",
@@ -164,8 +164,8 @@
       "endTime": "20:00",
       "status": "planned",
       "notes": null,
-      "createdAt": "2026-04-08T09:34:58",
-      "updatedAt": "2026-04-08T09:34:58",
+      "createdAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:03:32",
       "workers": [
         {
           "id": "2cdd8271-6d37-3fe4-a05e-935271b2d5b2",

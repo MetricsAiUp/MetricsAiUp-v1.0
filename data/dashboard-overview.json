@@ -5,13 +5,13 @@
       "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
       "zoneName": "Ремонтная зона (посты 1-4)",
       "zoneType": "repair",
-      "vehicleCount": 4
+      "vehicleCount": 3
     },
     {
       "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
       "zoneName": "Ремонтная зона (посты 5-8)",
       "zoneType": "repair",
-      "vehicleCount": 3
+      "vehicleCount": 4
     },
     {
       "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
@@ -30,78 +30,78 @@
     {
       "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
       "postName": "Пост 1",
-      "status": "occupied",
-      "plateNumber": "О456РС77",
-      "workerPresent": true
+      "status": "occupied_no_work",
+      "plateNumber": "Т345ВК77",
+      "workerPresent": false
     },
     {
       "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
       "postName": "Пост 2",
-      "status": "active_work",
-      "plateNumber": "М123НН50",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
       "postName": "Пост 3",
-      "status": "occupied",
-      "plateNumber": "Р012ВС50",
+      "status": "active_work",
+      "plateNumber": "Т678АР97",
       "workerPresent": true
     },
     {
       "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
       "postName": "Пост 4",
-      "status": "occupied",
-      "plateNumber": "А001ВС77",
+      "status": "active_work",
+      "plateNumber": "В234КМ50",
       "workerPresent": true
     },
     {
       "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
       "postName": "Пост 5",
       "status": "active_work",
-      "plateNumber": "С345ХМ77",
+      "plateNumber": "Е567ОР77",
       "workerPresent": true
     },
     {
       "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
       "postName": "Пост 6",
-      "status": "occupied_no_work",
-      "plateNumber": "Е890МР50",
-      "workerPresent": false
+      "status": "active_work",
+      "plateNumber": "М456НА97",
+      "workerPresent": true
     },
     {
       "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
       "postName": "Пост 7",
-      "status": "occupied",
-      "plateNumber": "М456НА97",
+      "status": "active_work",
+      "plateNumber": "В890КС97",
       "workerPresent": true
     },
     {
       "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
       "postName": "Пост 8",
-      "status": "free",
-      "plateNumber": null,
-      "workerPresent": false
+      "status": "active_work",
+      "plateNumber": "М123НН50",
+      "workerPresent": true
     },
     {
       "postId": "6cff9b6d-306f-de08-2265-79e420541253",
       "postName": "Пост 9",
       "status": "active_work",
-      "plateNumber": "К891АС99",
+      "plateNumber": "В890КС97",
       "workerPresent": true
     },
     {
       "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
       "postName": "Пост 10",
-      "status": "occupied",
-      "plateNumber": "Х901ОН97",
+      "status": "active_work",
+      "plateNumber": "Р012ВС50",
       "workerPresent": true
     }
   ],
   "activeRecommendations": 3,
-  "completedToday": 4,
-  "totalNormHours": 97.4,
+  "completedToday": 13,
+  "totalNormHours": 75.6,
   "freePostsCount": 1,
   "occupiedPostsCount": 9,
-  "activeWorkCount": 3
+  "activeWorkCount": 8
 }
