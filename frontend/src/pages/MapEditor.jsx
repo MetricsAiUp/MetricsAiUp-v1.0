@@ -12,7 +12,7 @@ import HelpButton from '../components/HelpButton';
 
 const ELEMENT_DEFAULTS = {
   building: { width: 0, height: 0, color: '#22c55e', points: [] },
-  driveway: { width: 300, height: 40, color: '#94a3b8' },
+  driveway: { width: 300, height: 40, color: '#f59e0b' },
   post:   { width: 120, height: 80, color: '#3b82f6' },
   zone:   { width: 160, height: 100, color: '#22c55e' },
   camera: { width: 24, height: 24, color: '#ef4444', data: { direction: 0, fov: 90, range: 80 } },
@@ -588,8 +588,10 @@ export default function MapEditor() {
     if (isAreaType && isPolygon) {
       const pts = el.points;
       const vertexColor = '#e11d48';
-      const fillOpacity = el.type === 'building' ? 0.08 : el.type === 'zone' ? 0.2 : 0.15;
-      const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4] : undefined;
+      const fillOpacity = el.type === 'building' ? 0.08 : el.type === 'zone' ? 0.2
+        : el.type === 'driveway' ? 0.25 : 0.15;
+      const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4]
+        : el.type === 'driveway' ? [8, 4] : undefined;
       return (
         <Group key={el.id} {...common}>
           <Line points={pts} closed fill={el.color} opacity={fillOpacity}
@@ -635,9 +637,9 @@ export default function MapEditor() {
     if (isAreaType) {
       const w = el.width || 100, h = el.height || 60;
       const fillOpacity = el.type === 'building' ? 0.08 : el.type === 'zone' ? 0.35
-        : el.type === 'infozone' ? 0.1 : el.type === 'driveway' ? 0.12 : 0.75;
+        : el.type === 'infozone' ? 0.1 : el.type === 'driveway' ? 0.25 : 0.75;
       const dash = el.type === 'building' ? [8, 4] : el.type === 'infozone' ? [4, 4]
-        : el.type === 'driveway' ? [6, 3] : undefined;
+        : el.type === 'driveway' ? [8, 4] : undefined;
       const cr = el.type === 'post' ? 4 : el.type === 'infozone' ? 8 : 0;
       return (
         <Group key={el.id} {...common}>
