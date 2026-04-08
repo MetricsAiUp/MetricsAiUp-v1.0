@@ -6,6 +6,7 @@ import PostTimer from '../components/PostTimer';
 import {
   Wrench, Car, Clock, Play, Pause, CheckCircle, Timer, FileText, User,
 } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 const BASE = import.meta.env.BASE_URL || './';
 
@@ -84,6 +85,7 @@ export default function MyPost() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             {t('myPost.title')}
           </h1>
+          <HelpButton pageKey="myPost" />
         </div>
         {myPost && (
           <div className="text-lg font-medium" style={{ color: 'var(--accent)' }}>
