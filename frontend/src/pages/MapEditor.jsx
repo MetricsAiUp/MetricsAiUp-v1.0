@@ -6,7 +6,7 @@ import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer, Image as Ko
 import {
   MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus, Maximize2, ArrowRightLeft,
   Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
-  Magnet, Copy, Undo2, Redo2, PenTool, LayoutDashboard,
+  Magnet, Copy, Undo2, Redo2, PenTool, LayoutDashboard, Check, X,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
@@ -17,7 +17,7 @@ const ELEMENT_DEFAULTS = {
   zone:   { width: 160, height: 100, color: '#22c55e' },
   camera: { width: 24, height: 24, color: '#ef4444', data: { direction: 0, fov: 90, range: 80 } },
   door:   { width: 60, height: 8, color: '#f59e0b' },
-  wall:   { width: 200, height: 6, color: '#6b7280' },
+  wall:   { width: 200, height: 6, color: '#6b7280', thickness: 6 },
   label:  { width: 100, height: 30, color: '#a855f7' },
   infozone: { width: 200, height: 150, color: '#8b5cf6' },
 };
@@ -49,7 +49,7 @@ const TOOLS = [
   { id: 'door', icon: DoorOpen, label: 'Door',
     tip: { ru: 'Дверь / ворота / въезд. Визуальный элемент для обозначения входов.', en: 'Door / gate / entrance. Visual element marking entry points.' } },
   { id: 'wall', icon: Minus, label: 'Wall',
-    tip: { ru: 'Стена / перегородка. Визуальный элемент для обозначения границ.', en: 'Wall / partition. Visual element marking boundaries.' } },
+    tip: { ru: 'Стена / перегородка. Кликайте для добавления точек, двойной клик — завершить. Толщину можно настроить в свойствах.', en: 'Wall / partition. Click to add points, double-click to finish. Thickness adjustable in properties.' } },
   { id: 'label', icon: Type, label: 'Label',
     tip: { ru: 'Текстовая подпись. Добавьте название зоны, направление или примечание.', en: 'Text label. Add zone name, direction or note.' } },
   { id: 'infozone', icon: LayoutDashboard, label: 'Info Zone',
@@ -333,8 +333,9 @@ export default function MapEditor() {
 
   // Finish polygon drawing — create element of given type
   const finishPolygon = useCallback((pts, elType) => {
-    if (!pts || pts.length < 6) return; // need at least 3 points (6 coords)
     const type = elType || 'building';
+    const minPts = type === 'wall' ? 4 : 6; // wall needs 2+ points, others 3+
+    if (!pts || pts.length < minPts) return;
     const xs = pts.filter((_, i) => i % 2 === 0);
     const ys = pts.filter((_, i) => i % 2 === 1);
     const minX = Math.min(...xs), minY = Math.min(...ys);
@@ -348,7 +349,7 @@ export default function MapEditor() {
       rotation: 0, name: `${type}-${elements.filter(e => e.type === type).length + 1}`,
       color: defaults.color || '#22c55e',
       points: relPoints, shapeMode: 'polygon',
-      data: defaults.data ? { ...defaults.data } : {},
+      data: { ...(defaults.data || {}), ...(defaults.thickness != null ? { thickness: defaults.thickness } : {}) },
     };
     setElements(prev => [...prev, el]);
     setSelectedId(el.id);
@@ -373,18 +374,25 @@ export default function MapEditor() {
     const px = snapEnabled ? snapToGrid(x) : x;
     const py = snapEnabled ? snapToGrid(y) : y;
 
-    // Polygon drawing mode (building always, others when activated via drawingPolygon)
-    if (isPolygonDrawing || tool === 'building') {
+    // Polygon drawing mode (building/wall always, others when activated via drawingPolygon)
+    if (isPolygonDrawing || tool === 'building' || tool === 'wall') {
       const drawType = drawingPolygon?.elType || tool;
       if (!drawingPolygon) {
         setDrawingPolygon({ points: [px, py], elType: drawType });
       } else {
         const fp = drawingPolygon.points;
         const dist = Math.hypot(px - fp[0], py - fp[1]);
-        if (fp.length >= 6 && dist < 15 / stageScale) {
+        if (drawType !== 'wall' && fp.length >= 6 && dist < 15 / stageScale) {
           finishPolygon(fp, drawingPolygon.elType);
         } else {
-          setDrawingPolygon(prev => ({ ...prev, points: [...prev.points, px, py] }));
+          let nx = px, ny = py;
+          // Wall: constrain to 90° angles (horizontal/vertical segments only)
+          if (drawType === 'wall' && fp.length >= 2) {
+            const prevX = fp[fp.length - 2], prevY = fp[fp.length - 1];
+            const dx = Math.abs(px - prevX), dy = Math.abs(py - prevY);
+            if (dx >= dy) { ny = prevY; } else { nx = prevX; }
+          }
+          setDrawingPolygon(prev => ({ ...prev, points: [...prev.points, nx, ny] }));
         }
       }
       return;
@@ -407,7 +415,9 @@ export default function MapEditor() {
 
   // Double-click to finish polygon
   const handleStageDblClick = (e) => {
-    if (drawingPolygon && drawingPolygon.points.length >= 6) {
+    if (!drawingPolygon) return;
+    const minPts = drawingPolygon.elType === 'wall' ? 4 : 6;
+    if (drawingPolygon.points.length >= minPts) {
       e.evt?.preventDefault();
       finishPolygon(drawingPolygon.points, drawingPolygon.elType);
     }
@@ -590,7 +600,29 @@ export default function MapEditor() {
       );
     }
 
-    // ── Door, Wall ──
+    // ── Wall (polygon mode) ──
+    if (el.type === 'wall' && el.shapeMode === 'polygon' && el.points?.length >= 4) {
+      const pts = el.points;
+      const thickness = el.data?.thickness || 6;
+      const vertexColor = '#e11d48';
+      return (
+        <Group key={el.id} {...common}>
+          <Line points={pts} closed={false} stroke={el.color} strokeWidth={thickness}
+            opacity={0.85} lineCap="round" lineJoin="round" />
+          {isSelected && (
+            <Line points={pts} closed={false} stroke="#fff" strokeWidth={thickness + 4}
+              opacity={0.15} lineCap="round" lineJoin="round" />
+          )}
+          {isSelected && pts.length >= 2 && Array.from({ length: pts.length / 2 }, (_, i) => (
+            <Circle key={i} x={pts[i * 2]} y={pts[i * 2 + 1]} radius={6}
+              fill={vertexColor} stroke="#fff" strokeWidth={2}
+              shadowBlur={4} shadowColor={vertexColor} shadowOpacity={0.6} />
+          ))}
+        </Group>
+      );
+    }
+
+    // ── Door, Wall (rect mode, legacy) ──
     return (
       <Group key={el.id} {...common}>
         <Rect width={el.width} height={el.height} fill={el.color} opacity={0.75} stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1} />
@@ -730,20 +762,54 @@ export default function MapEditor() {
 
         {/* Canvas */}
         <div ref={containerRef} className="flex-1 overflow-hidden relative" style={{ background: 'var(--bg-primary)', cursor: tool === 'select' ? 'default' : 'crosshair' }}>
-          {/* Polygon drawing indicator */}
-          {(tool === 'building' || isPolygonDrawing) && (
+          {/* Polygon drawing toolbar */}
+          {(tool === 'building' || tool === 'wall' || isPolygonDrawing) && (
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg shadow-lg"
               style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid #22c55e55', color: '#22c55e' }}>
               <PenTool size={14} />
-              <span className="text-xs font-medium">
-                {drawingPolygon
-                  ? (i18n.language === 'ru'
-                    ? `Точек: ${drawingPolygon.points.length / 2} · Двойной клик или клик на первую точку — завершить · Esc — отмена`
-                    : `Points: ${drawingPolygon.points.length / 2} · Double-click or click first point to finish · Esc to cancel`)
-                  : (i18n.language === 'ru'
+              {drawingPolygon ? (<>
+                <span className="text-xs font-medium">
+                  {i18n.language === 'ru'
+                    ? `Точек: ${drawingPolygon.points.length / 2}`
+                    : `Points: ${drawingPolygon.points.length / 2}`}
+                </span>
+                {/* Undo last point */}
+                <button onClick={() => {
+                  if (drawingPolygon.points.length <= 2) {
+                    setDrawingPolygon(null); setTool('select');
+                  } else {
+                    setDrawingPolygon(prev => ({ ...prev, points: prev.points.slice(0, -2) }));
+                  }
+                }}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium hover:opacity-80 transition-opacity"
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+                  <Undo2 size={12} /> {i18n.language === 'ru' ? 'Назад' : 'Undo'}
+                </button>
+                {/* Apply / Finish */}
+                <button onClick={() => {
+                  const minPts = drawingPolygon.elType === 'wall' ? 4 : 6;
+                  if (drawingPolygon.points.length >= minPts) {
+                    finishPolygon(drawingPolygon.points, drawingPolygon.elType);
+                  }
+                }}
+                  disabled={drawingPolygon.points.length < (drawingPolygon.elType === 'wall' ? 4 : 6)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-30"
+                  style={{ background: '#22c55e', color: '#fff' }}>
+                  <Check size={12} /> {i18n.language === 'ru' ? 'Применить' : 'Apply'}
+                </button>
+                {/* Cancel */}
+                <button onClick={() => { setDrawingPolygon(null); setTool('select'); }}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium hover:opacity-80 transition-opacity"
+                  style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
+                  <X size={12} /> {i18n.language === 'ru' ? 'Отмена' : 'Cancel'}
+                </button>
+              </>) : (
+                <span className="text-xs font-medium">
+                  {i18n.language === 'ru'
                     ? 'Кликните для первой точки контура'
-                    : 'Click to place first point')}
-              </span>
+                    : 'Click to place first point'}
+                </span>
+              )}
             </div>
           )}
           <Stage ref={stageRef} width={stageSize.width} height={stageSize.height}
@@ -876,6 +942,19 @@ export default function MapEditor() {
                   <input type="number" value={Math.round(selected.rotation || 0)} onChange={e => updateProp('rotation', +e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
                 </div>
               </>)}
+
+              {/* Wall thickness */}
+              {selected.type === 'wall' && selected.shapeMode === 'polygon' && (
+                <div className="space-y-1 mt-1 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                  <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {i18n.language === 'ru' ? 'Толщина' : 'Thickness'}
+                  </label>
+                  <input type="range" min="2" max="40" value={selected.data?.thickness || 6}
+                    onChange={e => updateProp('data', { ...selected.data, thickness: +e.target.value })}
+                    className="w-full" />
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.data?.thickness || 6}px</span>
+                </div>
+              )}
 
               {/* Polygon info: point count + redraw button */}
               {selected.shapeMode === 'polygon' && selected.points?.length >= 4 && (

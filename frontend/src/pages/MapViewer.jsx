@@ -635,6 +635,14 @@ function DoorEl({ el, isDark }) {
 }
 
 function WallEl({ el }) {
+  if (el.shapeMode === 'polygon' && el.points?.length >= 4) {
+    const thickness = el.data?.thickness || 6;
+    return (
+      <Line x={el.x} y={el.y} points={el.points} closed={false}
+        stroke={el.color || '#6b7280'} strokeWidth={thickness}
+        opacity={0.6} lineCap="round" lineJoin="round" />
+    );
+  }
   const s = Math.min(el.width || 200, el.height || 6);
   return (
     <Rect x={el.x} y={el.y} width={el.width} height={el.height}
