@@ -249,8 +249,13 @@ export default function MapViewer() {
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
   usePolling(fetchRealtime, 5000);
 
-  // Compute content bounding box
+  // Use mapFrame from layout (or compute bounding box as fallback)
   const computeBounds = useCallback(() => {
+    // Use mapFrame or layout width/height as the fixed map area
+    const frame = layout?.mapFrame || (layout?.width && layout?.height ? { width: layout.width, height: layout.height } : null);
+    if (frame) {
+      return { minX: 0, minY: 0, maxX: frame.width, maxY: frame.height };
+    }
     const els = layout?.elements || [];
     if (els.length === 0) return { minX: 0, minY: 0, maxX: 100, maxY: 100 };
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -272,36 +277,35 @@ export default function MapViewer() {
     return { minX, minY, maxX, maxY };
   }, [layout]);
 
-  // Fit to container
+  // Fit to container — scale to fill width like STOMap
   const fitToContainer = useCallback(() => {
     if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const cw = rect.width, ch = rect.height;
-    if (cw < 10 || ch < 10) return;
+    const cw = containerRef.current.clientWidth;
+    if (cw < 10) return;
 
     const bounds = computeBounds();
     const contentW = bounds.maxX - bounds.minX;
     const contentH = bounds.maxY - bounds.minY;
     if (contentW <= 0 || contentH <= 0) return;
 
-    const fitScale = Math.min(cw / contentW, ch / contentH);
-    const scaledW = contentW * fitScale;
-    const scaledH = contentH * fitScale;
-    const offsetX = (cw - scaledW) / 2 - bounds.minX * fitScale;
-    const offsetY = (ch - scaledH) / 2 - bounds.minY * fitScale;
-
-    setStageSize({ width: cw, height: ch });
+    const fitScale = cw / contentW;
+    setStageSize({ width: cw, height: contentH * fitScale });
     setScale(fitScale);
     setBaseScale(fitScale);
     setBaseBounds(bounds);
-    setPosition({ x: offsetX, y: offsetY });
+    setPosition({ x: -bounds.minX * fitScale, y: -bounds.minY * fitScale });
   }, [computeBounds]);
 
-  // Responsive sizing
+  // Responsive sizing — use ResizeObserver for reliable container tracking
   useEffect(() => {
     const raf = requestAnimationFrame(fitToContainer);
     window.addEventListener('resize', fitToContainer);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', fitToContainer); };
+    let ro;
+    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => fitToContainer());
+      ro.observe(containerRef.current);
+    }
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', fitToContainer); ro?.disconnect(); };
   }, [fitToContainer]);
 
   // Zoom controls (button-based, centered)
@@ -477,7 +481,7 @@ export default function MapViewer() {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="overflow-hidden flex-1 relative" style={{ minHeight: 0 }}>
+      <div ref={containerRef} className="overflow-hidden relative w-full rounded-xl" style={{ border: '2px solid var(--accent)' }}>
         <Stage
           ref={stageRef}
           width={stageSize.width}

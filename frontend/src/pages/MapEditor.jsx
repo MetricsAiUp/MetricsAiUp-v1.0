@@ -70,7 +70,8 @@ export default function MapEditor() {
   const [tool, setTool] = useState('select');
   const [bgImage, setBgImage] = useState(null);
   const [bgDataUrl, setBgDataUrl] = useState(null);
-  const [showGrid, setShowGrid] = useState(false);
+  const [bgOpacity, setBgOpacity] = useState(0.5);
+  const [showGrid, setShowGrid] = useState(true);
   const [stageSize, setStageSize] = useState({ width: 900, height: 600 });
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
@@ -80,6 +81,9 @@ export default function MapEditor() {
   const [loading, setLoading] = useState(false);
   const [snapEnabled, setSnapEnabled] = useState(false);
   const [drawingPolygon, setDrawingPolygon] = useState(null); // { points: [x,y,...], elType: 'building'|... }
+
+  // Map frame — fixed container representing the final map area
+  const [mapFrame, setMapFrame] = useState({ width: 935, height: 680 });
 
   const containerRef = useRef(null);
   const stageRef = useRef(null);
@@ -147,46 +151,8 @@ export default function MapEditor() {
     trRef.current.getLayer()?.batchDraw();
   }, [selectedId, tool, elements]);
 
-  // Load layout from API on mount, fallback to draft from localStorage
-  useEffect(() => {
-    let cancelled = false;
-    const loadFromApi = async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.get('/api/map-layout');
-        if (!cancelled && data) {
-          setLayoutId(data.id || null);
-          setMapName(data.name || '');
-          if (data.elements) setElements(data.elements);
-          if (data.bgImage) loadImageFromUrl(data.bgImage);
-          else if (data.width && data.height && containerRef.current) {
-            // Fit layout to canvas even without background image
-            const rect = containerRef.current.getBoundingClientRect();
-            const fitScale = Math.min(rect.width / data.width, rect.height / data.height, 1);
-            setStageScale(fitScale);
-            setStagePos({ x: 0, y: 0 });
-          }
-          setLoading(false);
-          return;
-        }
-      } catch { /* API unavailable, fall through to draft */ }
-      // Fallback: load draft from localStorage
-      if (!cancelled) {
-        const saved = localStorage.getItem(DRAFT_KEY);
-        if (saved) {
-          try {
-            const data = JSON.parse(saved);
-            if (data.elements) setElements(data.elements);
-            if (data.mapName) setMapName(data.mapName);
-            if (data.bgDataUrl) loadImageFromUrl(data.bgDataUrl);
-          } catch { /* ignore */ }
-        }
-      }
-      if (!cancelled) setLoading(false);
-    };
-    loadFromApi();
-    return () => { cancelled = true; };
-  }, []);
+  // Load layout from API — moved after fitFrameToView/loadImageFromUrl declarations
+  const loadLayoutOnMount = useRef(false);
 
   // Track element changes for undo/redo
   useEffect(() => {
@@ -216,21 +182,33 @@ export default function MapEditor() {
     return () => clearInterval(interval);
   }, [elements, bgDataUrl, mapName]);
 
+  // Fit view to map frame
+  const fitFrameToView = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const pad = 40;
+    const s = Math.min((rect.width - pad) / mapFrame.width, (rect.height - pad) / mapFrame.height);
+    const offsetX = (rect.width - mapFrame.width * s) / 2;
+    const offsetY = (rect.height - mapFrame.height * s) / 2;
+    setStageScale(s);
+    setStagePos({ x: offsetX, y: offsetY });
+  }, [mapFrame]);
+
+  // Auto-fit frame on mount and when mapFrame changes
+  useEffect(() => {
+    requestAnimationFrame(fitFrameToView);
+  }, [fitFrameToView]);
+
   const loadImageFromUrl = useCallback((dataUrl) => {
     setBgDataUrl(dataUrl);
     const img = new window.Image();
     img.onload = () => {
       setBgImage(img);
-      // Fit image into canvas view
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const fitScale = Math.min(rect.width / img.width, rect.height / img.height, 1);
-        setStageScale(fitScale);
-        setStagePos({ x: 0, y: 0 });
-      }
+      // Fit view to map frame after loading image
+      setTimeout(fitFrameToView, 50);
     };
     img.src = dataUrl;
-  }, []);
+  }, [fitFrameToView]);
 
   // Background upload (supports images + PDF)
   const handleBgUpload = async (e) => {
@@ -268,13 +246,51 @@ export default function MapEditor() {
     }
   };
 
+  // Load layout from API on mount, fallback to draft from localStorage
+  useEffect(() => {
+    if (loadLayoutOnMount.current) return;
+    loadLayoutOnMount.current = true;
+    let cancelled = false;
+    const loadFromApi = async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get('/api/map-layout');
+        if (!cancelled && data) {
+          setLayoutId(data.id || null);
+          setMapName(data.name || '');
+          if (data.elements) setElements(data.elements);
+          if (data.mapFrame) setMapFrame(data.mapFrame);
+          else if (data.width && data.height) setMapFrame({ width: data.width, height: data.height });
+          if (data.bgImage) loadImageFromUrl(data.bgImage);
+          else setTimeout(fitFrameToView, 50);
+          setLoading(false);
+          return;
+        }
+      } catch { /* API unavailable, fall through to draft */ }
+      if (!cancelled) {
+        const saved = localStorage.getItem(DRAFT_KEY);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.elements) setElements(data.elements);
+            if (data.mapName) setMapName(data.mapName);
+            if (data.bgDataUrl) loadImageFromUrl(data.bgDataUrl);
+          } catch { /* ignore */ }
+        }
+      }
+      if (!cancelled) setLoading(false);
+    };
+    loadFromApi();
+    return () => { cancelled = true; };
+  }, [loadImageFromUrl, fitFrameToView]);
+
   // Save to API
   const handleSave = async () => {
     setSaving(true);
     const payload = {
       name: mapName || 'Untitled',
-      width: stageSize.width,
-      height: stageSize.height,
+      width: mapFrame.width,
+      height: mapFrame.height,
       bgImage: bgDataUrl,
       elements,
     };
@@ -304,8 +320,10 @@ export default function MapEditor() {
         setLayoutId(data.id || null);
         setMapName(data.name || '');
         setElements(data.elements || []);
+        if (data.mapFrame) setMapFrame(data.mapFrame);
+          else if (data.width && data.height) setMapFrame({ width: data.width, height: data.height });
         if (data.bgImage) loadImageFromUrl(data.bgImage);
-        else { setBgImage(null); setBgDataUrl(null); }
+        else { setBgImage(null); setBgDataUrl(null); setTimeout(fitFrameToView, 50); }
         setSelectedId(null);
         toast.success(t('mapEditor.loadSuccess') || 'Layout loaded');
       } else {
@@ -496,21 +514,21 @@ export default function MapEditor() {
   // Zoom buttons
   const zoomIn = () => setStageScale(s => Math.min(5, s * 1.2));
   const zoomOut = () => setStageScale(s => Math.max(0.1, s / 1.2));
-  const resetView = () => { setStageScale(1); setStagePos({ x: 0, y: 0 }); };
 
-  // Grid lines (small 20px + bold every 100px)
+  const resetView = () => fitFrameToView();
+
+  // Grid lines inside map frame only (small 20px + bold every 100px)
   const gridLines = [];
   if (showGrid) {
     const step = 20;
-    const w = stageSize.width / stageScale + Math.abs(stagePos.x / stageScale);
-    const h = stageSize.height / stageScale + Math.abs(stagePos.y / stageScale);
-    for (let i = 0; i < w; i += step) {
+    const fw = mapFrame.width, fh = mapFrame.height;
+    for (let i = 0; i <= fw; i += step) {
       const bold = i % 100 === 0;
-      gridLines.push(<Line key={`gv${i}`} points={[i, 0, i, h]} stroke="#555" strokeWidth={bold ? 0.8 : 0.3} opacity={bold ? 0.4 : 0.2} />);
+      gridLines.push(<Line key={`gv${i}`} points={[i, 0, i, fh]} stroke="#555" strokeWidth={bold ? 0.8 : 0.3} opacity={bold ? 0.4 : 0.2} />);
     }
-    for (let i = 0; i < h; i += step) {
+    for (let i = 0; i <= fh; i += step) {
       const bold = i % 100 === 0;
-      gridLines.push(<Line key={`gh${i}`} points={[0, i, w, i]} stroke="#555" strokeWidth={bold ? 0.8 : 0.3} opacity={bold ? 0.4 : 0.2} />);
+      gridLines.push(<Line key={`gh${i}`} points={[0, i, fw, i]} stroke="#555" strokeWidth={bold ? 0.8 : 0.3} opacity={bold ? 0.4 : 0.2} />);
     }
   }
 
@@ -679,6 +697,15 @@ export default function MapEditor() {
         <button onClick={() => loadImageFromUrl('/data/sto-plan.png')} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           {i18n.language === 'ru' ? 'План СТО' : 'STO Plan'}
         </button>
+        {bgImage && (<>
+          <button onClick={() => { setBgImage(null); setBgDataUrl(null); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', border: '1px solid #ef444433', color: '#ef4444' }}>
+            <X size={13} /> {i18n.language === 'ru' ? 'Убрать фон' : 'Remove bg'}
+          </button>
+          <input type="range" min="0" max="100" value={Math.round(bgOpacity * 100)}
+            onChange={e => setBgOpacity(+e.target.value / 100)}
+            title={`${Math.round(bgOpacity * 100)}%`}
+            style={{ width: 60, accentColor: 'var(--accent)' }} />
+        </>)}
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
           <Save size={13} /> {saving ? '...' : t('common.save')}
         </button>
@@ -833,7 +860,15 @@ export default function MapEditor() {
             onDblClick={handleStageDblClick} onDblTap={handleStageDblClick}
             onWheel={handleWheel}>
             <Layer>
-              {bgImage && <KonvaImage image={bgImage} x={0} y={0} width={bgImage.width} height={bgImage.height} />}
+              {/* Map frame background */}
+              <Rect x={0} y={0} width={mapFrame.width} height={mapFrame.height}
+                fill="#0f172a" stroke="var(--accent, #f59e0b)" strokeWidth={2 / stageScale} />
+              {/* Background image fitted into map frame */}
+              {bgImage && (() => {
+                const s = Math.min(mapFrame.width / bgImage.width, mapFrame.height / bgImage.height);
+                const bw = bgImage.width * s, bh = bgImage.height * s;
+                return <KonvaImage image={bgImage} x={(mapFrame.width - bw) / 2} y={(mapFrame.height - bh) / 2} width={bw} height={bh} opacity={bgOpacity} />;
+              })()}
               {gridLines}
               {elements.map(renderElement)}
               {/* Drawing polygon preview */}
@@ -1042,7 +1077,27 @@ export default function MapEditor() {
               </button>
             </div>
           ) : (
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.noSelection')}</p>
+            <div className="space-y-3">
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.noSelection')}</p>
+              <div className="pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                <label className="text-xs font-semibold block mb-2" style={{ color: 'var(--accent)' }}>
+                  {i18n.language === 'ru' ? 'Размер карты' : 'Map Size'}
+                </label>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>W</label>
+                    <input type="number" value={mapFrame.width} onChange={e => setMapFrame(f => ({ ...f, width: +e.target.value || 100 }))} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>H</label>
+                    <input type="number" value={mapFrame.height} onChange={e => setMapFrame(f => ({ ...f, height: +e.target.value || 100 }))} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                </div>
+                <button onClick={fitFrameToView} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+                  <Maximize2 size={12} /> {i18n.language === 'ru' ? 'Вписать' : 'Fit'}
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Elements list */}
