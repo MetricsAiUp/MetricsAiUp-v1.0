@@ -277,23 +277,25 @@ export default function MapViewer() {
     return { minX, minY, maxX, maxY };
   }, [layout]);
 
-  // Fit to container — scale to fill width like STOMap
+  // Fit to container — same logic as STOMap: scale by width, height follows
   const fitToContainer = useCallback(() => {
     if (!containerRef.current) return;
-    const cw = containerRef.current.clientWidth;
+    const bounds = computeBounds();
+    const mapW = bounds.maxX - bounds.minX;
+    const mapH = bounds.maxY - bounds.minY;
+    if (mapW <= 0 || mapH <= 0) return;
+
+    // Use page width minus padding for available width
+    const pageEl = containerRef.current.parentElement;
+    const cw = pageEl ? pageEl.clientWidth : containerRef.current.clientWidth;
     if (cw < 10) return;
 
-    const bounds = computeBounds();
-    const contentW = bounds.maxX - bounds.minX;
-    const contentH = bounds.maxY - bounds.minY;
-    if (contentW <= 0 || contentH <= 0) return;
-
-    const fitScale = cw / contentW;
-    setStageSize({ width: cw, height: contentH * fitScale });
-    setScale(fitScale);
-    setBaseScale(fitScale);
+    const s = cw / mapW;
+    setScale(s);
+    setBaseScale(s);
     setBaseBounds(bounds);
-    setPosition({ x: -bounds.minX * fitScale, y: -bounds.minY * fitScale });
+    setStageSize({ width: mapW * s, height: mapH * s });
+    setPosition({ x: 0, y: 0 });
   }, [computeBounds]);
 
   // Responsive sizing — use ResizeObserver for reliable container tracking
@@ -495,10 +497,10 @@ export default function MapViewer() {
         >
 
           <Layer>
-            {/* Background — fill entire visible stage with large margin */}
-            <Rect x={(-position.x / scale) - 5000} y={(-position.y / scale) - 5000}
-              width={(stageSize.width / scale) + 10000} height={(stageSize.height / scale) + 10000}
-              fill={bgFill} />
+            {/* Background — fill map frame */}
+            {(() => { const b = computeBounds(); return (
+              <Rect x={b.minX} y={b.minY} width={b.maxX - b.minX} height={b.maxY - b.minY} fill={bgFill} />
+            ); })()}
 
 
             {/* Render elements by type */}
@@ -702,8 +704,8 @@ function CameraEl({ el, isDark, onClick }) {
       <Circle x={cx} y={cy} radius={r} fill={fill} opacity={0.9}
         shadowBlur={r * 0.5} shadowColor={fill} shadowOpacity={0.5} />
       <Circle x={cx} y={cy} radius={r * 0.3} fill="#fff" />
-      <Text x={cx - r * 2} y={cy + r + 4} text={el.name || ''} fontSize={fs}
-        fill={fill} width={r * 4} align="center" fontStyle="bold" />
+      <Text x={cx} y={-fs - 4} text={el.name || ''} fontSize={fs}
+        fill={fill} fontStyle="bold" rotation={-(el.rotation || 0)} />
     </Group>
   );
 }

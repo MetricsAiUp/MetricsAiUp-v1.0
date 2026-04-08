@@ -28,7 +28,6 @@ const AREA_TYPES = new Set(['building', 'post', 'zone', 'driveway', 'infozone'])
 const calcFontSize = (w, h, base = 0.3, min = 10, max = 28) =>
   Math.round(Math.max(min, Math.min(Math.min(w, h) * base, max)));
 
-const DRAFT_KEY = 'stoMapLayout_draft';
 const SNAP_STEP = 10;
 const HISTORY_LIMIT = 50;
 
@@ -89,6 +88,7 @@ export default function MapEditor() {
   const stageRef = useRef(null);
   const trRef = useRef(null);
   const fileInputRef = useRef(null);
+  const pageRef = useRef(null);
 
   // Undo/Redo history
   const historyRef = useRef([]);
@@ -123,6 +123,18 @@ export default function MapEditor() {
   }, []);
 
   const selected = elements.find(e => e.id === selectedId) || null;
+
+  // Set page height to fill viewport exactly
+  useEffect(() => {
+    const setHeight = () => {
+      if (!pageRef.current) return;
+      const top = pageRef.current.getBoundingClientRect().top;
+      pageRef.current.style.height = `${window.innerHeight - top}px`;
+    };
+    setHeight();
+    window.addEventListener('resize', setHeight);
+    return () => window.removeEventListener('resize', setHeight);
+  }, []);
 
   // Resize canvas to fit container
   useEffect(() => {
@@ -168,35 +180,39 @@ export default function MapEditor() {
       if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); duplicateSelected(); }
       if (e.key === 'Delete' && selectedId) { e.preventDefault(); deleteSelected(); }
       if (e.key === 'Escape' && drawingPolygon) { e.preventDefault(); setDrawingPolygon(null); setTool('select'); }
+      // Arrow keys — move selected element (Shift = 1px, default = 5px)
+      if (selectedId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 1 : 5;
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+        setElements(prev => prev.map(el => el.id === selectedId ? { ...el, x: el.x + dx, y: el.y + dy } : el));
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo, selectedId, elements, drawingPolygon]);
 
-  // Draft autosave to localStorage every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const draft = { elements, bgDataUrl, mapName };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [elements, bgDataUrl, mapName]);
 
   // Fit view to map frame
   const fitFrameToView = useCallback(() => {
     if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const pad = 40;
-    const s = Math.min((rect.width - pad) / mapFrame.width, (rect.height - pad) / mapFrame.height);
-    const offsetX = (rect.width - mapFrame.width * s) / 2;
-    const offsetY = (rect.height - mapFrame.height * s) / 2;
+    const cw = containerRef.current.clientWidth;
+    const ch = containerRef.current.clientHeight;
+    if (cw < 10 || ch < 10) return;
+    const s = Math.min(cw / mapFrame.width, ch / mapFrame.height);
+    const offsetX = (cw - mapFrame.width * s) / 2;
+    const offsetY = (ch - mapFrame.height * s) / 2;
     setStageScale(s);
     setStagePos({ x: offsetX, y: offsetY });
   }, [mapFrame]);
 
   // Auto-fit frame on mount and when mapFrame changes
   useEffect(() => {
-    requestAnimationFrame(fitFrameToView);
+    // Delay to ensure container has final layout dimensions
+    const t = setTimeout(fitFrameToView, 100);
+    window.addEventListener('resize', fitFrameToView);
+    return () => { clearTimeout(t); window.removeEventListener('resize', fitFrameToView); };
   }, [fitFrameToView]);
 
   const loadImageFromUrl = useCallback((dataUrl) => {
@@ -246,7 +262,7 @@ export default function MapEditor() {
     }
   };
 
-  // Load layout from API on mount, fallback to draft from localStorage
+  // Load layout from API on mount
   useEffect(() => {
     if (loadLayoutOnMount.current) return;
     loadLayoutOnMount.current = true;
@@ -263,20 +279,9 @@ export default function MapEditor() {
           else if (data.width && data.height) setMapFrame({ width: data.width, height: data.height });
           if (data.bgImage) loadImageFromUrl(data.bgImage);
           else setTimeout(fitFrameToView, 50);
-          setLoading(false);
-          return;
         }
-      } catch { /* API unavailable, fall through to draft */ }
-      if (!cancelled) {
-        const saved = localStorage.getItem(DRAFT_KEY);
-        if (saved) {
-          try {
-            const data = JSON.parse(saved);
-            if (data.elements) setElements(data.elements);
-            if (data.mapName) setMapName(data.mapName);
-            if (data.bgDataUrl) loadImageFromUrl(data.bgDataUrl);
-          } catch { /* ignore */ }
-        }
+      } catch (err) {
+        console.error('Failed to load layout:', err);
       }
       if (!cancelled) setLoading(false);
     };
@@ -303,7 +308,6 @@ export default function MapEditor() {
       }
       if (res.data?.id) setLayoutId(res.data.id);
       toast.success(t('mapEditor.saveSuccess') || 'Layout saved');
-      localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
       toast.error((t('mapEditor.saveError') || 'Save failed') + ': ' + (err.message || 'Unknown error'));
     } finally {
@@ -408,8 +412,8 @@ export default function MapEditor() {
           finishPolygon(fp, drawingPolygon.elType);
         } else {
           let nx = px, ny = py;
-          // Wall/Door: constrain to 90° angles (horizontal/vertical segments only)
-          if ((drawType === 'wall' || drawType === 'door') && fp.length >= 2) {
+          // Wall/Door/Driveway: constrain to 90° angles (horizontal/vertical segments only)
+          if ((drawType === 'wall' || drawType === 'door' || drawType === 'driveway') && fp.length >= 2) {
             const prevX = fp[fp.length - 2], prevY = fp[fp.length - 1];
             const dx = Math.abs(px - prevX), dy = Math.abs(py - prevY);
             if (dx >= dy) { ny = prevY; } else { nx = prevX; }
@@ -511,6 +515,39 @@ export default function MapEditor() {
     setSelectedId(copy.id);
   };
 
+  // Polygon vertex editing
+  const handleVertexDrag = (elId, vertexIndex, e) => {
+    let x = e.target.x(), y = e.target.y();
+    if (snapEnabled) { x = snapToGrid(x); y = snapToGrid(y); }
+    setElements(prev => prev.map(el => {
+      if (el.id !== elId) return el;
+      const pts = [...el.points];
+      pts[vertexIndex * 2] = x;
+      pts[vertexIndex * 2 + 1] = y;
+      return { ...el, points: pts };
+    }));
+  };
+
+  const addVertexOnEdge = (elId, edgeIndex, pos) => {
+    setElements(prev => prev.map(el => {
+      if (el.id !== elId) return el;
+      const pts = [...el.points];
+      const insertAt = (edgeIndex + 1) * 2;
+      pts.splice(insertAt, 0, pos.x, pos.y);
+      return { ...el, points: pts };
+    }));
+  };
+
+  const removeVertex = (elId, vertexIndex) => {
+    setElements(prev => prev.map(el => {
+      if (el.id !== elId) return el;
+      const pts = [...el.points];
+      if (pts.length <= 4) return el; // min 2 points
+      pts.splice(vertexIndex * 2, 2);
+      return { ...el, points: pts };
+    }));
+  };
+
   // Zoom buttons
   const zoomIn = () => setStageScale(s => Math.min(5, s * 1.2));
   const zoomOut = () => setStageScale(s => Math.max(0.1, s / 1.2));
@@ -557,10 +594,31 @@ export default function MapEditor() {
         <Group key={el.id} {...common}>
           <Line points={pts} closed fill={el.color} opacity={fillOpacity}
             stroke={el.color} strokeWidth={isSelected ? 3 : 2} dash={dash} />
+          {isSelected && pts.length >= 4 && (() => {
+            // Edge midpoints — click to add vertex
+            const edges = [];
+            const numPts = pts.length / 2;
+            for (let i = 0; i < numPts; i++) {
+              const ni = (i + 1) % numPts;
+              const mx = (pts[i * 2] + pts[ni * 2]) / 2;
+              const my = (pts[i * 2 + 1] + pts[ni * 2 + 1]) / 2;
+              edges.push(
+                <Circle key={`edge${i}`} x={mx} y={my} radius={5}
+                  fill="#3b82f6" stroke="#fff" strokeWidth={1.5} opacity={0.6}
+                  hitStrokeWidth={10}
+                  onClick={() => addVertexOnEdge(el.id, i, { x: mx, y: my })}
+                  onTap={() => addVertexOnEdge(el.id, i, { x: mx, y: my })} />
+              );
+            }
+            return edges;
+          })()}
           {isSelected && pts.length >= 2 && Array.from({ length: pts.length / 2 }, (_, i) => (
             <Circle key={i} x={pts[i * 2]} y={pts[i * 2 + 1]} radius={10}
               fill={vertexColor} stroke="#fff" strokeWidth={3}
-              shadowBlur={6} shadowColor={vertexColor} shadowOpacity={0.6} />
+              shadowBlur={6} shadowColor={vertexColor} shadowOpacity={0.6}
+              draggable
+              onDragEnd={(e) => handleVertexDrag(el.id, i, e)}
+              onContextMenu={(e) => { e.evt.preventDefault(); removeVertex(el.id, i); }} />
           ))}
           {(() => {
             const xs = pts.filter((_, i) => i % 2 === 0), ys = pts.filter((_, i) => i % 2 === 1);
@@ -613,8 +671,9 @@ export default function MapEditor() {
           <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed fill={el.color} opacity={0.15} stroke={el.color} strokeWidth={1} dash={[4, 2]} />
           <Circle x={cx} y={cy} radius={el.width / 2} fill={el.color} opacity={0.9} stroke={isSelected ? '#fff' : '#000'} strokeWidth={isSelected ? 2 : 1} />
           <Circle x={cx} y={cy} radius={3} fill="#fff" />
-          <Text text={el.name} x={-20} y={el.height + 4} width={el.width + 40}
-            fontSize={Math.max(10, Math.round(el.width * 0.5))} fill={el.color} fontStyle="bold" align="center" />
+          <Text text={el.name} x={cx} y={-Math.max(10, Math.round(el.width * 0.5)) - 4}
+            fontSize={Math.max(10, Math.round(el.width * 0.5))} fill={el.color} fontStyle="bold"
+            rotation={-(el.rotation || 0)} offsetX={0} align="left" />
         </Group>
       );
     }
@@ -643,10 +702,29 @@ export default function MapEditor() {
             <Line points={pts} closed={false} stroke="#fff" strokeWidth={thickness + 4}
               opacity={0.15} lineCap="round" lineJoin="round" />
           )}
+          {isSelected && pts.length >= 4 && (() => {
+            const edges = [];
+            const numPts = pts.length / 2;
+            for (let i = 0; i < numPts - 1; i++) {
+              const mx = (pts[i * 2] + pts[(i + 1) * 2]) / 2;
+              const my = (pts[i * 2 + 1] + pts[(i + 1) * 2 + 1]) / 2;
+              edges.push(
+                <Circle key={`edge${i}`} x={mx} y={my} radius={4}
+                  fill="#3b82f6" stroke="#fff" strokeWidth={1} opacity={0.6}
+                  hitStrokeWidth={10}
+                  onClick={() => addVertexOnEdge(el.id, i, { x: mx, y: my })}
+                  onTap={() => addVertexOnEdge(el.id, i, { x: mx, y: my })} />
+              );
+            }
+            return edges;
+          })()}
           {isSelected && pts.length >= 2 && Array.from({ length: pts.length / 2 }, (_, i) => (
             <Circle key={i} x={pts[i * 2]} y={pts[i * 2 + 1]} radius={6}
               fill={vertexColor} stroke="#fff" strokeWidth={2}
-              shadowBlur={4} shadowColor={vertexColor} shadowOpacity={0.6} />
+              shadowBlur={4} shadowColor={vertexColor} shadowOpacity={0.6}
+              draggable
+              onDragEnd={(e) => handleVertexDrag(el.id, i, e)}
+              onContextMenu={(e) => { e.evt.preventDefault(); removeVertex(el.id, i); }} />
           ))}
         </Group>
       );
@@ -676,63 +754,45 @@ export default function MapEditor() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ color: 'var(--text-primary)' }}>
+    <div ref={pageRef} className="flex flex-col overflow-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Top Bar */}
-      <div className="glass-static flex items-center gap-2 px-3 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-glass)' }}>
-        <h2 className="text-sm font-semibold mr-2 flex items-center gap-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.title')} <HelpButton pageKey="mapEditor" /></h2>
-
+      <div className="glass-static flex items-center gap-1 px-2 py-1 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-glass)' }}>
         <input
           type="text"
           value={mapName}
           onChange={e => setMapName(e.target.value)}
           placeholder={t('mapEditor.mapName') || 'Map name'}
-          className="px-2 py-1 rounded text-xs border outline-none"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)', width: 160 }}
+          className="px-1.5 py-0.5 rounded text-xs border outline-none"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)', width: 130 }}
         />
-
         <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.pdf,application/pdf" className="hidden" onChange={handleBgUpload} />
-        <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-          <Upload size={13} /> {t('mapEditor.uploadBg')}
-        </button>
-        <button onClick={() => loadImageFromUrl('/data/sto-plan.png')} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-          {i18n.language === 'ru' ? 'План СТО' : 'STO Plan'}
+        <button onClick={() => fileInputRef.current?.click()} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={i18n.language === 'ru' ? 'Загрузить фон' : 'Upload bg'}><Upload size={14} /></button>
+        <button onClick={() => loadImageFromUrl('/data/sto-plan.png')} className="px-1.5 py-0.5 rounded text-[10px] hover:opacity-80" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          {i18n.language === 'ru' ? 'План' : 'Plan'}
         </button>
         {bgImage && (<>
-          <button onClick={() => { setBgImage(null); setBgDataUrl(null); }} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', border: '1px solid #ef444433', color: '#ef4444' }}>
-            <X size={13} /> {i18n.language === 'ru' ? 'Убрать фон' : 'Remove bg'}
-          </button>
+          <button onClick={() => { setBgImage(null); setBgDataUrl(null); }} className="p-1 rounded hover:opacity-80" style={{ color: '#ef4444' }} title={i18n.language === 'ru' ? 'Убрать фон' : 'Remove bg'}><X size={14} /></button>
           <input type="range" min="0" max="100" value={Math.round(bgOpacity * 100)}
             onChange={e => setBgOpacity(+e.target.value / 100)}
             title={`${Math.round(bgOpacity * 100)}%`}
-            style={{ width: 60, accentColor: 'var(--accent)' }} />
+            style={{ width: 50, accentColor: 'var(--accent)' }} />
         </>)}
-        <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
-          <Save size={13} /> {saving ? '...' : t('common.save')}
+        <div style={{ width: 1, height: 16, background: 'var(--border-glass)' }} />
+        <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] hover:opacity-80 disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
+          <Save size={12} /> {saving ? '...' : t('common.save')}
         </button>
-        <button onClick={handleLoad} disabled={loading} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-          <RefreshCw size={13} /> {loading ? '...' : t('mapEditor.load')}
-        </button>
-        <button onClick={handleExport} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-          <Download size={13} /> {t('mapEditor.exportJson')}
-        </button>
-        <button onClick={handleClear} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: '#ef4444' }}>
-          <Trash2 size={13} /> {t('mapEditor.clear')}
-        </button>
-
+        <button onClick={handleLoad} disabled={loading} className="p-1 rounded hover:opacity-80 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }} title={i18n.language === 'ru' ? 'Загрузить' : 'Load'}><RefreshCw size={14} /></button>
+        <button onClick={handleExport} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={i18n.language === 'ru' ? 'Экспорт JSON' : 'Export JSON'}><Download size={14} /></button>
+        <button onClick={handleClear} className="p-1 rounded hover:opacity-80" style={{ color: '#ef4444' }} title={i18n.language === 'ru' ? 'Очистить' : 'Clear'}><Trash2 size={14} /></button>
         <div className="flex-1" />
-
-        <button onClick={undo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={t('mapEditor.undo') + ' (Ctrl+Z)'}><Undo2 size={16} /></button>
-        <button onClick={redo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={t('mapEditor.redo') + ' (Ctrl+Shift+Z)'}><Redo2 size={16} /></button>
-        <div style={{ width: 1, height: 20, background: 'var(--border-glass)' }} />
-        <button onClick={() => setSnapEnabled(!snapEnabled)} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: snapEnabled ? 'var(--accent)' : 'var(--bg-card)', color: snapEnabled ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
-          <Magnet size={13} /> {t('mapEditor.snap')}
-        </button>
-        <button onClick={() => setShowGrid(!showGrid)} className="flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity" style={{ background: showGrid ? 'var(--accent)' : 'var(--bg-card)', color: showGrid ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
-          <Grid3X3 size={13} /> {t('mapEditor.grid')}
-        </button>
-        <button onClick={zoomIn} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><ZoomIn size={16} /></button>
-        <button onClick={zoomOut} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><ZoomOut size={16} /></button>
-        <button onClick={resetView} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><RotateCcw size={16} /></button>
+        <button onClick={undo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title="Ctrl+Z"><Undo2 size={14} /></button>
+        <button onClick={redo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title="Ctrl+Shift+Z"><Redo2 size={14} /></button>
+        <div style={{ width: 1, height: 16, background: 'var(--border-glass)' }} />
+        <button onClick={() => setSnapEnabled(!snapEnabled)} className="p-1 rounded hover:opacity-80" style={{ color: snapEnabled ? 'var(--accent)' : 'var(--text-muted)' }} title={t('mapEditor.snap')}><Magnet size={14} /></button>
+        <button onClick={() => setShowGrid(!showGrid)} className="p-1 rounded hover:opacity-80" style={{ color: showGrid ? 'var(--accent)' : 'var(--text-muted)' }} title={t('mapEditor.grid')}><Grid3X3 size={14} /></button>
+        <button onClick={zoomIn} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><ZoomIn size={14} /></button>
+        <button onClick={zoomOut} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><ZoomOut size={14} /></button>
+        <button onClick={resetView} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><RotateCcw size={14} /></button>
         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{Math.round(stageScale * 100)}%</span>
       </div>
 
@@ -862,12 +922,13 @@ export default function MapEditor() {
             <Layer>
               {/* Map frame background */}
               <Rect x={0} y={0} width={mapFrame.width} height={mapFrame.height}
-                fill="#0f172a" stroke="var(--accent, #f59e0b)" strokeWidth={2 / stageScale} />
+                fill="#0f172a" stroke="#f59e0b" strokeWidth={3 / stageScale}
+                shadowColor="#f59e0b" shadowBlur={8 / stageScale} shadowOpacity={0.5} />
               {/* Background image fitted into map frame */}
               {bgImage && (() => {
                 const s = Math.min(mapFrame.width / bgImage.width, mapFrame.height / bgImage.height);
                 const bw = bgImage.width * s, bh = bgImage.height * s;
-                return <KonvaImage image={bgImage} x={(mapFrame.width - bw) / 2} y={(mapFrame.height - bh) / 2} width={bw} height={bh} opacity={bgOpacity} />;
+                return <KonvaImage image={bgImage} x={0} y={0} width={bw} height={bh} opacity={bgOpacity} />;
               })()}
               {gridLines}
               {elements.map(renderElement)}
@@ -902,7 +963,7 @@ export default function MapEditor() {
         </div>
 
         {/* Right Properties Panel */}
-        <div className="glass-static flex flex-col p-2 flex-shrink-0 overflow-y-auto" style={{ width: 160, borderLeft: '1px solid var(--border-glass)' }}>
+        <div className="glass-static flex flex-col p-2 flex-shrink-0 overflow-y-auto" style={{ width: 160, borderLeft: '1px solid var(--border-glass)', minHeight: 0 }}>
           <h3 className="text-xs font-semibold mb-3" style={{ color: 'var(--accent)' }}>{t('mapEditor.properties')}</h3>
           {selected ? (
             <div className="space-y-2">
@@ -1069,6 +1130,15 @@ export default function MapEditor() {
               <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-2 hover:opacity-80 transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
                 <Save size={12} /> {saving ? '...' : t('common.save')}
               </button>
+              <button onClick={() => {
+                const elType = selected.type;
+                setElements(prev => prev.filter(e => e.id !== selectedId));
+                setSelectedId(null);
+                setDrawingPolygon({ points: [], elType });
+                setTool(elType);
+              }} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
+                <PenTool size={12} /> {i18n.language === 'ru' ? 'Перерисовать' : 'Redraw'}
+              </button>
               <button onClick={duplicateSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
                 <Copy size={12} /> {t('mapEditor.duplicate')} <span className="opacity-50 ml-1">Ctrl+D</span>
               </button>
@@ -1102,7 +1172,7 @@ export default function MapEditor() {
 
           {/* Elements list */}
           <h3 className="text-xs font-semibold mt-4 mb-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.elements')}</h3>
-          <div className="space-y-0.5 overflow-y-auto flex-1">
+          <div className="space-y-0.5 overflow-y-auto flex-1" style={{ minHeight: 0 }}>
             {elements.map(el => (
               <button key={el.id} onClick={() => { setSelectedId(el.id); setTool('select'); }}
                 className="w-full text-left px-2 py-1 rounded text-xs truncate transition-all"

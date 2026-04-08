@@ -50,7 +50,7 @@ async function authenticate(req, res, next) {
 
     // Derive pages from role (matches frontend PAGE_PERMISSIONS)
     const ROLE_PAGES = {
-      admin: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'map-view', 'sessions', 'work-orders', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c', 'users'],
+      admin: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'map-view', 'map-editor', 'sessions', 'work-orders', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c', 'users'],
       director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
       manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'data-1c'],
       mechanic: ['dashboard', 'dashboard-posts', 'map'],
