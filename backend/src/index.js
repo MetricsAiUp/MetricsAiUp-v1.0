@@ -30,8 +30,10 @@ const auditLogRoutes = require('./routes/auditLog');
 const pushRoutes = require('./routes/push');
 const photosRoutes = require('./routes/photos');
 const locationsRoutes = require('./routes/locations');
+const predictRoutes = require('./routes/predict');
 const { startFileWatcher } = require('./services/sync1C');
 const { initTelegramBot } = require('./services/telegramBot');
+const { generate: generateDemoData } = require('./generateDemoData');
 
 const app = express();
 
@@ -77,6 +79,8 @@ app.use('/api/audit-log', auditLogRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/photos', photosRoutes);
 app.use('/api/locations', locationsRoutes);
+app.use('/api/predict', predictRoutes);
+app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -98,6 +102,12 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Socket.IO] Ready for connections`);
   startFileWatcher();
   initTelegramBot();
+
+  // Demo data auto-refresh: regenerate every 2 minutes so data "lives"
+  try { generateDemoData(); } catch (e) { console.error('[DemoGen] Initial run error:', e.message); }
+  setInterval(() => {
+    try { generateDemoData(); } catch (e) { console.error('[DemoGen] Refresh error:', e.message); }
+  }, 2 * 60 * 1000);
 });
 
 // Also listen on 8080 for VPS proxy (same app, just another HTTP server)

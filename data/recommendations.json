@@ -1,1 +1,51 @@
-[{"id":"6fe61805-b0b8-4092-ac24-6cbdb795f625","type":"capacity_available","zoneId":"b054e559-f867-43dc-84d4-ea63caba5925","postId":null,"message":"Диагностика: Пост 10 свободен, в очереди 1 авто на компьютерную диагностику.","messageEn":"Diagnostics: Post 10 is free, 1 vehicle queued for computer diagnostics.","status":"active","createdAt":"2026-03-23T06:44:25.030Z","updatedAt":"2026-03-23T06:44:25.030Z","zone":{"id":"b054e559-f867-43dc-84d4-ea63caba5925","name":"Диагностика (посты 9-10)","type":"parking","description":"Правая часть СТО, диагностические посты","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.367Z","updatedAt":"2026-03-23T06:44:24.367Z"},"post":null},{"id":"560a2cd5-6c6f-4c3c-a7b8-3b64487ea8e2","type":"post_free","zoneId":null,"postId":"22b4af12-7ee4-46ac-bc16-769cf63c4ad4","message":"Пост 10 (Диагностика) свободен. Есть 2 авто в зоне ожидания.","messageEn":"Post 10 (Diagnostics) is free. 2 vehicles in waiting zone.","status":"active","createdAt":"2026-03-23T06:44:25.025Z","updatedAt":"2026-03-23T06:44:25.025Z","zone":null,"post":{"id":"22b4af12-7ee4-46ac-bc16-769cf63c4ad4","zoneId":"b054e559-f867-43dc-84d4-ea63caba5925","name":"Пост 10","type":"special","status":"free","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.430Z","updatedAt":"2026-03-23T06:44:24.430Z"}},{"id":"6d2d7a3b-334a-4b64-9267-0c7cd161f308","type":"post_free","zoneId":null,"postId":"80c0e202-4ced-4687-9c97-ffb4ae5e7831","message":"Пост 6 свободен более 2 часов при наличии записанных клиентов.","messageEn":"Post 6 has been free for over 2 hours while there are scheduled clients.","status":"active","createdAt":"2026-03-23T06:44:25.021Z","updatedAt":"2026-03-23T06:44:25.021Z","zone":null,"post":{"id":"80c0e202-4ced-4687-9c97-ffb4ae5e7831","zoneId":"bbf4ea6f-9e0a-4793-b05a-7cf47b330477","name":"Пост 6","type":"light","status":"free","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.425Z","updatedAt":"2026-03-23T06:44:24.425Z"}},{"id":"3290093d-5526-4466-ab28-de0269b222c6","type":"work_overtime","zoneId":null,"postId":"74ffb58d-ee67-4e86-beba-0e917d34a1c9","message":"ТО-2 на Посту 1 (А123ВС77) превышает норму: 2.3ч из 3.0ч запланированных.","messageEn":"Service TO-2 at Post 1 (А123ВС77) exceeds norm: 2.3h out of 3.0h planned.","status":"active","createdAt":"2026-03-23T06:44:25.018Z","updatedAt":"2026-03-23T06:44:25.018Z","zone":null,"post":{"id":"74ffb58d-ee67-4e86-beba-0e917d34a1c9","zoneId":"23acc854-e6ba-404b-a36a-7a995d9e4909","name":"Пост 1","type":"light","status":"active_work","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.399Z","updatedAt":"2026-03-23T06:44:24.399Z"}},{"id":"d3d8c533-df62-42e8-a57c-4f52f142d1fb","type":"capacity_available","zoneId":"bbf4ea6f-9e0a-4793-b05a-7cf47b330477","postId":null,"message":"Ремонтная зона (посты 5-8): Посты 6 и 8 свободны, можно принять ещё 2 авто.","messageEn":"Repair zone (posts 5-8): Posts 6 and 8 are free, can accept 2 more vehicles.","status":"active","createdAt":"2026-03-23T06:44:25.014Z","updatedAt":"2026-03-23T06:44:25.014Z","zone":{"id":"bbf4ea6f-9e0a-4793-b05a-7cf47b330477","name":"Ремонтная зона (посты 5-8)","type":"repair","description":"Верхний ряд, 2-х стоечные подъёмники","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.361Z","updatedAt":"2026-03-23T06:44:24.361Z"},"post":null},{"id":"2924ec70-eacc-4d1b-85e9-6c09c1aef673","type":"no_show","zoneId":null,"postId":null,"message":"Клиент не приехал: ЗН-2026-0310 (АВ55577), запись была 5 часов назад.","messageEn":"Client no-show: WO-2026-0310 (АВ55577), appointment was 5 hours ago.","status":"active","createdAt":"2026-03-23T06:44:25.010Z","updatedAt":"2026-03-23T06:44:25.010Z","zone":null,"post":null},{"id":"427b83b8-8964-4b89-9cb5-d72300f42cd8","type":"vehicle_idle","zoneId":null,"postId":"edde428b-df82-4343-8a2c-488640579321","message":"Авто К111АА99 на Посту 7 — работник присутствует, но активности нет 40 мин.","messageEn":"Vehicle К111АА99 at Post 7 — worker present but no activity for 40 min.","status":"active","createdAt":"2026-03-23T06:44:25.007Z","updatedAt":"2026-03-23T06:44:25.007Z","zone":null,"post":{"id":"edde428b-df82-4343-8a2c-488640579321","zoneId":"bbf4ea6f-9e0a-4793-b05a-7cf47b330477","name":"Пост 7","type":"light","status":"occupied","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.435Z","updatedAt":"2026-03-23T06:44:24.435Z"}},{"id":"4d9fde25-e66f-4bb0-a753-eb0a9823f403","type":"vehicle_idle","zoneId":null,"postId":"3696651a-9108-4afd-a47f-9e73941da433","message":"Авто В456КМ50 на Посту 2 без работника более 45 минут. Возможен простой.","messageEn":"Vehicle В456КМ50 at Post 2 without worker for over 45 minutes. Possible idle time.","status":"active","createdAt":"2026-03-23T06:44:25.003Z","updatedAt":"2026-03-23T06:44:25.003Z","zone":null,"post":{"id":"3696651a-9108-4afd-a47f-9e73941da433","zoneId":"23acc854-e6ba-404b-a36a-7a995d9e4909","name":"Пост 2","type":"light","status":"occupied_no_work","coordinates":null,"isActive":true,"createdAt":"2026-03-23T06:44:24.400Z","updatedAt":"2026-03-23T06:44:24.400Z"}}]
+[
+  {
+    "id": "75662f84-7167-919d-8325-9876f8708739",
+    "type": "no_show",
+    "zoneId": null,
+    "postId": null,
+    "message": "Клиент Х234ОЕ50 (CITROEN JUMPER) не приехал на ТО-2. ЗН КОЛ00036350",
+    "messageEn": "Client Х234ОЕ50 (CITROEN JUMPER) did not arrive for ТО-2. WO КОЛ00036350",
+    "status": "active",
+    "createdAt": "2026-04-08T10:00:00",
+    "updatedAt": "2026-04-08T09:34:58"
+  },
+  {
+    "id": "9844aed4-5d09-db36-e5b8-b96cf939adac",
+    "type": "post_free",
+    "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+    "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+    "message": "Пост 8 свободен. В очереди 4 нераспределённых ЗН.",
+    "messageEn": "Пост 8 is free. 4 unassigned WOs in queue.",
+    "status": "active",
+    "zone": {
+      "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+      "name": "Ремонтная зона (посты 5-8)"
+    },
+    "post": {
+      "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+      "name": "Пост 8"
+    },
+    "createdAt": "2026-04-08T09:19:58",
+    "updatedAt": "2026-04-08T09:34:58"
+  },
+  {
+    "id": "b2327cfb-aecf-2f29-2985-d55bd8b54c9c",
+    "type": "vehicle_idle",
+    "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+    "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
+    "message": "Авто Е890МР50 на Пост 6 без активной работы. Работник отсутствует.",
+    "messageEn": "Vehicle Е890МР50 on Пост 6 without active work. Worker absent.",
+    "status": "active",
+    "zone": {
+      "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+      "name": "Ремонтная зона (посты 5-8)"
+    },
+    "post": {
+      "id": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
+      "name": "Пост 6"
+    },
+    "createdAt": "2026-04-08T09:26:58",
+    "updatedAt": "2026-04-08T09:34:58"
+  }
+]

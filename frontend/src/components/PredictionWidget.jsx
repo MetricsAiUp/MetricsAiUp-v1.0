@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, Clock, BarChart3, RefreshCw } from 'lucide-react';
 
-const ML_API = import.meta.env.VITE_ML_API_URL || `${window.location.protocol}//${window.location.hostname}:8282`;
+// Use backend /api/predict endpoints (proxied by nginx alongside other /api/* routes)
+const ML_API = import.meta.env.VITE_ML_API_URL || `${window.location.origin}/api`;
 
 export default function PredictionWidget() {
   const { t, i18n } = useTranslation();
