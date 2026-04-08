@@ -1,24 +1,6 @@
 {
-  "activeSessions": 9,
+  "activeSessions": 2,
   "zonesWithVehicles": [
-    {
-      "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-      "zoneName": "Ремонтная зона (посты 1-4)",
-      "zoneType": "repair",
-      "vehicleCount": 3
-    },
-    {
-      "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-      "zoneName": "Ремонтная зона (посты 5-8)",
-      "zoneType": "repair",
-      "vehicleCount": 2
-    },
-    {
-      "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-      "zoneName": "Диагностика (посты 9-10)",
-      "zoneType": "repair",
-      "vehicleCount": 2
-    },
     {
       "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
       "zoneName": "Зона Ожидания / Парковка",
@@ -37,37 +19,37 @@
     {
       "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
       "postName": "Пост 2",
-      "status": "active_work",
-      "plateNumber": "Т678АР97",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
       "postName": "Пост 3",
-      "status": "active_work",
-      "plateNumber": "К891АС99",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
       "postName": "Пост 4",
-      "status": "active_work",
-      "plateNumber": "Е567ОР77",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
       "postName": "Пост 5",
-      "status": "active_work",
-      "plateNumber": "Е890МР50",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
       "postName": "Пост 6",
-      "status": "active_work",
-      "plateNumber": "С012ХЕ99",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
@@ -86,22 +68,22 @@
     {
       "postId": "6cff9b6d-306f-de08-2265-79e420541253",
       "postName": "Пост 9",
-      "status": "active_work",
-      "plateNumber": "Е567ОР77",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     },
     {
       "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
       "postName": "Пост 10",
-      "status": "active_work",
-      "plateNumber": "В567ЕК99",
-      "workerPresent": true
+      "status": "free",
+      "plateNumber": null,
+      "workerPresent": false
     }
   ],
-  "activeRecommendations": 5,
-  "completedToday": 22,
-  "totalNormHours": 94.7,
-  "freePostsCount": 3,
-  "occupiedPostsCount": 7,
-  "activeWorkCount": 7
+  "activeRecommendations": 12,
+  "completedToday": 0,
+  "totalNormHours": 90.2,
+  "freePostsCount": 10,
+  "occupiedPostsCount": 0,
+  "activeWorkCount": 0
 }

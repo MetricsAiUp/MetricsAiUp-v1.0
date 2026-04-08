@@ -6,8 +6,8 @@
     "description": "Нижний ряд, 2-х стоечные подъёмники",
     "coordinates": null,
     "isActive": true,
-    "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T00:00:00",
+    "createdAt": "2026-04-09T00:00:00",
+    "updatedAt": "2026-04-09T00:00:00",
     "posts": [
       {
         "id": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
@@ -17,8 +17,8 @@
         "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
         "stays": [],
         "zone": {
           "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
@@ -27,8 +27,8 @@
           "description": "Нижний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -36,24 +36,12 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 2",
         "type": "heavy",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "ca550bc5-cf8f-0faf-1d37-81844d6d0a6c",
-            "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
-            "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
-            "startTime": "2026-04-08T12:35:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 4685,
-            "idleTime": 2008
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
           "name": "Ремонтная зона (посты 1-4)",
@@ -61,8 +49,8 @@
           "description": "Нижний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -70,24 +58,12 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 3",
         "type": "heavy",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "6372a085-6195-38a1-388c-c404de369177",
-            "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
-            "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
-            "startTime": "2026-04-08T11:59:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 6197,
-            "idleTime": 2656
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
           "name": "Ремонтная зона (посты 1-4)",
@@ -95,8 +71,8 @@
           "description": "Нижний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -104,24 +80,12 @@
         "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
         "name": "Пост 4",
         "type": "heavy",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "52bc6701-d84e-8a68-743e-62ddc045ce01",
-            "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
-            "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-            "startTime": "2026-04-08T12:19:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 5357,
-            "idleTime": 2296
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
           "name": "Ремонтная зона (посты 1-4)",
@@ -129,8 +93,8 @@
           "description": "Нижний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       }
     ],
@@ -168,32 +132,20 @@
     "description": "Верхний ряд, 2-х стоечные подъёмники",
     "coordinates": null,
     "isActive": true,
-    "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T00:00:00",
+    "createdAt": "2026-04-09T00:00:00",
+    "updatedAt": "2026-04-09T00:00:00",
     "posts": [
       {
         "id": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
         "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
         "name": "Пост 5",
         "type": "light",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "b46c6275-3961-5b87-9476-5ad6659b72e6",
-            "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
-            "vehicleSessionId": "f25b4b0f-f1db-0006-d460-cc9d6403f76d",
-            "startTime": "2026-04-08T13:07:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 3341,
-            "idleTime": 1432
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "8b416cdc-f285-e894-9378-3be648996ef6",
           "name": "Ремонтная зона (посты 5-8)",
@@ -201,8 +153,8 @@
           "description": "Верхний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -210,24 +162,12 @@
         "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
         "name": "Пост 6",
         "type": "light",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "746f5238-cbe9-fc51-8c11-92309cc59cfe",
-            "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-            "vehicleSessionId": "4d398e63-2d9b-ed06-ef6a-da9af8342331",
-            "startTime": "2026-04-08T12:03:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 6029,
-            "idleTime": 2584
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "8b416cdc-f285-e894-9378-3be648996ef6",
           "name": "Ремонтная зона (посты 5-8)",
@@ -235,8 +175,8 @@
           "description": "Верхний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -247,8 +187,8 @@
         "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
         "stays": [],
         "zone": {
           "id": "8b416cdc-f285-e894-9378-3be648996ef6",
@@ -257,8 +197,8 @@
           "description": "Верхний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -269,8 +209,8 @@
         "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
         "stays": [],
         "zone": {
           "id": "8b416cdc-f285-e894-9378-3be648996ef6",
@@ -279,8 +219,8 @@
           "description": "Верхний ряд, 2-х стоечные подъёмники",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       }
     ],
@@ -291,7 +231,7 @@
           "name": "CAM 01",
           "rtspUrl": "rtsp://cam1"
         },
-        "priority": 5
+        "priority": 8
       },
       {
         "camera": {
@@ -299,7 +239,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 8
+        "priority": 5
       },
       {
         "camera": {
@@ -318,32 +258,20 @@
     "description": "Правая часть СТО, диагностические посты",
     "coordinates": null,
     "isActive": true,
-    "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T00:00:00",
+    "createdAt": "2026-04-09T00:00:00",
+    "updatedAt": "2026-04-09T00:00:00",
     "posts": [
       {
         "id": "6cff9b6d-306f-de08-2265-79e420541253",
         "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
         "name": "Пост 9",
         "type": "special",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "81e582ad-0fbc-f060-4c3e-e0fbf71759da",
-            "postId": "6cff9b6d-306f-de08-2265-79e420541253",
-            "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-            "startTime": "2026-04-08T13:23:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 2669,
-            "idleTime": 1144
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
           "name": "Диагностика (посты 9-10)",
@@ -351,8 +279,8 @@
           "description": "Правая часть СТО, диагностические посты",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       },
       {
@@ -360,24 +288,12 @@
         "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
         "name": "Пост 10",
         "type": "special",
-        "status": "active_work",
+        "status": "free",
         "coordinates": null,
         "isActive": true,
-        "createdAt": "2026-04-08T00:00:00",
-        "updatedAt": "2026-04-08T14:26:33",
-        "stays": [
-          {
-            "id": "44766efe-bf49-81f8-b94c-67f4f643f0ca",
-            "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-            "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
-            "startTime": "2026-04-08T12:04:00",
-            "endTime": null,
-            "hasWorker": true,
-            "isActive": true,
-            "activeTime": 5987,
-            "idleTime": 2566
-          }
-        ],
+        "createdAt": "2026-04-09T00:00:00",
+        "updatedAt": "2026-04-09T01:03:00",
+        "stays": [],
         "zone": {
           "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
           "name": "Диагностика (посты 9-10)",
@@ -385,11 +301,48 @@
           "description": "Правая часть СТО, диагностические посты",
           "coordinates": null,
           "isActive": true,
-          "createdAt": "2026-04-08T00:00:00",
-          "updatedAt": "2026-04-08T00:00:00"
+          "createdAt": "2026-04-09T00:00:00",
+          "updatedAt": "2026-04-09T00:00:00"
         }
       }
     ],
+    "cameras": [
+      {
+        "camera": {
+          "id": "2c819688-54ec-33b1-fd98-a82465643bc6",
+          "name": "CAM 01",
+          "rtspUrl": "rtsp://cam1"
+        },
+        "priority": 4
+      },
+      {
+        "camera": {
+          "id": "8491dde4-9fc1-c11d-b2bb-3fe023790162",
+          "name": "CAM 02",
+          "rtspUrl": "rtsp://cam2"
+        },
+        "priority": 4
+      },
+      {
+        "camera": {
+          "id": "23e5dbb1-b96a-4007-938d-99eb3f2e9306",
+          "name": "CAM 03",
+          "rtspUrl": "rtsp://cam3"
+        },
+        "priority": 9
+      }
+    ]
+  },
+  {
+    "id": "a7100bdd-80fa-2fc6-53c6-5f087d5f67d2",
+    "name": "Зона Въезд/Выезд",
+    "type": "entry",
+    "description": "Ворота въезда и выезда",
+    "coordinates": null,
+    "isActive": true,
+    "createdAt": "2026-04-09T00:00:00",
+    "updatedAt": "2026-04-09T00:00:00",
+    "posts": [],
     "cameras": [
       {
         "camera": {
@@ -418,51 +371,14 @@
     ]
   },
   {
-    "id": "a7100bdd-80fa-2fc6-53c6-5f087d5f67d2",
-    "name": "Зона Въезд/Выезд",
-    "type": "entry",
-    "description": "Ворота въезда и выезда",
-    "coordinates": null,
-    "isActive": true,
-    "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T00:00:00",
-    "posts": [],
-    "cameras": [
-      {
-        "camera": {
-          "id": "2c819688-54ec-33b1-fd98-a82465643bc6",
-          "name": "CAM 01",
-          "rtspUrl": "rtsp://cam1"
-        },
-        "priority": 9
-      },
-      {
-        "camera": {
-          "id": "8491dde4-9fc1-c11d-b2bb-3fe023790162",
-          "name": "CAM 02",
-          "rtspUrl": "rtsp://cam2"
-        },
-        "priority": 5
-      },
-      {
-        "camera": {
-          "id": "23e5dbb1-b96a-4007-938d-99eb3f2e9306",
-          "name": "CAM 03",
-          "rtspUrl": "rtsp://cam3"
-        },
-        "priority": 9
-      }
-    ]
-  },
-  {
     "id": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
     "name": "Зона Ожидания / Парковка",
     "type": "waiting",
     "description": "Зона ожидания и парковка готовых авто",
     "coordinates": null,
     "isActive": true,
-    "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T00:00:00",
+    "createdAt": "2026-04-09T00:00:00",
+    "updatedAt": "2026-04-09T00:00:00",
     "posts": [],
     "cameras": [
       {
@@ -471,7 +387,7 @@
           "name": "CAM 01",
           "rtspUrl": "rtsp://cam1"
         },
-        "priority": 8
+        "priority": 9
       },
       {
         "camera": {
@@ -479,7 +395,7 @@
           "name": "CAM 02",
           "rtspUrl": "rtsp://cam2"
         },
-        "priority": 7
+        "priority": 4
       },
       {
         "camera": {

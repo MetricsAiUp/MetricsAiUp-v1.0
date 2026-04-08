@@ -5,119 +5,119 @@
       "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
       "zoneName": "Ремонтная зона (посты 1-4)",
       "zoneType": "repair",
-      "avgDuration": 15785,
-      "vehicleCount": 269
+      "avgDuration": 22917,
+      "vehicleCount": 152
     },
     {
       "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
       "zoneName": "Ремонтная зона (посты 5-8)",
       "zoneType": "repair",
-      "avgDuration": 24860,
-      "vehicleCount": 727
+      "avgDuration": 16464,
+      "vehicleCount": 916
     },
     {
       "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
       "zoneName": "Диагностика (посты 9-10)",
       "zoneType": "repair",
-      "avgDuration": 10790,
-      "vehicleCount": 291
+      "avgDuration": 23498,
+      "vehicleCount": 705
     },
     {
       "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
       "zoneName": "Зона Ожидания / Парковка",
       "zoneType": "waiting",
-      "avgDuration": 11998,
-      "vehicleCount": 1176
+      "avgDuration": 16699,
+      "vehicleCount": 1105
     }
   ],
   "postMetrics": [
     {
       "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
       "postName": "Пост 1",
-      "activeTime": 1131259,
-      "idleTime": 441166,
-      "vehicleCount": 145
+      "activeTime": 845328,
+      "idleTime": 224802,
+      "vehicleCount": 128
     },
     {
       "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
       "postName": "Пост 2",
-      "activeTime": 1176981,
-      "idleTime": 382864,
-      "vehicleCount": 152
+      "activeTime": 989457,
+      "idleTime": 413304,
+      "vehicleCount": 163
     },
     {
       "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
       "postName": "Пост 3",
-      "activeTime": 1095502,
-      "idleTime": 174777,
-      "vehicleCount": 173
+      "activeTime": 1243641,
+      "idleTime": 324282,
+      "vehicleCount": 157
     },
     {
       "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
       "postName": "Пост 4",
-      "activeTime": 1269772,
-      "idleTime": 316116,
-      "vehicleCount": 135
+      "activeTime": 985816,
+      "idleTime": 419315,
+      "vehicleCount": 130
     },
     {
       "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
       "postName": "Пост 5",
-      "activeTime": 1099065,
-      "idleTime": 367000,
-      "vehicleCount": 96
+      "activeTime": 1418117,
+      "idleTime": 407354,
+      "vehicleCount": 93
     },
     {
       "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
       "postName": "Пост 6",
-      "activeTime": 1060731,
-      "idleTime": 412818,
-      "vehicleCount": 100
+      "activeTime": 740651,
+      "idleTime": 300457,
+      "vehicleCount": 131
     },
     {
       "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
       "postName": "Пост 7",
-      "activeTime": 791812,
-      "idleTime": 90438,
-      "vehicleCount": 131
+      "activeTime": 671019,
+      "idleTime": 181129,
+      "vehicleCount": 134
     },
     {
       "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
       "postName": "Пост 8",
-      "activeTime": 1319304,
-      "idleTime": 312157,
-      "vehicleCount": 151
+      "activeTime": 1469814,
+      "idleTime": 198572,
+      "vehicleCount": 164
     },
     {
       "postId": "6cff9b6d-306f-de08-2265-79e420541253",
       "postName": "Пост 9",
-      "activeTime": 1251450,
-      "idleTime": 260538,
-      "vehicleCount": 158
+      "activeTime": 1218184,
+      "idleTime": 178683,
+      "vehicleCount": 116
     },
     {
       "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
       "postName": "Пост 10",
-      "activeTime": 1264196,
-      "idleTime": 271618,
-      "vehicleCount": 96
+      "activeTime": 706588,
+      "idleTime": 266189,
+      "vehicleCount": 145
     }
   ],
   "workOrderMetrics": [
     {
       "status": "completed",
-      "count": 1182
+      "count": 1192
     },
     {
       "status": "in_progress",
-      "count": 6
+      "count": 9
     },
     {
       "status": "scheduled",
-      "count": 5
+      "count": 7
     },
     {
       "status": "no_show",
-      "count": 34
+      "count": 72
     }
   ]
 }
