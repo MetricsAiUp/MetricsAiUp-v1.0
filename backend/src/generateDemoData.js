@@ -607,7 +607,7 @@ function generate() {
 
   // ═══ WRITE FILES ═══
   const writes = {
-    'dashboard-posts.json': dashboardPosts,
+    // 'dashboard-posts.json' and 'posts-analytics.json' are now served from DB via /api/
     'work-orders.json': workOrdersJson,
     'sessions.json': sessionsJson,
     'sessions-completed.json': sessionsCompletedJson,
@@ -615,7 +615,6 @@ function generate() {
     'dashboard-overview.json': dashboardOverview,
     'recommendations.json': recommendations,
     'shifts.json': shiftsJson,
-    'posts-analytics.json': postsAnalytics,
     'analytics-history.json': analyticsHistory,
     'dashboard-metrics-30d.json': metrics30d,
     'dashboard-metrics-7d.json': metrics7d,

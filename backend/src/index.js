@@ -31,6 +31,7 @@ const pushRoutes = require('./routes/push');
 const photosRoutes = require('./routes/photos');
 const locationsRoutes = require('./routes/locations');
 const predictRoutes = require('./routes/predict');
+const postsDataRoutes = require('./routes/postsData');
 const { startFileWatcher } = require('./services/sync1C');
 const { initTelegramBot } = require('./services/telegramBot');
 const { generate: generateDemoData } = require('./generateDemoData');
@@ -80,6 +81,7 @@ app.use('/api/push', pushRoutes);
 app.use('/api/photos', photosRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/predict', predictRoutes);
+app.use('/api', postsDataRoutes);
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check

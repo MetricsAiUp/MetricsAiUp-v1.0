@@ -243,20 +243,30 @@ model Event {
 // WorkOrderStatus: scheduled, in_progress, completed, cancelled, no_show
 
 model WorkOrder {
-  id            String   @id @default(uuid())
-  externalId    String?  @unique @map("external_id")
-  orderNumber   String   @map("order_number")
-  scheduledTime DateTime @map("scheduled_time")
-  status        String   @default("scheduled") // WorkOrderStatus
-  plateNumber   String?  @map("plate_number")
-  workType      String?  @map("work_type")
-  normHours     Float?   @map("norm_hours")
-  actualHours   Float?   @map("actual_hours")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id            String    @id @default(uuid())
+  externalId    String?   @unique @map("external_id")
+  orderNumber   String    @map("order_number")
+  scheduledTime DateTime  @map("scheduled_time")
+  status        String    @default("scheduled") // WorkOrderStatus
+  plateNumber   String?   @map("plate_number")
+  workType      String?   @map("work_type")
+  normHours     Float?    @map("norm_hours")
+  actualHours   Float?    @map("actual_hours")
+  brand         String?
+  model         String?
+  worker        String?
+  master        String?
+  postNumber    Int?      @map("post_number")
+  startTime     DateTime? @map("start_time")
+  endTime       DateTime? @map("end_time")
+  estimatedEnd  DateTime? @map("estimated_end")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   links WorkOrderLink[]
 
+  @@index([postNumber])
+  @@index([status])
   @@map("work_orders")
 }
 
