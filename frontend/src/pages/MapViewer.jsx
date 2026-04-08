@@ -775,43 +775,42 @@ function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
     { label: isRu ? 'Дверей' : 'Doors', value: counts.door || 0, color: '#f59e0b' },
   ];
 
-  // Scale fonts to fill box
-  const totalRows = rows.length + 2;
-  const fsByH = h / (totalRows * 2.4 + 2);
-  const fsByW = w / 14;
-  const fs = Math.max(Math.min(fsByH, fsByW), 8);
-  const pad = fs * 1.2;
-  const lineH = fs * 2.2;
-  const titleFs = fs * 1.6;
+  // Fixed font sizes — don't scale with element size
+  const fs = 10;
+  const pad = 10;
+  const lineH = 16;
+  const titleFs = 12;
   const contentW = w - pad * 2;
-  const dotR = fs * 0.5;
+  const dotR = 3.5;
 
-  const sepY = pad + titleFs * 1.5;
-  const rowsStartY = sepY + pad * 0.8;
+  const sepY = pad + titleFs + 5;
+  const rowsStartY = sepY + 7;
 
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} clipX={0} clipY={0} clipWidth={w} clipHeight={h}>
-      <Rect width={w} height={h} fill={bgFill} cornerRadius={Math.min(w, h) * 0.03}
+      <Rect width={w} height={h} fill={bgFill} cornerRadius={5}
         stroke={borderColor} strokeWidth={1}
-        shadowBlur={8} shadowColor="rgba(0,0,0,0.2)" shadowOpacity={0.3} />
+        shadowBlur={6} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
 
       {/* Title */}
       <Text x={pad} y={pad} text={title} fontSize={titleFs}
-        fontStyle="bold" fill={accentColor} width={contentW} />
+        fontStyle="bold" fill={accentColor} width={contentW} fontFamily="system-ui, sans-serif" />
 
       {/* Separator */}
-      <Rect x={pad} y={sepY} width={contentW} height={1} fill={mutedColor} opacity={0.2} />
+      <Rect x={pad} y={sepY} width={contentW} height={0.5} fill={accentColor} opacity={0.3} />
 
       {/* Rows */}
       {rows.map((row, i) => {
         const ry = rowsStartY + i * lineH;
-        if (ry + fs > h - pad * 0.3) return null;
+        if (ry + fs > h - 4) return null;
         return (
           <Group key={i}>
-            <Circle x={pad + dotR} y={ry + fs * 0.5} radius={dotR} fill={row.color} />
-            <Text x={pad + dotR * 3.5} y={ry} text={row.label} fontSize={fs} fill={mutedColor} />
-            <Text x={pad} y={ry} text={String(row.value)} fontSize={fs * 1.1}
-              fontStyle="bold" fill={textColor} width={contentW} align="right" />
+            <Circle x={pad + dotR} y={ry + fs * 0.45} radius={dotR} fill={row.color} />
+            <Text x={pad + dotR * 3} y={ry} text={row.label} fontSize={fs}
+              fill={mutedColor} fontFamily="system-ui, sans-serif" />
+            <Text x={pad} y={ry} text={String(row.value)} fontSize={fs}
+              fontStyle="bold" fill={textColor} width={contentW} align="right"
+              fontFamily="system-ui, sans-serif" />
           </Group>
         );
       })}
