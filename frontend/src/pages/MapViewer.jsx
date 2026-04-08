@@ -11,6 +11,7 @@ import HelpButton from '../components/HelpButton';
 import {
   X, Car, Clock, Timer, User, FileText, AlertTriangle,
   ArrowRight, MapPin, Layers, Download, ChevronDown, ChevronUp, Image, FileDown,
+  ZoomIn, ZoomOut, Maximize, Minimize,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
@@ -188,6 +189,7 @@ export default function MapViewer() {
   const { api } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const pageRef = useRef(null);
   const containerRef = useRef(null);
   const stageRef = useRef(null);
 
@@ -200,6 +202,9 @@ export default function MapViewer() {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showLayersPanel, setShowLayersPanel] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [baseScale, setBaseScale] = useState(1);
+  const [baseBounds, setBaseBounds] = useState(null);
   const [visibleLayers, setVisibleLayers] = useState(() => {
     try {
       const saved = localStorage.getItem('mapViewerLayers');
@@ -209,6 +214,18 @@ export default function MapViewer() {
   });
 
   const isDark = theme === 'dark';
+
+  // Set page height to fill viewport
+  useEffect(() => {
+    const setHeight = () => {
+      if (!pageRef.current) return;
+      const top = pageRef.current.getBoundingClientRect().top;
+      pageRef.current.style.height = `${window.innerHeight - top}px`;
+    };
+    setHeight();
+    window.addEventListener('resize', setHeight);
+    return () => window.removeEventListener('resize', setHeight);
+  }, []);
 
   // Load layout from API
   useEffect(() => {
@@ -232,70 +249,91 @@ export default function MapViewer() {
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
   usePolling(fetchRealtime, 5000);
 
-  // Responsive sizing — fit all elements into available space
-  useEffect(() => {
-    const resize = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const cw = rect.width;
-      const ch = window.innerHeight - rect.top - 20; // fill to bottom of viewport
-
-      // Compute bounding box of all elements (including polygon points, camera range)
-      const els = layout?.elements || [];
-      let maxX = 100, maxY = 100;
-      for (const el of els) {
-        let ex = (el.x || 0) + (el.width || 0);
-        let ey = (el.y || 0) + (el.height || 0);
-        // Polygon points
-        if (el.points?.length >= 2) {
-          for (let i = 0; i < el.points.length; i += 2) {
-            ex = Math.max(ex, (el.x || 0) + el.points[i]);
-            ey = Math.max(ey, (el.y || 0) + el.points[i + 1]);
-          }
+  // Compute content bounding box
+  const computeBounds = useCallback(() => {
+    const els = layout?.elements || [];
+    if (els.length === 0) return { minX: 0, minY: 0, maxX: 100, maxY: 100 };
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const el of els) {
+      const elX = el.x || 0, elY = el.y || 0;
+      minX = Math.min(minX, elX);
+      minY = Math.min(minY, elY);
+      maxX = Math.max(maxX, elX + (el.width || 0));
+      maxY = Math.max(maxY, elY + (el.height || 0));
+      if (el.points?.length >= 2) {
+        for (let i = 0; i < el.points.length; i += 2) {
+          minX = Math.min(minX, elX + el.points[i]);
+          minY = Math.min(minY, elY + el.points[i + 1]);
+          maxX = Math.max(maxX, elX + el.points[i]);
+          maxY = Math.max(maxY, elY + el.points[i + 1]);
         }
-        // Camera FOV range
-        if (el.type === 'camera') {
-          const range = el.data?.range || 80;
-          ex = Math.max(ex, (el.x || 0) + (el.width || 24) + range);
-          ey = Math.max(ey, (el.y || 0) + (el.height || 24) + range);
-        }
-        if (ex > maxX) maxX = ex;
-        if (ey > maxY) maxY = ey;
       }
-      // Add padding
-      maxX += 20;
-      maxY += 20;
-
-      // Scale to fit — no upper limit, fill available space
-      const fitScale = Math.min(cw / maxX, ch / maxY);
-      setStageSize({ width: cw, height: ch });
-      setScale(fitScale);
-      setPosition({ x: 0, y: 0 });
-    };
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    }
+    return { minX, minY, maxX, maxY };
   }, [layout]);
 
-  // Zoom with wheel
-  const handleWheel = (e) => {
-    e.evt.preventDefault();
-    const stage = stageRef.current;
-    if (!stage) return;
-    const oldScale = scale;
-    const pointer = stage.getPointerPosition();
-    const dir = e.evt.deltaY > 0 ? -1 : 1;
-    const newScale = Math.min(3, Math.max(0.2, oldScale + dir * 0.1));
-    const mousePointTo = {
-      x: (pointer.x - position.x) / oldScale,
-      y: (pointer.y - position.y) / oldScale,
-    };
+  // Fit to container
+  const fitToContainer = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const cw = rect.width, ch = rect.height;
+    if (cw < 10 || ch < 10) return;
+
+    const bounds = computeBounds();
+    const contentW = bounds.maxX - bounds.minX;
+    const contentH = bounds.maxY - bounds.minY;
+    if (contentW <= 0 || contentH <= 0) return;
+
+    const fitScale = Math.min(cw / contentW, ch / contentH);
+    const scaledW = contentW * fitScale;
+    const scaledH = contentH * fitScale;
+    const offsetX = (cw - scaledW) / 2 - bounds.minX * fitScale;
+    const offsetY = (ch - scaledH) / 2 - bounds.minY * fitScale;
+
+    setStageSize({ width: cw, height: ch });
+    setScale(fitScale);
+    setBaseScale(fitScale);
+    setBaseBounds(bounds);
+    setPosition({ x: offsetX, y: offsetY });
+  }, [computeBounds]);
+
+  // Responsive sizing
+  useEffect(() => {
+    const raf = requestAnimationFrame(fitToContainer);
+    window.addEventListener('resize', fitToContainer);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', fitToContainer); };
+  }, [fitToContainer]);
+
+  // Zoom controls (button-based, centered)
+  const handleZoom = useCallback((dir) => {
+    const newScale = Math.min(baseScale * 3, Math.max(baseScale * 0.5, scale + dir * baseScale * 0.2));
+    const cx = stageSize.width / 2, cy = stageSize.height / 2;
+    const mousePointTo = { x: (cx - position.x) / scale, y: (cy - position.y) / scale };
     setScale(newScale);
-    setPosition({
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    });
-  };
+    setPosition({ x: cx - mousePointTo.x * newScale, y: cy - mousePointTo.y * newScale });
+  }, [scale, baseScale, position, stageSize]);
+
+  // Fullscreen
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  // Re-fit after fullscreen change
+  useEffect(() => {
+    setTimeout(fitToContainer, 100);
+  }, [isFullscreen, fitToContainer]);
 
   // Save layers to localStorage
   useEffect(() => {
@@ -362,80 +400,84 @@ export default function MapViewer() {
 
   const allElements = layout?.elements || [];
   const elements = allElements.filter(el => visibleLayers[el.type] !== false);
-  const bgFill = isDark ? '#1a1a2e' : '#f0f4f8';
+  const bgFill = isDark ? '#0f172a' : '#f0f4f8';
   const textFill = isDark ? '#e2e8f0' : '#1e293b';
   const mutedFill = isDark ? '#94a3b8' : '#64748b';
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <MapPin size={22} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            {t('nav.mapView2')}
-          </h2>
-          <HelpButton pageKey="map" />
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Layers dropdown */}
-          <div className="relative">
-            <button onClick={() => setShowLayersPanel(!showLayersPanel)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-              <Layers size={14} /> {t('mapView.layers')}
-              {showLayersPanel ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-            {showLayersPanel && (
-              <div className="absolute right-0 mt-1 p-2 rounded-lg shadow-lg space-y-1 z-20"
-                style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', minWidth: 140 }}>
-                {[
-                  { key: 'building', label: t('mapView.layerBuildings') },
-                  { key: 'post', label: t('mapView.layerPosts') },
-                  { key: 'zone', label: t('mapView.layerZones') },
-                  { key: 'camera', label: t('mapView.layerCameras') },
-                  { key: 'driveway', label: t('mapView.layerDriveways') },
-                  { key: 'door', label: t('mapView.layerDoors') },
-                  { key: 'wall', label: t('mapView.layerWalls') },
-                  { key: 'label', label: t('mapView.layerLabels') },
-                  { key: 'infozone', label: t('mapView.layerInfoZone') },
-                ].map(l => (
-                  <label key={l.key} className="flex items-center gap-2 px-1 py-0.5 rounded cursor-pointer hover:opacity-80 text-xs"
-                    style={{ color: 'var(--text-secondary)' }}>
-                    <input type="checkbox" checked={visibleLayers[l.key] !== false}
-                      onChange={() => toggleLayer(l.key)} className="rounded" />
-                    {l.label}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-          <button onClick={handleExportPng}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-            <Image size={14} /> {t('mapView.exportPng')}
-          </button>
-          <button onClick={handleExportPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
-            <FileDown size={14} /> {t('mapView.exportPdf')}
-          </button>
-        </div>
-      </div>
-
-      {/* Stats bar */}
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col overflow-hidden" ref={pageRef}>
+      {/* Toolbar — one compact row */}
+      <div className="flex items-center gap-2 py-1 flex-shrink-0 flex-wrap">
+        {/* Stats pills */}
         {stats.map((s, i) => (
-          <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+          <div key={i} className="flex items-center gap-1 px-2 py-0.5 rounded"
             style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</span>
-            <span className="text-sm font-bold" style={{ color: s.color }}>{s.value}</span>
+            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{s.label}</span>
+            <span className="text-xs font-bold" style={{ color: s.color }}>{s.value}</span>
           </div>
         ))}
+        <div className="w-px h-4" style={{ background: 'var(--border-glass)' }} />
+        {/* Legend */}
+        {[
+          { color: POST_STATUS_COLORS.free, label: isRu ? 'Свободен' : 'Free' },
+          { color: POST_STATUS_COLORS.occupied || '#f59e0b', label: isRu ? 'Занят' : 'Occupied' },
+          { color: POST_STATUS_COLORS.active_work, label: isRu ? 'В работе' : 'Active' },
+          { color: POST_STATUS_COLORS.occupied_no_work || '#ef4444', label: isRu ? 'Простой' : 'Idle' },
+        ].map((item, i) => (
+          <span key={`leg-${i}`} className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            <span className="w-2 h-2 rounded-full inline-block" style={{ background: item.color }} />
+            {item.label}
+          </span>
+        ))}
+        {/* Spacer */}
+        <div className="flex-1" />
+        {/* Actions */}
+        <div className="relative">
+          <button onClick={() => setShowLayersPanel(!showLayersPanel)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            <Layers size={12} /> {t('mapView.layers')}
+            {showLayersPanel ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+          </button>
+          {showLayersPanel && (
+            <div className="absolute right-0 mt-1 p-2 rounded-lg shadow-lg space-y-1 z-20"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', minWidth: 130 }}>
+              {[
+                { key: 'building', label: t('mapView.layerBuildings') },
+                { key: 'post', label: t('mapView.layerPosts') },
+                { key: 'zone', label: t('mapView.layerZones') },
+                { key: 'camera', label: t('mapView.layerCameras') },
+                { key: 'driveway', label: t('mapView.layerDriveways') },
+                { key: 'door', label: t('mapView.layerDoors') },
+                { key: 'wall', label: t('mapView.layerWalls') },
+                { key: 'label', label: t('mapView.layerLabels') },
+                { key: 'infozone', label: t('mapView.layerInfoZone') },
+              ].map(l => (
+                <label key={l.key} className="flex items-center gap-2 px-1 py-0.5 rounded cursor-pointer hover:opacity-80 text-[11px]"
+                  style={{ color: 'var(--text-secondary)' }}>
+                  <input type="checkbox" checked={visibleLayers[l.key] !== false}
+                    onChange={() => toggleLayer(l.key)} className="rounded" />
+                  {l.label}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <button onClick={handleExportPng}
+          className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
+          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          <Image size={12} /> PNG
+        </button>
+        <button onClick={handleExportPdf}
+          className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
+          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          <FileDown size={12} /> PDF
+        </button>
+        <HelpButton pageKey="map" />
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="glass-static rounded-xl overflow-hidden" style={{ minHeight: 300 }}>
+      <div ref={containerRef} className="overflow-hidden flex-1 relative" style={{ minHeight: 0 }}>
         <Stage
           ref={stageRef}
           width={stageSize.width}
@@ -446,12 +488,12 @@ export default function MapViewer() {
           y={position.y}
           draggable
           onDragEnd={(e) => setPosition({ x: e.target.x(), y: e.target.y() })}
-          onWheel={handleWheel}
         >
+
           <Layer>
-            {/* Background — fill entire visible stage */}
-            <Rect x={-position.x / scale} y={-position.y / scale}
-              width={stageSize.width / scale} height={stageSize.height / scale}
+            {/* Background — fill entire visible stage with large margin */}
+            <Rect x={(-position.x / scale) - 5000} y={(-position.y / scale) - 5000}
+              width={(stageSize.width / scale) + 10000} height={(stageSize.height / scale) + 10000}
               fill={bgFill} />
 
 
@@ -516,14 +558,40 @@ export default function MapViewer() {
                 );
               }
               if (el.type === 'infozone') return (
-                <InfoZoneEl key={el.id} el={el} isDark={isDark}
-                  stats={stats} isRu={isRu}
-                  statusColors={POST_STATUS_COLORS} />
+                <InfoZoneEl key={el.id} el={el} isDark={isDark} isRu={isRu}
+                  layoutName={layout?.name || ''}
+                  allElements={allElements} />
               );
               return null;
             })}
           </Layer>
         </Stage>
+
+        {/* Zoom & Fullscreen controls */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 z-10">
+          <button onClick={() => handleZoom(1)}
+            className="p-1.5 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(8px)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            <ZoomIn size={16} />
+          </button>
+          <button onClick={() => handleZoom(-1)}
+            className="p-1.5 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(8px)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            <ZoomOut size={16} />
+          </button>
+          <button onClick={fitToContainer}
+            className="p-1.5 rounded-lg hover:opacity-80 transition-opacity text-xs font-medium"
+            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(8px)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            title={isRu ? 'Вписать' : 'Fit'}>
+            <Minimize size={16} />
+          </button>
+          <button onClick={toggleFullscreen}
+            className="p-1.5 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(8px)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            title={isRu ? 'На весь экран' : 'Fullscreen'}>
+            <Maximize size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Post Modal */}
@@ -588,14 +656,14 @@ function ZoneEl({ el, isDark, zonesData }) {
   const textColor = isDark ? '#cbd5e1' : '#475569';
   const w = el.width || 160, h = el.height || 100;
   const s = Math.min(w, h);
-  const fs = Math.max(s * 0.12, 8);
+  const fs = Math.max(s * 0.15, 10);
   const sw = Math.max(s * 0.015, 1);
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
       <Rect width={w} height={h} fill={fill} opacity={isDark ? ZONE_FILL_OPACITY.dark : ZONE_FILL_OPACITY.light}
         stroke={fill} strokeWidth={sw} cornerRadius={s * 0.04}
         dash={[s * 0.06, s * 0.03]} />
-      <Text x={s * 0.04} y={s * 0.04} text={el.name} fontSize={fs} fill={textColor} opacity={0.7} />
+      <Text x={6} y={4} text={el.name} fontSize={fs} fill={textColor} opacity={0.8} fontStyle="bold" />
       {vehicleCount > 0 && (
         <>
           <Circle x={w - s * 0.15} y={s * 0.15} radius={s * 0.12} fill={fill} opacity={0.5} />
@@ -620,11 +688,10 @@ function CameraEl({ el, isDark, onClick }) {
   const ry = cy + Math.sin(dir + fov / 2) * range;
   const mx = cx + Math.cos(dir) * range;
   const my = cy + Math.sin(dir) * range;
-  const r = Math.max(w * 0.4, 10);
-  const fs = Math.max(r * 0.7, 8);
+  const r = Math.max(w * 0.5, 12);
+  const fs = Math.max(r * 0.8, 9);
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}
-      offsetX={w / 2} offsetY={h / 2}
       onClick={onClick} onTap={onClick}>
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
         fill={fill} opacity={isDark ? CAMERA_FOV_OPACITY.dark : CAMERA_FOV_OPACITY.light} stroke={fill} strokeWidth={1} dash={[8, 4]} />
@@ -672,61 +739,76 @@ function WallEl({ el }) {
 
 function LabelEl({ el, fill }) {
   const s = Math.min(el.width || 100, el.height || 30);
-  const fs = Math.max(s * 0.4, 8);
+  const fs = Math.max(s * 0.5, 10);
   return (
-    <Text x={el.x} y={el.y} text={el.name} fontSize={fs}
-      fill={fill} fontStyle="italic" opacity={0.6} />
+    <Text x={el.x} y={el.y} text={el.name} fontSize={fs} rotation={el.rotation || 0}
+      fill={fill} fontStyle="bold" opacity={0.7} />
   );
 }
 
-function InfoZoneEl({ el, isDark, stats, isRu, statusColors }) {
-  const bgFill = isDark ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.85)';
+function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
+  const bgFill = isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.92)';
   const textColor = isDark ? '#e2e8f0' : '#1e293b';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
-  const titleText = el.name || (isRu ? 'Информация' : 'Information');
-
-  const legendItems = [
-    { color: statusColors.free, label: isRu ? 'Свободен' : 'Free' },
-    { color: statusColors.occupied || '#94a3b8', label: isRu ? 'Занят' : 'Occupied' },
-    { color: statusColors.active_work, label: isRu ? 'В работе' : 'Active work' },
-    { color: statusColors.occupied_no_work || '#eab308', label: isRu ? 'Простой' : 'Idle' },
-  ];
+  const accentColor = isDark ? '#818cf8' : '#6366f1';
+  const borderColor = isDark ? '#334155' : '#cbd5e1';
 
   const w = el.width || 200, h = el.height || 150;
-  const s = Math.min(w, h);
-  const fs = Math.max(s * 0.08, 8);
-  const pad = s * 0.06;
-  const lineH = fs * 1.8;
+
+  // Count elements by type
+  const counts = {};
+  for (const e of (allElements || [])) {
+    counts[e.type] = (counts[e.type] || 0) + 1;
+  }
+
+  const title = layoutName || (isRu ? 'Карта СТО' : 'STO Map');
+  const rows = [
+    { label: isRu ? 'Постов' : 'Posts', value: counts.post || 0, color: '#3b82f6' },
+    { label: isRu ? 'Камер' : 'Cameras', value: counts.camera || 0, color: '#ef4444' },
+    { label: isRu ? 'Зон' : 'Zones', value: counts.zone || 0, color: '#22c55e' },
+    { label: isRu ? 'Дверей' : 'Doors', value: counts.door || 0, color: '#f59e0b' },
+  ];
+
+  // Scale fonts to fill box
+  const totalRows = rows.length + 2;
+  const fsByH = h / (totalRows * 2.4 + 2);
+  const fsByW = w / 14;
+  const fs = Math.max(Math.min(fsByH, fsByW), 8);
+  const pad = fs * 1.2;
+  const lineH = fs * 2.2;
+  const titleFs = fs * 1.6;
+  const contentW = w - pad * 2;
   const dotR = fs * 0.5;
+
+  const sepY = pad + titleFs * 1.5;
+  const rowsStartY = sepY + pad * 0.8;
 
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} clipX={0} clipY={0} clipWidth={w} clipHeight={h}>
-      <Rect width={w} height={h} fill={bgFill} cornerRadius={s * 0.05}
-        stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth={Math.max(s * 0.01, 1)}
-        shadowBlur={s * 0.04} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
-      <Text x={pad} y={pad} text={titleText} fontSize={fs * 1.2}
-        fontStyle="bold" fill={textColor} width={w - pad * 2} />
-      {legendItems.map((item, i) => (
-        <Group key={i} x={pad} y={pad + fs * 1.8 + i * lineH}>
-          <Circle x={dotR} y={dotR} radius={dotR} fill={item.color} />
-          <Text x={dotR * 3} y={0} text={item.label} fontSize={fs} fill={mutedColor} />
-        </Group>
-      ))}
-      {stats && stats.length > 0 && (() => {
-        const statsY = pad + fs * 1.8 + legendItems.length * lineH + pad;
+      <Rect width={w} height={h} fill={bgFill} cornerRadius={Math.min(w, h) * 0.03}
+        stroke={borderColor} strokeWidth={1}
+        shadowBlur={8} shadowColor="rgba(0,0,0,0.2)" shadowOpacity={0.3} />
+
+      {/* Title */}
+      <Text x={pad} y={pad} text={title} fontSize={titleFs}
+        fontStyle="bold" fill={accentColor} width={contentW} />
+
+      {/* Separator */}
+      <Rect x={pad} y={sepY} width={contentW} height={1} fill={mutedColor} opacity={0.2} />
+
+      {/* Rows */}
+      {rows.map((row, i) => {
+        const ry = rowsStartY + i * lineH;
+        if (ry + fs > h - pad * 0.3) return null;
         return (
-          <Group y={statsY}>
-            <Rect x={pad} y={0} width={w - pad * 2} height={1} fill={mutedColor} opacity={0.2} />
-            {stats.slice(0, 4).map((s2, i) => (
-              <Group key={i} x={pad} y={pad + i * lineH}>
-                <Text x={0} y={0} text={s2.label} fontSize={fs} fill={mutedColor} />
-                <Text x={w - pad * 2 - fs * 3} y={0} text={String(s2.value)} fontSize={fs}
-                  fontStyle="bold" fill={s2.color} width={fs * 3} align="right" />
-              </Group>
-            ))}
+          <Group key={i}>
+            <Circle x={pad + dotR} y={ry + fs * 0.5} radius={dotR} fill={row.color} />
+            <Text x={pad + dotR * 3.5} y={ry} text={row.label} fontSize={fs} fill={mutedColor} />
+            <Text x={pad} y={ry} text={String(row.value)} fontSize={fs * 1.1}
+              fontStyle="bold" fill={textColor} width={contentW} align="right" />
           </Group>
         );
-      })()}
+      })}
     </Group>
   );
 }
