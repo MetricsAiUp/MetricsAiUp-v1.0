@@ -507,8 +507,8 @@ export default function MapViewer() {
             {elements.map(el => {
               const isPolygon = el.shapeMode === 'polygon' && el.points?.length >= 4;
 
-              // ── Polygon mode for area types (building, zone, driveway) — NOT wall/door/infozone/post ──
-              if (isPolygon && !['post', 'wall', 'door', 'infozone'].includes(el.type)) {
+              // ── Polygon mode for area types (building, zone) — NOT driveway/wall/door/infozone/post ──
+              if (isPolygon && !['post', 'wall', 'door', 'infozone', 'driveway'].includes(el.type)) {
                 const fillOpacity = el.type === 'building' ? 0 : 0.08;
                 const dash = el.type === 'building' ? [8, 4] : undefined;
                 const stroke = el.color || '#22c55e';
@@ -516,6 +516,25 @@ export default function MapViewer() {
                   <Group key={el.id} x={el.x} y={el.y}>
                     <Line points={el.points} closed fill={stroke} opacity={fillOpacity}
                       stroke={stroke} strokeWidth={2} dash={dash} />
+                  </Group>
+                );
+              }
+              // ── Polygon driveway — same style as rect driveway, snap to 90° ──
+              if (isPolygon && el.type === 'driveway') {
+                const dStroke = isDark ? '#94a3b8' : '#9ca3af';
+                const dFill = isDark ? DRIVEWAY_FILL.dark : DRIVEWAY_FILL.light;
+                // Snap each segment to horizontal or vertical (90° angles)
+                const pts = el.points;
+                const snapped = [pts[0], pts[1]];
+                for (let i = 2; i < pts.length; i += 2) {
+                  const prevX = snapped[snapped.length - 2], prevY = snapped[snapped.length - 1];
+                  const dx = Math.abs(pts[i] - prevX), dy = Math.abs(pts[i + 1] - prevY);
+                  if (dx >= dy) { snapped.push(pts[i], prevY); } else { snapped.push(prevX, pts[i + 1]); }
+                }
+                return (
+                  <Group key={el.id} x={el.x} y={el.y}>
+                    <Line points={snapped} closed fill={dFill}
+                      stroke={dStroke} strokeWidth={1.5} dash={[6, 3]} />
                   </Group>
                 );
               }
@@ -626,55 +645,56 @@ export default function MapViewer() {
 
 function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, postLabel, onClick }) {
   const color = POST_STATUS_COLORS[status] || '#94a3b8';
-  const fillBg = isDark ? 'rgba(30,30,60,0.85)' : 'rgba(255,255,255,0.9)';
+  const fillBg = isDark ? 'rgba(20,25,45,0.88)' : 'rgba(255,255,255,0.92)';
   const w = el.width || 120, h = el.height || 80;
-  // Scale font/stroke relative to element size
-  const s = Math.min(w, h);
-  const fs = Math.max(s * 0.14, 8);
-  const headerH = s * 0.25;
-  const sw = Math.max(s * 0.03, 2);
+  const headerH = 16;
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} onClick={onClick} onTap={onClick}>
       <Rect width={w} height={h} fill={fillBg}
-        stroke={color} strokeWidth={sw} cornerRadius={s * 0.06} shadowBlur={s * 0.06}
-        shadowColor={color} shadowOpacity={0.3} />
+        stroke={color} strokeWidth={1.5} cornerRadius={4}
+        shadowBlur={4} shadowColor="rgba(0,0,0,0.2)" shadowOpacity={0.3} />
+      {/* Color header bar */}
       <Rect x={0} y={0} width={w} height={headerH} fill={color}
-        cornerRadius={[s * 0.06, s * 0.06, 0, 0]} opacity={0.9} />
-      <Text x={s * 0.06} y={headerH * 0.2} text={postLabel} fontSize={fs} fontStyle="bold" fill="#fff" />
-      <Text x={w * 0.4} y={headerH * 0.25} text={statusLabel} fontSize={fs * 0.75} fill="#fff" width={w * 0.55} align="right" />
+        cornerRadius={[4, 4, 0, 0]} opacity={0.85} />
+      <Text x={5} y={2.5} text={postLabel} fontSize={9} fontStyle="bold" fill="#fff"
+        fontFamily="system-ui, sans-serif" />
+      <Text x={5} y={2.5} text={statusLabel} fontSize={7} fill="rgba(255,255,255,0.85)"
+        width={w - 10} align="right" fontFamily="system-ui, sans-serif" />
+      {/* Vehicle plate or empty */}
       {plate ? (
-        <Text x={s * 0.06} y={headerH + s * 0.1} text={plate} fontSize={fs * 1.1} fontFamily="monospace"
+        <Text x={5} y={headerH + 5} text={plate} fontSize={8} fontFamily="monospace"
           fontStyle="bold" fill={textFill} />
       ) : (
-        <Text x={s * 0.06} y={headerH + s * 0.1} text="---" fontSize={fs} fill={mutedFill} />
+        <Text x={5} y={headerH + 5} text="----" fontSize={8} fill={mutedFill} fontFamily="monospace" />
       )}
-      <Circle x={w - s * 0.15} y={h - s * 0.15} radius={s * 0.06} fill={color} />
+      {/* Small status dot */}
+      <Circle x={w - 7} y={h - 7} radius={3} fill={color} opacity={0.7} />
     </Group>
   );
 }
 
 function ZoneEl({ el, isDark, zonesData }) {
-  const fill = el.color || '#22c55e';
+  const stroke = el.color || '#22c55e';
   let vehicleCount = 0;
   for (const z of (zonesData || [])) {
     if (z.name === el.name) vehicleCount = z._count?.stays || 0;
   }
-  const textColor = isDark ? '#cbd5e1' : '#475569';
+  const textColor = isDark ? '#94a3b8' : '#64748b';
   const w = el.width || 160, h = el.height || 100;
-  const s = Math.min(w, h);
-  const fs = Math.max(s * 0.15, 10);
-  const sw = Math.max(s * 0.015, 1);
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
-      <Rect width={w} height={h} fill={fill} opacity={isDark ? ZONE_FILL_OPACITY.dark : ZONE_FILL_OPACITY.light}
-        stroke={fill} strokeWidth={sw} cornerRadius={s * 0.04}
-        dash={[s * 0.06, s * 0.03]} />
-      <Text x={6} y={4} text={el.name} fontSize={fs} fill={textColor} opacity={0.8} fontStyle="bold" />
+      <Rect width={w} height={h} fill={stroke}
+        opacity={isDark ? 0.06 : 0.05}
+        stroke={stroke} strokeWidth={1} cornerRadius={3}
+        dash={[6, 3]} />
+      <Text x={5} y={3} text={el.name} fontSize={9} fill={textColor}
+        opacity={0.7} fontStyle="bold" fontFamily="system-ui, sans-serif" />
       {vehicleCount > 0 && (
         <>
-          <Circle x={w - s * 0.15} y={s * 0.15} radius={s * 0.12} fill={fill} opacity={0.5} />
-          <Text x={w - s * 0.25} y={s * 0.08} text={String(vehicleCount)} fontSize={fs}
-            fontStyle="bold" fill="#fff" width={s * 0.2} align="center" />
+          <Circle x={w - 10} y={10} radius={7} fill={stroke} opacity={0.6} />
+          <Text x={w - 17} y={4.5} text={String(vehicleCount)} fontSize={8}
+            fontStyle="bold" fill="#fff" width={14} align="center"
+            fontFamily="system-ui, sans-serif" />
         </>
       )}
     </Group>
@@ -694,61 +714,66 @@ function CameraEl({ el, isDark, onClick }) {
   const ry = cy + Math.sin(dir + fov / 2) * range;
   const mx = cx + Math.cos(dir) * range;
   const my = cy + Math.sin(dir) * range;
-  const r = Math.max(w * 0.5, 12);
-  const fs = Math.max(r * 0.8, 9);
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}
       onClick={onClick} onTap={onClick}>
+      {/* Light FOV cone */}
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
-        fill={fill} opacity={isDark ? CAMERA_FOV_OPACITY.dark : CAMERA_FOV_OPACITY.light} stroke={fill} strokeWidth={1} dash={[8, 4]} />
-      <Circle x={cx} y={cy} radius={r} fill={fill} opacity={0.9}
-        shadowBlur={r * 0.5} shadowColor={fill} shadowOpacity={0.5} />
-      <Circle x={cx} y={cy} radius={r * 0.3} fill="#fff" />
-      <Text x={cx} y={-fs - 4} text={el.name || ''} fontSize={fs}
-        fill={fill} fontStyle="bold" rotation={-(el.rotation || 0)} />
+        fill={fill} opacity={isDark ? 0.08 : 0.06}
+        stroke={fill} strokeWidth={0.5} opacity={0.15} dash={[4, 3]} />
+      {/* Small camera dot */}
+      <Circle x={cx} y={cy} radius={5} fill={fill} opacity={0.85} />
+      <Circle x={cx} y={cy} radius={1.5} fill="#fff" />
+      {/* Label */}
+      <Text x={cx + 7} y={cy - 4} text={el.name || ''} fontSize={7}
+        fill={fill} fontStyle="bold" fontFamily="system-ui, sans-serif"
+        rotation={-(el.rotation || 0)} opacity={0.8} />
     </Group>
   );
 }
 
 function DoorEl({ el, isDark }) {
   if (el.shapeMode === 'polygon' && el.points?.length >= 4) {
-    const thickness = el.data?.thickness || 8;
+    const thickness = el.data?.thickness || 5;
     return (
       <Line x={el.x} y={el.y} points={el.points} closed={false}
         stroke={el.color || '#f59e0b'} strokeWidth={thickness}
-        opacity={0.6} lineCap="round" lineJoin="round" />
+        opacity={0.5} lineCap="round" lineJoin="round" />
     );
   }
   const fill = el.color || '#f59e0b';
   const w = el.width || 60, h = el.height || 8;
+  const isVertical = h > w;
   return (
-    <Rect x={el.x} y={el.y} width={w} height={h} rotation={el.rotation || 0}
-      fill={fill} opacity={0.5} stroke={fill} strokeWidth={1} cornerRadius={2} />
+    <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
+      <Rect width={w || 4} height={h || 4} fill={fill} opacity={0.6} cornerRadius={1.5} />
+      {/* Door arc indicator */}
+      <Line points={isVertical ? [0, 0, 8, h / 2, 0, h] : [0, 0, w / 2, -8, w, 0]}
+        stroke={fill} strokeWidth={0.8} opacity={0.3} />
+    </Group>
   );
 }
 
 function WallEl({ el }) {
   if (el.shapeMode === 'polygon' && el.points?.length >= 4) {
-    const thickness = el.data?.thickness || 6;
+    const thickness = el.data?.thickness || 4;
     return (
       <Line x={el.x} y={el.y} points={el.points} closed={false}
-        stroke={el.color || '#6b7280'} strokeWidth={thickness}
-        opacity={0.75} lineCap="round" lineJoin="round" />
+        stroke={el.color || '#475569'} strokeWidth={thickness}
+        opacity={0.6} lineCap="round" lineJoin="round" />
     );
   }
   const w = el.width || 200, h = el.height || 6;
   return (
     <Rect x={el.x} y={el.y} width={w} height={h} rotation={el.rotation || 0}
-      fill={el.color || '#6b7280'} opacity={0.75} />
+      fill={el.color || '#475569'} opacity={0.5} />
   );
 }
 
 function LabelEl({ el, fill }) {
-  const s = Math.min(el.width || 100, el.height || 30);
-  const fs = Math.max(s * 0.5, 10);
   return (
-    <Text x={el.x} y={el.y} text={el.name} fontSize={fs} rotation={el.rotation || 0}
-      fill={fill} fontStyle="bold" opacity={0.7} />
+    <Text x={el.x} y={el.y} text={el.name} fontSize={9} rotation={el.rotation || 0}
+      fill={fill} fontStyle="bold" opacity={0.6} fontFamily="system-ui, sans-serif" />
   );
 }
 
