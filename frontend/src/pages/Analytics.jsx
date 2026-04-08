@@ -20,10 +20,10 @@ const PERIODS = [
 
 function StatCard({ label, value, sub, color }) {
   return (
-    <div className="glass p-4">
-      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
-      <p className="text-2xl font-bold" style={{ color: color || 'var(--accent)' }}>{value}</p>
-      {sub && <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
+    <div className="glass px-3 py-2">
+      <p className="text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <p className="text-lg font-bold leading-tight" style={{ color: color || 'var(--accent)' }}>{value}</p>
+      {sub && <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
     </div>
   );
 }
@@ -323,7 +323,7 @@ export default function Analytics() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         <StatCard label={isRu ? 'Ср. занятость' : 'Avg Occupancy'} value={`${totals.avgOccupancy}%`} color="#6366f1" />
         <StatCard label={isRu ? 'Ср. эффективность' : 'Avg Efficiency'} value={`${totals.avgEfficiency}%`} color={totals.avgEfficiency >= 70 ? '#10b981' : '#f59e0b'} />
         <StatCard label={isRu ? 'Всего авто' : 'Total Vehicles'} value={totals.totalVehicles} color="#3b82f6" />

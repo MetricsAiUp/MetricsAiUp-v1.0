@@ -8,7 +8,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "93334f09-9d9d-f9b4-34c4-296156bc58b1",
@@ -18,8 +18,8 @@
         "endTime": null,
         "hasWorker": false,
         "isActive": false,
-        "activeTime": 1240,
-        "idleTime": 531
+        "activeTime": 1435,
+        "idleTime": 615
       }
     ],
     "zone": {
@@ -42,7 +42,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
@@ -64,7 +64,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "6372a085-6195-38a1-388c-c404de369177",
@@ -74,8 +74,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 9808,
-        "idleTime": 4203
+        "activeTime": 10003,
+        "idleTime": 4287
       }
     ],
     "zone": {
@@ -98,7 +98,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "52bc6701-d84e-8a68-743e-62ddc045ce01",
@@ -108,8 +108,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 1156,
-        "idleTime": 495
+        "activeTime": 1351,
+        "idleTime": 579
       }
     ],
     "zone": {
@@ -132,7 +132,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "b46c6275-3961-5b87-9476-5ad6659b72e6",
@@ -142,8 +142,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 4138,
-        "idleTime": 1773
+        "activeTime": 4333,
+        "idleTime": 1857
       }
     ],
     "zone": {
@@ -166,7 +166,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "746f5238-cbe9-fc51-8c11-92309cc59cfe",
@@ -176,8 +176,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 2206,
-        "idleTime": 945
+        "activeTime": 2401,
+        "idleTime": 1029
       }
     ],
     "zone": {
@@ -200,7 +200,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "93492b0f-e93e-b9d1-424e-7c36956351f3",
@@ -210,8 +210,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 5440,
-        "idleTime": 2331
+        "activeTime": 5635,
+        "idleTime": 2415
       }
     ],
     "zone": {
@@ -234,7 +234,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "94190d16-b437-ec39-8daf-7fe8cb3c56a3",
@@ -244,8 +244,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 5104,
-        "idleTime": 2187
+        "activeTime": 5299,
+        "idleTime": 2271
       }
     ],
     "zone": {
@@ -268,7 +268,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "81e582ad-0fbc-f060-4c3e-e0fbf71759da",
@@ -278,8 +278,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 9640,
-        "idleTime": 4131
+        "activeTime": 9835,
+        "idleTime": 4215
       }
     ],
     "zone": {
@@ -302,7 +302,7 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:03:32",
+    "updatedAt": "2026-04-08T12:08:10",
     "stays": [
       {
         "id": "44766efe-bf49-81f8-b94c-67f4f643f0ca",
@@ -312,8 +312,8 @@
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 3466,
-        "idleTime": 1485
+        "activeTime": 3661,
+        "idleTime": 1569
       }
     ],
     "zone": {

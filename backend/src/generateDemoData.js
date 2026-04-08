@@ -884,54 +884,108 @@ function generatePostsAnalytics(postStates, allWorkOrders) {
 
 // ─── Analytics History (30 days) ───
 function generateAnalyticsHistory() {
-  const days = [];
+  // Analytics.jsx expects: { posts: [{ id, name, nameEn, type, days: [{ date, occupancyRate, efficiency, vehicleCount, ... hourly }] }], daily: [{ date, totalVehicles, totalNoShows }] }
+
+  // Base load curve by hour — realistic STO pattern
+  function hourlyLoadBase(h, isWeekend) {
+    const curve = { 8: 0.35, 9: 0.55, 10: 0.78, 11: 0.85, 12: 0.75, 13: 0.55, 14: 0.72, 15: 0.80, 16: 0.70, 17: 0.55, 18: 0.40, 19: 0.25 };
+    return (curve[h] || 0.3) * (isWeekend ? 0.4 : 1.0);
+  }
+
+  // Per-post "personality" — some posts are busier than others
+  const postTraits = POSTS.map((p, i) => ({
+    occBase: 0.55 + (i % 3) * 0.1,   // 0.55-0.75
+    effBase: 0.60 + ((i + 1) % 4) * 0.08, // 0.60-0.84
+    vehicleBase: i < 8 ? 4 : 3,      // diag posts get fewer
+  }));
+
+  const posts = POSTS.map((p, pi) => {
+    const trait = postTraits[pi];
+    const worker = WORKERS[pi % WORKERS.length];
+    const master = MASTERS[pi % MASTERS.length];
+
+    const days = [];
+    for (let d = 29; d >= 0; d--) {
+      const day = new Date(TODAY);
+      day.setDate(day.getDate() - d);
+      const dateStr = day.toISOString().split('T')[0];
+      const dow = day.getDay();
+      const isWeekend = dow === 0 || dow === 6;
+
+      // Day-level variation
+      const dayNoise = randBetween(-0.1, 0.1);
+      const occ = Math.max(0.05, Math.min(0.98, trait.occBase + dayNoise + (isWeekend ? -0.3 : 0)));
+      const eff = Math.max(0.3, Math.min(0.98, trait.effBase + randBetween(-0.08, 0.08) + (isWeekend ? -0.15 : 0)));
+      const vehicles = isWeekend ? Math.max(1, Math.floor(trait.vehicleBase * 0.4 + randBetween(0, 1))) : Math.floor(trait.vehicleBase + randBetween(-1, 2));
+      const activeMin = roundTo(vehicles * randBetween(60, 120), 0);
+      const idleMin = roundTo(vehicles * randBetween(10, 40), 0);
+      const avgTime = vehicles > 0 ? Math.round(randBetween(45, 150)) : 0; // minutes per vehicle
+      const avgWait = Math.round(randBetween(5, 35)); // minutes
+      const workerPres = Math.max(0.5, Math.min(1, eff + randBetween(-0.05, 0.1)));
+      const plannedOrders = vehicles + Math.floor(randBetween(0, 2));
+      const completedOrders = Math.max(0, vehicles - Math.floor(randBetween(0, 1)));
+      const noShows = isWeekend ? 0 : (seededRandom() > 0.8 ? 1 : 0);
+      const plannedH = roundTo(vehicles * randBetween(1.5, 2.5), 1);
+      const actualH = roundTo(plannedH * randBetween(0.85, 1.2), 1);
+
+      // Hourly data for heatmap
+      const hourly = [];
+      for (let h = 8; h <= 19; h++) {
+        const baseOcc = hourlyLoadBase(h, isWeekend);
+        const postOcc = Math.max(0, Math.min(1, baseOcc + (occ - 0.5) * 0.3 + randBetween(-0.1, 0.1)));
+        const hourVeh = postOcc > 0.5 ? 1 : (seededRandom() > 0.5 ? 1 : 0);
+        hourly.push({ hour: h, occupancy: roundTo(postOcc, 3), vehicles: hourVeh });
+      }
+
+      days.push({
+        date: dateStr,
+        occupancyRate: roundTo(occ, 3),
+        efficiency: roundTo(eff, 3),
+        vehicleCount: vehicles,
+        avgTimePerVehicle: avgTime,
+        avgWaitTime: avgWait,
+        activeMinutes: activeMin,
+        idleMinutes: idleMin,
+        workerPresence: roundTo(workerPres, 3),
+        plannedOrders,
+        completedOrders,
+        noShows,
+        plannedHours: plannedH,
+        actualHours: actualH,
+        hourly,
+      });
+    }
+
+    return {
+      id: `post-${p.number}`,
+      name: p.name,
+      nameEn: `Post ${p.number}`,
+      type: p.type,
+      worker: worker.name,
+      master,
+      days,
+    };
+  });
+
+  // Aggregate daily totals
+  const daily = [];
   for (let d = 29; d >= 0; d--) {
     const day = new Date(TODAY);
     day.setDate(day.getDate() - d);
     const dateStr = day.toISOString().split('T')[0];
-    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
-    const postData = POSTS.map(p => {
-      const occ = isWeekend ? roundTo(randBetween(10, 40)) : roundTo(randBetween(50, 95));
-      const eff = roundTo(randBetween(50, 95));
-      const vehicles = isWeekend ? Math.floor(randBetween(1, 3)) : Math.floor(randBetween(3, 6));
-      return {
-        postId: p.id, postName: p.name, postNumber: p.number,
-        occupancy: occ, efficiency: eff, vehicles,
-        activeHours: roundTo(vehicles * randBetween(1.5, 3), 1),
-        idleHours: roundTo(randBetween(0.5, 2), 1),
-        normHours: roundTo(vehicles * randBetween(1.5, 3), 1),
-        actualHours: roundTo(vehicles * randBetween(1.5, 3.5), 1),
-        workerPresence: roundTo(randBetween(70, 98)),
-      };
+    let totalVehicles = 0, totalNoShows = 0;
+    posts.forEach(p => {
+      const dayData = p.days.find(dd => dd.date === dateStr);
+      if (dayData) {
+        totalVehicles += dayData.vehicleCount;
+        totalNoShows += dayData.noShows;
+      }
     });
-
-    const totalVehicles = postData.reduce((s, p) => s + p.vehicles, 0);
-    const avgOccupancy = roundTo(postData.reduce((s, p) => s + p.occupancy, 0) / postData.length);
-    const avgEfficiency = roundTo(postData.reduce((s, p) => s + p.efficiency, 0) / postData.length);
-
-    days.push({
-      date: dateStr,
-      avgOccupancy,
-      avgEfficiency,
-      totalVehicles,
-      totalActiveHours: roundTo(postData.reduce((s, p) => s + p.activeHours, 0), 1),
-      totalIdleHours: roundTo(postData.reduce((s, p) => s + p.idleHours, 0), 1),
-      totalNoShows: isWeekend ? 0 : Math.floor(randBetween(0, 3)),
-      totalNormHours: roundTo(postData.reduce((s, p) => s + p.normHours, 0), 1),
-      totalActualHours: roundTo(postData.reduce((s, p) => s + p.actualHours, 0), 1),
-      posts: postData,
-      // Hourly heatmap for this day
-      hourly: Array.from({ length: 12 }, (_, h) => ({
-        hour: h + 8,
-        posts: POSTS.map(p => ({
-          postNumber: p.number,
-          occupancy: roundTo(isWeekend ? randBetween(0, 40) : randBetween(30, 100)),
-        })),
-      })),
-    });
+    daily.push({ date: dateStr, totalVehicles, totalNoShows });
   }
-  return { period: '30d', days };
+
+  return { posts, daily };
 }
 
 // ─── Dashboard Metrics ───

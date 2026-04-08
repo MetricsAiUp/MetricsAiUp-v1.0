@@ -8,7 +8,7 @@
       "status": "active",
       "trackId": "track_Т345ВК77",
       "createdAt": "2026-04-08T11:15:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "feb7ed8c-f97a-346b-42b3-be4a88f72e4e",
@@ -62,7 +62,7 @@
       "status": "active",
       "trackId": "track_Т678АР97",
       "createdAt": "2026-04-08T07:55:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "a643cffe-51d4-478c-8747-3d02f8a7d8ff",
@@ -116,7 +116,7 @@
       "status": "active",
       "trackId": "track_В234КМ50",
       "createdAt": "2026-04-08T11:22:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "63f9aa22-e029-44f7-267c-2f8226bac220",
@@ -170,7 +170,7 @@
       "status": "active",
       "trackId": "track_Е567ОР77",
       "createdAt": "2026-04-08T10:12:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "84c92027-1a86-c944-1b47-fdb091ae6ee1",
@@ -224,7 +224,7 @@
       "status": "active",
       "trackId": "track_М456НА97",
       "createdAt": "2026-04-08T10:53:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "b4463690-c188-e36e-52b2-d3a1d364a1b8",
@@ -278,7 +278,7 @@
       "status": "active",
       "trackId": "track_В890КС97",
       "createdAt": "2026-04-08T09:41:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "23edcda1-1249-7457-ba41-700a9a356469",
@@ -332,7 +332,7 @@
       "status": "active",
       "trackId": "track_М123НН50",
       "createdAt": "2026-04-08T09:54:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "a3a1c82b-6df0-c0dd-afac-e9fc270ca4a5",
@@ -386,7 +386,7 @@
       "status": "active",
       "trackId": "track_В890КС97",
       "createdAt": "2026-04-08T08:03:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "b371ee47-f08a-2756-f48f-243c61da78af",
@@ -440,7 +440,7 @@
       "status": "active",
       "trackId": "track_Р012ВС50",
       "createdAt": "2026-04-08T10:29:00",
-      "updatedAt": "2026-04-08T12:03:32",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "093f412d-8e4b-0e43-530c-5db6205490f5",
@@ -489,18 +489,18 @@
     {
       "id": "78eaa12e-7bad-4519-712a-a4bb97868d4e",
       "plateNumber": "В890КС97",
-      "entryTime": "2026-04-08T11:44:32",
+      "entryTime": "2026-04-08T11:49:10",
       "exitTime": null,
       "status": "active",
       "trackId": "track_park_0",
-      "createdAt": "2026-04-08T11:44:32",
-      "updatedAt": "2026-04-08T12:03:32",
+      "createdAt": "2026-04-08T11:49:10",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "fa420b35-0d1b-2262-36f7-eaee36d86bd2",
           "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
           "vehicleSessionId": "78eaa12e-7bad-4519-712a-a4bb97868d4e",
-          "entryTime": "2026-04-08T11:44:32",
+          "entryTime": "2026-04-08T11:49:10",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -520,18 +520,18 @@
     {
       "id": "9a7643be-fd09-8f80-be34-24c08cab904f",
       "plateNumber": "А567ВР77",
-      "entryTime": "2026-04-08T11:33:32",
+      "entryTime": "2026-04-08T11:38:10",
       "exitTime": null,
       "status": "active",
       "trackId": "track_park_1",
-      "createdAt": "2026-04-08T11:33:32",
-      "updatedAt": "2026-04-08T12:03:32",
+      "createdAt": "2026-04-08T11:38:10",
+      "updatedAt": "2026-04-08T12:08:10",
       "zoneStays": [
         {
           "id": "84a6b355-81b8-770b-227f-0103a440418f",
           "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
           "vehicleSessionId": "9a7643be-fd09-8f80-be34-24c08cab904f",
-          "entryTime": "2026-04-08T11:33:32",
+          "entryTime": "2026-04-08T11:38:10",
           "exitTime": null,
           "duration": null,
           "zone": {

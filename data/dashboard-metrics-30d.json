@@ -5,119 +5,119 @@
       "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
       "zoneName": "Ремонтная зона (посты 1-4)",
       "zoneType": "repair",
-      "avgDuration": 20616,
-      "vehicleCount": 1461
+      "avgDuration": 10653,
+      "vehicleCount": 1403
     },
     {
       "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
       "zoneName": "Ремонтная зона (посты 5-8)",
       "zoneType": "repair",
-      "avgDuration": 21694,
-      "vehicleCount": 1231
+      "avgDuration": 13768,
+      "vehicleCount": 1488
     },
     {
       "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
       "zoneName": "Диагностика (посты 9-10)",
       "zoneType": "repair",
-      "avgDuration": 20510,
-      "vehicleCount": 843
+      "avgDuration": 15092,
+      "vehicleCount": 1046
     },
     {
       "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
       "zoneName": "Зона Ожидания / Парковка",
       "zoneType": "waiting",
-      "avgDuration": 16760,
-      "vehicleCount": 594
+      "avgDuration": 10072,
+      "vehicleCount": 379
     }
   ],
   "postMetrics": [
     {
       "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
       "postName": "Пост 1",
-      "activeTime": 1457291,
-      "idleTime": 251055,
-      "vehicleCount": 94
+      "activeTime": 1299121,
+      "idleTime": 343802,
+      "vehicleCount": 96
     },
     {
       "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
       "postName": "Пост 2",
-      "activeTime": 1060547,
-      "idleTime": 256079,
-      "vehicleCount": 144
+      "activeTime": 1359686,
+      "idleTime": 353495,
+      "vehicleCount": 142
     },
     {
       "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
       "postName": "Пост 3",
-      "activeTime": 831253,
-      "idleTime": 279291,
-      "vehicleCount": 115
+      "activeTime": 1398252,
+      "idleTime": 424776,
+      "vehicleCount": 127
     },
     {
       "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
       "postName": "Пост 4",
-      "activeTime": 1197949,
-      "idleTime": 227814,
+      "activeTime": 1040530,
+      "idleTime": 325959,
       "vehicleCount": 91
     },
     {
       "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
       "postName": "Пост 5",
-      "activeTime": 1109842,
-      "idleTime": 99735,
-      "vehicleCount": 136
+      "activeTime": 1116183,
+      "idleTime": 246558,
+      "vehicleCount": 98
     },
     {
       "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
       "postName": "Пост 6",
-      "activeTime": 1429329,
-      "idleTime": 185695,
-      "vehicleCount": 148
+      "activeTime": 1072321,
+      "idleTime": 214554,
+      "vehicleCount": 178
     },
     {
       "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
       "postName": "Пост 7",
-      "activeTime": 1477906,
-      "idleTime": 237058,
-      "vehicleCount": 141
+      "activeTime": 641695,
+      "idleTime": 319534,
+      "vehicleCount": 97
     },
     {
       "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
       "postName": "Пост 8",
-      "activeTime": 1436516,
-      "idleTime": 260151,
-      "vehicleCount": 154
+      "activeTime": 1149561,
+      "idleTime": 365177,
+      "vehicleCount": 175
     },
     {
       "postId": "6cff9b6d-306f-de08-2265-79e420541253",
       "postName": "Пост 9",
-      "activeTime": 1017794,
-      "idleTime": 121994,
-      "vehicleCount": 150
+      "activeTime": 1460292,
+      "idleTime": 267570,
+      "vehicleCount": 95
     },
     {
       "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
       "postName": "Пост 10",
-      "activeTime": 1359916,
-      "idleTime": 93554,
-      "vehicleCount": 173
+      "activeTime": 928683,
+      "idleTime": 443306,
+      "vehicleCount": 135
     }
   ],
   "workOrderMetrics": [
     {
       "status": "completed",
-      "count": 880
+      "count": 1112
     },
     {
       "status": "in_progress",
-      "count": 9
+      "count": 7
     },
     {
       "status": "scheduled",
-      "count": 3
+      "count": 5
     },
     {
       "status": "no_show",
-      "count": 110
+      "count": 51
     }
   ]
 }
