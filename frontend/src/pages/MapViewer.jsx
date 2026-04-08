@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
+import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constants/mapTheme';
 
 const ALL_CAMERAS = [
   { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
@@ -472,7 +473,7 @@ export default function MapViewer() {
               }
               if (el.type === 'driveway') return (
                 <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
-                  rotation={el.rotation || 0} fill={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.06)'}
+                  rotation={el.rotation || 0} fill={isDark ? DRIVEWAY_FILL.dark : DRIVEWAY_FILL.light}
                   stroke={isDark ? '#94a3b8' : '#9ca3af'} strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
               );
               if (el.type === 'wall') return <WallEl key={el.id} el={el} />;
@@ -575,7 +576,7 @@ function ZoneEl({ el, isDark, zonesData }) {
   const sw = Math.max(s * 0.015, 1);
   return (
     <Group x={el.x} y={el.y}>
-      <Rect width={w} height={h} fill={fill} opacity={isDark ? 0.18 : 0.08}
+      <Rect width={w} height={h} fill={fill} opacity={isDark ? ZONE_FILL_OPACITY.dark : ZONE_FILL_OPACITY.light}
         stroke={fill} strokeWidth={sw} cornerRadius={s * 0.04}
         dash={[s * 0.06, s * 0.03]} />
       <Text x={s * 0.04} y={s * 0.04} text={el.name} fontSize={fs} fill={textColor} opacity={0.7} />
@@ -608,7 +609,7 @@ function CameraEl({ el, isDark, onClick }) {
   return (
     <Group x={el.x} y={el.y} onClick={onClick} onTap={onClick}>
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
-        fill={fill} opacity={isDark ? 0.18 : 0.08} stroke={fill} strokeWidth={1} dash={[8, 4]} />
+        fill={fill} opacity={isDark ? CAMERA_FOV_OPACITY.dark : CAMERA_FOV_OPACITY.light} stroke={fill} strokeWidth={1} dash={[8, 4]} />
       <Circle x={cx} y={cy} radius={r} fill={fill} opacity={0.9}
         shadowBlur={r * 0.5} shadowColor={fill} shadowOpacity={0.5} />
       <Circle x={cx} y={cy} radius={r * 0.3} fill="#fff" />

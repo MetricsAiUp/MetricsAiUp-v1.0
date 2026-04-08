@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Text, Group, Line, Circle, Arrow } from 'react-konva';
 import { useTranslation } from 'react-i18next';
 import { POST_STATUS_COLORS } from '../constants';
+import { getZoneColors, MAP_BG, GRID_STROKE, BUILDING_STROKE, CAMERA_FOV_OPACITY } from '../constants/mapTheme';
 import { usePostTimerText } from './PostTimer';
 
 const STATUS_LABELS = {
@@ -12,25 +13,6 @@ const STATUS_LABELS = {
 };
 
 const STATUS_COLORS = POST_STATUS_COLORS;
-
-const ZONE_COLORS_DARK = {
-  entry: { fill: 'rgba(16, 185, 129, 0.15)', stroke: '#10b981' },
-  waiting: { fill: 'rgba(245, 158, 11, 0.15)', stroke: '#f59e0b' },
-  repair: { fill: 'rgba(99, 102, 241, 0.15)', stroke: '#6366f1' },
-  diagnostics: { fill: 'rgba(168, 85, 247, 0.15)', stroke: '#a855f7' },
-  driveway: { fill: 'rgba(107, 114, 128, 0.10)', stroke: '#6b7280' },
-  parking: { fill: 'rgba(59, 130, 246, 0.15)', stroke: '#3b82f6' },
-  free: { fill: 'rgba(148, 163, 184, 0.12)', stroke: '#94a3b8' },
-};
-const ZONE_COLORS_LIGHT = {
-  entry: { fill: 'rgba(16, 185, 129, 0.06)', stroke: '#059669' },
-  waiting: { fill: 'rgba(245, 158, 11, 0.06)', stroke: '#d97706' },
-  repair: { fill: 'rgba(99, 102, 241, 0.06)', stroke: '#4f46e5' },
-  diagnostics: { fill: 'rgba(168, 85, 247, 0.06)', stroke: '#7c3aed' },
-  driveway: { fill: 'rgba(107, 114, 128, 0.04)', stroke: '#9ca3af' },
-  parking: { fill: 'rgba(59, 130, 246, 0.06)', stroke: '#2563eb' },
-  free: { fill: 'rgba(148, 163, 184, 0.05)', stroke: '#94a3b8' },
-};
 
 // ─── РАСКЛАДКА v8 ──────────────────────────────────────────────────────────
 // Верхний ряд: 5,6,7,8,9. Нижний ряд: 1,2,3,4,10
@@ -284,11 +266,11 @@ function CameraIcon({ cam, isDark, isRu, onClick }) {
       />
       <Line
         points={[0, 0, Math.cos((cam.angle - 25) * Math.PI / 180) * 22, Math.sin((cam.angle - 25) * Math.PI / 180) * 22]}
-        stroke={isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.2)'} strokeWidth={1}
+        stroke={`rgba(239, 68, 68, ${isDark ? CAMERA_FOV_OPACITY.dark : CAMERA_FOV_OPACITY.light})`} strokeWidth={1}
       />
       <Line
         points={[0, 0, Math.cos((cam.angle + 25) * Math.PI / 180) * 22, Math.sin((cam.angle + 25) * Math.PI / 180) * 22]}
-        stroke={isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.2)'} strokeWidth={1}
+        stroke={`rgba(239, 68, 68, ${isDark ? CAMERA_FOV_OPACITY.dark : CAMERA_FOV_OPACITY.light})`} strokeWidth={1}
       />
     </Group>
   );
@@ -340,18 +322,18 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
           <Rect
             width={MAP_LAYOUT.width}
             height={MAP_LAYOUT.height}
-            fill={isDark ? '#0f172a' : '#f0f4f8'}
+            fill={isDark ? MAP_BG.dark : MAP_BG.light}
             cornerRadius={16}
           />
 
           {/* Grid */}
           {Array.from({ length: 21 }).map((_, i) => (
             <Line key={`gv${i}`} points={[i * 50, 0, i * 50, MAP_LAYOUT.height]}
-              stroke={isDark ? 'rgba(148,163,184,0.04)' : 'rgba(0,0,0,0.02)'} strokeWidth={1} />
+              stroke={isDark ? GRID_STROKE.dark : GRID_STROKE.light} strokeWidth={1} />
           ))}
           {Array.from({ length: 10 }).map((_, i) => (
             <Line key={`gh${i}`} points={[0, i * 50, MAP_LAYOUT.width, i * 50]}
-              stroke={isDark ? 'rgba(148,163,184,0.04)' : 'rgba(0,0,0,0.02)'} strokeWidth={1} />
+              stroke={isDark ? GRID_STROKE.dark : GRID_STROKE.light} strokeWidth={1} />
           ))}
 
           {/* Building walls */}
@@ -359,7 +341,7 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
             x={MAP_LAYOUT.building.x} y={MAP_LAYOUT.building.y}
             width={MAP_LAYOUT.building.w} height={MAP_LAYOUT.building.h}
             fill="transparent"
-            stroke={isDark ? 'rgba(148,163,184,0.2)' : 'rgba(0,0,0,0.15)'}
+            stroke={isDark ? BUILDING_STROKE.dark : BUILDING_STROKE.light}
             strokeWidth={2}
             cornerRadius={4}
           />
@@ -368,7 +350,7 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
 
           {/* Zones */}
           {MAP_LAYOUT.zones.map(zl => {
-            const zoneTheme = isDark ? ZONE_COLORS_DARK : ZONE_COLORS_LIGHT;
+            const zoneTheme = getZoneColors(isDark);
             const colors = zoneTheme[zl.type] || zoneTheme.free;
             const zoneData = zoneMap[zl.key];
             const vehicleCount = zoneData?._count?.stays || 0;
