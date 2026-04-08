@@ -751,62 +751,79 @@ function generateEvents(postStates, activeSessions) {
 // ─── Shifts generator ───
 function generateShifts(postStates) {
   const shifts = [];
-  // Yesterday completed shift
-  const yesterday = new Date(TODAY); yesterday.setDate(yesterday.getDate() - 1);
-  shifts.push({
-    id: uuid('shift-yesterday'),
-    name: 'Дневная смена',
-    date: yesterday.toISOString().split('T')[0],
-    startTime: '08:00', endTime: '20:00',
-    status: 'completed',
-    notes: 'Смена завершена штатно. Все ЗН выполнены.',
-    createdAt: timeStr(yesterday),
-    updatedAt: timeStr(yesterday),
-    workers: WORKERS.slice(0, 8).map((w, i) => ({
-      id: uuid(`sw-y-${i}`), shiftId: uuid('shift-yesterday'),
-      name: w.name, role: i < 6 ? 'mechanic' : (i === 6 ? 'master' : 'diagnostician'),
-      postId: POSTS[i]?.id || null,
-    })),
-    workOrdersCount: 38, completedCount: 35,
-  });
+  const todayStr = TODAY.toISOString().split('T')[0];
 
-  // Today active shift
-  shifts.push({
-    id: uuid('shift-today'),
-    name: 'Дневная смена',
-    date: TODAY.toISOString().split('T')[0],
-    startTime: '08:00', endTime: '20:00',
-    status: NOW >= shiftStart && NOW <= shiftEnd ? 'active' : 'planned',
-    notes: null,
-    createdAt: timeStr(shiftStart),
-    updatedAt: timeStr(NOW),
-    workers: WORKERS.slice(0, 10).map((w, i) => ({
-      id: uuid(`sw-t-${i}`), shiftId: uuid('shift-today'),
-      name: w.name, role: i < 8 ? 'mechanic' : (i === 8 ? 'master' : 'diagnostician'),
-      postId: POSTS[i]?.id || null,
-    })),
-    workOrdersCount: postStates.reduce((s, p) => s + p.timeline.length, 0),
-    completedCount: postStates.reduce((s, p) => s + p.completedWOs.length, 0),
-  });
+  // Generate shifts for 14 days (past week + current week + a few days ahead)
+  for (let d = -7; d <= 6; d++) {
+    const day = new Date(TODAY);
+    day.setDate(day.getDate() + d);
+    const dateStr = day.toISOString().split('T')[0];
+    const dow = day.getDay(); // 0=Sun, 6=Sat
+    const isWeekend = dow === 0 || dow === 6;
+    const isToday = dateStr === todayStr;
+    const isPast = day < TODAY;
+    const isFuture = day > TODAY;
 
-  // Tomorrow planned shift
-  const tomorrow = new Date(TODAY); tomorrow.setDate(tomorrow.getDate() + 1);
-  shifts.push({
-    id: uuid('shift-tomorrow'),
-    name: 'Дневная смена',
-    date: tomorrow.toISOString().split('T')[0],
-    startTime: '08:00', endTime: '20:00',
-    status: 'planned',
-    notes: null,
-    createdAt: timeStr(NOW),
-    updatedAt: timeStr(NOW),
-    workers: WORKERS.slice(2, 10).map((w, i) => ({
-      id: uuid(`sw-m-${i}`), shiftId: uuid('shift-tomorrow'),
-      name: w.name, role: i < 6 ? 'mechanic' : (i === 6 ? 'master' : 'diagnostician'),
-      postId: POSTS[i]?.id || null,
-    })),
-    workOrdersCount: 0, completedCount: 0,
-  });
+    // Weekends — no shifts (or optional short shift on Saturday)
+    if (dow === 0) continue; // Sunday always off
+    if (dow === 6 && d < 0) continue; // Past Saturdays — skip
+    // Saturday: optional short shift
+    const isSaturday = dow === 6;
+
+    // Determine status
+    let status;
+    if (isPast) status = 'completed';
+    else if (isToday) status = (NOW >= shiftStart && NOW <= shiftEnd) ? 'active' : 'planned';
+    else status = 'planned';
+
+    // Vary worker count per day (rotation)
+    const workerOffset = (d + 7) % WORKERS.length;
+    const workerCount = isSaturday ? 5 : (8 + Math.abs(d) % 3); // 8-10 weekday, 5 saturday
+    const dayWorkers = [];
+    for (let wi = 0; wi < Math.min(workerCount, WORKERS.length); wi++) {
+      const w = WORKERS[(workerOffset + wi) % WORKERS.length];
+      dayWorkers.push({
+        id: uuid(`sw-${dateStr}-${wi}`),
+        shiftId: uuid(`shift-${dateStr}`),
+        name: w.name,
+        role: wi < workerCount - 2 ? 'mechanic' : (wi === workerCount - 2 ? 'master' : 'diagnostician'),
+        postId: wi < 10 ? `post-${POSTS[wi]?.number}` : null,
+      });
+    }
+
+    // WO counts — realistic numbers
+    const woTotal = isPast
+      ? Math.floor(randBetween(isSaturday ? 15 : 30, isSaturday ? 25 : 42))
+      : (isToday ? postStates.reduce((s, p) => s + p.timeline.length, 0) : 0);
+    const woCompleted = isPast
+      ? Math.floor(woTotal * randBetween(0.85, 0.98))
+      : (isToday ? postStates.reduce((s, p) => s + p.completedWOs.length, 0) : 0);
+
+    const notes = isPast
+      ? pick([
+        'Смена завершена штатно.',
+        'Все ЗН выполнены в срок.',
+        `Завершено ${woCompleted} из ${woTotal} ЗН.`,
+        'Без происшествий.',
+        '1 ЗН перенесён на следующий день.',
+      ])
+      : null;
+
+    shifts.push({
+      id: uuid(`shift-${dateStr}`),
+      name: isSaturday ? 'Дежурная смена' : 'Дневная смена',
+      date: dateStr,
+      startTime: isSaturday ? '09:00' : '08:00',
+      endTime: isSaturday ? '16:00' : '20:00',
+      status,
+      notes,
+      createdAt: timeStr(addMin(day, -120)),
+      updatedAt: timeStr(isToday ? NOW : day),
+      workers: dayWorkers,
+      workOrdersCount: woTotal,
+      completedCount: woCompleted,
+    });
+  }
 
   return { shifts, total: shifts.length };
 }

@@ -4,24 +4,12 @@
     "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
     "name": "Пост 1",
     "type": "heavy",
-    "status": "occupied_no_work",
+    "status": "free",
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
-    "stays": [
-      {
-        "id": "93334f09-9d9d-f9b4-34c4-296156bc58b1",
-        "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
-        "vehicleSessionId": "22a5f657-374e-9a3f-9e69-eceab9db64a8",
-        "startTime": "2026-04-08T11:34:00",
-        "endTime": null,
-        "hasWorker": false,
-        "isActive": false,
-        "activeTime": 1435,
-        "idleTime": 615
-      }
-    ],
+    "updatedAt": "2026-04-08T14:26:33",
+    "stays": [],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
       "name": "Ремонтная зона (посты 1-4)",
@@ -38,12 +26,24 @@
     "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
     "name": "Пост 2",
     "type": "heavy",
-    "status": "free",
+    "status": "active_work",
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
-    "stays": [],
+    "updatedAt": "2026-04-08T14:26:33",
+    "stays": [
+      {
+        "id": "ca550bc5-cf8f-0faf-1d37-81844d6d0a6c",
+        "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
+        "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
+        "startTime": "2026-04-08T12:35:00",
+        "endTime": null,
+        "hasWorker": true,
+        "isActive": true,
+        "activeTime": 4685,
+        "idleTime": 2008
+      }
+    ],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
       "name": "Ремонтная зона (посты 1-4)",
@@ -64,18 +64,18 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
+    "updatedAt": "2026-04-08T14:26:33",
     "stays": [
       {
         "id": "6372a085-6195-38a1-388c-c404de369177",
         "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
-        "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
-        "startTime": "2026-04-08T08:10:00",
+        "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+        "startTime": "2026-04-08T11:59:00",
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 10003,
-        "idleTime": 4287
+        "activeTime": 6197,
+        "idleTime": 2656
       }
     ],
     "zone": {
@@ -98,18 +98,18 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
+    "updatedAt": "2026-04-08T14:26:33",
     "stays": [
       {
         "id": "52bc6701-d84e-8a68-743e-62ddc045ce01",
         "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
-        "vehicleSessionId": "e14becc6-0c4f-2299-d04e-75a476d055f4",
-        "startTime": "2026-04-08T11:36:00",
+        "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+        "startTime": "2026-04-08T12:19:00",
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 1351,
-        "idleTime": 579
+        "activeTime": 5357,
+        "idleTime": 2296
       }
     ],
     "zone": {
@@ -132,18 +132,18 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
+    "updatedAt": "2026-04-08T14:26:33",
     "stays": [
       {
         "id": "b46c6275-3961-5b87-9476-5ad6659b72e6",
         "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
-        "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-        "startTime": "2026-04-08T10:25:00",
+        "vehicleSessionId": "f25b4b0f-f1db-0006-d460-cc9d6403f76d",
+        "startTime": "2026-04-08T13:07:00",
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 4333,
-        "idleTime": 1857
+        "activeTime": 3341,
+        "idleTime": 1432
       }
     ],
     "zone": {
@@ -166,18 +166,18 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
+    "updatedAt": "2026-04-08T14:26:33",
     "stays": [
       {
         "id": "746f5238-cbe9-fc51-8c11-92309cc59cfe",
         "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-        "vehicleSessionId": "571aed12-0414-233b-a581-2c0b9200fd58",
-        "startTime": "2026-04-08T11:11:00",
+        "vehicleSessionId": "4d398e63-2d9b-ed06-ef6a-da9af8342331",
+        "startTime": "2026-04-08T12:03:00",
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 2401,
-        "idleTime": 1029
+        "activeTime": 6029,
+        "idleTime": 2584
       }
     ],
     "zone": {
@@ -196,24 +196,12 @@
     "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
     "name": "Пост 7",
     "type": "light",
-    "status": "active_work",
+    "status": "free",
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
-    "stays": [
-      {
-        "id": "93492b0f-e93e-b9d1-424e-7c36956351f3",
-        "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
-        "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-        "startTime": "2026-04-08T09:54:00",
-        "endTime": null,
-        "hasWorker": true,
-        "isActive": true,
-        "activeTime": 5635,
-        "idleTime": 2415
-      }
-    ],
+    "updatedAt": "2026-04-08T14:26:33",
+    "stays": [],
     "zone": {
       "id": "8b416cdc-f285-e894-9378-3be648996ef6",
       "name": "Ремонтная зона (посты 5-8)",
@@ -230,24 +218,12 @@
     "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
     "name": "Пост 8",
     "type": "light",
-    "status": "active_work",
+    "status": "free",
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
-    "stays": [
-      {
-        "id": "94190d16-b437-ec39-8daf-7fe8cb3c56a3",
-        "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
-        "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
-        "startTime": "2026-04-08T10:02:00",
-        "endTime": null,
-        "hasWorker": true,
-        "isActive": true,
-        "activeTime": 5299,
-        "idleTime": 2271
-      }
-    ],
+    "updatedAt": "2026-04-08T14:26:33",
+    "stays": [],
     "zone": {
       "id": "8b416cdc-f285-e894-9378-3be648996ef6",
       "name": "Ремонтная зона (посты 5-8)",
@@ -268,18 +244,18 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
+    "updatedAt": "2026-04-08T14:26:33",
     "stays": [
       {
         "id": "81e582ad-0fbc-f060-4c3e-e0fbf71759da",
         "postId": "6cff9b6d-306f-de08-2265-79e420541253",
-        "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-        "startTime": "2026-04-08T08:14:00",
+        "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+        "startTime": "2026-04-08T13:23:00",
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 9835,
-        "idleTime": 4215
+        "activeTime": 2669,
+        "idleTime": 1144
       }
     ],
     "zone": {
@@ -302,18 +278,18 @@
     "coordinates": null,
     "isActive": true,
     "createdAt": "2026-04-08T00:00:00",
-    "updatedAt": "2026-04-08T12:08:10",
+    "updatedAt": "2026-04-08T14:26:33",
     "stays": [
       {
         "id": "44766efe-bf49-81f8-b94c-67f4f643f0ca",
         "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-        "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-        "startTime": "2026-04-08T10:41:00",
+        "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+        "startTime": "2026-04-08T12:04:00",
         "endTime": null,
         "hasWorker": true,
         "isActive": true,
-        "activeTime": 3661,
-        "idleTime": 1569
+        "activeTime": 5987,
+        "idleTime": 2566
       }
     ],
     "zone": {

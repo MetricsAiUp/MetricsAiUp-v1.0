@@ -4,38 +4,19 @@
     "type": "no_show",
     "zoneId": null,
     "postId": null,
-    "message": "Клиент О789ТК99 (DONGFENG DFA103W) не приехал на ТО-2. ЗН КОЛ00036350",
-    "messageEn": "Client О789ТК99 (DONGFENG DFA103W) did not arrive for ТО-2. WO КОЛ00036350",
+    "message": "Клиент Е567ОР77 (CITROEN JUMPY) не приехал на ТО-2. ЗН КОЛ00036350",
+    "messageEn": "Client Е567ОР77 (CITROEN JUMPY) did not arrive for ТО-2. WO КОЛ00036350",
     "status": "active",
     "createdAt": "2026-04-08T10:00:00",
-    "updatedAt": "2026-04-08T12:08:10"
+    "updatedAt": "2026-04-08T14:26:33"
   },
   {
-    "id": "51761f38-52c1-702e-f6d6-badf692128ab",
+    "id": "179723a6-adda-bfd1-3edc-8ebed5a03167",
     "type": "post_free",
     "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-    "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
-    "message": "Пост 2 свободен. В очереди 4 нераспределённых ЗН.",
-    "messageEn": "Пост 2 is free. 4 unassigned WOs in queue.",
-    "status": "active",
-    "zone": {
-      "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-      "name": "Ремонтная зона (посты 1-4)"
-    },
-    "post": {
-      "id": "17c52d88-8239-9846-3a84-55c474cb7e1a",
-      "name": "Пост 2"
-    },
-    "createdAt": "2026-04-08T11:53:10",
-    "updatedAt": "2026-04-08T12:08:10"
-  },
-  {
-    "id": "0eda31f2-2a3c-205c-db01-41c4a0846276",
-    "type": "vehicle_idle",
-    "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
     "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
-    "message": "Авто Т345ВК77 на Пост 1 без активной работы. Работник отсутствует.",
-    "messageEn": "Vehicle Т345ВК77 on Пост 1 without active work. Worker absent.",
+    "message": "Пост 1 свободен. В очереди 4 нераспределённых ЗН.",
+    "messageEn": "Пост 1 is free. 4 unassigned WOs in queue.",
     "status": "active",
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
@@ -45,7 +26,60 @@
       "id": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
       "name": "Пост 1"
     },
-    "createdAt": "2026-04-08T12:00:10",
-    "updatedAt": "2026-04-08T12:08:10"
+    "createdAt": "2026-04-08T14:11:33",
+    "updatedAt": "2026-04-08T14:26:33"
+  },
+  {
+    "id": "857d04b6-efe4-cd7c-20ac-15c7909c36c3",
+    "type": "post_free",
+    "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+    "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
+    "message": "Пост 7 свободен. В очереди 4 нераспределённых ЗН.",
+    "messageEn": "Пост 7 is free. 4 unassigned WOs in queue.",
+    "status": "active",
+    "zone": {
+      "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+      "name": "Ремонтная зона (посты 5-8)"
+    },
+    "post": {
+      "id": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
+      "name": "Пост 7"
+    },
+    "createdAt": "2026-04-08T14:11:33",
+    "updatedAt": "2026-04-08T14:26:33"
+  },
+  {
+    "id": "9844aed4-5d09-db36-e5b8-b96cf939adac",
+    "type": "post_free",
+    "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+    "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+    "message": "Пост 8 свободен. В очереди 4 нераспределённых ЗН.",
+    "messageEn": "Пост 8 is free. 4 unassigned WOs in queue.",
+    "status": "active",
+    "zone": {
+      "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+      "name": "Ремонтная зона (посты 5-8)"
+    },
+    "post": {
+      "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+      "name": "Пост 8"
+    },
+    "createdAt": "2026-04-08T14:11:33",
+    "updatedAt": "2026-04-08T14:26:33"
+  },
+  {
+    "id": "4744394f-4519-5e53-95c7-6c9467d89e6c",
+    "type": "capacity_available",
+    "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
+    "postId": null,
+    "message": "Есть свободная мощность: 3 постов доступны. Можно принять дополнительные заказы.",
+    "messageEn": "Capacity available: 3 posts free. Can accept additional orders.",
+    "status": "active",
+    "zone": {
+      "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
+      "name": "Ремонтная зона (посты 1-4)"
+    },
+    "createdAt": "2026-04-08T14:16:33",
+    "updatedAt": "2026-04-08T14:26:33"
   }
 ]

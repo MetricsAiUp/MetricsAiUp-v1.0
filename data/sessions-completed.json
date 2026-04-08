@@ -1,292 +1,22 @@
 {
   "sessions": [
     {
-      "id": "ed73ecc5-25ec-a6a5-4d77-dfb296f7c55b",
-      "plateNumber": "А567ВР77",
-      "entryTime": "2026-04-08T10:08:00",
-      "exitTime": "2026-04-08T10:57:00",
-      "status": "completed",
-      "trackId": "track_А567ВР77",
-      "createdAt": "2026-04-08T10:08:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "8caaf4e3-e85a-f344-5b1e-d83c3f89d5b1",
-          "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-          "vehicleSessionId": "ed73ecc5-25ec-a6a5-4d77-dfb296f7c55b",
-          "entryTime": "2026-04-08T10:08:00",
-          "exitTime": "2026-04-08T10:57:00",
-          "duration": 2940,
-          "zone": {
-            "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-            "name": "Ремонтная зона (посты 1-4)",
-            "type": "repair",
-            "description": "Нижний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "a546d66c-ecd4-46ac-6ecb-9ae713238fc1",
-          "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
-          "vehicleSessionId": "ed73ecc5-25ec-a6a5-4d77-dfb296f7c55b",
-          "startTime": "2026-04-08T10:15:00",
-          "endTime": "2026-04-08T10:51:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 1890,
-          "idleTime": 630,
-          "post": {
-            "id": "17c52d88-8239-9846-3a84-55c474cb7e1a",
-            "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-            "name": "Пост 2",
-            "type": "heavy",
-            "status": "free",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "92121cb4-629b-cd2d-1138-12dd1b64e353",
-      "plateNumber": "В567ЕК99",
-      "entryTime": "2026-04-08T07:57:00",
-      "exitTime": "2026-04-08T11:19:00",
-      "status": "completed",
-      "trackId": "track_В567ЕК99",
-      "createdAt": "2026-04-08T07:57:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "3191887a-c17f-522c-2d82-dcfb9df16512",
-          "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-          "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
-          "entryTime": "2026-04-08T07:57:00",
-          "exitTime": "2026-04-08T11:19:00",
-          "duration": 12120,
-          "zone": {
-            "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-            "name": "Ремонтная зона (посты 1-4)",
-            "type": "repair",
-            "description": "Нижний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "9427edaf-7c7e-01a1-c829-b25527c170ce",
-          "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
-          "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
-          "startTime": "2026-04-08T08:12:00",
-          "endTime": "2026-04-08T11:12:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 8640,
-          "idleTime": 2880,
-          "post": {
-            "id": "ff6319be-4d63-aafc-361d-b39219d84e47",
-            "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-            "name": "Пост 4",
-            "type": "heavy",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-      "plateNumber": "Р012ВС50",
-      "entryTime": "2026-04-08T07:58:00",
-      "exitTime": "2026-04-08T10:30:00",
-      "status": "completed",
-      "trackId": "track_Р012ВС50",
-      "createdAt": "2026-04-08T07:58:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "fdbd1a37-b7ee-ed0d-e50b-30943ac73120",
-          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-          "entryTime": "2026-04-08T07:58:00",
-          "exitTime": "2026-04-08T10:30:00",
-          "duration": 9120,
-          "zone": {
-            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Ремонтная зона (посты 5-8)",
-            "type": "repair",
-            "description": "Верхний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "dcfc1dd1-87b8-8621-18c9-a21d1b5495ac",
-          "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
-          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-          "startTime": "2026-04-08T08:16:00",
-          "endTime": "2026-04-08T10:16:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 5400,
-          "idleTime": 1800,
-          "post": {
-            "id": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
-            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Пост 5",
-            "type": "light",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
-      "plateNumber": "А001ВС77",
-      "entryTime": "2026-04-08T07:54:00",
-      "exitTime": "2026-04-08T10:09:00",
-      "status": "completed",
-      "trackId": "track_А001ВС77",
-      "createdAt": "2026-04-08T07:54:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "aaea8b6e-b1b0-42ac-3a6f-4774bfa6641f",
-          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
-          "entryTime": "2026-04-08T07:54:00",
-          "exitTime": "2026-04-08T10:09:00",
-          "duration": 8100,
-          "zone": {
-            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Ремонтная зона (посты 5-8)",
-            "type": "repair",
-            "description": "Верхний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "73a2d045-8568-76b9-20e2-e1f25a344b87",
-          "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-          "vehicleSessionId": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
-          "startTime": "2026-04-08T08:05:00",
-          "endTime": "2026-04-08T09:59:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 5130,
-          "idleTime": 1710,
-          "post": {
-            "id": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Пост 6",
-            "type": "light",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
       "id": "785bb769-be48-908e-d685-8c9663b40dd5",
       "plateNumber": "К123ОС77",
-      "entryTime": "2026-04-08T10:02:00",
-      "exitTime": "2026-04-08T11:02:00",
+      "entryTime": "2026-04-08T08:11:00",
+      "exitTime": "2026-04-08T09:10:00",
       "status": "completed",
       "trackId": "track_К123ОС77",
-      "createdAt": "2026-04-08T10:02:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "e7a36828-dfb7-858d-1b80-e5be8934d577",
-          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "785bb769-be48-908e-d685-8c9663b40dd5",
-          "entryTime": "2026-04-08T10:02:00",
-          "exitTime": "2026-04-08T11:02:00",
-          "duration": 3600,
-          "zone": {
-            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Ремонтная зона (посты 5-8)",
-            "type": "repair",
-            "description": "Верхний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "d9d9032e-8208-3828-b545-e99dc7765bbd",
-          "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-          "vehicleSessionId": "785bb769-be48-908e-d685-8c9663b40dd5",
-          "startTime": "2026-04-08T10:10:00",
-          "endTime": "2026-04-08T10:52:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 2160,
-          "idleTime": 720,
-          "post": {
-            "id": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Пост 6",
-            "type": "light",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "4d4e4ecd-c49c-0a80-f2b4-8da157d69756",
-      "plateNumber": "А234СТ77",
-      "entryTime": "2026-04-08T07:54:00",
-      "exitTime": "2026-04-08T09:29:00",
-      "status": "completed",
-      "trackId": "track_А234СТ77",
-      "createdAt": "2026-04-08T07:54:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "createdAt": "2026-04-08T08:11:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
           "id": "677f33df-409d-1b91-59af-6b6363d7ad27",
           "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "4d4e4ecd-c49c-0a80-f2b4-8da157d69756",
-          "entryTime": "2026-04-08T07:54:00",
-          "exitTime": "2026-04-08T09:29:00",
-          "duration": 5700,
+          "vehicleSessionId": "785bb769-be48-908e-d685-8c9663b40dd5",
+          "entryTime": "2026-04-08T08:11:00",
+          "exitTime": "2026-04-08T09:10:00",
+          "duration": 3540,
           "zone": {
             "id": "8b416cdc-f285-e894-9378-3be648996ef6",
             "name": "Ремонтная зона (посты 5-8)",
@@ -303,19 +33,19 @@
         {
           "id": "42524d67-513f-cf6d-f3eb-851d3d57df7d",
           "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
-          "vehicleSessionId": "4d4e4ecd-c49c-0a80-f2b4-8da157d69756",
-          "startTime": "2026-04-08T08:05:00",
-          "endTime": "2026-04-08T09:23:00",
+          "vehicleSessionId": "785bb769-be48-908e-d685-8c9663b40dd5",
+          "startTime": "2026-04-08T08:17:00",
+          "endTime": "2026-04-08T08:59:00",
           "hasWorker": true,
           "isActive": false,
-          "activeTime": 4050,
-          "idleTime": 1350,
+          "activeTime": 2430,
+          "idleTime": 810,
           "post": {
             "id": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
             "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
             "name": "Пост 7",
             "type": "light",
-            "status": "active_work",
+            "status": "free",
             "coordinates": null,
             "isActive": true,
             "createdAt": "2026-04-08T00:00:00",
@@ -325,22 +55,130 @@
       ]
     },
     {
-      "id": "1f62c411-0588-496e-b4a3-5e15514848f6",
-      "plateNumber": "О789ТК99",
-      "entryTime": "2026-04-08T08:02:00",
+      "id": "e14becc6-0c4f-2299-d04e-75a476d055f4",
+      "plateNumber": "В234КМ50",
+      "entryTime": "2026-04-08T09:08:00",
       "exitTime": "2026-04-08T10:02:00",
       "status": "completed",
-      "trackId": "track_О789ТК99",
-      "createdAt": "2026-04-08T08:02:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_В234КМ50",
+      "createdAt": "2026-04-08T09:08:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "23edcda1-1249-7457-ba41-700a9a356469",
+          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+          "vehicleSessionId": "e14becc6-0c4f-2299-d04e-75a476d055f4",
+          "entryTime": "2026-04-08T09:08:00",
+          "exitTime": "2026-04-08T10:02:00",
+          "duration": 3240,
+          "zone": {
+            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Ремонтная зона (посты 5-8)",
+            "type": "repair",
+            "description": "Верхний ряд, 2-х стоечные подъёмники",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "0c100f19-d3e3-c190-8648-06f0e50e5ef9",
+          "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
+          "vehicleSessionId": "e14becc6-0c4f-2299-d04e-75a476d055f4",
+          "startTime": "2026-04-08T09:17:00",
+          "endTime": "2026-04-08T09:53:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 2430,
+          "idleTime": 810,
+          "post": {
+            "id": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
+            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Пост 7",
+            "type": "light",
+            "status": "free",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "11c237de-8bb9-c76e-80f6-fb95526a3396",
+      "plateNumber": "У678АМ50",
+      "entryTime": "2026-04-08T10:18:00",
+      "exitTime": "2026-04-08T11:08:00",
+      "status": "completed",
+      "trackId": "track_У678АМ50",
+      "createdAt": "2026-04-08T10:18:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "9a9c11b2-345d-2469-af65-b290f453e4d1",
+          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+          "vehicleSessionId": "11c237de-8bb9-c76e-80f6-fb95526a3396",
+          "entryTime": "2026-04-08T10:18:00",
+          "exitTime": "2026-04-08T11:08:00",
+          "duration": 3000,
+          "zone": {
+            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Ремонтная зона (посты 5-8)",
+            "type": "repair",
+            "description": "Верхний ряд, 2-х стоечные подъёмники",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "8c9a928a-48cf-35ce-06e4-e41199f29088",
+          "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
+          "vehicleSessionId": "11c237de-8bb9-c76e-80f6-fb95526a3396",
+          "startTime": "2026-04-08T10:23:00",
+          "endTime": "2026-04-08T10:59:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 2430,
+          "idleTime": 810,
+          "post": {
+            "id": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
+            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Пост 7",
+            "type": "light",
+            "status": "free",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
+      "plateNumber": "А001ВС77",
+      "entryTime": "2026-04-08T07:47:00",
+      "exitTime": "2026-04-08T08:38:00",
+      "status": "completed",
+      "trackId": "track_А001ВС77",
+      "createdAt": "2026-04-08T07:47:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
           "id": "d6dd97f0-7e9c-8446-e597-aff54a3fac13",
           "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "1f62c411-0588-496e-b4a3-5e15514848f6",
-          "entryTime": "2026-04-08T08:02:00",
-          "exitTime": "2026-04-08T10:02:00",
-          "duration": 7200,
+          "vehicleSessionId": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
+          "entryTime": "2026-04-08T07:47:00",
+          "exitTime": "2026-04-08T08:38:00",
+          "duration": 3060,
           "zone": {
             "id": "8b416cdc-f285-e894-9378-3be648996ef6",
             "name": "Ремонтная зона (посты 5-8)",
@@ -357,19 +195,181 @@
         {
           "id": "7d6a07cd-65de-0092-862f-845f3a841bb8",
           "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
-          "vehicleSessionId": "1f62c411-0588-496e-b4a3-5e15514848f6",
-          "startTime": "2026-04-08T08:18:00",
-          "endTime": "2026-04-08T09:54:00",
+          "vehicleSessionId": "a2cd2bcf-b72f-43c7-bfa1-1054299a7f0d",
+          "startTime": "2026-04-08T08:06:00",
+          "endTime": "2026-04-08T08:30:00",
           "hasWorker": true,
           "isActive": false,
-          "activeTime": 4320,
-          "idleTime": 1440,
+          "activeTime": 1890,
+          "idleTime": 630,
           "post": {
             "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
             "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
             "name": "Пост 8",
             "type": "light",
-            "status": "active_work",
+            "status": "free",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+      "plateNumber": "В567ЕК99",
+      "entryTime": "2026-04-08T08:41:00",
+      "exitTime": "2026-04-08T09:32:00",
+      "status": "completed",
+      "trackId": "track_В567ЕК99",
+      "createdAt": "2026-04-08T08:41:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "a3a1c82b-6df0-c0dd-afac-e9fc270ca4a5",
+          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+          "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+          "entryTime": "2026-04-08T08:41:00",
+          "exitTime": "2026-04-08T09:32:00",
+          "duration": 3060,
+          "zone": {
+            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Ремонтная зона (посты 5-8)",
+            "type": "repair",
+            "description": "Верхний ряд, 2-х стоечные подъёмники",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "e82c77af-24e0-fd9d-36b4-5bed539894ec",
+          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+          "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+          "startTime": "2026-04-08T09:00:00",
+          "endTime": "2026-04-08T09:24:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 1350,
+          "idleTime": 450,
+          "post": {
+            "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Пост 8",
+            "type": "light",
+            "status": "free",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+      "plateNumber": "К891АС99",
+      "entryTime": "2026-04-08T09:23:00",
+      "exitTime": "2026-04-08T12:30:00",
+      "status": "completed",
+      "trackId": "track_К891АС99",
+      "createdAt": "2026-04-08T09:23:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "42fe58a5-7d92-28cc-6cd2-8a9899b5d269",
+          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+          "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+          "entryTime": "2026-04-08T09:23:00",
+          "exitTime": "2026-04-08T12:30:00",
+          "duration": 11220,
+          "zone": {
+            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Ремонтная зона (посты 5-8)",
+            "type": "repair",
+            "description": "Верхний ряд, 2-х стоечные подъёмники",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "cdc0e831-e3fc-3ee9-e4a0-b4502727699b",
+          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+          "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+          "startTime": "2026-04-08T09:37:00",
+          "endTime": "2026-04-08T12:19:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 7830,
+          "idleTime": 2610,
+          "post": {
+            "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Пост 8",
+            "type": "light",
+            "status": "free",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
+      "plateNumber": "Р012ВС50",
+      "entryTime": "2026-04-08T12:29:00",
+      "exitTime": "2026-04-08T14:12:00",
+      "status": "completed",
+      "trackId": "track_Р012ВС50",
+      "createdAt": "2026-04-08T12:29:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "6b4075c7-7cca-65d7-eda6-98a65dffd520",
+          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
+          "entryTime": "2026-04-08T12:29:00",
+          "exitTime": "2026-04-08T14:12:00",
+          "duration": 6180,
+          "zone": {
+            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Ремонтная зона (посты 5-8)",
+            "type": "repair",
+            "description": "Верхний ряд, 2-х стоечные подъёмники",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "62fd6836-9d08-c28f-56ed-1d747b3be260",
+          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
+          "startTime": "2026-04-08T12:44:00",
+          "endTime": "2026-04-08T14:02:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 3780,
+          "idleTime": 1260,
+          "post": {
+            "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
+            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
+            "name": "Пост 8",
+            "type": "light",
+            "status": "free",
             "coordinates": null,
             "isActive": true,
             "createdAt": "2026-04-08T00:00:00",
@@ -381,20 +381,128 @@
     {
       "id": "7eec73da-0614-574d-198f-9a9a13c74f83",
       "plateNumber": "О456РС77",
-      "entryTime": "2026-04-08T07:48:00",
-      "exitTime": "2026-04-08T09:12:00",
+      "entryTime": "2026-04-08T07:57:00",
+      "exitTime": "2026-04-08T11:13:00",
       "status": "completed",
       "trackId": "track_О456РС77",
-      "createdAt": "2026-04-08T07:48:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "createdAt": "2026-04-08T07:57:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "b371ee47-f08a-2756-f48f-243c61da78af",
+          "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
+          "vehicleSessionId": "7eec73da-0614-574d-198f-9a9a13c74f83",
+          "entryTime": "2026-04-08T07:57:00",
+          "exitTime": "2026-04-08T11:13:00",
+          "duration": 11760,
+          "zone": {
+            "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
+            "name": "Диагностика (посты 9-10)",
+            "type": "repair",
+            "description": "Правая часть СТО, диагностические посты",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "3fcc3bcf-8689-2867-f4cc-adb6ff215ca9",
+          "postId": "6cff9b6d-306f-de08-2265-79e420541253",
+          "vehicleSessionId": "7eec73da-0614-574d-198f-9a9a13c74f83",
+          "startTime": "2026-04-08T08:08:00",
+          "endTime": "2026-04-08T11:02:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 8370,
+          "idleTime": 2790,
+          "post": {
+            "id": "6cff9b6d-306f-de08-2265-79e420541253",
+            "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
+            "name": "Пост 9",
+            "type": "special",
+            "status": "active_work",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ee331e00-3645-1c18-3887-618d13ea75e5",
+      "plateNumber": "М123НН50",
+      "entryTime": "2026-04-08T11:12:00",
+      "exitTime": "2026-04-08T13:10:00",
+      "status": "completed",
+      "trackId": "track_М123НН50",
+      "createdAt": "2026-04-08T11:12:00",
+      "updatedAt": "2026-04-08T14:26:33",
+      "zoneStays": [
+        {
+          "id": "8a4a9aa8-bc7c-60ea-75ca-8d5c78770700",
+          "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
+          "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
+          "entryTime": "2026-04-08T11:12:00",
+          "exitTime": "2026-04-08T13:10:00",
+          "duration": 7080,
+          "zone": {
+            "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
+            "name": "Диагностика (посты 9-10)",
+            "type": "repair",
+            "description": "Правая часть СТО, диагностические посты",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ],
+      "postStays": [
+        {
+          "id": "b294727d-4bfd-ed79-1842-b66408b93c27",
+          "postId": "6cff9b6d-306f-de08-2265-79e420541253",
+          "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
+          "startTime": "2026-04-08T11:20:00",
+          "endTime": "2026-04-08T12:56:00",
+          "hasWorker": true,
+          "isActive": false,
+          "activeTime": 4860,
+          "idleTime": 1620,
+          "post": {
+            "id": "6cff9b6d-306f-de08-2265-79e420541253",
+            "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
+            "name": "Пост 9",
+            "type": "special",
+            "status": "active_work",
+            "coordinates": null,
+            "isActive": true,
+            "createdAt": "2026-04-08T00:00:00",
+            "updatedAt": "2026-04-08T00:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ee331e00-3645-1c18-3887-618d13ea75e5",
+      "plateNumber": "М123НН50",
+      "entryTime": "2026-04-08T07:50:00",
+      "exitTime": "2026-04-08T11:59:00",
+      "status": "completed",
+      "trackId": "track_М123НН50",
+      "createdAt": "2026-04-08T07:50:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
           "id": "e43b02c0-cfbf-5b5d-e87c-6a28733b259a",
           "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-          "vehicleSessionId": "7eec73da-0614-574d-198f-9a9a13c74f83",
-          "entryTime": "2026-04-08T07:48:00",
-          "exitTime": "2026-04-08T09:12:00",
-          "duration": 5040,
+          "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
+          "entryTime": "2026-04-08T07:50:00",
+          "exitTime": "2026-04-08T11:59:00",
+          "duration": 14940,
           "zone": {
             "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
             "name": "Диагностика (посты 9-10)",
@@ -411,121 +519,13 @@
         {
           "id": "c16371aa-1a8e-7b3d-fa8f-28258591c0ab",
           "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-          "vehicleSessionId": "7eec73da-0614-574d-198f-9a9a13c74f83",
-          "startTime": "2026-04-08T08:07:00",
-          "endTime": "2026-04-08T09:01:00",
+          "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
+          "startTime": "2026-04-08T08:09:00",
+          "endTime": "2026-04-08T11:45:00",
           "hasWorker": true,
           "isActive": false,
-          "activeTime": 2430,
-          "idleTime": 810,
-          "post": {
-            "id": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-            "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-            "name": "Пост 10",
-            "type": "special",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-      "plateNumber": "Е567ОР77",
-      "entryTime": "2026-04-08T08:53:00",
-      "exitTime": "2026-04-08T09:41:00",
-      "status": "completed",
-      "trackId": "track_Е567ОР77",
-      "createdAt": "2026-04-08T08:53:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "36e6ad71-c708-a15a-82a6-b325a068432b",
-          "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-          "entryTime": "2026-04-08T08:53:00",
-          "exitTime": "2026-04-08T09:41:00",
-          "duration": 2880,
-          "zone": {
-            "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-            "name": "Диагностика (посты 9-10)",
-            "type": "repair",
-            "description": "Правая часть СТО, диагностические посты",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "8a27867d-cff1-97e2-d2a3-3020e3fa7944",
-          "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-          "startTime": "2026-04-08T09:09:00",
-          "endTime": "2026-04-08T09:33:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 1620,
-          "idleTime": 540,
-          "post": {
-            "id": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-            "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-            "name": "Пост 10",
-            "type": "special",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-      "plateNumber": "Р012ВС50",
-      "entryTime": "2026-04-08T09:44:00",
-      "exitTime": "2026-04-08T10:35:00",
-      "status": "completed",
-      "trackId": "track_Р012ВС50",
-      "createdAt": "2026-04-08T09:44:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "d6799c1f-3f3e-fd01-316c-869bf0a648e2",
-          "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-          "entryTime": "2026-04-08T09:44:00",
-          "exitTime": "2026-04-08T10:35:00",
-          "duration": 3060,
-          "zone": {
-            "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-            "name": "Диагностика (посты 9-10)",
-            "type": "repair",
-            "description": "Правая часть СТО, диагностические посты",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "1a3469d0-28b0-54be-9894-61ecdfb8fc30",
-          "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-          "startTime": "2026-04-08T09:51:00",
-          "endTime": "2026-04-08T10:21:00",
-          "hasWorker": true,
-          "isActive": false,
-          "activeTime": 1890,
-          "idleTime": 630,
+          "activeTime": 9720,
+          "idleTime": 3240,
           "post": {
             "id": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
             "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
@@ -541,5 +541,5 @@
       ]
     }
   ],
-  "total": 13
+  "total": 22
 }

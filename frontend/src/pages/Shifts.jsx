@@ -37,7 +37,10 @@ function getWeekDays(weekStart) {
 }
 
 function formatDateKey(d) {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function StatusBadge({ status, t }) {
@@ -677,7 +680,7 @@ export default function Shifts() {
                   <button
                     key={shift.id}
                     onClick={() => setSelectedShift(shift)}
-                    className="w-full text-left rounded-lg p-2 hover:opacity-90 transition-all cursor-pointer"
+                    className="w-full text-left rounded-lg p-2.5 hover:opacity-90 transition-all cursor-pointer"
                     style={{
                       background: shift.status === 'active'
                         ? 'rgba(34, 197, 94, 0.12)'
@@ -691,34 +694,26 @@ export default function Shifts() {
                       }`,
                     }}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                        {shift.name}
-                      </span>
+                    <div className="text-xs font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
+                      {shift.name}
                     </div>
-                    <div className="flex items-center gap-1 mb-1">
+                    <div className="mb-1.5"><StatusBadge status={shift.status} t={t} /></div>
+                    <div className="grid grid-cols-[12px_1fr] gap-x-1.5 gap-y-0.5 items-center">
                       <Clock size={10} style={{ color: 'var(--text-muted)' }} />
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {shift.startTime}-{shift.endTime}
+                      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                        {shift.startTime}–{shift.endTime}
                       </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Users size={10} style={{ color: 'var(--text-muted)' }} />
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          {shift.workers?.length || 0}
-                        </span>
-                      </div>
-                      <StatusBadge status={shift.status} t={t} />
-                    </div>
-                    {shift.workOrdersCount != null && shift.workOrdersCount > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
+                      <Users size={10} style={{ color: 'var(--text-muted)' }} />
+                      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                        {shift.workers?.length || 0} {isRu ? 'чел.' : 'ppl'}
+                      </span>
+                      {shift.workOrdersCount > 0 && (<>
                         <FileText size={10} style={{ color: 'var(--text-muted)' }} />
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          {shift.completedCount || 0}/{shift.workOrdersCount}
+                        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                          {shift.completedCount || 0}/{shift.workOrdersCount} {isRu ? 'ЗН' : 'WO'}
                         </span>
-                      </div>
-                    )}
+                      </>)}
+                    </div>
                   </button>
                 ))}
               </div>

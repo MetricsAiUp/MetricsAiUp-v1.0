@@ -1,20 +1,20 @@
 {
   "sessions": [
     {
-      "id": "22a5f657-374e-9a3f-9e69-eceab9db64a8",
-      "plateNumber": "Т345ВК77",
-      "entryTime": "2026-04-08T11:15:00",
+      "id": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
+      "plateNumber": "Т678АР97",
+      "entryTime": "2026-04-08T12:26:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_Т345ВК77",
-      "createdAt": "2026-04-08T11:15:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_Т678АР97",
+      "createdAt": "2026-04-08T12:26:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "feb7ed8c-f97a-346b-42b3-be4a88f72e4e",
+          "id": "9fc245f5-8554-0153-29f2-e344f700150c",
           "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-          "vehicleSessionId": "22a5f657-374e-9a3f-9e69-eceab9db64a8",
-          "entryTime": "2026-04-08T11:15:00",
+          "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
+          "entryTime": "2026-04-08T12:26:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -31,21 +31,21 @@
       ],
       "postStays": [
         {
-          "id": "114f50d6-9ef1-3835-2469-cba5e2260655",
-          "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
-          "vehicleSessionId": "22a5f657-374e-9a3f-9e69-eceab9db64a8",
-          "startTime": "2026-04-08T11:34:00",
+          "id": "ab43c33b-dd9e-22d7-e77a-f1e954a85b23",
+          "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a",
+          "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
+          "startTime": "2026-04-08T12:35:00",
           "endTime": null,
-          "hasWorker": false,
-          "isActive": false,
-          "activeTime": 3780,
-          "idleTime": 1260,
+          "hasWorker": true,
+          "isActive": true,
+          "activeTime": 12690,
+          "idleTime": 4230,
           "post": {
-            "id": "f4ca36d5-f89b-9cee-0d56-a005f9966bee",
+            "id": "17c52d88-8239-9846-3a84-55c474cb7e1a",
             "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-            "name": "Пост 1",
+            "name": "Пост 2",
             "type": "heavy",
-            "status": "occupied_no_work",
+            "status": "active_work",
             "coordinates": null,
             "isActive": true,
             "createdAt": "2026-04-08T00:00:00",
@@ -55,20 +55,20 @@
       ]
     },
     {
-      "id": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
-      "plateNumber": "Т678АР97",
-      "entryTime": "2026-04-08T07:55:00",
+      "id": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+      "plateNumber": "К891АС99",
+      "entryTime": "2026-04-08T11:54:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_Т678АР97",
-      "createdAt": "2026-04-08T07:55:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_К891АС99",
+      "createdAt": "2026-04-08T11:54:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "a643cffe-51d4-478c-8747-3d02f8a7d8ff",
+          "id": "6fcd5e26-0392-4d85-1d6a-21bade593390",
           "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-          "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
-          "entryTime": "2026-04-08T07:55:00",
+          "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+          "entryTime": "2026-04-08T11:54:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -85,15 +85,15 @@
       ],
       "postStays": [
         {
-          "id": "06c779ba-db1d-45be-4241-40e6a6e0612d",
+          "id": "7e1667f9-0087-6d5a-299e-df841870f5ab",
           "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
-          "vehicleSessionId": "ff3a1e7d-fda6-d0c8-7b9a-15e3670ef6c0",
-          "startTime": "2026-04-08T08:10:00",
+          "vehicleSessionId": "e84ddbb5-761f-cdfe-abe8-4ded3bde3ffb",
+          "startTime": "2026-04-08T11:59:00",
           "endTime": null,
           "hasWorker": true,
           "isActive": true,
-          "activeTime": 12690,
-          "idleTime": 4230,
+          "activeTime": 15120,
+          "idleTime": 5040,
           "post": {
             "id": "1a9a2861-26c8-61ba-77f6-336e9d47207e",
             "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
@@ -109,20 +109,20 @@
       ]
     },
     {
-      "id": "e14becc6-0c4f-2299-d04e-75a476d055f4",
-      "plateNumber": "В234КМ50",
-      "entryTime": "2026-04-08T11:22:00",
+      "id": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+      "plateNumber": "Е567ОР77",
+      "entryTime": "2026-04-08T12:07:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_В234КМ50",
-      "createdAt": "2026-04-08T11:22:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_Е567ОР77",
+      "createdAt": "2026-04-08T12:07:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "63f9aa22-e029-44f7-267c-2f8226bac220",
+          "id": "eb3d7f11-64af-043a-4347-9cf9ed9f5200",
           "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-          "vehicleSessionId": "e14becc6-0c4f-2299-d04e-75a476d055f4",
-          "entryTime": "2026-04-08T11:22:00",
+          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+          "entryTime": "2026-04-08T12:07:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -139,15 +139,15 @@
       ],
       "postStays": [
         {
-          "id": "949fc859-6536-9787-b98b-ab4a3c4988b5",
+          "id": "135b33b1-d9a7-4250-0a11-23029a179707",
           "postId": "ff6319be-4d63-aafc-361d-b39219d84e47",
-          "vehicleSessionId": "e14becc6-0c4f-2299-d04e-75a476d055f4",
-          "startTime": "2026-04-08T11:36:00",
+          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+          "startTime": "2026-04-08T12:19:00",
           "endTime": null,
           "hasWorker": true,
           "isActive": true,
-          "activeTime": 3780,
-          "idleTime": 1260,
+          "activeTime": 6750,
+          "idleTime": 2250,
           "post": {
             "id": "ff6319be-4d63-aafc-361d-b39219d84e47",
             "zoneId": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
@@ -163,20 +163,20 @@
       ]
     },
     {
-      "id": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-      "plateNumber": "Е567ОР77",
-      "entryTime": "2026-04-08T10:12:00",
+      "id": "f25b4b0f-f1db-0006-d460-cc9d6403f76d",
+      "plateNumber": "Е890МР50",
+      "entryTime": "2026-04-08T13:01:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_Е567ОР77",
-      "createdAt": "2026-04-08T10:12:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_Е890МР50",
+      "createdAt": "2026-04-08T13:01:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "84c92027-1a86-c944-1b47-fdb091ae6ee1",
+          "id": "26989199-1e98-c867-882d-24cf6ae85286",
           "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-          "entryTime": "2026-04-08T10:12:00",
+          "vehicleSessionId": "f25b4b0f-f1db-0006-d460-cc9d6403f76d",
+          "entryTime": "2026-04-08T13:01:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -193,15 +193,15 @@
       ],
       "postStays": [
         {
-          "id": "d06160e5-a76e-f1c3-2c40-132dea6543ac",
+          "id": "ebb06d4b-9c7f-d2f6-b717-25feb8251a6d",
           "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
-          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
-          "startTime": "2026-04-08T10:25:00",
+          "vehicleSessionId": "f25b4b0f-f1db-0006-d460-cc9d6403f76d",
+          "startTime": "2026-04-08T13:07:00",
           "endTime": null,
           "hasWorker": true,
           "isActive": true,
-          "activeTime": 8370,
-          "idleTime": 2790,
+          "activeTime": 4860,
+          "idleTime": 1620,
           "post": {
             "id": "a5db4908-6555-2cfe-3e11-029b1e5ca837",
             "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
@@ -217,20 +217,20 @@
       ]
     },
     {
-      "id": "571aed12-0414-233b-a581-2c0b9200fd58",
-      "plateNumber": "М456НА97",
-      "entryTime": "2026-04-08T10:53:00",
+      "id": "4d398e63-2d9b-ed06-ef6a-da9af8342331",
+      "plateNumber": "С012ХЕ99",
+      "entryTime": "2026-04-08T11:57:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_М456НА97",
-      "createdAt": "2026-04-08T10:53:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_С012ХЕ99",
+      "createdAt": "2026-04-08T11:57:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "b4463690-c188-e36e-52b2-d3a1d364a1b8",
+          "id": "e7a36828-dfb7-858d-1b80-e5be8934d577",
           "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "571aed12-0414-233b-a581-2c0b9200fd58",
-          "entryTime": "2026-04-08T10:53:00",
+          "vehicleSessionId": "4d398e63-2d9b-ed06-ef6a-da9af8342331",
+          "entryTime": "2026-04-08T11:57:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -247,15 +247,15 @@
       ],
       "postStays": [
         {
-          "id": "fe88a578-fa4b-41ce-6aca-921e7d8db598",
+          "id": "d9d9032e-8208-3828-b545-e99dc7765bbd",
           "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
-          "vehicleSessionId": "571aed12-0414-233b-a581-2c0b9200fd58",
-          "startTime": "2026-04-08T11:11:00",
+          "vehicleSessionId": "4d398e63-2d9b-ed06-ef6a-da9af8342331",
+          "startTime": "2026-04-08T12:03:00",
           "endTime": null,
           "hasWorker": true,
           "isActive": true,
-          "activeTime": 6210,
-          "idleTime": 2070,
+          "activeTime": 9990,
+          "idleTime": 3330,
           "post": {
             "id": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8",
             "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
@@ -271,128 +271,20 @@
       ]
     },
     {
-      "id": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-      "plateNumber": "В890КС97",
-      "entryTime": "2026-04-08T09:41:00",
+      "id": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+      "plateNumber": "Е567ОР77",
+      "entryTime": "2026-04-08T13:10:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_В890КС97",
-      "createdAt": "2026-04-08T09:41:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_Е567ОР77",
+      "createdAt": "2026-04-08T13:10:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "23edcda1-1249-7457-ba41-700a9a356469",
-          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-          "entryTime": "2026-04-08T09:41:00",
-          "exitTime": null,
-          "duration": null,
-          "zone": {
-            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Ремонтная зона (посты 5-8)",
-            "type": "repair",
-            "description": "Верхний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "0c100f19-d3e3-c190-8648-06f0e50e5ef9",
-          "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
-          "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-          "startTime": "2026-04-08T09:54:00",
-          "endTime": null,
-          "hasWorker": true,
-          "isActive": true,
-          "activeTime": 10530,
-          "idleTime": 3510,
-          "post": {
-            "id": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea",
-            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Пост 7",
-            "type": "light",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "ee331e00-3645-1c18-3887-618d13ea75e5",
-      "plateNumber": "М123НН50",
-      "entryTime": "2026-04-08T09:54:00",
-      "exitTime": null,
-      "status": "active",
-      "trackId": "track_М123НН50",
-      "createdAt": "2026-04-08T09:54:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "a3a1c82b-6df0-c0dd-afac-e9fc270ca4a5",
-          "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-          "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
-          "entryTime": "2026-04-08T09:54:00",
-          "exitTime": null,
-          "duration": null,
-          "zone": {
-            "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Ремонтная зона (посты 5-8)",
-            "type": "repair",
-            "description": "Верхний ряд, 2-х стоечные подъёмники",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ],
-      "postStays": [
-        {
-          "id": "e82c77af-24e0-fd9d-36b4-5bed539894ec",
-          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9",
-          "vehicleSessionId": "ee331e00-3645-1c18-3887-618d13ea75e5",
-          "startTime": "2026-04-08T10:02:00",
-          "endTime": null,
-          "hasWorker": true,
-          "isActive": true,
-          "activeTime": 6750,
-          "idleTime": 2250,
-          "post": {
-            "id": "769ed42a-3451-22ea-df5f-1035e1013ec9",
-            "zoneId": "8b416cdc-f285-e894-9378-3be648996ef6",
-            "name": "Пост 8",
-            "type": "light",
-            "status": "active_work",
-            "coordinates": null,
-            "isActive": true,
-            "createdAt": "2026-04-08T00:00:00",
-            "updatedAt": "2026-04-08T00:00:00"
-          }
-        }
-      ]
-    },
-    {
-      "id": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-      "plateNumber": "В890КС97",
-      "entryTime": "2026-04-08T08:03:00",
-      "exitTime": null,
-      "status": "active",
-      "trackId": "track_В890КС97",
-      "createdAt": "2026-04-08T08:03:00",
-      "updatedAt": "2026-04-08T12:08:10",
-      "zoneStays": [
-        {
-          "id": "b371ee47-f08a-2756-f48f-243c61da78af",
+          "id": "f8d5f153-03e0-97ff-9ec4-a41df7259ac5",
           "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-          "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-          "entryTime": "2026-04-08T08:03:00",
+          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+          "entryTime": "2026-04-08T13:10:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -409,15 +301,15 @@
       ],
       "postStays": [
         {
-          "id": "3fcc3bcf-8689-2867-f4cc-adb6ff215ca9",
+          "id": "f9cae06d-897e-d00f-bdb8-3bc2a95e52b7",
           "postId": "6cff9b6d-306f-de08-2265-79e420541253",
-          "vehicleSessionId": "2858dcc8-2a15-b9d5-0bc5-159223502e49",
-          "startTime": "2026-04-08T08:14:00",
+          "vehicleSessionId": "8b1b995b-50bc-e5ae-6e04-ec3b20ef65ce",
+          "startTime": "2026-04-08T13:23:00",
           "endTime": null,
           "hasWorker": true,
           "isActive": true,
-          "activeTime": 18360,
-          "idleTime": 6120,
+          "activeTime": 11880,
+          "idleTime": 3960,
           "post": {
             "id": "6cff9b6d-306f-de08-2265-79e420541253",
             "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
@@ -433,20 +325,20 @@
       ]
     },
     {
-      "id": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-      "plateNumber": "Р012ВС50",
-      "entryTime": "2026-04-08T10:29:00",
+      "id": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+      "plateNumber": "В567ЕК99",
+      "entryTime": "2026-04-08T11:53:00",
       "exitTime": null,
       "status": "active",
-      "trackId": "track_Р012ВС50",
-      "createdAt": "2026-04-08T10:29:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "trackId": "track_В567ЕК99",
+      "createdAt": "2026-04-08T11:53:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
-          "id": "093f412d-8e4b-0e43-530c-5db6205490f5",
+          "id": "36e6ad71-c708-a15a-82a6-b325a068432b",
           "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-          "entryTime": "2026-04-08T10:29:00",
+          "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+          "entryTime": "2026-04-08T11:53:00",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -463,15 +355,15 @@
       ],
       "postStays": [
         {
-          "id": "99e62f9f-b53b-c455-c5e4-3fd7706e4d80",
+          "id": "8a27867d-cff1-97e2-d2a3-3020e3fa7944",
           "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
-          "vehicleSessionId": "a95b60d5-9ea2-e86e-24b3-6e5433a0cb27",
-          "startTime": "2026-04-08T10:41:00",
+          "vehicleSessionId": "92121cb4-629b-cd2d-1138-12dd1b64e353",
+          "startTime": "2026-04-08T12:04:00",
           "endTime": null,
           "hasWorker": true,
           "isActive": true,
-          "activeTime": 9180,
-          "idleTime": 3060,
+          "activeTime": 12690,
+          "idleTime": 4230,
           "post": {
             "id": "aaa0a43a-1047-271c-5dd3-bdbfff911664",
             "zoneId": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
@@ -489,18 +381,18 @@
     {
       "id": "78eaa12e-7bad-4519-712a-a4bb97868d4e",
       "plateNumber": "В890КС97",
-      "entryTime": "2026-04-08T11:49:10",
+      "entryTime": "2026-04-08T14:09:33",
       "exitTime": null,
       "status": "active",
       "trackId": "track_park_0",
-      "createdAt": "2026-04-08T11:49:10",
-      "updatedAt": "2026-04-08T12:08:10",
+      "createdAt": "2026-04-08T14:09:33",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
           "id": "fa420b35-0d1b-2262-36f7-eaee36d86bd2",
           "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
           "vehicleSessionId": "78eaa12e-7bad-4519-712a-a4bb97868d4e",
-          "entryTime": "2026-04-08T11:49:10",
+          "entryTime": "2026-04-08T14:09:33",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -520,18 +412,18 @@
     {
       "id": "9a7643be-fd09-8f80-be34-24c08cab904f",
       "plateNumber": "А567ВР77",
-      "entryTime": "2026-04-08T11:38:10",
+      "entryTime": "2026-04-08T14:09:33",
       "exitTime": null,
       "status": "active",
       "trackId": "track_park_1",
-      "createdAt": "2026-04-08T11:38:10",
-      "updatedAt": "2026-04-08T12:08:10",
+      "createdAt": "2026-04-08T14:09:33",
+      "updatedAt": "2026-04-08T14:26:33",
       "zoneStays": [
         {
           "id": "84a6b355-81b8-770b-227f-0103a440418f",
           "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
           "vehicleSessionId": "9a7643be-fd09-8f80-be34-24c08cab904f",
-          "entryTime": "2026-04-08T11:38:10",
+          "entryTime": "2026-04-08T14:09:33",
           "exitTime": null,
           "duration": null,
           "zone": {
@@ -549,5 +441,5 @@
       "postStays": []
     }
   ],
-  "total": 11
+  "total": 9
 }

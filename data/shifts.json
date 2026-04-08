@@ -1,232 +1,842 @@
 {
   "shifts": [
     {
-      "id": "448dd99e-852a-dad0-e222-0e6738d48f7d",
+      "id": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+      "name": "Дневная смена",
+      "date": "2026-04-01",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "completed",
+      "notes": "Завершено 33 из 37 ЗН.",
+      "createdAt": "2026-03-31T22:00:00",
+      "updatedAt": "2026-04-01T00:00:00",
+      "workers": [
+        {
+          "id": "b3d7260b-d4f0-4f42-60f8-f368bcf1c9c4",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "d97eb2f7-fc3c-0b13-b6c5-59f3367c919f",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Романовский Денис Сергеевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "3e250713-6ab1-c4ea-5ef6-6e134319136a",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "c49fe76b-d432-1de1-aca2-990e1d5ca53c",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Кондратенко Андрей Станиславович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "c33f55a9-6af6-efb9-4049-67840504c9d5",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Бортник Ярослав Константинович",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "c4bb270b-5343-ae85-03fa-d49f640b0d89",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Кендыш Александр Иванович",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "eb968778-de84-0604-ddce-e2d0f9df3ba3",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Швец Алексей Богданович",
+          "role": "mechanic",
+          "postId": "post-7"
+        },
+        {
+          "id": "4980a583-f12c-cae5-fd68-89aca5d4df5b",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Воропай Александр Антонович",
+          "role": "master",
+          "postId": "post-8"
+        },
+        {
+          "id": "736e8e16-5400-3c4f-8354-27d94a417356",
+          "shiftId": "2cacbefd-adc8-4ebe-2609-8d6c5cab68e0",
+          "name": "Бобров Александр Владимирович",
+          "role": "diagnostician",
+          "postId": "post-9"
+        }
+      ],
+      "workOrdersCount": 37,
+      "completedCount": 33
+    },
+    {
+      "id": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+      "name": "Дневная смена",
+      "date": "2026-04-02",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "completed",
+      "notes": "Завершено 37 из 39 ЗН.",
+      "createdAt": "2026-04-01T22:00:00",
+      "updatedAt": "2026-04-02T00:00:00",
+      "workers": [
+        {
+          "id": "a05abf7f-472b-13e6-a240-8bc13f32938d",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Романовский Денис Сергеевич",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "cb096bd9-4afd-a579-d4ff-680813ae6c1f",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "7a0b78ff-27df-0842-e710-a506e8765deb",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Кондратенко Андрей Станиславович",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "da8c691f-d8a4-9ce8-f0d8-be6c77da18d7",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Бортник Ярослав Константинович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "6e7c37fe-8fe7-2543-2243-5b3ef641f41f",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Кендыш Александр Иванович",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "0e39f1bd-ab6b-9c21-4bc2-6275c946c670",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Швец Алексей Богданович",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "88fe3666-cde2-1f24-3bd6-7a663b829d23",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Воропай Александр Антонович",
+          "role": "master",
+          "postId": "post-7"
+        },
+        {
+          "id": "a982578f-fabe-514c-9bb0-cee873d8e9db",
+          "shiftId": "aece4bbc-de3b-7ba3-ca58-d0277e88d671",
+          "name": "Бобров Александр Владимирович",
+          "role": "diagnostician",
+          "postId": "post-8"
+        }
+      ],
+      "workOrdersCount": 39,
+      "completedCount": 37
+    },
+    {
+      "id": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+      "name": "Дневная смена",
+      "date": "2026-04-03",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "completed",
+      "notes": "Завершено 31 из 32 ЗН.",
+      "createdAt": "2026-04-02T22:00:00",
+      "updatedAt": "2026-04-03T00:00:00",
+      "workers": [
+        {
+          "id": "1bfa7c41-b59f-8a84-7a1f-0b732b106ca8",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "c6d33123-67e5-4131-57c7-7d21715586ae",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Кондратенко Андрей Станиславович",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "1764895b-550d-4d31-bf40-f78f0d54eede",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Бортник Ярослав Константинович",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "8e39365c-6c17-031f-ea15-eb84bdcb5402",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Кендыш Александр Иванович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "67071e82-c04b-7c1a-bbad-6bf42ff033a6",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Швец Алексей Богданович",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "87627db8-88f7-7040-d490-8b8e803815ee",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Воропай Александр Антонович",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "308417ca-b2ea-813b-1ce2-ba177e2af47c",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Бобров Александр Владимирович",
+          "role": "mechanic",
+          "postId": "post-7"
+        },
+        {
+          "id": "bd024ce9-f6df-58f4-dc16-87f43b4f6234",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Косачук Антон Николаевич",
+          "role": "mechanic",
+          "postId": "post-8"
+        },
+        {
+          "id": "47a3ceed-33b8-b722-d584-66167348dd4a",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "master",
+          "postId": "post-9"
+        },
+        {
+          "id": "f1174ad6-efcd-c4d2-496a-feeee931675e",
+          "shiftId": "97b1f907-48ba-a8d9-275d-ca24810bf961",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "diagnostician",
+          "postId": "post-10"
+        }
+      ],
+      "workOrdersCount": 32,
+      "completedCount": 31
+    },
+    {
+      "id": "492e783c-a359-d50b-9c51-80bda51b26f6",
+      "name": "Дневная смена",
+      "date": "2026-04-06",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "completed",
+      "notes": "1 ЗН перенесён на следующий день.",
+      "createdAt": "2026-04-05T22:00:00",
+      "updatedAt": "2026-04-06T00:00:00",
+      "workers": [
+        {
+          "id": "2611043a-8c41-1a47-a918-54aa641b2e9a",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Кендыш Александр Иванович",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "fea5799b-1fb1-e62c-4de4-e9cdaaaaf3a8",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Швец Алексей Богданович",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "b3673563-0c7a-ce9d-3267-afcb658fadc4",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Воропай Александр Антонович",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "8b3be3e0-094e-ce47-eaf7-cff09bbdf3d8",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Бобров Александр Владимирович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "882651d9-468f-45d5-27dd-4f4bc3b39919",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Косачук Антон Николаевич",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "7412fbf9-56a4-36a5-9a68-2e48a626c1f6",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "9ac1ead6-f01d-e758-b12e-c5207d16af32",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "mechanic",
+          "postId": "post-7"
+        },
+        {
+          "id": "b31097d4-be0c-c5d3-7a44-49497df7b680",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-8"
+        },
+        {
+          "id": "fb5257b0-100b-711e-7c2b-7c9df3172d24",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Романовский Денис Сергеевич",
+          "role": "master",
+          "postId": "post-9"
+        },
+        {
+          "id": "03d6fc90-5624-b153-5243-3290d62016d2",
+          "shiftId": "492e783c-a359-d50b-9c51-80bda51b26f6",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "diagnostician",
+          "postId": "post-10"
+        }
+      ],
+      "workOrdersCount": 37,
+      "completedCount": 33
+    },
+    {
+      "id": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
       "name": "Дневная смена",
       "date": "2026-04-07",
       "startTime": "08:00",
       "endTime": "20:00",
       "status": "completed",
-      "notes": "Смена завершена штатно. Все ЗН выполнены.",
-      "createdAt": "2026-04-07T00:00:00",
+      "notes": "Все ЗН выполнены в срок.",
+      "createdAt": "2026-04-06T22:00:00",
       "updatedAt": "2026-04-07T00:00:00",
       "workers": [
         {
-          "id": "06b153f0-47a9-e010-2a79-5029ae6b1fa1",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
+          "id": "1a551e4b-ada4-d6be-d76d-74fc3a0e7ae2",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Швец Алексей Богданович",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "685b3a6e-9a14-e8a5-0361-1da9d8c836ae",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Воропай Александр Антонович",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "35e9b9ff-3143-4883-9d7e-ed5ecc30b2c9",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Бобров Александр Владимирович",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "fedfc936-be5b-d9a0-0d5e-1ce5cb5a9cbe",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Косачук Антон Николаевич",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "db9e388a-9aee-9b25-ab76-0d5ce5523689",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "dab10262-5103-e277-d44a-3b1815327837",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "8176550b-461c-bb67-8a65-f1ab94d9368c",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
           "name": "Павлович Сергей Леонидович",
           "role": "mechanic",
-          "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee"
+          "postId": "post-7"
         },
         {
-          "id": "d18b9cb1-e4dc-e8fe-5463-c82e725fe395",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
+          "id": "92543cae-9546-fb53-b07b-1bcd275f2e2b",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
           "name": "Романовский Денис Сергеевич",
-          "role": "mechanic",
-          "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a"
-        },
-        {
-          "id": "f96eca29-ebde-e0e7-016f-1bd0108b30ca",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
-          "name": "Филипеня Павел Григорьевич",
-          "role": "mechanic",
-          "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e"
-        },
-        {
-          "id": "356ae252-383c-fa72-e130-a88dfb85e6bd",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
-          "name": "Кондратенко Андрей Станиславович",
-          "role": "mechanic",
-          "postId": "ff6319be-4d63-aafc-361d-b39219d84e47"
-        },
-        {
-          "id": "c0339ec8-4b95-dd64-700d-ff24f0e952ff",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
-          "name": "Бортник Ярослав Константинович",
-          "role": "mechanic",
-          "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837"
-        },
-        {
-          "id": "04931af0-ddea-039c-19ef-98efc9ea53fc",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
-          "name": "Кендыш Александр Иванович",
-          "role": "mechanic",
-          "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8"
-        },
-        {
-          "id": "192c5466-f2e4-52e8-6614-cd6b5387e387",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
-          "name": "Швец Алексей Богданович",
           "role": "master",
-          "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea"
+          "postId": "post-8"
         },
         {
-          "id": "54a83093-49a9-2bb4-8d12-39a8d670f344",
-          "shiftId": "448dd99e-852a-dad0-e222-0e6738d48f7d",
-          "name": "Воропай Александр Антонович",
+          "id": "a4a2fdc4-071e-6663-b033-cc90fce5e3d7",
+          "shiftId": "5577ee93-1a19-c70e-62ce-cc621e76aea4",
+          "name": "Филипеня Павел Григорьевич",
           "role": "diagnostician",
-          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9"
+          "postId": "post-9"
         }
       ],
-      "workOrdersCount": 38,
-      "completedCount": 35
+      "workOrdersCount": 40,
+      "completedCount": 38
     },
     {
-      "id": "d75ca668-05be-da52-f2b6-9644402f25d2",
+      "id": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
       "name": "Дневная смена",
       "date": "2026-04-08",
       "startTime": "08:00",
       "endTime": "20:00",
       "status": "active",
       "notes": null,
-      "createdAt": "2026-04-08T08:00:00",
-      "updatedAt": "2026-04-08T12:08:10",
+      "createdAt": "2026-04-07T22:00:00",
+      "updatedAt": "2026-04-08T14:26:33",
       "workers": [
         {
-          "id": "840ebbcf-ed92-804c-4144-c03f1e95a5dc",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Павлович Сергей Леонидович",
-          "role": "mechanic",
-          "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee"
-        },
-        {
-          "id": "1584af76-ec2f-9df1-dc03-cdffc6040bff",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Романовский Денис Сергеевич",
-          "role": "mechanic",
-          "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a"
-        },
-        {
-          "id": "73a0dabb-2cb6-26db-b57e-3be28e810668",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Филипеня Павел Григорьевич",
-          "role": "mechanic",
-          "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e"
-        },
-        {
-          "id": "48a80a7b-359b-4f2c-c3f5-404d52945951",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Кондратенко Андрей Станиславович",
-          "role": "mechanic",
-          "postId": "ff6319be-4d63-aafc-361d-b39219d84e47"
-        },
-        {
-          "id": "1e53705c-1241-e35c-2c54-186d19ef293c",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Бортник Ярослав Константинович",
-          "role": "mechanic",
-          "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837"
-        },
-        {
-          "id": "99d086b3-4a8a-eb92-d824-7f4ab2adfebf",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Кендыш Александр Иванович",
-          "role": "mechanic",
-          "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8"
-        },
-        {
-          "id": "5bd68442-6572-af93-742a-c3fc43ee8722",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
-          "name": "Швец Алексей Богданович",
-          "role": "mechanic",
-          "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea"
-        },
-        {
-          "id": "2c8da88c-f021-f995-88f9-d2eaa028b6df",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
+          "id": "3a458576-c24c-cc64-34a9-dbeef5f5980c",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
           "name": "Воропай Александр Антонович",
           "role": "mechanic",
-          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9"
+          "postId": "post-1"
         },
         {
-          "id": "90d6b972-a144-8a10-f3dd-bfe5a1d87aeb",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
+          "id": "a81ae667-40d1-d9a9-9b9f-87cc7b479100",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
           "name": "Бобров Александр Владимирович",
-          "role": "master",
-          "postId": "6cff9b6d-306f-de08-2265-79e420541253"
+          "role": "mechanic",
+          "postId": "post-2"
         },
         {
-          "id": "f9c20961-bcc0-bb3b-1b83-299f1692f5ec",
-          "shiftId": "d75ca668-05be-da52-f2b6-9644402f25d2",
+          "id": "6f13e54a-b85a-a5e0-5862-bfea8043cabc",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
           "name": "Косачук Антон Николаевич",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "e961707d-43d4-473c-d626-370722ca93f3",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "f84ced43-a0cc-b117-0e16-bb743bd81066",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "e0129842-2cab-1598-7b90-fb20efb143bf",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "2103c378-de84-55b5-9b7f-58933f585302",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
+          "name": "Романовский Денис Сергеевич",
+          "role": "master",
+          "postId": "post-7"
+        },
+        {
+          "id": "60997785-19cc-073e-0967-c81c80fbccd7",
+          "shiftId": "93ddff2f-2593-5b73-9deb-5ea6b19da1f4",
+          "name": "Филипеня Павел Григорьевич",
           "role": "diagnostician",
-          "postId": "aaa0a43a-1047-271c-5dd3-bdbfff911664"
+          "postId": "post-8"
         }
       ],
-      "workOrdersCount": 35,
-      "completedCount": 13
+      "workOrdersCount": 39,
+      "completedCount": 22
     },
     {
-      "id": "b468e0df-2874-d741-1329-4e064470c112",
+      "id": "dc691c73-2fea-0884-f635-ace19de307fa",
       "name": "Дневная смена",
       "date": "2026-04-09",
       "startTime": "08:00",
       "endTime": "20:00",
       "status": "planned",
       "notes": null,
-      "createdAt": "2026-04-08T12:08:10",
-      "updatedAt": "2026-04-08T12:08:10",
+      "createdAt": "2026-04-08T22:00:00",
+      "updatedAt": "2026-04-09T00:00:00",
       "workers": [
         {
-          "id": "2cdd8271-6d37-3fe4-a05e-935271b2d5b2",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "fc93c536-6e4c-fccf-8349-cf95b0987a07",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Бобров Александр Владимирович",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "8a15bae3-88c5-7548-025e-3cf591980930",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Косачук Антон Николаевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "8f2dbb18-1bea-423f-9f56-1e6aa5a80a6a",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "83eb25fc-9946-ac6a-6782-1239b337b57f",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "73625cb8-cfc4-75d1-531a-454a2b1a322c",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "2c674438-e616-8488-e52e-39082bacd784",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Романовский Денис Сергеевич",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "deb79971-4810-a8e7-af87-58e5cc271dc6",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
           "name": "Филипеня Павел Григорьевич",
           "role": "mechanic",
-          "postId": "f4ca36d5-f89b-9cee-0d56-a005f9966bee"
+          "postId": "post-7"
         },
         {
-          "id": "421ad10c-4c16-e0db-c787-8bef8e4531fa",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "43840646-7553-d0be-479d-3c4eb245a32d",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Кондратенко Андрей Станиславович",
+          "role": "master",
+          "postId": "post-8"
+        },
+        {
+          "id": "3f732a60-4673-73dd-b91f-8e92fc52b20d",
+          "shiftId": "dc691c73-2fea-0884-f635-ace19de307fa",
+          "name": "Бортник Ярослав Константинович",
+          "role": "diagnostician",
+          "postId": "post-9"
+        }
+      ],
+      "workOrdersCount": 0,
+      "completedCount": 0
+    },
+    {
+      "id": "a1889e15-3946-e16c-b812-0cf893662d46",
+      "name": "Дневная смена",
+      "date": "2026-04-10",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "notes": null,
+      "createdAt": "2026-04-09T22:00:00",
+      "updatedAt": "2026-04-10T00:00:00",
+      "workers": [
+        {
+          "id": "52cb07a2-9f42-cd13-fe86-7e0ff28e7b7a",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Косачук Антон Николаевич",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "98b3bf8a-cc55-41d9-f884-5aab3d6a18cd",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "963fa956-4e11-5080-78b2-e3ad9620ac1b",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "f26197d7-998b-6353-4b86-872b7a5f7008",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "b77e89f6-c8a2-09d3-74bf-21b91442894b",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Романовский Денис Сергеевич",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "d6c1df16-d725-7ead-a0d8-4c6e03390a51",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "1ed104ea-4a47-a8ac-7c21-0ed861e2700c",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
           "name": "Кондратенко Андрей Станиславович",
           "role": "mechanic",
-          "postId": "17c52d88-8239-9846-3a84-55c474cb7e1a"
+          "postId": "post-7"
         },
         {
-          "id": "5bce98c4-0abc-f074-ae5e-173ef92ea458",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "317a4369-4a6f-ae77-bbe9-624e3f26f026",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
           "name": "Бортник Ярослав Константинович",
           "role": "mechanic",
-          "postId": "1a9a2861-26c8-61ba-77f6-336e9d47207e"
+          "postId": "post-8"
         },
         {
-          "id": "1ae842a6-4f16-ee67-01fb-674ac41e1a10",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "4de347e3-063d-5743-bbed-798645b90231",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Кендыш Александр Иванович",
+          "role": "master",
+          "postId": "post-9"
+        },
+        {
+          "id": "784ab46a-e97c-c928-67d7-e5cdb361b450",
+          "shiftId": "a1889e15-3946-e16c-b812-0cf893662d46",
+          "name": "Швец Алексей Богданович",
+          "role": "diagnostician",
+          "postId": "post-10"
+        }
+      ],
+      "workOrdersCount": 0,
+      "completedCount": 0
+    },
+    {
+      "id": "f8c46a13-d7cb-1323-ed5d-e0ebff9e6ae7",
+      "name": "Дежурная смена",
+      "date": "2026-04-11",
+      "startTime": "09:00",
+      "endTime": "16:00",
+      "status": "planned",
+      "notes": null,
+      "createdAt": "2026-04-10T22:00:00",
+      "updatedAt": "2026-04-11T00:00:00",
+      "workers": [
+        {
+          "id": "0bd62885-ffec-5b7a-7abc-36f587f3ad5d",
+          "shiftId": "f8c46a13-d7cb-1323-ed5d-e0ebff9e6ae7",
+          "name": "Стасевич Дмитрий Сергеевич",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "5331f81e-4786-7a2a-390e-a5208737bb96",
+          "shiftId": "f8c46a13-d7cb-1323-ed5d-e0ebff9e6ae7",
+          "name": "Гриценко Кирилл Сергеевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "dd9f6b2a-ed9e-cd3c-caec-f17e0b4176a7",
+          "shiftId": "f8c46a13-d7cb-1323-ed5d-e0ebff9e6ae7",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "7c4123f6-82c0-d2f0-a62d-d6d3c7520e7e",
+          "shiftId": "f8c46a13-d7cb-1323-ed5d-e0ebff9e6ae7",
+          "name": "Романовский Денис Сергеевич",
+          "role": "master",
+          "postId": "post-4"
+        },
+        {
+          "id": "4d2170a4-76d8-b124-9d86-6d1b232db1fd",
+          "shiftId": "f8c46a13-d7cb-1323-ed5d-e0ebff9e6ae7",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "diagnostician",
+          "postId": "post-5"
+        }
+      ],
+      "workOrdersCount": 0,
+      "completedCount": 0
+    },
+    {
+      "id": "b85c7de6-6737-a926-633b-1512a6858c20",
+      "name": "Дневная смена",
+      "date": "2026-04-13",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "notes": null,
+      "createdAt": "2026-04-12T22:00:00",
+      "updatedAt": "2026-04-13T00:00:00",
+      "workers": [
+        {
+          "id": "a5869466-ecd2-74db-aaf0-f25b7ecf6a29",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
+          "name": "Павлович Сергей Леонидович",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "386fb2ee-210e-c9f8-d1cc-7f8b377c3f3b",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
+          "name": "Романовский Денис Сергеевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "9ae1fcdd-37b8-899d-48a9-3b537e0e2195",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "95062a44-c0fd-42a7-10e0-730281f44763",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
+          "name": "Кондратенко Андрей Станиславович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "8cae58ea-8fd2-3d99-9503-18fca18592d9",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
+          "name": "Бортник Ярослав Константинович",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "51ba1b02-9e4a-5142-ca36-4b63c7d323ba",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
           "name": "Кендыш Александр Иванович",
           "role": "mechanic",
-          "postId": "ff6319be-4d63-aafc-361d-b39219d84e47"
+          "postId": "post-6"
         },
         {
-          "id": "f8b5bacf-b9b3-79cc-5980-47b389dd34c3",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "b501e154-8cc7-ca82-ec97-266a21bd211d",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
           "name": "Швец Алексей Богданович",
           "role": "mechanic",
-          "postId": "a5db4908-6555-2cfe-3e11-029b1e5ca837"
+          "postId": "post-7"
         },
         {
-          "id": "0cc466da-ac63-b31f-8280-b0da73268f93",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "2f5784d0-2a35-14b6-4ce5-f5f16a8eccf2",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
           "name": "Воропай Александр Антонович",
           "role": "mechanic",
-          "postId": "f1a5703c-89d7-fe3a-ef57-4deb3b65b3f8"
+          "postId": "post-8"
         },
         {
-          "id": "5b0faf9a-9faf-8180-7b0e-1c2351c1a8ce",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "9e0facc7-30a7-48f8-f454-dbd9f2e9fb25",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
           "name": "Бобров Александр Владимирович",
           "role": "master",
-          "postId": "7e696d4c-60d5-c0ee-d5cd-777865ab42ea"
+          "postId": "post-9"
         },
         {
-          "id": "b03a83c4-5a54-5875-dea4-2b26e8324c65",
-          "shiftId": "b468e0df-2874-d741-1329-4e064470c112",
+          "id": "a842ffe8-0bdb-e72d-37f5-62002e9accc9",
+          "shiftId": "b85c7de6-6737-a926-633b-1512a6858c20",
           "name": "Косачук Антон Николаевич",
           "role": "diagnostician",
-          "postId": "769ed42a-3451-22ea-df5f-1035e1013ec9"
+          "postId": "post-10"
+        }
+      ],
+      "workOrdersCount": 0,
+      "completedCount": 0
+    },
+    {
+      "id": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+      "name": "Дневная смена",
+      "date": "2026-04-14",
+      "startTime": "08:00",
+      "endTime": "20:00",
+      "status": "planned",
+      "notes": null,
+      "createdAt": "2026-04-13T22:00:00",
+      "updatedAt": "2026-04-14T00:00:00",
+      "workers": [
+        {
+          "id": "aa51eec6-80e3-7e87-1efe-910a5f328ba0",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Романовский Денис Сергеевич",
+          "role": "mechanic",
+          "postId": "post-1"
+        },
+        {
+          "id": "b807c895-8d02-4228-f028-935e3c308194",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Филипеня Павел Григорьевич",
+          "role": "mechanic",
+          "postId": "post-2"
+        },
+        {
+          "id": "e84cf68a-4af4-c956-ed48-3c8929828570",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Кондратенко Андрей Станиславович",
+          "role": "mechanic",
+          "postId": "post-3"
+        },
+        {
+          "id": "a37bcc05-3802-2a68-014a-57e653d8d9d0",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Бортник Ярослав Константинович",
+          "role": "mechanic",
+          "postId": "post-4"
+        },
+        {
+          "id": "74aa91ac-7738-5182-edd0-09320a1d4837",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Кендыш Александр Иванович",
+          "role": "mechanic",
+          "postId": "post-5"
+        },
+        {
+          "id": "4e587976-630a-5191-6b88-6ca6bf486d7d",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Швец Алексей Богданович",
+          "role": "mechanic",
+          "postId": "post-6"
+        },
+        {
+          "id": "67bb3788-fc31-9d48-7810-6053616c6a43",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Воропай Александр Антонович",
+          "role": "master",
+          "postId": "post-7"
+        },
+        {
+          "id": "11ac355c-e131-2cb5-63f6-5dbda7b3d035",
+          "shiftId": "30837507-1fc1-4e48-f3d7-b40e71a21eee",
+          "name": "Бобров Александр Владимирович",
+          "role": "diagnostician",
+          "postId": "post-8"
         }
       ],
       "workOrdersCount": 0,
       "completedCount": 0
     }
   ],
-  "total": 3
+  "total": 11
 }
