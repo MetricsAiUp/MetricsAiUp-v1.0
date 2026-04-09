@@ -14,7 +14,6 @@ const navItems = [
   { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', pageId: 'dashboard' },
   { path: '/dashboard-posts', icon: CalendarClock, labelKey: 'nav.dashboardPosts', pageId: 'dashboard-posts' },
   { path: '/posts-detail', icon: Columns, labelKey: 'nav.postsDetail', pageId: 'posts-detail', hasSub: true },
-  { path: '/map', icon: Map, labelKey: 'nav.map', pageId: 'map' },
   { path: '/sessions', icon: Car, labelKey: 'nav.sessions', pageId: 'sessions' },
   { path: '/work-orders', icon: ClipboardList, labelKey: 'nav.workOrders', pageId: 'work-orders' },
   { path: '/shifts', icon: Clock, labelKey: 'nav.shifts', pageId: 'shifts' },

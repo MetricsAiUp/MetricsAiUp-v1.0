@@ -11,7 +11,6 @@ const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const DashboardPosts = lazy(() => import('./pages/DashboardPosts'));
 const PostsDetail = lazy(() => import('./pages/PostsDetail'));
-const MapView = lazy(() => import('./pages/MapView'));
 const Sessions = lazy(() => import('./pages/Sessions'));
 const WorkOrders = lazy(() => import('./pages/WorkOrders'));
 const Events = lazy(() => import('./pages/Events'));
@@ -60,7 +59,6 @@ function AppRoutes() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard-posts" element={<DashboardPosts />} />
           <Route path="posts-detail" element={<PostsDetail />} />
-          <Route path="map" element={<MapView />} />
           <Route path="sessions" element={<Sessions />} />
           <Route path="work-orders" element={<WorkOrders />} />
           <Route path="events" element={<Events />} />
