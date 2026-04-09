@@ -27,6 +27,7 @@ const MyPost = lazy(() => import('./pages/MyPost'));
 const Health = lazy(() => import('./pages/Health'));
 const WorkerStats = lazy(() => import('./pages/WorkerStats'));
 const ReportSchedule = lazy(() => import('./pages/ReportSchedule'));
+const TechDocs = lazy(() => import('./pages/TechDocs'));
 
 function PageLoader() {
   return (
@@ -75,6 +76,7 @@ function AppRoutes() {
           <Route path="health" element={<Health />} />
           <Route path="worker-stats/:workerName" element={<WorkerStats />} />
           <Route path="report-schedule" element={<ReportSchedule />} />
+          <Route path="tech-docs" element={<TechDocs />} />
         </Route>
       </Routes>
     </Suspense>

@@ -32,6 +32,7 @@ const PAGE_PERMISSIONS = {
   'map-view': ['view_zones'],
   'map-editor': ['manage_zones'],
   'audit': ['manage_users'],
+  'tech-docs': ['view_dashboard'],
 };
 
 function buildPermissions(pages, role) {

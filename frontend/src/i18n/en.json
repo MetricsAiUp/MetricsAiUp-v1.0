@@ -24,7 +24,8 @@
     "audit": "Audit Log",
     "health": "System Health",
     "myPost": "My Post",
-    "reportSchedule": "Report Schedule"
+    "reportSchedule": "Report Schedule",
+    "techDocs": "Documentation"
   },
   "shifts": {
     "title": "Shift Management",
