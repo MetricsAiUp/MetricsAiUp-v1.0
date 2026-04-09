@@ -783,19 +783,19 @@ export default function Data1C() {
   const hasUnsaved = unsavedPlanning.length > 0 || unsavedWorkers.length > 0;
 
   useEffect(() => {
-    api.get('/api/1c-stats').then(r => setStats(r.data)).catch(console.error);
+    api.get('/api/1c/stats').then(r => setStats(r.data)).catch(console.error);
     // localStorage overrides mock JSON if present, no merging to avoid duplicates
     const savedPlanning = localStorage.getItem('1c-imported-planning');
     if (savedPlanning) {
       setPlanning(JSON.parse(savedPlanning));
     } else {
-      api.get('/api/1c-planning').then(r => setPlanning(r.data || [])).catch(console.error);
+      api.get('/api/1c/planning').then(r => setPlanning(r.data || [])).catch(console.error);
     }
     const savedWorkers = localStorage.getItem('1c-imported-workers');
     if (savedWorkers) {
       setWorkers(JSON.parse(savedWorkers));
     } else {
-      api.get('/api/1c-workers').then(r => setWorkers(r.data || [])).catch(console.error);
+      api.get('/api/1c/workers').then(r => setWorkers(r.data || [])).catch(console.error);
     }
   }, []);
 
