@@ -103,6 +103,7 @@ export default function ReportSchedule() {
           <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             <FileSpreadsheet size={20} style={{ color: 'var(--accent)' }} />
             {t('reportSchedule.title')}
+            <HelpButton pageKey="reportSchedule" />
           </h2>
         </div>
         <button

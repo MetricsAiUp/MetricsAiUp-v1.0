@@ -5,6 +5,7 @@ import {
   Activity, Database, HardDrive, Camera, RefreshCw,
   Wifi, WifiOff, Server, CheckCircle, AlertCircle, Clock,
 } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
@@ -97,9 +98,12 @@ export default function Health() {
             }
           </div>
           <div>
-            <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
-              {isRu ? 'Состояние системы' : 'System Status'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Состояние системы' : 'System Status'}
+              </h2>
+              <HelpButton pageKey="health" />
+            </div>
             <p className="text-[11px]" style={{ color: allHealthy ? '#10b981' : '#f59e0b' }}>
               {allHealthy
                 ? (isRu ? 'Все системы работают нормально' : 'All systems operational')

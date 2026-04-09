@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { ArrowLeft, User, ClipboardList, Clock, TrendingUp, Wrench, Car } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
@@ -78,6 +79,7 @@ export default function WorkerStats() {
           <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <User size={20} style={{ color: 'var(--accent)' }} />
             {t('workerStats.title')}: {decodeURIComponent(workerName)}
+            <HelpButton pageKey="workerStats" />
           </h2>
         </div>
         {/* Period selector */}
