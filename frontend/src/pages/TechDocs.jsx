@@ -133,39 +133,69 @@ export default function TechDocs() {
       const content = contentRef.current;
       if (!content) return;
 
-      const originalOverflow = content.style.overflow;
-      const originalHeight = content.style.height;
-      const originalMaxHeight = content.style.maxHeight;
-      content.style.overflow = 'visible';
-      content.style.height = 'auto';
-      content.style.maxHeight = 'none';
+      // Clone content into an unconstrained off-screen container
+      // This avoids the parent flex container height clipping issue
+      const clone = content.cloneNode(true);
+      clone.style.cssText = `
+        position: absolute; left: -9999px; top: 0;
+        width: ${content.offsetWidth}px;
+        overflow: visible; height: auto; max-height: none;
+        padding: 24px; background: #0f172a; color: #e2e8f0;
+      `;
+      document.body.appendChild(clone);
+      await new Promise(r => setTimeout(r, 200));
 
-      const canvas = await html2canvas(content, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: content.scrollWidth,
-        windowHeight: content.scrollHeight,
-      });
+      const fullH = clone.scrollHeight;
+      const fullW = clone.offsetWidth;
 
-      content.style.overflow = originalOverflow;
-      content.style.height = originalHeight;
-      content.style.maxHeight = originalMaxHeight;
+      // Render in vertical chunks of 2500px to stay within browser canvas limits
+      const CHUNK = 2500;
+      const chunks = [];
+      for (let y = 0; y < fullH; y += CHUNK) {
+        const h = Math.min(CHUNK, fullH - y);
+        const c = await html2canvas(clone, {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          x: 0, y, width: fullW, height: h,
+          windowWidth: fullW,
+          windowHeight: fullH,
+          scrollX: 0, scrollY: 0,
+          backgroundColor: '#0f172a',
+        });
+        chunks.push(c);
+      }
 
-      const imgData = canvas.toDataURL('image/png');
+      document.body.removeChild(clone);
+
+      // Build PDF page-by-page from chunks
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let yOffset = 0;
-      let page = 0;
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      const m = 8;
+      const usableW = pdfW - m * 2;
+      const usableH = pdfH - m * 2;
+      const cW = chunks[0].width;
+      const scl = usableW / cW;
+      const sliceH = Math.floor(usableH / scl);
 
-      while (yOffset < imgHeight) {
-        if (page > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, 10 - yOffset, imgWidth, imgHeight);
-        yOffset += pdfHeight - 20;
-        page++;
+      let pageNum = 0;
+      for (const chunk of chunks) {
+        let srcY = 0;
+        while (srcY < chunk.height) {
+          if (pageNum > 0) pdf.addPage();
+          const h = Math.min(sliceH, chunk.height - srcY);
+          const pg = document.createElement('canvas');
+          pg.width = cW;
+          pg.height = h;
+          const ctx = pg.getContext('2d');
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(0, 0, cW, h);
+          ctx.drawImage(chunk, 0, srcY, cW, h, 0, 0, cW, h);
+          pdf.addImage(pg.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, usableW, h * scl);
+          srcY += h;
+          pageNum++;
+        }
       }
 
       pdf.save(`MetricsAiUp-TechDocs-${generatedDate}.pdf`);
