@@ -601,22 +601,24 @@ export default function MapViewer() {
                     onClick={() => setSelectedPost(pn)} />
                 );
               }
-              if (el.type === 'camera') {
-                const cn = getCamNum(el);
-                const camId = cn ? `cam${String(cn).padStart(2, '0')}` : null;
-                const camOnline = camId ? cameraStatuses[camId]?.online : undefined;
-                return (
-                  <CameraEl key={el.id} el={el} isDark={isDark}
-                    online={camOnline}
-                    onClick={() => cn && setSelectedCam(cn)} />
-                );
-              }
+              if (el.type === 'camera') return null; // cameras rendered in second pass below
               if (el.type === 'infozone') return (
                 <InfoZoneEl key={el.id} el={el} isDark={isDark} isRu={isRu}
                   layoutName={layout?.name || ''}
                   allElements={allElements} />
               );
               return null;
+            })}
+            {/* Cameras on top of everything */}
+            {allElements.filter(el => el.type === 'camera').map(el => {
+              const cn = getCamNum(el);
+              const camId = cn ? `cam${String(cn).padStart(2, '0')}` : null;
+              const camOnline = camId ? cameraStatuses[camId]?.online : undefined;
+              return (
+                <CameraEl key={el.id} el={el} isDark={isDark}
+                  online={camOnline}
+                  onClick={() => cn && setSelectedCam(cn)} />
+              );
             })}
           </Layer>
         </Stage>
