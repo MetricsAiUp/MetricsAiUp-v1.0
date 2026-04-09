@@ -93,17 +93,24 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
   const timer = usePostTimerText(currentWOForTimer?.estimatedEnd || currentWOForTimer?.endTime, currentWOForTimer?.startTime);
   const vehicle = post?.stays?.[0]?.vehicleSession;
   const postLabel = isRu ? layout.label : (layout.labelEN || layout.label);
-  const isLarge = layout.h >= 200; // diagnostic posts are larger
 
   // Data from dashboard-posts
   const currentWO = dashPost?.timeline?.find(t => t.status === 'in_progress');
   const currentVehicle = dashPost?.currentVehicle;
   const workerName = currentWO?.worker;
-  const note = currentWO?.note;
+  const workType = currentWO?.workType;
+  const isFree = status === 'free';
+  const isIdle = status === 'occupied_no_work';
 
-  const nameY = 5;
-  const statusY = postLabel.includes('\n') ? 30 : 19;
-  let y = statusY + 12;
+  // Short worker name: "Фамилия И."
+  const shortWorker = workerName ? (() => {
+    const parts = workerName.split(' ');
+    return parts.length >= 2 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+  })() : null;
+
+  const W = layout.w;
+  const H = layout.h;
+  const pad = 6;
 
   return (
     <Group
@@ -112,140 +119,173 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
       onClick={() => onClick?.(post)}
       onTap={() => onClick?.(post)}
     >
-      {/* Post background */}
+      {/* Card background */}
       <Rect
-        width={layout.w}
-        height={layout.h}
-        fill={isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)'}
+        width={W} height={H}
+        fill={isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.85)'}
         stroke={color}
-        strokeWidth={2}
+        strokeWidth={status === 'active_work' ? 2.5 : 1.5}
         cornerRadius={8}
         shadowColor={color}
-        shadowBlur={status === 'active_work' ? 15 : 4}
-        shadowOpacity={0.4}
+        shadowBlur={status === 'active_work' ? 12 : 3}
+        shadowOpacity={status === 'active_work' ? 0.5 : 0.2}
       />
-      {/* Status indicator */}
-      <Circle x={layout.w - 15} y={14} radius={6} fill={color} />
-      {/* Post name */}
-      <Text
-        x={7} y={nameY}
-        text={postLabel}
-        fontSize={12}
-        fontStyle="bold"
-        fill={isDark ? '#f1f5f9' : '#1a202c'}
-        lineHeight={1.15}
-      />
-      {/* Status text */}
-      <Text
-        x={7} y={statusY}
-        text={STATUS_LABELS[status]?.[isRu ? 'ru' : 'en'] || status}
-        fontSize={10}
+      {/* Top accent bar */}
+      <Rect
+        x={1} y={1}
+        width={W - 2} height={3}
         fill={color}
+        cornerRadius={[8, 8, 0, 0]}
       />
 
-      {/* Vehicle: brand + model */}
-      {currentVehicle && (
-        <Text
-          x={7} y={y}
-          width={layout.w - 14}
-          text={`${currentVehicle.brand} ${currentVehicle.model}`}
-          fontSize={10}
-          fill={isDark ? '#94a3b8' : '#718096'}
-          ellipsis={true}
-        />
-      )}
+      {/* Header row: Post name + status dot */}
+      <Text
+        x={pad} y={8}
+        text={postLabel.replace('\n', ' ')}
+        fontSize={11}
+        fontStyle="bold"
+        fill={isDark ? '#e2e8f0' : '#1e293b'}
+      />
+      <Circle x={W - 12} y={14} radius={5} fill={color} />
+      {/* Status text next to dot */}
+      <Text
+        x={pad} y={21}
+        width={W - pad * 2}
+        text={STATUS_LABELS[status]?.[isRu ? 'ru' : 'en'] || status}
+        fontSize={9}
+        fill={color}
+        fontStyle="bold"
+      />
 
-      {/* Work Order number */}
-      {currentWO && (
+      {/* ── Content area ── */}
+      {isFree ? (
+        /* Free post — show "—" centered */
         <Text
-          x={7} y={y + (currentVehicle ? 13 : 0)}
-          width={layout.w - 14}
-          text={currentWO.workOrderNumber}
-          fontSize={10}
-          fontStyle="bold"
-          fill={isDark ? '#a5b4fc' : '#6366f1'}
-          ellipsis={true}
+          x={pad} y={38}
+          width={W - pad * 2} height={H - 50}
+          text="—"
+          fontSize={16}
+          fill={isDark ? '#334155' : '#cbd5e1'}
+          align="center"
+          verticalAlign="middle"
         />
-      )}
-
-      {/* Worker */}
-      {workerName && (
-        <Text
-          x={7} y={y + (currentVehicle ? 26 : 13)}
-          width={layout.w - 14}
-          text={workerName}
-          fontSize={9}
-          fill={isDark ? '#94a3b8' : '#718096'}
-          ellipsis={true}
+      ) : (<>
+        {/* Divider line */}
+        <Line
+          points={[pad, 33, W - pad, 33]}
+          stroke={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.08)'}
+          strokeWidth={1}
         />
-      )}
 
-      {/* Time: placed → estimated end */}
-      {(post?.stays?.[0]?.startTime || currentWO?.estimatedEnd) && (
-        <Text
-          x={7} y={y + (currentVehicle ? 38 : 26)}
-          width={layout.w - 14}
-          text={`${fmtTime(post?.stays?.[0]?.startTime)} → ${fmtTime(currentWO?.estimatedEnd)}`}
-          fontSize={9}
-          fill={isDark ? '#94a3b8' : '#718096'}
-        />
-      )}
+        {/* Vehicle plate — prominent */}
+        {vehicle && (
+          <Group>
+            <Rect
+              x={pad} y={37}
+              width={W - pad * 2} height={18}
+              fill={isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)'}
+              cornerRadius={4}
+            />
+            <Text
+              x={pad} y={37}
+              width={W - pad * 2} height={18}
+              text={vehicle.plateNumber || '—'}
+              fontSize={11}
+              fontStyle="bold"
+              fill={isDark ? '#e2e8f0' : '#1e293b'}
+              align="center"
+              verticalAlign="middle"
+            />
+          </Group>
+        )}
 
-      {/* Timer countdown */}
-      {timer.text && status !== 'free' && (
-        <Group>
-          <Rect
-            x={7} y={y + (currentVehicle ? 52 : 39)}
-            width={layout.w - 14} height={16}
-            fill={timer.color} cornerRadius={4} opacity={0.9}
-          />
+        {/* Brand + Model */}
+        {currentVehicle && (
           <Text
-            x={7} y={y + (currentVehicle ? 53 : 40)}
-            width={layout.w - 14} height={14}
-            text={timer.text}
-            fontSize={10} fontStyle="bold" fill="#fff"
-            align="center" verticalAlign="middle"
+            x={pad} y={58}
+            width={W - pad * 2}
+            text={`${currentVehicle.brand} ${currentVehicle.model}`}
+            fontSize={9}
+            fill={isDark ? '#64748b' : '#94a3b8'}
+            ellipsis={true}
           />
-        </Group>
-      )}
+        )}
 
-      {/* Note (warning) — only on large posts (diagnostics) */}
-      {note && layout.h >= 200 && (
-        <Text
-          x={7} y={y + (currentVehicle ? 52 : 39)}
-          width={layout.w - 14}
-          text={`⚠ ${note}`}
-          fontSize={9}
-          fill="#f59e0b"
-          ellipsis={true}
-        />
-      )}
-
-      {/* Vehicle plate at bottom */}
-      {vehicle && (
-        <Group>
-          <Rect
-            x={7} y={layout.h - 30}
-            width={layout.w - 14}
-            height={24}
-            fill={isDark ? 'rgba(15, 23, 42, 0.7)' : 'rgba(240, 244, 248, 0.9)'}
-            cornerRadius={6}
-            stroke={color}
-            strokeWidth={0.5}
-          />
+        {/* Work type */}
+        {workType && (
           <Text
-            x={7} y={layout.h - 30}
-            width={layout.w - 14}
-            height={24}
-            text={vehicle.plateNumber || '—'}
-            fontSize={12}
+            x={pad} y={69}
+            width={W - pad * 2}
+            text={workType}
+            fontSize={9}
             fontStyle="bold"
-            fill={isDark ? '#e2e8f0' : '#1a202c'}
-            align="center"
-            verticalAlign="middle"
+            fill={isDark ? '#a5b4fc' : '#6366f1'}
+            ellipsis={true}
           />
-        </Group>
-      )}
+        )}
+
+        {/* Worker name (short) */}
+        {shortWorker && (
+          <Text
+            x={pad} y={80}
+            width={W - pad * 2}
+            text={shortWorker}
+            fontSize={9}
+            fill={isDark ? '#64748b' : '#94a3b8'}
+            ellipsis={true}
+          />
+        )}
+
+        {/* Time range */}
+        {(post?.stays?.[0]?.startTime || currentWO?.estimatedEnd) && (
+          <Text
+            x={pad} y={91}
+            width={W - pad * 2}
+            text={`${fmtTime(post?.stays?.[0]?.startTime)} → ${fmtTime(currentWO?.estimatedEnd)}`}
+            fontSize={9}
+            fill={isDark ? '#64748b' : '#94a3b8'}
+          />
+        )}
+
+        {/* Timer bar at bottom */}
+        {timer.text && (
+          <Group>
+            <Rect
+              x={pad} y={H - 20}
+              width={W - pad * 2} height={16}
+              fill={timer.color} cornerRadius={4} opacity={0.9}
+            />
+            <Text
+              x={pad} y={H - 19}
+              width={W - pad * 2} height={14}
+              text={timer.text}
+              fontSize={9} fontStyle="bold" fill="#fff"
+              align="center" verticalAlign="middle"
+            />
+          </Group>
+        )}
+
+        {/* Idle indicator (no timer but occupied) */}
+        {isIdle && !timer.text && (
+          <Group>
+            <Rect
+              x={pad} y={H - 20}
+              width={W - pad * 2} height={16}
+              fill={isDark ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.1)'}
+              cornerRadius={4}
+              stroke="rgba(234,179,8,0.3)"
+              strokeWidth={1}
+            />
+            <Text
+              x={pad} y={H - 19}
+              width={W - pad * 2} height={14}
+              text={isRu ? 'Простой' : 'Idle'}
+              fontSize={9} fontStyle="bold" fill="#eab308"
+              align="center" verticalAlign="middle"
+            />
+          </Group>
+        )}
+      </>)}
     </Group>
   );
 }

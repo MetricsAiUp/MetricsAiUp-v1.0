@@ -31,6 +31,12 @@ const ALL_CAMERAS = [
   { num: '10', loc: { ru: 'Правая стена, низ', en: 'Right wall, lower' }, covers: { ru: 'Пост 10', en: 'Post 10' } },
 ];
 
+function fmtTime(t) {
+  if (!t) return '—';
+  const d = new Date(t);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
 function PostModal({ postNum, dashboardData, onClose, onGoToPost, t }) {
   const post = dashboardData?.posts?.find(p => p.number === postNum);
   if (!post) return null;
@@ -173,10 +179,14 @@ function findPostInZones(postNum, zonesData) {
 function postStatusFromData(n, dd, zd) {
   const dp = dd?.posts?.find(p => p.number === n);
   if (dp) {
+    if (dp.status && dp.status !== 'free') return dp.status;
     if (dp.status === 'free') return 'free';
     return dp.timeline?.some(i => i.status === 'in_progress') ? 'active_work' : 'occupied';
   }
   return findPostInZones(n, zd)?.status || 'free';
+}
+function dashPostFromData(n, dd) {
+  return dd?.posts?.find(p => p.number === n) || null;
 }
 function vehiclePlateFromData(n, dd, zd) {
   const dp = dd?.posts?.find(p => p.number === n);
@@ -586,6 +596,8 @@ export default function MapViewer() {
                     plate={vehiclePlateFromData(pn, dashboardData, zonesData)}
                     statusLabel={t(`posts.${postStatusFromData(pn, dashboardData, zonesData)}`)}
                     postLabel={t(`posts.post${pn}`)}
+                    dashPost={dashPostFromData(pn, dashboardData)}
+                    isRu={isRu}
                     onClick={() => setSelectedPost(pn)} />
                 );
               }
@@ -660,32 +672,145 @@ export default function MapViewer() {
   );
 }
 
-function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, postLabel, onClick }) {
+function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, postLabel, dashPost, isRu, onClick }) {
   const color = POST_STATUS_COLORS[status] || '#94a3b8';
-  const fillBg = isDark ? 'rgba(20,25,45,0.88)' : 'rgba(255,255,255,0.92)';
+  const fillBg = isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)';
   const w = el.width || 120, h = el.height || 80;
-  const headerH = 16;
+  const headerH = 18;
+  const pad = 5;
+  const isFree = status === 'free';
+  const isIdle = status === 'occupied_no_work';
+
+  const currentWO = dashPost?.timeline?.find(i => i.status === 'in_progress');
+  const currentVehicle = dashPost?.currentVehicle;
+  const workType = currentWO?.workType;
+  const workerName = currentWO?.worker;
+  const shortWorker = workerName ? (() => {
+    const parts = workerName.split(' ');
+    return parts.length >= 2 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+  })() : null;
+
+  // Scale font sizes relative to card size
+  const sf = Math.min(w / 130, h / 100, 1.2);
+  const fs = (base) => Math.max(7, Math.round(base * sf));
+
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} onClick={onClick} onTap={onClick}>
+      {/* Card background */}
       <Rect width={w} height={h} fill={fillBg}
-        stroke={color} strokeWidth={1.5} cornerRadius={4}
-        shadowBlur={4} shadowColor="rgba(0,0,0,0.2)" shadowOpacity={0.3} />
+        stroke={color}
+        strokeWidth={status === 'active_work' ? 2 : 1.5}
+        cornerRadius={6}
+        shadowBlur={status === 'active_work' ? 10 : 3}
+        shadowColor={color}
+        shadowOpacity={status === 'active_work' ? 0.4 : 0.15} />
+
       {/* Color header bar */}
       <Rect x={0} y={0} width={w} height={headerH} fill={color}
-        cornerRadius={[4, 4, 0, 0]} opacity={0.85} />
-      <Text x={5} y={2.5} text={postLabel} fontSize={9} fontStyle="bold" fill="#fff"
+        cornerRadius={[6, 6, 0, 0]} opacity={0.9} />
+      <Text x={pad} y={3} text={postLabel} fontSize={fs(10)} fontStyle="bold" fill="#fff"
         fontFamily="system-ui, sans-serif" />
-      <Text x={5} y={2.5} text={statusLabel} fontSize={7} fill="rgba(255,255,255,0.85)"
-        width={w - 10} align="right" fontFamily="system-ui, sans-serif" />
-      {/* Vehicle plate or empty */}
-      {plate ? (
-        <Text x={5} y={headerH + 5} text={plate} fontSize={8} fontFamily="monospace"
-          fontStyle="bold" fill={textFill} />
-      ) : (
-        <Text x={5} y={headerH + 5} text="----" fontSize={8} fill={mutedFill} fontFamily="monospace" />
-      )}
-      {/* Small status dot */}
-      <Circle x={w - 7} y={h - 7} radius={3} fill={color} opacity={0.7} />
+      <Text x={pad} y={3} text={statusLabel} fontSize={fs(8)} fill="rgba(255,255,255,0.9)"
+        width={w - pad * 2} align="right" fontFamily="system-ui, sans-serif" fontStyle="bold" />
+
+      {isFree ? (
+        /* Free post — centered dash */
+        <Text
+          x={pad} y={headerH}
+          width={w - pad * 2} height={h - headerH}
+          text="—"
+          fontSize={14}
+          fill={isDark ? '#334155' : '#cbd5e1'}
+          align="center" verticalAlign="middle"
+        />
+      ) : (<>
+        {/* Vehicle plate — prominent */}
+        {plate && (
+          <Group>
+            <Rect
+              x={pad} y={headerH + 4}
+              width={w - pad * 2} height={Math.max(15, fs(16))}
+              fill={isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)'}
+              cornerRadius={3}
+            />
+            <Text
+              x={pad} y={headerH + 4}
+              width={w - pad * 2} height={Math.max(15, fs(16))}
+              text={plate}
+              fontSize={fs(10)} fontStyle="bold" fontFamily="monospace"
+              fill={textFill}
+              align="center" verticalAlign="middle"
+            />
+          </Group>
+        )}
+
+        {/* Brand + Model */}
+        {currentVehicle && (
+          <Text
+            x={pad} y={headerH + 22 * sf}
+            width={w - pad * 2}
+            text={`${currentVehicle.brand} ${currentVehicle.model}`}
+            fontSize={fs(8)}
+            fill={mutedFill}
+            ellipsis={true}
+          />
+        )}
+
+        {/* Work type */}
+        {workType && (
+          <Text
+            x={pad} y={headerH + 32 * sf}
+            width={w - pad * 2}
+            text={workType}
+            fontSize={fs(8)} fontStyle="bold"
+            fill={isDark ? '#a5b4fc' : '#6366f1'}
+            ellipsis={true}
+          />
+        )}
+
+        {/* Worker name */}
+        {shortWorker && (
+          <Text
+            x={pad} y={headerH + 42 * sf}
+            width={w - pad * 2}
+            text={shortWorker}
+            fontSize={fs(8)}
+            fill={mutedFill}
+            ellipsis={true}
+          />
+        )}
+
+        {/* Time range */}
+        {currentWO && (
+          <Text
+            x={pad} y={headerH + 52 * sf}
+            width={w - pad * 2}
+            text={`${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`}
+            fontSize={fs(8)}
+            fill={mutedFill}
+          />
+        )}
+
+        {/* Idle indicator bar */}
+        {isIdle && (
+          <Group>
+            <Rect
+              x={pad} y={h - 16}
+              width={w - pad * 2} height={13}
+              fill={isDark ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.1)'}
+              cornerRadius={3}
+              stroke="rgba(234,179,8,0.3)" strokeWidth={1}
+            />
+            <Text
+              x={pad} y={h - 15}
+              width={w - pad * 2} height={11}
+              text={isRu ? 'Простой' : 'Idle'}
+              fontSize={fs(8)} fontStyle="bold" fill="#eab308"
+              align="center" verticalAlign="middle"
+            />
+          </Group>
+        )}
+      </>)}
     </Group>
   );
 }

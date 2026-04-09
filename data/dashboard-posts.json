@@ -12,8 +12,12 @@
       "name": "Пост 1",
       "type": "heavy",
       "zone": "Ремонтная зона (посты 1-4)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "active_work",
+      "currentVehicle": {
+        "plateNumber": "Т345ВК77",
+        "brand": "OPEL",
+        "model": "GRANDLAND X"
+      },
       "timeline": [
         {
           "id": "tl-1-КОЛ00036200",
@@ -23,7 +27,7 @@
           "brand": "OPEL",
           "model": "GRANDLAND X",
           "workType": "Диагностика двигателя",
-          "status": "scheduled",
+          "status": "in_progress",
           "startTime": "2026-04-09T08:11:00",
           "endTime": null,
           "normHours": 0.7,
@@ -116,8 +120,12 @@
       "name": "Пост 2",
       "type": "heavy",
       "zone": "Ремонтная зона (посты 1-4)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "active_work",
+      "currentVehicle": {
+        "plateNumber": "О456РС77",
+        "brand": "OPEL",
+        "model": "CROSSLAND"
+      },
       "timeline": [
         {
           "id": "tl-2-КОЛ00036203",
@@ -127,7 +135,7 @@
           "brand": "OPEL",
           "model": "CROSSLAND",
           "workType": "Балансировка колёс",
-          "status": "scheduled",
+          "status": "in_progress",
           "startTime": "2026-04-09T08:07:00",
           "endTime": null,
           "normHours": 0.9,
@@ -195,8 +203,12 @@
       "name": "Пост 3",
       "type": "heavy",
       "zone": "Ремонтная зона (посты 1-4)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "active_work",
+      "currentVehicle": {
+        "plateNumber": "Х901ОН97",
+        "brand": "PEUGEOT",
+        "model": "BOXER"
+      },
       "timeline": [
         {
           "id": "tl-3-КОЛ00036207",
@@ -206,7 +218,7 @@
           "brand": "PEUGEOT",
           "model": "BOXER",
           "workType": "ТО / ГРМ",
-          "status": "scheduled",
+          "status": "in_progress",
           "startTime": "2026-04-09T08:06:00",
           "endTime": null,
           "normHours": 4.1,
@@ -274,8 +286,12 @@
       "name": "Пост 4",
       "type": "heavy",
       "zone": "Ремонтная зона (посты 1-4)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "occupied_no_work",
+      "currentVehicle": {
+        "plateNumber": "Т678АР97",
+        "brand": "GEELY",
+        "model": "Farizon SuperVan"
+      },
       "timeline": [
         {
           "id": "tl-4-КОЛ00036211",
@@ -285,13 +301,13 @@
           "brand": "GEELY",
           "model": "Farizon SuperVan",
           "workType": "Компьютерная диагностика",
-          "status": "scheduled",
+          "status": "completed",
           "startTime": "2026-04-09T08:08:00",
-          "endTime": null,
+          "endTime": "2026-04-09T08:50:00",
           "normHours": 0.7,
           "master": "Эксузьян Андроник Андроникович",
           "worker": "Кондратенко Андрей Станиславович",
-          "actualHours": null,
+          "actualHours": 0.7,
           "estimatedEnd": "2026-04-09T08:50:00"
         },
         {
@@ -370,8 +386,12 @@
       "name": "Пост 5",
       "type": "light",
       "zone": "Ремонтная зона (посты 5-8)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "active_work",
+      "currentVehicle": {
+        "plateNumber": "В567ЕК99",
+        "brand": "AVIOR",
+        "model": "V90"
+      },
       "timeline": [
         {
           "id": "tl-5-КОЛ00036216",
@@ -381,7 +401,7 @@
           "brand": "AVIOR",
           "model": "V90",
           "workType": "ТО-2",
-          "status": "scheduled",
+          "status": "in_progress",
           "startTime": "2026-04-09T08:13:00",
           "endTime": null,
           "normHours": 4.5,
@@ -449,8 +469,12 @@
       "name": "Пост 6",
       "type": "light",
       "zone": "Ремонтная зона (посты 5-8)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "active_work",
+      "currentVehicle": {
+        "plateNumber": "О789ТК99",
+        "brand": "DONGFENG",
+        "model": "DFA103W"
+      },
       "timeline": [
         {
           "id": "tl-6-КОЛ00036220",
@@ -460,7 +484,7 @@
           "brand": "DONGFENG",
           "model": "DFA103W",
           "workType": "ТО-1",
-          "status": "scheduled",
+          "status": "in_progress",
           "startTime": "2026-04-09T08:12:00",
           "endTime": null,
           "normHours": 1.9,
@@ -607,8 +631,12 @@
       "name": "Пост 8",
       "type": "light",
       "zone": "Ремонтная зона (посты 5-8)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "active_work",
+      "currentVehicle": {
+        "plateNumber": "Р012ВС50",
+        "brand": "RENAULT",
+        "model": "DUSTER"
+      },
       "timeline": [
         {
           "id": "tl-8-КОЛ00036228",
@@ -618,7 +646,7 @@
           "brand": "RENAULT",
           "model": "DUSTER",
           "workType": "Замена стоек",
-          "status": "scheduled",
+          "status": "in_progress",
           "startTime": "2026-04-09T08:09:00",
           "endTime": null,
           "normHours": 2.4,
@@ -686,8 +714,12 @@
       "name": "Пост 9",
       "type": "special",
       "zone": "Диагностика (посты 9-10)",
-      "status": "free",
-      "currentVehicle": null,
+      "status": "occupied_no_work",
+      "currentVehicle": {
+        "plateNumber": "О456РС77",
+        "brand": "OPEL",
+        "model": "CROSSLAND"
+      },
       "timeline": [
         {
           "id": "tl-9-КОЛ00036232",
@@ -697,13 +729,13 @@
           "brand": "OPEL",
           "model": "CROSSLAND",
           "workType": "Кузовной ремонт",
-          "status": "scheduled",
+          "status": "completed",
           "startTime": "2026-04-09T08:08:00",
-          "endTime": null,
+          "endTime": "2026-04-09T12:44:00",
           "normHours": 4.6,
           "master": "Крылатов Максим Геннадьевич",
           "worker": "Бобров Александр Владимирович",
-          "actualHours": null,
+          "actualHours": 4.6,
           "estimatedEnd": "2026-04-09T12:44:00"
         },
         {
