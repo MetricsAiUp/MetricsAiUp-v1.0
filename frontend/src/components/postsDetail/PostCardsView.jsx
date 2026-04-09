@@ -104,7 +104,7 @@ export default function PostCardsView({ posts, navigate }) {
             </div>
 
             {/* WO count + workers + works */}
-            <div className="flex items-start gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex items-start gap-4 text-xs overflow-hidden" style={{ color: 'var(--text-secondary)' }}>
               <div className="relative group">
                 <div className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{d.workOrders?.length || 0}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '9px' }}>{isRu ? 'ЗН' : 'WO'}</div>
@@ -113,7 +113,7 @@ export default function PostCardsView({ posts, navigate }) {
                   {isRu ? 'Заказ-наряды на посту' : 'Work orders on post'}
                 </div>
               </div>
-              <div className="flex-1 relative group">
+              <div className="flex-1 min-w-0 relative group">
                 <div style={{ color: 'var(--text-muted)', fontSize: '9px', marginBottom: 2 }}>{isRu ? 'Исполнители' : 'Workers'}</div>
                 {topWorkers.map((w, i) => <div key={i} className="truncate">{w.name}</div>)}
                 {!topWorkers.length && <span style={{ color: 'var(--text-muted)' }}>—</span>}
@@ -122,7 +122,7 @@ export default function PostCardsView({ posts, navigate }) {
                   {isRu ? 'ТОП-3 исполнителей на посту' : 'Top 3 workers on post'}
                 </div>
               </div>
-              <div className="flex-1 relative group">
+              <div className="flex-1 min-w-0 relative group">
                 <div style={{ color: 'var(--text-muted)', fontSize: '9px', marginBottom: 2 }}>{isRu ? 'Работы' : 'Works'}</div>
                 {topWorks.map((w, i) => <div key={i} className="truncate">{w.group}</div>)}
                 {!topWorks.length && <span style={{ color: 'var(--text-muted)' }}>—</span>}
