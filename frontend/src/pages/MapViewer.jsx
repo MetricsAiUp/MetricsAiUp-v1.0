@@ -507,7 +507,7 @@ export default function MapViewer() {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="overflow-hidden relative w-full rounded-xl" style={{ border: '2px solid var(--accent)' }}>
+      <div ref={containerRef} className="overflow-hidden relative w-full rounded-xl">
         <Stage
           ref={stageRef}
           width={stageSize.width}
@@ -830,7 +830,8 @@ function ZoneEl({ el, isDark, zonesData }) {
 }
 
 function CameraEl({ el, isDark, onClick, online }) {
-  const fill = online === true ? '#10b981' : online === false ? '#94a3b8' : '#ef4444';
+  const dotColor = online === true ? '#10b981' : online === false ? '#94a3b8' : '#ef4444';
+  const labelColor = isDark ? '#e2e8f0' : '#1e293b';
   const groupOpacity = online === false ? 0.5 : 1;
   const w = el.width || 24, h = el.height || 24;
   const cx = w / 2, cy = h / 2;
@@ -843,20 +844,24 @@ function CameraEl({ el, isDark, onClick, online }) {
   const ry = cy + Math.sin(dir + fov / 2) * range;
   const mx = cx + Math.cos(dir) * range;
   const my = cy + Math.sin(dir) * range;
+  const rot = el.rotation || 0;
   return (
-    <Group x={el.x} y={el.y} rotation={el.rotation || 0}
+    <Group x={el.x} y={el.y} rotation={rot}
       onClick={onClick} onTap={onClick} opacity={groupOpacity}>
       {/* Light FOV cone */}
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
-        fill={fill} opacity={isDark ? 0.08 : 0.06}
-        stroke={fill} strokeWidth={0.5} opacity={0.15} dash={[4, 3]} />
-      {/* Small camera dot */}
-      <Circle x={cx} y={cy} radius={5} fill={fill} opacity={0.85} />
+        fill={dotColor} opacity={isDark ? 0.08 : 0.06}
+        stroke={dotColor} strokeWidth={0.5} dash={[4, 3]} />
+      {/* Invisible hit area for easier clicking */}
+      <Circle x={cx} y={cy} radius={18} fill="transparent" />
+      {/* Camera dot */}
+      <Circle x={cx} y={cy} radius={5} fill={dotColor} opacity={0.85} />
       <Circle x={cx} y={cy} radius={1.5} fill="#fff" />
-      {/* Label */}
-      <Text x={cx + 7} y={cy - 4} text={el.name || ''} fontSize={7}
-        fill={fill} fontStyle="bold" fontFamily="system-ui, sans-serif"
-        rotation={-(el.rotation || 0)} opacity={0.8} />
+      {/* Label — counter-rotated so text is always horizontal */}
+      <Group x={cx} y={cy} rotation={-rot}>
+        <Text x={8} y={-5} text={el.name || ''} fontSize={8}
+          fill={labelColor} fontStyle="bold" fontFamily="system-ui, sans-serif" />
+      </Group>
     </Group>
   );
 }
