@@ -4,42 +4,28 @@ import { useTheme } from '../contexts/ThemeContext';
 import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
-// Все зоны СТО
 const DEFAULT_ZONES = [
   { id: 'entry', name: { ru: 'Въезд', en: 'Entry' }, type: 'entry' },
   { id: 'exit', name: { ru: 'Выезд', en: 'Exit' }, type: 'exit' },
   { id: 'post-1', name: { ru: 'Пост 1', en: 'Post 1' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
   { id: 'post-2', name: { ru: 'Пост 2', en: 'Post 2' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
   { id: 'post-3', name: { ru: 'Пост 3', en: 'Post 3' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-4', name: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift', desc: { ru: '2-х ст. >2.5т (грузовой)', en: '2-post >2.5t (heavy)' } },
+  { id: 'post-4', name: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift', desc: { ru: '2-х ст. >2.5т', en: '2-post >2.5t' } },
   { id: 'post-5', name: { ru: 'Пост 5', en: 'Post 5' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
   { id: 'post-6', name: { ru: 'Пост 6', en: 'Post 6' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
   { id: 'post-7', name: { ru: 'Пост 7', en: 'Post 7' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
   { id: 'post-8', name: { ru: 'Пост 8', en: 'Post 8' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
   { id: 'post-9', name: { ru: 'Пост 9', en: 'Post 9' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' } },
   { id: 'post-10', name: { ru: 'Пост 10', en: 'Post 10' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' } },
-  { id: 'parking', name: { ru: 'Парковка / Ожидание', en: 'Parking / Waiting' }, type: 'parking' },
+  { id: 'parking', name: { ru: 'Парковка', en: 'Parking' }, type: 'parking' },
 ];
 
 const zn = (zone, isRu) => typeof zone.name === 'string' ? zone.name : zone.name[isRu ? 'ru' : 'en'];
 const zd = (zone, isRu) => zone.desc ? zone.desc[isRu ? 'ru' : 'en'] : '';
 
-const DEFAULT_CAMERAS = [
-  { id: 'cam-01', num: '01' },
-  { id: 'cam-02', num: '02' },
-  { id: 'cam-03', num: '03' },
-  { id: 'cam-04', num: '04' },
-  { id: 'cam-05', num: '05' },
-  { id: 'cam-06', num: '06' },
-  { id: 'cam-07', num: '07' },
-  { id: 'cam-08', num: '08' },
-  { id: 'cam-09', num: '09' },
-  { id: 'cam-10', num: '10' },
-];
-
+const DEFAULT_CAMERAS = Array.from({ length: 10 }, (_, i) => ({ id: `cam-${String(i+1).padStart(2,'0')}`, num: String(i+1).padStart(2,'0') }));
 const camLabel = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
 
-// Начальная привязка камер к зонам { zoneId: { camId: priority } }
 const DEFAULT_MAPPING = {
   'entry':   { 'cam-09': 10 },
   'exit':    { 'cam-09': 10 },
@@ -56,47 +42,34 @@ const DEFAULT_MAPPING = {
   'parking': { 'cam-09': 5, 'cam-01': 3 },
 };
 
-const TYPE_COLORS = {
-  entry: '#10b981', exit: '#ef4444', lift: '#6366f1',
-  diag: '#a855f7', parking: '#f59e0b',
-};
+const TYPE_COLORS = { entry: '#10b981', exit: '#ef4444', lift: '#6366f1', diag: '#a855f7', parking: '#f59e0b' };
+const TYPE_ICONS_MAP = { entry: DoorOpen, exit: DoorOpen, lift: Wrench, diag: Search, parking: ParkingCircle };
 
-const TYPE_ICONS_MAP = {
-  entry: DoorOpen, exit: DoorOpen, lift: Wrench,
-  diag: Search, parking: ParkingCircle,
-};
-
-function ZoneIcon({ type, size = 14 }) {
+function ZoneIcon({ type, size = 12 }) {
   const Icon = TYPE_ICONS_MAP[type] || Wrench;
-  const color = TYPE_COLORS[type] || '#94a3b8';
-  return <Icon size={size} style={{ color, flexShrink: 0 }} />;
+  return <Icon size={size} style={{ color: TYPE_COLORS[type] || '#94a3b8', flexShrink: 0 }} />;
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 10, label: 'Основная (P10)' },
-  { value: 8, label: 'Высокий (P8)' },
-  { value: 5, label: 'Средний (P5)' },
-  { value: 3, label: 'Низкий (P3)' },
-  { value: 1, label: 'Минимальный (P1)' },
+  { value: 10, label: 'P10' },
+  { value: 8, label: 'P8' },
+  { value: 5, label: 'P5' },
+  { value: 3, label: 'P3' },
+  { value: 1, label: 'P1' },
 ];
 
 export default function CameraMapping() {
   const { i18n } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const lang = i18n.language;
-  const isRu = lang === 'ru';
+  const isRu = i18n.language === 'ru';
 
-  // State: mapping data (persisted in localStorage for now)
   const [mapping, setMapping] = useState(() => {
     try {
       const saved = localStorage.getItem('cameraMappingData');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Validate: check if keys match DEFAULT_MAPPING structure
-        if (parsed && typeof parsed === 'object' && Object.keys(parsed).some(k => k in DEFAULT_MAPPING)) {
-          return parsed;
-        }
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).some(k => k in DEFAULT_MAPPING)) return parsed;
       }
     } catch {}
     return JSON.parse(JSON.stringify(DEFAULT_MAPPING));
@@ -104,27 +77,13 @@ export default function CameraMapping() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const saveMapping = () => {
-    localStorage.setItem('cameraMappingData', JSON.stringify(mapping));
-    setHasChanges(false);
-  };
-
-  const resetMapping = () => {
-    localStorage.removeItem('cameraMappingData');
-    const fresh = JSON.parse(JSON.stringify(DEFAULT_MAPPING));
-    setMapping(fresh);
-    setSelectedZone(null);
-    setHasChanges(false);
-  };
+  const saveMapping = () => { localStorage.setItem('cameraMappingData', JSON.stringify(mapping)); setHasChanges(false); };
+  const resetMapping = () => { localStorage.removeItem('cameraMappingData'); setMapping(JSON.parse(JSON.stringify(DEFAULT_MAPPING))); setSelectedZone(null); setHasChanges(false); };
 
   const toggleCamera = (zoneId, camId) => {
     setMapping(prev => {
       const zone = { ...(prev[zoneId] || {}) };
-      if (zone[camId]) {
-        delete zone[camId];
-      } else {
-        zone[camId] = 5; // default priority
-      }
+      if (zone[camId]) delete zone[camId]; else zone[camId] = 5;
       setHasChanges(true);
       return { ...prev, [zoneId]: zone };
     });
@@ -143,165 +102,94 @@ export default function CameraMapping() {
   const getCameraZones = (camId) => {
     const zones = [];
     for (const [zoneId, cams] of Object.entries(mapping)) {
-      if (cams[camId]) {
-        const zone = DEFAULT_ZONES.find(z => z.id === zoneId);
-        zones.push({ zone, priority: cams[camId] });
-      }
+      if (cams[camId]) { const zone = DEFAULT_ZONES.find(z => z.id === zoneId); zones.push({ zone, priority: cams[camId] }); }
     }
     return zones;
   };
 
-  // Stats
   const totalLinks = Object.values(mapping).reduce((s, z) => s + Object.keys(z).length, 0);
   const unmappedZones = DEFAULT_ZONES.filter(z => !mapping[z.id] || Object.keys(mapping[z.id]).length === 0);
-  const unmappedCameras = DEFAULT_CAMERAS.filter(c => getCameraZones(c.id).length === 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              {lang === 'ru' ? 'Разметка камер' : 'Camera Mapping'}
-            </h2>
-            <HelpButton pageKey="cameraMapping" />
-          </div>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            {lang === 'ru'
-              ? 'Привязка камер к зонам СТО с настройкой приоритетов'
-              : 'Link cameras to STO zones with priority settings'}
-          </p>
+        <div className="flex items-center gap-2">
+          <Camera size={18} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+            {isRu ? 'Разметка камер' : 'Camera Mapping'}
+          </h2>
+          <HelpButton pageKey="cameraMapping" />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {hasChanges && (
-            <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
-              {lang === 'ru' ? 'Есть изменения' : 'Unsaved changes'}
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
+              {isRu ? 'Изменения' : 'Changed'}
             </span>
           )}
-          <button
-            onClick={resetMapping}
-            className="px-3 py-1.5 rounded-xl text-xs transition-all hover:opacity-80"
-            style={{ color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}
-          >
-            {lang === 'ru' ? 'Сбросить' : 'Reset'}
+          <button onClick={resetMapping} className="px-2 py-1 rounded-lg text-xs hover:opacity-80"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}>
+            {isRu ? 'Сброс' : 'Reset'}
           </button>
-          <button
-            onClick={saveMapping}
-            className="px-4 py-1.5 rounded-xl text-xs font-medium text-white transition-all hover:opacity-90"
-            style={{ background: hasChanges ? 'var(--accent)' : 'var(--text-muted)' }}
-          >
-            {lang === 'ru' ? 'Сохранить' : 'Save'}
+          <button onClick={saveMapping} className="px-2.5 py-1 rounded-lg text-xs font-medium text-white hover:opacity-90"
+            style={{ background: hasChanges ? 'var(--accent)' : 'var(--text-muted)' }}>
+            {isRu ? 'Сохранить' : 'Save'}
           </button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass p-4">
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{lang === 'ru' ? 'Зон' : 'Zones'}</p>
-          <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{DEFAULT_ZONES.length}</p>
-        </div>
-        <div className="glass p-4">
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{lang === 'ru' ? 'Камер' : 'Cameras'}</p>
-          <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{DEFAULT_CAMERAS.length}</p>
-        </div>
-        <div className="glass p-4">
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{lang === 'ru' ? 'Привязок' : 'Links'}</p>
-          <p className="text-2xl font-bold" style={{ color: 'var(--success)' }}>{totalLinks}</p>
-        </div>
-        <div className="glass p-4">
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{lang === 'ru' ? 'Без камер' : 'Unmapped'}</p>
-          <p className="text-2xl font-bold" style={{ color: unmappedZones.length > 0 ? 'var(--danger)' : 'var(--success)' }}>
-            {unmappedZones.length}
-          </p>
-        </div>
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-2">
+        <StatPill label={isRu ? 'Зон' : 'Zones'} value={DEFAULT_ZONES.length} color="var(--accent)" />
+        <StatPill label={isRu ? 'Камер' : 'Cameras'} value={DEFAULT_CAMERAS.length} color="var(--accent)" />
+        <StatPill label={isRu ? 'Привязок' : 'Links'} value={totalLinks} color="var(--success)" />
+        <StatPill label={isRu ? 'Без камер' : 'No cam'} value={unmappedZones.length} color={unmappedZones.length > 0 ? 'var(--danger)' : 'var(--success)'} />
       </div>
 
-      {/* Warnings */}
-      {(unmappedZones.length > 0 || unmappedCameras.length > 0) && (
-        <div className="glass-static p-4 space-y-2" style={{ borderLeft: '3px solid var(--warning)' }}>
-          {unmappedZones.length > 0 && (
-            <p className="text-sm" style={{ color: 'var(--warning)' }}>
-              ⚠️ {lang === 'ru' ? 'Зоны без камер:' : 'Zones without cameras:'} {unmappedZones.map(z => zn(z, isRu)).join(', ')}
-            </p>
-          )}
-          {unmappedCameras.length > 0 && (
-            <p className="text-sm" style={{ color: 'var(--warning)' }}>
-              ⚠️ {lang === 'ru' ? 'Камеры без привязки:' : 'Unlinked cameras:'} {unmappedCameras.map(c => camLabel(c.num, lang === 'ru')).join(', ')}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Main grid: Zones on left, Editor on right */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main: zones + editor */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Zones list */}
-        <div className="lg:col-span-1 space-y-2">
-          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-            {lang === 'ru' ? 'Зоны СТО' : 'STO Zones'}
-          </h3>
-          {DEFAULT_ZONES.map(zone => {
-            const color = TYPE_COLORS[zone.type] || '#94a3b8';
-            const cams = getZoneCameras(zone.id);
-            const camCount = Object.keys(cams).length;
-            const isSelected = selectedZone?.id === zone.id;
-
-            return (
-              <button
-                key={zone.id}
-                onClick={() => setSelectedZone(zone)}
-                className="w-full text-left p-3 rounded-xl transition-all"
-                style={{
-                  background: isSelected ? color + '15' : 'var(--bg-glass)',
-                  border: `1px solid ${isSelected ? color : 'var(--border-glass)'}`,
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+        <div className="lg:col-span-1">
+          <div className="glass rounded-xl overflow-hidden">
+            {DEFAULT_ZONES.map((zone, i) => {
+              const color = TYPE_COLORS[zone.type] || '#94a3b8';
+              const camCount = Object.keys(getZoneCameras(zone.id)).length;
+              const isSelected = selectedZone?.id === zone.id;
+              return (
+                <button key={zone.id} onClick={() => setSelectedZone(zone)}
+                  className="w-full text-left px-3 py-2 flex items-center justify-between transition-all hover:opacity-80"
+                  style={{
+                    background: isSelected ? color + '12' : 'transparent',
+                    borderBottom: i < DEFAULT_ZONES.length - 1 ? '1px solid var(--border-glass)' : 'none',
+                    borderLeft: isSelected ? `3px solid ${color}` : '3px solid transparent',
+                  }}>
+                  <div className="flex items-center gap-2 min-w-0">
                     <ZoneIcon type={zone.type} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {zn(zone, isRu)}
-                    </span>
+                    <span className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>{zn(zone, isRu)}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: camCount > 0 ? color : 'var(--danger)' }}>
-                      {camCount}
-                    </span>
-                  </div>
-                </div>
-                {zone.desc && (
-                  <p className="text-xs mt-1 ml-6" style={{ color: 'var(--text-muted)' }}>{zd(zone, isRu)}</p>
-                )}
-              </button>
-            );
-          })}
+                  <span className="text-[11px] font-bold flex-shrink-0 ml-2"
+                    style={{ color: camCount > 0 ? color : 'var(--danger)' }}>
+                    {camCount}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Editor */}
         <div className="lg:col-span-2">
           {selectedZone ? (
-            <div className="glass-static p-5 space-y-4">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xl">{selectedZone.icon}</span>
-                <div>
-                  <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {zn(selectedZone, isRu)}
-                  </h3>
-                  {selectedZone.desc && (
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{zd(selectedZone, isRu)}</p>
-                  )}
-                </div>
+            <div className="glass rounded-xl p-3 space-y-2">
+              <div className="flex items-center gap-2 pb-2" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                <ZoneIcon type={selectedZone.type} size={16} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{zn(selectedZone, isRu)}</span>
+                {selectedZone.desc && (
+                  <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>({zd(selectedZone, isRu)})</span>
+                )}
               </div>
 
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {lang === 'ru'
-                  ? 'Выберите камеры, которые видят эту зону, и настройте приоритет:'
-                  : 'Select cameras that cover this zone and set priority:'}
-              </p>
-
-              {/* Camera toggle grid */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {DEFAULT_CAMERAS.map(cam => {
                   const zoneCams = getZoneCameras(selectedZone.id);
                   const isLinked = !!zoneCams[cam.id];
@@ -310,104 +198,67 @@ export default function CameraMapping() {
                   const camZones = getCameraZones(cam.id).filter(z => z.zone.id !== selectedZone.id);
 
                   return (
-                    <div
-                      key={cam.id}
-                      className="p-3 rounded-xl transition-all"
+                    <div key={cam.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
                       style={{
-                        background: isLinked
-                          ? (isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.8)')
-                          : (isDark ? 'rgba(15,23,42,0.4)' : 'rgba(240,244,248,0.5)'),
-                        border: `1px solid ${isLinked ? color + '40' : 'var(--border-glass)'}`,
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {/* Toggle */}
-                          <button
-                            onClick={() => toggleCamera(selectedZone.id, cam.id)}
-                            className="w-10 h-6 rounded-full transition-all relative"
-                            style={{
-                              background: isLinked ? color : (isDark ? '#334155' : '#cbd5e1'),
-                            }}
-                          >
-                            <span
-                              className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
-                              style={{ left: isLinked ? '18px' : '2px' }}
-                            />
-                          </button>
+                        background: isLinked ? color + '08' : 'transparent',
+                        border: `1px solid ${isLinked ? color + '30' : 'var(--border-glass)'}`,
+                      }}>
+                      {/* Toggle */}
+                      <button onClick={() => toggleCamera(selectedZone.id, cam.id)}
+                        className="w-8 h-4 rounded-full transition-all relative flex-shrink-0"
+                        style={{ background: isLinked ? color : (isDark ? '#334155' : '#cbd5e1') }}>
+                        <span className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all"
+                          style={{ left: isLinked ? '17px' : '2px' }} />
+                      </button>
 
-                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            <Camera size={12} style={{ flexShrink: 0 }} /> {camLabel(cam.num, lang === 'ru')}
+                      <Camera size={11} style={{ color: isLinked ? color : 'var(--text-muted)', flexShrink: 0 }} />
+                      <span className="text-xs font-medium" style={{ color: isLinked ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                        {camLabel(cam.num, isRu)}
+                      </span>
+
+                      {/* Other zones */}
+                      <div className="flex gap-1 flex-1 min-w-0">
+                        {camZones.slice(0, 3).map(({ zone: z }) => (
+                          <span key={z.id} className="text-[10px] px-1 py-px rounded truncate"
+                            style={{ background: 'var(--bg-glass)', color: 'var(--text-muted)', maxWidth: 80 }}>
+                            {zn(z, isRu)}
                           </span>
-
-                          {/* Other zones this camera covers */}
-                          {camZones.length > 0 && (
-                            <div className="flex gap-1 ml-2">
-                              {camZones.map(({ zone: z }) => (
-                                <span
-                                  key={z.id}
-                                  className="text-xs px-1.5 py-0.5 rounded"
-                                  style={{
-                                    background: isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.05)',
-                                    color: 'var(--text-muted)',
-                                  }}
-                                >
-                                  {zn(z, isRu)}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Priority selector */}
-                        {isLinked && (
-                          <select
-                            value={priority}
-                            onChange={e => setPriority(selectedZone.id, cam.id, parseInt(e.target.value))}
-                            className="text-xs px-2 py-1 rounded-lg outline-none cursor-pointer"
-                            style={{
-                              background: isDark ? '#1e293b' : '#f1f5f9',
-                              color: 'var(--text-primary)',
-                              border: '1px solid var(--border-glass)',
-                            }}
-                          >
-                            {PRIORITY_OPTIONS.map(o => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
-                        )}
+                        ))}
                       </div>
+
+                      {/* Priority */}
+                      {isLinked && (
+                        <select value={priority} onChange={e => setPriority(selectedZone.id, cam.id, parseInt(e.target.value))}
+                          className="text-[11px] px-1.5 py-0.5 rounded outline-none cursor-pointer flex-shrink-0"
+                          style={{ background: isDark ? '#1e293b' : '#f1f5f9', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
+                          {PRIORITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      )}
                     </div>
                   );
                 })}
               </div>
             </div>
           ) : (
-            <div className="glass-static p-12 text-center">
-              <ArrowLeft size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                {lang === 'ru'
-                  ? 'Выберите зону слева для настройки привязки камер'
-                  : 'Select a zone on the left to configure camera mapping'}
+            <div className="glass rounded-xl p-8 text-center">
+              <ArrowLeft size={24} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {isRu ? 'Выберите зону слева' : 'Select a zone on the left'}
               </p>
             </div>
           )}
 
-          {/* Matrix view */}
-          <div className="glass-static p-5 mt-6 overflow-x-auto">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-              {lang === 'ru' ? 'Матрица покрытия' : 'Coverage Matrix'}
+          {/* Matrix */}
+          <div className="glass rounded-xl p-3 mt-3 overflow-x-auto">
+            <h3 className="text-xs font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+              {isRu ? 'Матрица покрытия' : 'Coverage Matrix'}
             </h3>
-            <table className="w-full text-xs">
+            <table className="w-full text-[11px]">
               <thead>
                 <tr>
-                  <th className="text-left px-2 py-1.5" style={{ color: 'var(--text-muted)' }}>
-                    {lang === 'ru' ? 'Зона / Камера' : 'Zone / Camera'}
-                  </th>
+                  <th className="text-left px-1.5 py-1" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Зона' : 'Zone'}</th>
                   {DEFAULT_CAMERAS.map(c => (
-                    <th key={c.id} className="px-2 py-1.5 text-center" style={{ color: 'var(--text-muted)' }}>
-                      {camLabel(c.num, lang === 'ru')}
-                    </th>
+                    <th key={c.id} className="px-1 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{c.num}</th>
                   ))}
                 </tr>
               </thead>
@@ -416,31 +267,25 @@ export default function CameraMapping() {
                   const cams = getZoneCameras(zone.id);
                   const color = TYPE_COLORS[zone.type] || '#94a3b8';
                   return (
-                    <tr
-                      key={zone.id}
-                      style={{ borderTop: '1px solid var(--border-glass)' }}
-                      className="cursor-pointer hover:opacity-80"
-                      onClick={() => setSelectedZone(zone)}
-                    >
-                      <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
-                        <ZoneIcon type={zone.type} size={12} /> {zn(zone, isRu)}
+                    <tr key={zone.id} style={{ borderTop: '1px solid var(--border-glass)' }}
+                      className="cursor-pointer hover:opacity-80" onClick={() => setSelectedZone(zone)}>
+                      <td className="px-1.5 py-1 whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
+                        <div className="flex items-center gap-1">
+                          <ZoneIcon type={zone.type} size={10} />
+                          {zn(zone, isRu)}
+                        </div>
                       </td>
                       {DEFAULT_CAMERAS.map(cam => {
                         const prio = cams[cam.id];
                         return (
-                          <td key={cam.id} className="px-2 py-1.5 text-center">
+                          <td key={cam.id} className="px-1 py-1 text-center">
                             {prio ? (
-                              <span
-                                className="inline-block w-7 h-7 leading-7 rounded-lg text-white font-bold"
-                                style={{
-                                  background: color,
-                                  opacity: prio >= 8 ? 1 : prio >= 5 ? 0.6 : 0.3,
-                                }}
-                              >
+                              <span className="inline-block w-5 h-5 leading-5 rounded text-white text-[10px] font-bold"
+                                style={{ background: color, opacity: prio >= 8 ? 1 : prio >= 5 ? 0.6 : 0.35 }}>
                                 {prio}
                               </span>
                             ) : (
-                              <span style={{ color: 'var(--border-glass)' }}>—</span>
+                              <span style={{ color: 'var(--border-glass)' }}>-</span>
                             )}
                           </td>
                         );
@@ -453,6 +298,15 @@ export default function CameraMapping() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatPill({ label, value, color }) {
+  return (
+    <div className="glass px-3 py-1.5 flex items-center gap-2">
+      <span className="text-sm font-bold" style={{ color }}>{value}</span>
+      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
     </div>
   );
 }
