@@ -9,12 +9,7 @@ import {
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
-const BASE = import.meta.env.BASE_URL || './';
-const fetchApi = async (path) => {
-  const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-};
+// fetchApi removed — data loaded via api.get() from AuthContext
 
 const ROLE_ICONS = { mechanic: Wrench, master: Star, diagnostician: Stethoscope };
 
@@ -497,8 +492,8 @@ export default function Shifts() {
   // Load shifts data
   useEffect(() => {
     setLoading(true);
-    fetchApi('shifts')
-      .then(data => setAllShifts(data.shifts || []))
+    api.get('/api/shifts')
+      .then(res => setAllShifts((res.data || res).shifts || []))
       .catch(() => setAllShifts([]))
       .finally(() => setLoading(false));
   }, []);

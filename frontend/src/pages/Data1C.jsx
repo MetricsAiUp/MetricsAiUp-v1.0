@@ -491,9 +491,7 @@ function SyncTab({ lang, api }) {
 
       let result;
       try {
-        // Try API endpoint
-        const res = await fetch('data/1c-sync-log.json');
-        // Actually try the real API
+        // Import via backend API
         const apiRes = await api.post('/api/1c/import', {
           filename: file.name,
           data: base64,

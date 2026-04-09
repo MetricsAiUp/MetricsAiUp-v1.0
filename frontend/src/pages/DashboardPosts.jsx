@@ -16,12 +16,7 @@ import HelpButton from '../components/HelpButton';
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 
-const SHIFTS_BASE = import.meta.env.BASE_URL || './';
-const fetchShifts = async () => {
-  const res = await fetch(`${SHIFTS_BASE}data/shifts.json?t=${Date.now()}`);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-};
+// fetchShifts will be set after component mounts using api from AuthContext
 
 // Main component
 export default function DashboardPosts() {
@@ -56,13 +51,14 @@ export default function DashboardPosts() {
 
   // Load current shift
   useEffect(() => {
-    fetchShifts()
-      .then(d => {
+    api.get('/api/shifts')
+      .then(res => {
+        const d = res.data || res;
         const today = new Date().toISOString().split('T')[0];
-        const active = (d.shifts || []).find(s => s.date === today && s.status === 'active');
+        const active = (d.shifts || []).find(s => (s.date || '').slice(0, 10) === today && s.status === 'active');
         if (active) setCurrentShift(active);
         else {
-          const todayShift = (d.shifts || []).find(s => s.date === today);
+          const todayShift = (d.shifts || []).find(s => (s.date || '').slice(0, 10) === today);
           if (todayShift) setCurrentShift(todayShift);
         }
       })

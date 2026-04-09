@@ -35,9 +35,9 @@ export default function MyPost() {
         }
       } catch { /* fallback to mock data */ }
 
-      const res = await fetch(`${BASE}data/dashboard-posts.json?t=${Date.now()}`);
-      if (res.ok) {
-        const d = await res.json();
+      const dpRes = await api.get('/api/dashboard-posts');
+      if (dpRes?.data) {
+        const d = dpRes.data;
         setData(d);
         const posts = d?.posts || [];
         const found = posts.find(p => {

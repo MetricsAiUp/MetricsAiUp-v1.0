@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 /**
- * Demo Data Generator for MetricsAiUp
+ * Demo Data Generator for MetricsAiUp — Prisma/DB version
  *
- * Generates realistic, time-relative demo data based on real 1C Alfa-Auto data.
- * Run: node backend/src/generateDemoData.js
- * Auto-refresh: called from backend on interval
+ * Generates realistic, time-relative demo data and writes to SQLite via Prisma.
+ * All data comes from DB → backend API → frontend. No JSON mocks.
  */
 
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
-
-const DATA_DIR = path.join(__dirname, '../../data');
+const prisma = require('./config/database');
 
 // ─── Deterministic UUID from seed ───
 function uuid(seed) {
@@ -95,7 +91,7 @@ const WORK_TYPES = [
   { type: 'Балансировка колёс', normMin: 0.5, normMax: 1 },
 ];
 
-// ─── Zone/Post definitions (matching existing IDs) ───
+// ─── Zone/Post definitions ───
 const ZONES = [
   { id: uuid('zone-repair-1-4'), name: 'Ремонтная зона (посты 1-4)', type: 'repair', desc: 'Нижний ряд, 2-х стоечные подъёмники', posts: [1,2,3,4] },
   { id: uuid('zone-repair-5-8'), name: 'Ремонтная зона (посты 5-8)', type: 'repair', desc: 'Верхний ряд, 2-х стоечные подъёмники', posts: [5,6,7,8] },
@@ -110,7 +106,7 @@ for (let i = 1; i <= 10; i++) {
   POSTS.push({
     id: uuid(`post-${i}`),
     number: i,
-    name: `Пост ${i}`,
+    name: `Пост ${String(i).padStart(2, '0')}`,
     type: i <= 4 ? 'heavy' : (i <= 8 ? 'light' : 'special'),
     zoneId: zone?.id,
     zoneName: zone?.name,
@@ -131,65 +127,43 @@ function seededRandom() {
   return (_seed - 1) / 2147483646;
 }
 function pick(arr) { return arr[Math.floor(seededRandom() * arr.length)]; }
-function pickN(arr, n) {
-  const shuffled = [...arr].sort(() => seededRandom() - 0.5);
-  return shuffled.slice(0, n);
-}
 function randBetween(min, max) { return min + seededRandom() * (max - min); }
 function roundTo(n, d = 1) { return Math.round(n * (10 ** d)) / (10 ** d); }
 
-// ─── Time helpers ───
-// Use local-style ISO strings (no Z suffix) so browser interprets them in user's timezone.
-// The shift bounds in DashboardPosts use `new Date("YYYY-MM-DDT08:00:00")` (local),
-// so our block times must also be local (no Z).
+// ─── Time helpers (Moscow time) ───
 const MOSCOW_OFFSET_MS = 3 * 60 * 60000;
 const _now = new Date();
-// Calculate "Moscow now" for status determination (completed/in_progress/scheduled)
 const NOW = new Date(_now.getTime() + (MOSCOW_OFFSET_MS + _now.getTimezoneOffset() * 60000));
 const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
 const SHIFT_START_H = 8;
 const SHIFT_END_H = 20;
 const shiftStart = new Date(TODAY); shiftStart.setHours(SHIFT_START_H, 0, 0, 0);
 const shiftEnd = new Date(TODAY); shiftEnd.setHours(SHIFT_END_H, 0, 0, 0);
-const currentMinuteOfShift = Math.max(0, (NOW - shiftStart) / 60000);
 const totalShiftMinutes = (SHIFT_END_H - SHIFT_START_H) * 60;
 
-// Output as local ISO string WITHOUT Z suffix so browser treats it as local time
-function timeStr(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const hh = String(date.getHours()).padStart(2, '0');
-  const mm = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-  return `${y}-${m}-${d}T${hh}:${mm}:${ss}`;
-}
 function addMin(date, min) { return new Date(date.getTime() + min * 60000); }
 function addHours(date, h) { return addMin(date, h * 60); }
 
 // ═════════════════════════════════════════════
-// GENERATE MAIN DATA
+// MAIN GENERATE FUNCTION (async — writes to DB)
 // ═════════════════════════════════════════════
 
-function generate() {
-  _seed = Math.floor(TODAY.getTime() / 86400000); // same seed per day, different each day
+async function generate() {
+  _seed = Math.floor(TODAY.getTime() / 86400000);
 
   // ─── 1. Generate work orders for today's shift ───
   const usedCars = new Set();
   const allWorkOrders = [];
-  const postTimelines = {}; // postNumber -> [{wo}]
+  const postTimelines = {};
 
   for (let pn = 1; pn <= 10; pn++) {
     postTimelines[pn] = [];
     let cursor = new Date(shiftStart);
-    // Each post gets 3-5 WOs per day
     const woCount = Math.floor(randBetween(3, 6));
 
     for (let w = 0; w < woCount; w++) {
-      // Stop if we'd exceed the shift
       if (cursor >= shiftEnd) break;
 
-      // Pick a car not already used today
       let car;
       for (let attempt = 0; attempt < 50; attempt++) {
         car = pick(CARS);
@@ -201,31 +175,23 @@ function generate() {
       const normHours = roundTo(randBetween(wt.normMin, wt.normMax), 1);
       const gapMin = Math.floor(randBetween(5, 20));
       const start = addMin(cursor, gapMin);
-      // Don't start past shift end
       if (start >= shiftEnd) break;
-      // Cap planned end to shift end
       let plannedEnd = addHours(start, normHours);
       if (plannedEnd > shiftEnd) plannedEnd = new Date(shiftEnd);
       cursor = plannedEnd;
 
-      // Determine status based on current time
       let status, actualEnd, actualHours;
       if (plannedEnd < NOW && start < NOW) {
-        // Completed — finished in the past
-        // Keep actual within planned bounds to avoid overlaps with next WO
         const deviation = randBetween(-0.3, 0.15);
         actualHours = roundTo(Math.max(0.3, normHours + deviation), 1);
         actualEnd = addHours(start, actualHours);
-        // Never exceed planned end (cursor) to prevent overlap
         if (actualEnd > plannedEnd) actualEnd = new Date(plannedEnd);
         status = 'completed';
       } else if (start < NOW && plannedEnd >= NOW) {
-        // In progress right now
         status = 'in_progress';
         actualEnd = null;
         actualHours = null;
       } else {
-        // Scheduled for later
         status = 'scheduled';
         actualEnd = null;
         actualHours = null;
@@ -235,7 +201,7 @@ function generate() {
       const worker = WORKERS[(pn - 1) % WORKERS.length];
       const master = MASTERS[pn % MASTERS.length];
 
-      const wo = {
+      allWorkOrders.push({
         id: uuid(`wo-${pn}-${w}`),
         externalId: `1C-${woNum}`,
         orderNumber: woNum,
@@ -243,27 +209,23 @@ function generate() {
         plateNumber: car.plate,
         brand: car.brand,
         model: car.model,
-        vin: car.vin,
         workType: wt.type,
-        repairType: pick(REPAIR_TYPES),
         normHours,
         actualHours,
         status,
-        scheduledTime: timeStr(start),
-        startTime: timeStr(start),
-        endTime: actualEnd ? timeStr(actualEnd) : null,
-        estimatedEnd: timeStr(plannedEnd),
+        scheduledTime: new Date(start),
+        startTime: new Date(start),
+        endTime: actualEnd,
+        estimatedEnd: new Date(plannedEnd),
         worker: worker.name,
         master,
         car,
-      };
-
-      allWorkOrders.push(wo);
-      postTimelines[pn].push(wo);
+      });
+      postTimelines[pn].push(allWorkOrders[allWorkOrders.length - 1]);
     }
   }
 
-  // Add 3-4 free (unassigned) WOs
+  // Free (unassigned) WOs
   const freeWOs = [];
   for (let i = 0; i < 4; i++) {
     let car;
@@ -274,6 +236,7 @@ function generate() {
     usedCars.add(car.vin);
     const wt = pick(WORK_TYPES);
     const normHours = roundTo(randBetween(wt.normMin, wt.normMax), 1);
+    const schedTime = addMin(shiftStart, Math.floor(randBetween(60, totalShiftMinutes - 60)));
     freeWOs.push({
       id: uuid(`free-wo-${i}`),
       externalId: `1C-КОЛ${String(36300 + i).padStart(8, '0')}`,
@@ -284,12 +247,20 @@ function generate() {
       workType: wt.type,
       normHours,
       status: 'scheduled',
-      scheduledTime: timeStr(addMin(shiftStart, Math.floor(randBetween(60, totalShiftMinutes - 60)))),
+      scheduledTime: schedTime,
+      startTime: null,
+      endTime: null,
+      estimatedEnd: addHours(schedTime, normHours),
+      postNumber: null,
+      worker: null,
+      master: null,
+      car,
     });
   }
 
-  // Add 1 no-show
+  // No-show WO
   const noShowCar = pick(CARS);
+  const noShowScheduled = addMin(shiftStart, 90);
   const noShowWO = {
     id: uuid('no-show-wo'),
     externalId: '1C-КОЛ00036350',
@@ -300,10 +271,19 @@ function generate() {
     workType: 'ТО-2',
     normHours: 3,
     status: 'no_show',
-    scheduledTime: timeStr(addMin(shiftStart, 90)),
+    scheduledTime: noShowScheduled,
+    startTime: null,
+    endTime: null,
+    estimatedEnd: addHours(noShowScheduled, 3),
+    postNumber: null,
+    worker: null,
+    master: null,
+    car: noShowCar,
   };
 
-  // ─── Current state: which posts are occupied NOW ───
+  const allWOsForDB = [...allWorkOrders, ...freeWOs, noShowWO];
+
+  // ─── 2. Compute post states ───
   const postStates = POSTS.map(post => {
     const timeline = postTimelines[post.number] || [];
     const currentWO = timeline.find(wo => wo.status === 'in_progress');
@@ -313,385 +293,63 @@ function generate() {
     let status = 'free';
     let currentVehicle = null;
     if (currentWO) {
-      const hasWorker = seededRandom() > 0.15; // 85% worker present
-      const isActive = hasWorker && seededRandom() > 0.2; // 80% of worker-present is active
+      const hasWorker = seededRandom() > 0.15;
+      const isActive = hasWorker && seededRandom() > 0.2;
       status = !hasWorker ? 'occupied_no_work' : (isActive ? 'active_work' : 'occupied');
-      currentVehicle = {
-        plateNumber: currentWO.plateNumber,
-        brand: currentWO.brand,
-        model: currentWO.model,
-        color: pick(['белый', 'серый', 'чёрный', 'синий', 'красный', 'серебристый']),
-      };
+      currentVehicle = { plateNumber: currentWO.plateNumber, brand: currentWO.brand, model: currentWO.model };
     }
 
     return { ...post, status, currentVehicle, currentWO, completedWOs, scheduledWOs, timeline };
   });
 
-  // ─── 2. dashboard-posts.json ───
-  const dashboardPosts = {
-    settings: { shiftStart: '08:00', shiftEnd: '20:00', postsCount: 10, mode: 'demo' },
-    posts: postStates.map(ps => ({
-      id: `post-${ps.number}`,
-      number: ps.number,
-      name: ps.name,
-      type: ps.type,
-      zone: ps.zoneName,
-      status: ps.status,
-      currentVehicle: ps.currentVehicle,
-      timeline: ps.timeline.map(wo => ({
-        id: `tl-${ps.number}-${wo.orderNumber}`,
-        workOrderNumber: wo.orderNumber,
-        workOrderId: wo.id,
-        plateNumber: wo.plateNumber,
-        brand: wo.brand,
-        model: wo.model,
-        workType: wo.workType,
-        status: wo.status,
-        startTime: wo.startTime,
-        endTime: wo.endTime,
-        normHours: wo.normHours,
-        master: wo.master,
-        worker: wo.worker,
-        actualHours: wo.actualHours,
-        estimatedEnd: wo.estimatedEnd,
-      })),
-      freeWorkOrders: ps.number === 1 ? freeWOs.map(f => ({
-        id: f.id, orderNumber: f.orderNumber, plateNumber: f.plateNumber,
-        brand: f.brand, model: f.model, workType: f.workType,
-        normHours: f.normHours, status: f.status,
-      })) : undefined,
-    })),
-  };
-
-  // ─── 3. work-orders.json ───
-  const allWOsForExport = [...allWorkOrders, ...freeWOs, noShowWO];
-  const workOrdersJson = {
-    orders: allWOsForExport.map(wo => ({
-      id: wo.id,
-      externalId: wo.externalId,
-      orderNumber: wo.orderNumber,
-      scheduledTime: wo.scheduledTime,
-      status: wo.status,
-      plateNumber: wo.plateNumber,
-      workType: wo.workType,
-      normHours: wo.normHours,
-      actualHours: wo.actualHours || null,
-      createdAt: timeStr(addHours(shiftStart, -12)),
-      updatedAt: timeStr(NOW),
-      links: wo.status === 'in_progress' || wo.status === 'completed' ? [{
-        id: uuid(`link-${wo.id}`),
-        vehicleSessionId: uuid(`session-${wo.plateNumber}`),
-        postStayId: null,
-        workOrderId: wo.id,
-        confidence: roundTo(randBetween(0.85, 0.99), 4),
-        matchType: 'plate',
-        vehicleSession: {
-          id: uuid(`session-${wo.plateNumber}`),
-          plateNumber: wo.plateNumber,
-          entryTime: wo.scheduledTime,
-          exitTime: wo.status === 'completed' ? wo.endTime : null,
-          status: wo.status === 'completed' ? 'completed' : 'active',
-          trackId: `track_${wo.plateNumber}`,
-          createdAt: wo.scheduledTime,
-          updatedAt: timeStr(NOW),
-        },
-      }] : [],
-    })),
-    total: allWOsForExport.length,
-  };
-
-  // ─── 4. sessions.json (active) ───
-  const activeSessions = [];
-  const completedSessions = [];
+  // ─── 3. Generate sessions ───
+  const dbSessions = [];
+  const dbZoneStays = [];
+  const dbPostStays = [];
+  const dbWOLinks = [];
 
   postStates.forEach(ps => {
-    // Active session for in_progress WO
     if (ps.currentWO) {
       const wo = ps.currentWO;
-      const entryTime = addMin(new Date(wo.startTime), -Math.floor(randBetween(5, 20)));
-      activeSessions.push(makeSession(wo, ps, entryTime, null, 'active'));
+      const entryTime = addMin(wo.startTime, -Math.floor(randBetween(5, 20)));
+      const sessId = uuid(`session-${wo.plateNumber}`);
+      dbSessions.push({ id: sessId, plateNumber: wo.plateNumber, entryTime, exitTime: null, status: 'active', trackId: `track_${wo.plateNumber}` });
+      dbZoneStays.push({ id: uuid(`zs-${wo.id}`), zoneId: ps.zoneId, vehicleSessionId: sessId, entryTime, exitTime: null, duration: null });
+      const psId = uuid(`ps-${wo.id}`);
+      dbPostStays.push({ id: psId, postId: ps.id, vehicleSessionId: sessId, startTime: wo.startTime, endTime: null, hasWorker: ps.status !== 'occupied_no_work', isActive: ps.status === 'active_work', activeTime: Math.floor((NOW - wo.startTime) / 1000 * 0.7), idleTime: Math.floor((NOW - wo.startTime) / 1000 * 0.3) });
+      dbWOLinks.push({ id: uuid(`link-${wo.id}`), vehicleSessionId: sessId, postStayId: psId, workOrderId: wo.id, confidence: roundTo(randBetween(0.85, 0.99), 4), matchType: 'plate' });
     }
-    // Completed sessions
     ps.completedWOs.forEach(wo => {
-      const entryTime = addMin(new Date(wo.startTime), -Math.floor(randBetween(5, 20)));
-      const exitTime = addMin(new Date(wo.endTime), Math.floor(randBetween(5, 15)));
-      completedSessions.push(makeSession(wo, ps, entryTime, exitTime, 'completed'));
+      const entryTime = addMin(wo.startTime, -Math.floor(randBetween(5, 20)));
+      const exitTime = addMin(wo.endTime, Math.floor(randBetween(5, 15)));
+      const sessId = uuid(`session-c-${wo.id}`);
+      dbSessions.push({ id: sessId, plateNumber: wo.plateNumber, entryTime, exitTime, status: 'completed', trackId: `track_${wo.plateNumber}` });
+      dbZoneStays.push({ id: uuid(`zs-c-${wo.id}`), zoneId: ps.zoneId, vehicleSessionId: sessId, entryTime, exitTime, duration: Math.floor((exitTime - entryTime) / 1000) });
+      const psId = uuid(`ps-c-${wo.id}`);
+      dbPostStays.push({ id: psId, postId: ps.id, vehicleSessionId: sessId, startTime: wo.startTime, endTime: wo.endTime, hasWorker: true, isActive: false, activeTime: Math.floor(wo.normHours * 3600 * 0.75), idleTime: Math.floor(wo.normHours * 3600 * 0.25) });
+      dbWOLinks.push({ id: uuid(`link-c-${wo.id}`), vehicleSessionId: sessId, postStayId: psId, workOrderId: wo.id, confidence: roundTo(randBetween(0.85, 0.99), 4), matchType: 'plate' });
     });
   });
 
-  // 2 vehicles in parking/waiting
+  // Parking vehicles
   for (let i = 0; i < 2; i++) {
     const car = CARS[CARS.length - 1 - i];
     const entryTime = addMin(NOW, -Math.floor(randBetween(10, 40)));
-    activeSessions.push({
-      id: uuid(`parking-session-${i}`),
-      plateNumber: car.plate,
-      entryTime: timeStr(entryTime),
-      exitTime: null,
-      status: 'active',
-      trackId: `track_park_${i}`,
-      createdAt: timeStr(entryTime),
-      updatedAt: timeStr(NOW),
-      zoneStays: [{
-        id: uuid(`zs-park-${i}`),
-        zoneId: ZONES[4].id, // parking
-        vehicleSessionId: uuid(`parking-session-${i}`),
-        entryTime: timeStr(entryTime),
-        exitTime: null,
-        duration: null,
-        zone: { id: ZONES[4].id, name: ZONES[4].name, type: ZONES[4].type, description: ZONES[4].desc, coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-      }],
-      postStays: [],
-    });
+    const sessId = uuid(`parking-session-${i}`);
+    dbSessions.push({ id: sessId, plateNumber: car.plate, entryTime, exitTime: null, status: 'active', trackId: `track_park_${i}` });
+    dbZoneStays.push({ id: uuid(`zs-park-${i}`), zoneId: ZONES[4].id, vehicleSessionId: sessId, entryTime, exitTime: null, duration: null });
   }
 
-  const sessionsJson = { sessions: activeSessions, total: activeSessions.length };
-  const sessionsCompletedJson = { sessions: completedSessions.slice(-10), total: completedSessions.length };
-
-  // ─── 5. events.json ───
-  const events = generateEvents(postStates, activeSessions);
-
-  // ─── 6. dashboard-overview.json ───
-  const occupiedPosts = postStates.filter(p => p.status !== 'free');
-  const freePosts = postStates.filter(p => p.status === 'free');
-  const activeWorkPosts = postStates.filter(p => p.status === 'active_work');
-
-  const dashboardOverview = {
-    activeSessions: activeSessions.length,
-    zonesWithVehicles: ZONES.filter(z => z.type !== 'entry').map(z => {
-      const postsInZone = postStates.filter(p => p.zoneId === z.id);
-      const vehicleCount = postsInZone.filter(p => p.status !== 'free').length + (z.type === 'waiting' ? 2 : 0);
-      return { zoneId: z.id, zoneName: z.name, zoneType: z.type, vehicleCount };
-    }).filter(z => z.vehicleCount > 0),
-    postsStatus: postStates.map(p => ({
-      postId: p.id, postName: p.name, status: p.status,
-      plateNumber: p.currentVehicle?.plateNumber || null,
-      workerPresent: p.status === 'active_work' || p.status === 'occupied',
-    })),
-    activeRecommendations: 0, // will be set after recommendations
-    completedToday: allWorkOrders.filter(w => w.status === 'completed').length,
-    totalNormHours: roundTo(allWorkOrders.reduce((s, w) => s + w.normHours, 0), 1),
-    freePostsCount: freePosts.length,
-    occupiedPostsCount: occupiedPosts.length,
-    activeWorkCount: activeWorkPosts.length,
-  };
-
-  // ─── 7. recommendations.json ───
-  const recommendations = [];
-  // No-show recommendation
-  recommendations.push({
-    id: uuid('rec-noshow'),
-    type: 'no_show',
-    zoneId: null, postId: null,
-    message: `Клиент ${noShowWO.plateNumber} (${noShowWO.brand} ${noShowWO.model}) не приехал на ${noShowWO.workType}. ЗН ${noShowWO.orderNumber}`,
-    messageEn: `Client ${noShowWO.plateNumber} (${noShowWO.brand} ${noShowWO.model}) did not arrive for ${noShowWO.workType}. WO ${noShowWO.orderNumber}`,
-    status: 'active',
-    createdAt: timeStr(addMin(new Date(noShowWO.scheduledTime), 30)),
-    updatedAt: timeStr(NOW),
-  });
-  // Free post recommendations
-  freePosts.forEach(p => {
-    recommendations.push({
-      id: uuid(`rec-free-${p.number}`),
-      type: 'post_free',
-      zoneId: p.zoneId, postId: p.id,
-      message: `${p.name} свободен. В очереди ${freeWOs.length} нераспределённых ЗН.`,
-      messageEn: `${p.name} is free. ${freeWOs.length} unassigned WOs in queue.`,
-      status: 'active',
-      zone: { id: p.zoneId, name: p.zoneName },
-      post: { id: p.id, name: p.name },
-      createdAt: timeStr(addMin(NOW, -15)),
-      updatedAt: timeStr(NOW),
-    });
-  });
-  // Capacity available
-  if (freePosts.length >= 2) {
-    recommendations.push({
-      id: uuid('rec-capacity'),
-      type: 'capacity_available',
-      zoneId: ZONES[0].id, postId: null,
-      message: `Есть свободная мощность: ${freePosts.length} постов доступны. Можно принять дополнительные заказы.`,
-      messageEn: `Capacity available: ${freePosts.length} posts free. Can accept additional orders.`,
-      status: 'active',
-      zone: { id: ZONES[0].id, name: ZONES[0].name },
-      createdAt: timeStr(addMin(NOW, -10)),
-      updatedAt: timeStr(NOW),
-    });
-  }
-  // Overtime on some in_progress WOs
-  allWorkOrders.filter(wo => wo.status === 'in_progress').forEach(wo => {
-    const est = new Date(wo.estimatedEnd);
-    if (est < NOW) {
-      const post = POSTS.find(p => p.number === wo.postNumber);
-      const overMin = Math.round((NOW - est) / 60000);
-      recommendations.push({
-        id: uuid(`rec-overtime-${wo.id}`),
-        type: 'work_overtime',
-        zoneId: post?.zoneId, postId: post?.id,
-        message: `Работа на ${post?.name} затянулась на ${overMin} мин. ЗН ${wo.orderNumber} (${wo.workType}, норма ${wo.normHours}ч).`,
-        messageEn: `Work on ${post?.name} is ${overMin} min overdue. WO ${wo.orderNumber} (${wo.workType}, norm ${wo.normHours}h).`,
-        status: 'active',
-        zone: post ? { id: post.zoneId, name: post.zoneName } : undefined,
-        post: post ? { id: post.id, name: post.name } : undefined,
-        createdAt: timeStr(est),
-        updatedAt: timeStr(NOW),
-      });
-    }
-  });
-  // Idle vehicle
-  postStates.filter(p => p.status === 'occupied_no_work').forEach(p => {
-    recommendations.push({
-      id: uuid(`rec-idle-${p.number}`),
-      type: 'vehicle_idle',
-      zoneId: p.zoneId, postId: p.id,
-      message: `Авто ${p.currentVehicle?.plateNumber} на ${p.name} без активной работы. Работник отсутствует.`,
-      messageEn: `Vehicle ${p.currentVehicle?.plateNumber} on ${p.name} without active work. Worker absent.`,
-      status: 'active',
-      zone: { id: p.zoneId, name: p.zoneName },
-      post: { id: p.id, name: p.name },
-      createdAt: timeStr(addMin(NOW, -8)),
-      updatedAt: timeStr(NOW),
-    });
-  });
-
-  dashboardOverview.activeRecommendations = recommendations.length;
-
-  // ─── 8. shifts.json ───
-  const shiftsJson = generateShifts(postStates);
-
-  // ─── 9. posts-analytics.json ───
-  const postsAnalytics = generatePostsAnalytics(postStates, allWorkOrders);
-
-  // ─── 10. analytics-history.json ───
-  const analyticsHistory = generateAnalyticsHistory();
-
-  // ─── 11. dashboard-metrics ───
-  const metrics30d = generateMetrics(30);
-  const metrics7d = generateMetrics(7);
-  const metrics24h = generateMetrics(1);
-
-  // ─── 12. posts.json (zone-post structure) ───
-  const postsJson = POSTS.map(p => {
-    const ps = postStates.find(s => s.number === p.number);
-    return {
-      id: p.id, zoneId: p.zoneId, name: p.name, type: p.type, status: ps.status,
-      coordinates: null, isActive: true,
-      createdAt: timeStr(TODAY), updatedAt: timeStr(NOW),
-      stays: ps.currentWO ? [{
-        id: uuid(`stay-${p.number}`),
-        postId: p.id, vehicleSessionId: uuid(`session-${ps.currentWO.plateNumber}`),
-        startTime: ps.currentWO.startTime,
-        endTime: null, hasWorker: ps.status !== 'occupied_no_work',
-        isActive: ps.status === 'active_work',
-        activeTime: Math.floor((NOW - new Date(ps.currentWO.startTime)) / 1000 * 0.7),
-        idleTime: Math.floor((NOW - new Date(ps.currentWO.startTime)) / 1000 * 0.3),
-      }] : [],
-      zone: { id: p.zoneId, name: p.zoneName, type: p.zoneType, description: ZONES.find(z => z.id === p.zoneId)?.desc, coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-    };
-  });
-
-  // ─── 13. zones.json ───
-  const zonesJson = ZONES.map(z => ({
-    id: z.id, name: z.name, type: z.type, description: z.desc,
-    coordinates: null, isActive: true,
-    createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY),
-    posts: postsJson.filter(p => p.zoneId === z.id),
-    cameras: CAMERAS.slice(0, 3).map(c => ({
-      camera: c,
-      priority: Math.floor(randBetween(3, 10)),
-    })),
-  }));
-
-  // ─── 14. audit-log.json ───
-  const auditLog = generateAuditLog(allWorkOrders);
-
-  // ═══ WRITE FILES ═══
-  const writes = {
-    // 'dashboard-posts.json' and 'posts-analytics.json' are now served from DB via /api/
-    'work-orders.json': workOrdersJson,
-    'sessions.json': sessionsJson,
-    'sessions-completed.json': sessionsCompletedJson,
-    'events.json': { events, total: events.length },
-    'dashboard-overview.json': dashboardOverview,
-    'recommendations.json': recommendations,
-    'shifts.json': shiftsJson,
-    'analytics-history.json': analyticsHistory,
-    'dashboard-metrics-30d.json': metrics30d,
-    'dashboard-metrics-7d.json': metrics7d,
-    'dashboard-metrics-24h.json': metrics24h,
-    'posts.json': postsJson,
-    'zones.json': zonesJson,
-    'audit-log.json': auditLog,
-  };
-
-  for (const [filename, data] of Object.entries(writes)) {
-    fs.writeFileSync(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2), 'utf-8');
-  }
-
-  console.log(`[DemoGen] Generated ${Object.keys(writes).length} files at ${NOW.toLocaleTimeString()}`);
-  console.log(`  WOs: ${allWorkOrders.length} (completed: ${allWorkOrders.filter(w=>w.status==='completed').length}, in_progress: ${allWorkOrders.filter(w=>w.status==='in_progress').length}, scheduled: ${allWorkOrders.filter(w=>w.status==='scheduled').length})`);
-  console.log(`  Sessions: ${activeSessions.length} active, ${completedSessions.length} completed`);
-  console.log(`  Events: ${events.length}`);
-  console.log(`  Posts: ${occupiedPosts.length} occupied, ${freePosts.length} free`);
-  console.log(`  Recommendations: ${recommendations.length}`);
-}
-
-// ─── Helper: create session object ───
-function makeSession(wo, ps, entryTime, exitTime, status) {
-  const zone = ZONES.find(z => z.id === ps.zoneId) || ZONES[0];
-  return {
-    id: uuid(`session-${wo.plateNumber}`),
-    plateNumber: wo.plateNumber,
-    entryTime: timeStr(entryTime),
-    exitTime: exitTime ? timeStr(exitTime) : null,
-    status,
-    trackId: `track_${wo.plateNumber}`,
-    createdAt: timeStr(entryTime),
-    updatedAt: timeStr(NOW),
-    zoneStays: [{
-      id: uuid(`zs-${wo.id}`),
-      zoneId: zone.id,
-      vehicleSessionId: uuid(`session-${wo.plateNumber}`),
-      entryTime: timeStr(entryTime),
-      exitTime: exitTime ? timeStr(exitTime) : null,
-      duration: exitTime ? Math.floor((exitTime - entryTime) / 1000) : null,
-      zone: { id: zone.id, name: zone.name, type: zone.type, description: zone.desc, coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-    }],
-    postStays: [{
-      id: uuid(`ps-${wo.id}`),
-      postId: ps.id,
-      vehicleSessionId: uuid(`session-${wo.plateNumber}`),
-      startTime: wo.startTime,
-      endTime: wo.endTime,
-      hasWorker: ps.status !== 'occupied_no_work',
-      isActive: status === 'active' && ps.status === 'active_work',
-      activeTime: Math.floor(wo.normHours * 3600 * 0.75),
-      idleTime: Math.floor(wo.normHours * 3600 * 0.25),
-      post: { id: ps.id, zoneId: ps.zoneId, name: ps.name, type: ps.type, status: ps.status, coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-    }],
-  };
-}
-
-// ─── Events generator ───
-function generateEvents(postStates, activeSessions) {
-  const events = [];
-  const eventTypes = [
-    'vehicle_entered_zone', 'vehicle_left_zone', 'vehicle_moving', 'vehicle_waiting',
-    'post_occupied', 'post_vacated', 'worker_present', 'worker_absent',
-    'work_activity', 'work_idle',
-  ];
-
-  // Generate events for last 2 hours
+  // ─── 4. Generate events ───
+  const dbEvents = [];
   const eventStart = addMin(NOW, -120);
 
-  // For each active post — generate work_activity/work_idle events
   postStates.filter(p => p.status !== 'free').forEach(ps => {
     const cam = CAMERAS[ps.number - 1] || CAMERAS[0];
     let t = new Date(eventStart);
-
     while (t < NOW) {
       const isWork = seededRandom() > 0.3;
-      events.push({
+      dbEvents.push({
         id: uuid(`ev-${ps.number}-${t.getTime()}`),
         type: isWork ? 'work_activity' : 'work_idle',
         zoneId: ps.zoneId,
@@ -700,33 +358,20 @@ function generateEvents(postStates, activeSessions) {
         cameraId: cam.id,
         cameraSources: JSON.stringify([cam.name.toLowerCase().replace(' ', '')]),
         confidence: roundTo(randBetween(0.78, 0.99), 4),
-        startTime: timeStr(t),
+        startTime: new Date(t),
         endTime: null,
-        rawData: JSON.stringify({ mock: false, source: 'cv_engine_v2' }),
-        createdAt: timeStr(t),
-        zone: { id: ps.zoneId, name: ps.zoneName, type: ps.zoneType, description: '', coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-        post: { id: ps.id, zoneId: ps.zoneId, name: ps.name, type: ps.type, status: ps.status, coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-        vehicleSession: ps.currentWO ? {
-          id: uuid(`session-${ps.currentWO.plateNumber}`),
-          plateNumber: ps.currentWO.plateNumber,
-          entryTime: ps.currentWO.startTime,
-          exitTime: null, status: 'active',
-          trackId: `track_${ps.currentWO.plateNumber}`,
-          createdAt: ps.currentWO.startTime,
-          updatedAt: timeStr(NOW),
-        } : null,
+        rawData: JSON.stringify({ source: 'cv_engine_v2' }),
       });
       t = addMin(t, Math.floor(randBetween(2, 8)));
     }
   });
 
-  // Entry/exit events
-  activeSessions.forEach((sess, i) => {
-    const entryZone = ZONES[3]; // entry zone
-    events.push({
+  // Entry events
+  dbSessions.filter(s => s.status === 'active').forEach((sess, i) => {
+    dbEvents.push({
       id: uuid(`ev-entry-${i}`),
       type: 'vehicle_entered_zone',
-      zoneId: entryZone.id,
+      zoneId: ZONES[3].id,
       postId: null,
       vehicleSessionId: sess.id,
       cameraId: CAMERAS[0].id,
@@ -735,332 +380,329 @@ function generateEvents(postStates, activeSessions) {
       startTime: sess.entryTime,
       endTime: null,
       rawData: JSON.stringify({ plateNumber: sess.plateNumber, source: 'cv_engine_v2' }),
-      createdAt: sess.entryTime,
-      zone: { id: entryZone.id, name: entryZone.name, type: entryZone.type, description: entryZone.desc, coordinates: null, isActive: true, createdAt: timeStr(TODAY), updatedAt: timeStr(TODAY) },
-      post: null,
-      vehicleSession: { id: sess.id, plateNumber: sess.plateNumber, entryTime: sess.entryTime, exitTime: null, status: 'active', trackId: sess.trackId, createdAt: sess.entryTime, updatedAt: timeStr(NOW) },
     });
   });
 
-  // Sort by time descending
-  events.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-  return events.slice(0, 200);
-}
+  // Limit events to 200 most recent
+  dbEvents.sort((a, b) => b.startTime - a.startTime);
+  const eventsToInsert = dbEvents.slice(0, 200);
 
-// ─── Shifts generator ───
-function generateShifts(postStates) {
-  const shifts = [];
+  // ─── 5. Generate recommendations ───
+  const dbRecs = [];
+  const freePosts = postStates.filter(p => p.status === 'free');
+
+  // No-show
+  dbRecs.push({
+    id: uuid('rec-noshow'),
+    type: 'no_show',
+    zoneId: null, postId: null,
+    message: `Клиент ${noShowWO.plateNumber} (${noShowWO.brand} ${noShowWO.model}) не приехал на ${noShowWO.workType}. ЗН ${noShowWO.orderNumber}`,
+    messageEn: `Client ${noShowWO.plateNumber} (${noShowWO.brand} ${noShowWO.model}) did not arrive for ${noShowWO.workType}. WO ${noShowWO.orderNumber}`,
+    status: 'active',
+  });
+
+  // Free posts
+  freePosts.forEach(p => {
+    dbRecs.push({
+      id: uuid(`rec-free-${p.number}`),
+      type: 'post_free',
+      zoneId: p.zoneId, postId: p.id,
+      message: `${p.name} свободен. В очереди ${freeWOs.length} нераспределённых ЗН.`,
+      messageEn: `${p.name} is free. ${freeWOs.length} unassigned WOs in queue.`,
+      status: 'active',
+    });
+  });
+
+  // Capacity available
+  if (freePosts.length >= 2) {
+    dbRecs.push({
+      id: uuid('rec-capacity'),
+      type: 'capacity_available',
+      zoneId: ZONES[0].id, postId: null,
+      message: `Есть свободная мощность: ${freePosts.length} постов доступны. Можно принять дополнительные заказы.`,
+      messageEn: `Capacity available: ${freePosts.length} posts free. Can accept additional orders.`,
+      status: 'active',
+    });
+  }
+
+  // Overtime
+  allWorkOrders.filter(wo => wo.status === 'in_progress').forEach(wo => {
+    const est = wo.estimatedEnd;
+    if (est < NOW) {
+      const post = POSTS.find(p => p.number === wo.postNumber);
+      const overMin = Math.round((NOW - est) / 60000);
+      dbRecs.push({
+        id: uuid(`rec-overtime-${wo.id}`),
+        type: 'work_overtime',
+        zoneId: post?.zoneId || null, postId: post?.id || null,
+        message: `Работа на ${post?.name} затянулась на ${overMin} мин. ЗН ${wo.orderNumber} (${wo.workType}, норма ${wo.normHours}ч).`,
+        messageEn: `Work on ${post?.name} is ${overMin} min overdue. WO ${wo.orderNumber} (${wo.workType}, norm ${wo.normHours}h).`,
+        status: 'active',
+      });
+    }
+  });
+
+  // Idle vehicle
+  postStates.filter(p => p.status === 'occupied_no_work').forEach(p => {
+    dbRecs.push({
+      id: uuid(`rec-idle-${p.number}`),
+      type: 'vehicle_idle',
+      zoneId: p.zoneId, postId: p.id,
+      message: `Авто ${p.currentVehicle?.plateNumber} на ${p.name} без активной работы. Работник отсутствует.`,
+      messageEn: `Vehicle ${p.currentVehicle?.plateNumber} on ${p.name} without active work. Worker absent.`,
+      status: 'active',
+    });
+  });
+
+  // ─── 6. Generate shifts ───
+  const dbShifts = [];
+  const dbShiftWorkers = [];
   const todayStr = TODAY.toISOString().split('T')[0];
 
-  // Generate shifts for 14 days (past week + current week + a few days ahead)
   for (let d = -7; d <= 6; d++) {
     const day = new Date(TODAY);
     day.setDate(day.getDate() + d);
     const dateStr = day.toISOString().split('T')[0];
-    const dow = day.getDay(); // 0=Sun, 6=Sat
-    const isWeekend = dow === 0 || dow === 6;
+    const dow = day.getDay();
+    if (dow === 0) continue;
+    if (dow === 6 && d < 0) continue;
+    const isSaturday = dow === 6;
     const isToday = dateStr === todayStr;
     const isPast = day < TODAY;
-    const isFuture = day > TODAY;
 
-    // Weekends — no shifts (or optional short shift on Saturday)
-    if (dow === 0) continue; // Sunday always off
-    if (dow === 6 && d < 0) continue; // Past Saturdays — skip
-    // Saturday: optional short shift
-    const isSaturday = dow === 6;
-
-    // Determine status
     let status;
     if (isPast) status = 'completed';
     else if (isToday) status = (NOW >= shiftStart && NOW <= shiftEnd) ? 'active' : 'planned';
     else status = 'planned';
 
-    // Vary worker count per day (rotation)
+    const shiftId = uuid(`shift-${dateStr}`);
     const workerOffset = (d + 7) % WORKERS.length;
-    const workerCount = isSaturday ? 5 : (8 + Math.abs(d) % 3); // 8-10 weekday, 5 saturday
-    const dayWorkers = [];
-    for (let wi = 0; wi < Math.min(workerCount, WORKERS.length); wi++) {
-      const w = WORKERS[(workerOffset + wi) % WORKERS.length];
-      dayWorkers.push({
-        id: uuid(`sw-${dateStr}-${wi}`),
-        shiftId: uuid(`shift-${dateStr}`),
-        name: w.name,
-        role: wi < workerCount - 2 ? 'mechanic' : (wi === workerCount - 2 ? 'master' : 'diagnostician'),
-        postId: wi < 10 ? `post-${POSTS[wi]?.number}` : null,
-      });
-    }
+    const workerCount = isSaturday ? 5 : (8 + Math.abs(d) % 3);
 
-    // WO counts — realistic numbers
-    const woTotal = isPast
-      ? Math.floor(randBetween(isSaturday ? 15 : 30, isSaturday ? 25 : 42))
-      : (isToday ? postStates.reduce((s, p) => s + p.timeline.length, 0) : 0);
-    const woCompleted = isPast
-      ? Math.floor(woTotal * randBetween(0.85, 0.98))
-      : (isToday ? postStates.reduce((s, p) => s + p.completedWOs.length, 0) : 0);
+    const notes = isPast ? pick([
+      'Смена завершена штатно.',
+      'Все ЗН выполнены в срок.',
+      'Без происшествий.',
+    ]) : null;
 
-    const notes = isPast
-      ? pick([
-        'Смена завершена штатно.',
-        'Все ЗН выполнены в срок.',
-        `Завершено ${woCompleted} из ${woTotal} ЗН.`,
-        'Без происшествий.',
-        '1 ЗН перенесён на следующий день.',
-      ])
-      : null;
-
-    shifts.push({
-      id: uuid(`shift-${dateStr}`),
+    dbShifts.push({
+      id: shiftId,
       name: isSaturday ? 'Дежурная смена' : 'Дневная смена',
-      date: dateStr,
+      date: new Date(dateStr + 'T00:00:00'),
       startTime: isSaturday ? '09:00' : '08:00',
       endTime: isSaturday ? '16:00' : '20:00',
       status,
       notes,
-      createdAt: timeStr(addMin(day, -120)),
-      updatedAt: timeStr(isToday ? NOW : day),
-      workers: dayWorkers,
-      workOrdersCount: woTotal,
-      completedCount: woCompleted,
+    });
+
+    for (let wi = 0; wi < Math.min(workerCount, WORKERS.length); wi++) {
+      const w = WORKERS[(workerOffset + wi) % WORKERS.length];
+      dbShiftWorkers.push({
+        id: uuid(`sw-${dateStr}-${wi}`),
+        shiftId,
+        name: w.name,
+        role: wi < workerCount - 2 ? 'mechanic' : (wi === workerCount - 2 ? 'master' : 'diagnostician'),
+        postId: wi < 10 ? POSTS[wi]?.id : null,
+      });
+    }
+  }
+
+  // ═════════════════════════════════════════════
+  // WRITE TO DATABASE
+  // ═════════════════════════════════════════════
+
+  // Phase 1: Delete all demo data (order matters for foreign keys)
+  await prisma.event.deleteMany({});
+  await prisma.workOrderLink.deleteMany({});
+  await prisma.postStay.deleteMany({});
+  await prisma.zoneStay.deleteMany({});
+  await prisma.vehicleSession.deleteMany({});
+  await prisma.recommendation.deleteMany({});
+  await prisma.shiftWorker.deleteMany({});
+  await prisma.shift.deleteMany({});
+  await prisma.workOrder.deleteMany({});
+
+  // Phase 1b: Delete old seed infrastructure (posts/zones not in our deterministic set)
+  const myPostIds = POSTS.map(p => p.id);
+  const myZoneIds = ZONES.map(z => z.id);
+  const myCameraIds = CAMERAS.map(c => c.id);
+  await prisma.post.deleteMany({ where: { id: { notIn: myPostIds } } });
+  await prisma.zone.deleteMany({ where: { id: { notIn: myZoneIds } } });
+  await prisma.camera.deleteMany({ where: { id: { notIn: myCameraIds } } });
+
+  // Phase 2: Upsert infrastructure (zones, posts, cameras)
+  for (const z of ZONES) {
+    await prisma.zone.upsert({
+      where: { id: z.id },
+      create: { id: z.id, name: z.name, type: z.type, description: z.desc, isActive: true },
+      update: { name: z.name, type: z.type, description: z.desc, isActive: true },
     });
   }
 
-  return { shifts, total: shifts.length };
-}
+  for (const p of POSTS) {
+    const ps = postStates.find(s => s.number === p.number);
+    await prisma.post.upsert({
+      where: { id: p.id },
+      create: { id: p.id, zoneId: p.zoneId, name: p.name, type: p.type, status: ps?.status || 'free', isActive: true },
+      update: { zoneId: p.zoneId, name: p.name, type: p.type, status: ps?.status || 'free', isActive: true },
+    });
+  }
 
-// ─── Posts Analytics generator ───
-function generatePostsAnalytics(postStates, allWorkOrders) {
-  return postStates.map(ps => {
-    const completed = ps.completedWOs.length;
-    const inProgress = ps.currentWO ? 1 : 0;
-    const totalWOs = ps.timeline.length;
-    const normTotal = roundTo(ps.timeline.reduce((s, w) => s + w.normHours, 0), 1);
-    const actualTotal = roundTo(ps.completedWOs.reduce((s, w) => s + (w.actualHours || w.normHours), 0), 1);
+  for (const c of CAMERAS) {
+    await prisma.camera.upsert({
+      where: { id: c.id },
+      create: { id: c.id, name: c.name, rtspUrl: c.rtspUrl, isActive: true },
+      update: { name: c.name, rtspUrl: c.rtspUrl, isActive: true },
+    });
+  }
 
-    const occupancy = ps.status !== 'free'
-      ? roundTo(randBetween(55, 90))
-      : roundTo(randBetween(20, 50));
-    const efficiency = ps.status === 'active_work'
-      ? roundTo(randBetween(70, 95))
-      : roundTo(randBetween(40, 70));
-
-    // Daily history for last 7 days
-    const daily = [];
-    for (let d = 6; d >= 0; d--) {
-      const day = new Date(TODAY);
-      day.setDate(day.getDate() - d);
-      daily.push({
-        date: day.toISOString().split('T')[0],
-        occupancy: roundTo(randBetween(40, 90)),
-        efficiency: roundTo(randBetween(50, 95)),
-        vehicles: Math.floor(randBetween(2, 6)),
-        workerPresence: roundTo(randBetween(70, 98)),
-        activeHours: roundTo(randBetween(4, 10), 1),
-        idleHours: roundTo(randBetween(0.5, 3), 1),
-      });
+  // Camera-zone mappings
+  await prisma.cameraZone.deleteMany({});
+  const cameraZoneMappings = [];
+  CAMERAS.forEach((cam, ci) => {
+    // Each camera maps to nearest zone(s)
+    const zoneIdx = ci < 4 ? 0 : (ci < 8 ? 1 : 2);
+    cameraZoneMappings.push({ cameraId: cam.id, zoneId: ZONES[zoneIdx].id, priority: 10 - ci });
+    // Some cameras also cover entry/parking
+    if (ci === 0 || ci === 9) {
+      cameraZoneMappings.push({ cameraId: cam.id, zoneId: ZONES[3].id, priority: 5 });
     }
+  });
+  await prisma.cameraZone.createMany({ data: cameraZoneMappings });
 
-    return {
-      id: `post-${ps.number}`,
-      number: ps.number,
-      name: ps.name,
-      type: ps.type,
-      zone: ps.zoneName,
-      status: ps.status,
-      occupancy,
-      efficiency,
-      vehiclesToday: completed + inProgress,
-      avgServiceTime: totalWOs > 0 ? roundTo(normTotal / totalWOs, 1) : 0,
-      totalNormHours: normTotal,
-      totalActualHours: actualTotal,
-      completedWOs: completed,
-      scheduledWOs: ps.scheduledWOs.length,
-      workerPresence: roundTo(randBetween(75, 98)),
-      worker: WORKERS[(ps.number - 1) % WORKERS.length].name,
-      master: MASTERS[ps.number % MASTERS.length],
-      daily,
-      workOrders: ps.timeline.map(wo => ({
-        orderNumber: wo.orderNumber,
-        plateNumber: wo.plateNumber,
-        brand: wo.brand,
-        model: wo.model,
-        workType: wo.workType,
-        normHours: wo.normHours,
-        actualHours: wo.actualHours,
-        status: wo.status,
-        startTime: wo.startTime,
-        endTime: wo.endTime,
+  // Phase 3: Create demo data
+  await prisma.workOrder.createMany({
+    data: allWOsForDB.map(wo => ({
+      id: wo.id,
+      externalId: wo.externalId,
+      orderNumber: wo.orderNumber,
+      scheduledTime: wo.scheduledTime,
+      status: wo.status,
+      plateNumber: wo.plateNumber,
+      workType: wo.workType,
+      normHours: wo.normHours,
+      actualHours: wo.actualHours,
+      brand: wo.brand,
+      model: wo.model,
+      worker: wo.worker,
+      master: wo.master,
+      postNumber: wo.postNumber,
+      startTime: wo.startTime,
+      endTime: wo.endTime,
+      estimatedEnd: wo.estimatedEnd,
+    })),
+  });
+
+  await prisma.vehicleSession.createMany({
+    data: dbSessions.map(s => ({
+      id: s.id,
+      plateNumber: s.plateNumber,
+      entryTime: s.entryTime,
+      exitTime: s.exitTime,
+      status: s.status,
+      trackId: s.trackId,
+    })),
+  });
+
+  await prisma.zoneStay.createMany({
+    data: dbZoneStays.map(zs => ({
+      id: zs.id,
+      zoneId: zs.zoneId,
+      vehicleSessionId: zs.vehicleSessionId,
+      entryTime: zs.entryTime,
+      exitTime: zs.exitTime,
+      duration: zs.duration,
+    })),
+  });
+
+  await prisma.postStay.createMany({
+    data: dbPostStays.map(ps => ({
+      id: ps.id,
+      postId: ps.postId,
+      vehicleSessionId: ps.vehicleSessionId,
+      startTime: ps.startTime,
+      endTime: ps.endTime,
+      hasWorker: ps.hasWorker,
+      isActive: ps.isActive,
+      activeTime: ps.activeTime,
+      idleTime: ps.idleTime,
+    })),
+  });
+
+  await prisma.workOrderLink.createMany({
+    data: dbWOLinks.map(l => ({
+      id: l.id,
+      vehicleSessionId: l.vehicleSessionId,
+      postStayId: l.postStayId,
+      workOrderId: l.workOrderId,
+      confidence: l.confidence,
+      matchType: l.matchType,
+    })),
+  });
+
+  // Events — insert in batches to avoid SQLite limits
+  for (let i = 0; i < eventsToInsert.length; i += 50) {
+    const batch = eventsToInsert.slice(i, i + 50);
+    await prisma.event.createMany({
+      data: batch.map(ev => ({
+        id: ev.id,
+        type: ev.type,
+        zoneId: ev.zoneId,
+        postId: ev.postId,
+        vehicleSessionId: ev.vehicleSessionId,
+        cameraId: ev.cameraId,
+        cameraSources: ev.cameraSources,
+        confidence: ev.confidence,
+        startTime: ev.startTime,
+        endTime: ev.endTime,
+        rawData: ev.rawData,
       })),
-      alerts: ps.status === 'occupied_no_work' ? [
-        { type: 'worker_absent', message: 'Работник отсутствует на посту', time: timeStr(addMin(NOW, -5)) },
-      ] : [],
-      events: [],
-    };
-  });
-}
-
-// ─── Analytics History (30 days) ───
-function generateAnalyticsHistory() {
-  // Analytics.jsx expects: { posts: [{ id, name, nameEn, type, days: [{ date, occupancyRate, efficiency, vehicleCount, ... hourly }] }], daily: [{ date, totalVehicles, totalNoShows }] }
-
-  // Base load curve by hour — realistic STO pattern
-  function hourlyLoadBase(h, isWeekend) {
-    const curve = { 8: 0.35, 9: 0.55, 10: 0.78, 11: 0.85, 12: 0.75, 13: 0.55, 14: 0.72, 15: 0.80, 16: 0.70, 17: 0.55, 18: 0.40, 19: 0.25 };
-    return (curve[h] || 0.3) * (isWeekend ? 0.4 : 1.0);
-  }
-
-  // Per-post "personality" — some posts are busier than others
-  const postTraits = POSTS.map((p, i) => ({
-    occBase: 0.55 + (i % 3) * 0.1,   // 0.55-0.75
-    effBase: 0.60 + ((i + 1) % 4) * 0.08, // 0.60-0.84
-    vehicleBase: i < 8 ? 4 : 3,      // diag posts get fewer
-  }));
-
-  const posts = POSTS.map((p, pi) => {
-    const trait = postTraits[pi];
-    const worker = WORKERS[pi % WORKERS.length];
-    const master = MASTERS[pi % MASTERS.length];
-
-    const days = [];
-    for (let d = 29; d >= 0; d--) {
-      const day = new Date(TODAY);
-      day.setDate(day.getDate() - d);
-      const dateStr = day.toISOString().split('T')[0];
-      const dow = day.getDay();
-      const isWeekend = dow === 0 || dow === 6;
-
-      // Day-level variation
-      const dayNoise = randBetween(-0.1, 0.1);
-      const occ = Math.max(0.05, Math.min(0.98, trait.occBase + dayNoise + (isWeekend ? -0.3 : 0)));
-      const eff = Math.max(0.3, Math.min(0.98, trait.effBase + randBetween(-0.08, 0.08) + (isWeekend ? -0.15 : 0)));
-      const vehicles = isWeekend ? Math.max(1, Math.floor(trait.vehicleBase * 0.4 + randBetween(0, 1))) : Math.floor(trait.vehicleBase + randBetween(-1, 2));
-      const activeMin = roundTo(vehicles * randBetween(60, 120), 0);
-      const idleMin = roundTo(vehicles * randBetween(10, 40), 0);
-      const avgTime = vehicles > 0 ? Math.round(randBetween(45, 150)) : 0; // minutes per vehicle
-      const avgWait = Math.round(randBetween(5, 35)); // minutes
-      const workerPres = Math.max(0.5, Math.min(1, eff + randBetween(-0.05, 0.1)));
-      const plannedOrders = vehicles + Math.floor(randBetween(0, 2));
-      const completedOrders = Math.max(0, vehicles - Math.floor(randBetween(0, 1)));
-      const noShows = isWeekend ? 0 : (seededRandom() > 0.8 ? 1 : 0);
-      const plannedH = roundTo(vehicles * randBetween(1.5, 2.5), 1);
-      const actualH = roundTo(plannedH * randBetween(0.85, 1.2), 1);
-
-      // Hourly data for heatmap
-      const hourly = [];
-      for (let h = 8; h <= 19; h++) {
-        const baseOcc = hourlyLoadBase(h, isWeekend);
-        const postOcc = Math.max(0, Math.min(1, baseOcc + (occ - 0.5) * 0.3 + randBetween(-0.1, 0.1)));
-        const hourVeh = postOcc > 0.5 ? 1 : (seededRandom() > 0.5 ? 1 : 0);
-        hourly.push({ hour: h, occupancy: roundTo(postOcc, 3), vehicles: hourVeh });
-      }
-
-      days.push({
-        date: dateStr,
-        occupancyRate: roundTo(occ, 3),
-        efficiency: roundTo(eff, 3),
-        vehicleCount: vehicles,
-        avgTimePerVehicle: avgTime,
-        avgWaitTime: avgWait,
-        activeMinutes: activeMin,
-        idleMinutes: idleMin,
-        workerPresence: roundTo(workerPres, 3),
-        plannedOrders,
-        completedOrders,
-        noShows,
-        plannedHours: plannedH,
-        actualHours: actualH,
-        hourly,
-      });
-    }
-
-    return {
-      id: `post-${p.number}`,
-      name: p.name,
-      nameEn: `Post ${p.number}`,
-      type: p.type,
-      worker: worker.name,
-      master,
-      days,
-    };
-  });
-
-  // Aggregate daily totals
-  const daily = [];
-  for (let d = 29; d >= 0; d--) {
-    const day = new Date(TODAY);
-    day.setDate(day.getDate() - d);
-    const dateStr = day.toISOString().split('T')[0];
-
-    let totalVehicles = 0, totalNoShows = 0;
-    posts.forEach(p => {
-      const dayData = p.days.find(dd => dd.date === dateStr);
-      if (dayData) {
-        totalVehicles += dayData.vehicleCount;
-        totalNoShows += dayData.noShows;
-      }
-    });
-    daily.push({ date: dateStr, totalVehicles, totalNoShows });
-  }
-
-  return { posts, daily };
-}
-
-// ─── Dashboard Metrics ───
-function generateMetrics(periodDays) {
-  const periods = { 1: '24h', 7: '7d', 30: '30d' };
-  return {
-    period: periods[periodDays] || `${periodDays}d`,
-    zoneMetrics: ZONES.filter(z => z.type !== 'entry').map(z => ({
-      zoneId: z.id, zoneName: z.name, zoneType: z.type,
-      avgDuration: Math.floor(randBetween(10000, 30000)),
-      vehicleCount: Math.floor(randBetween(5, 50) * periodDays),
-    })),
-    postMetrics: POSTS.map(p => ({
-      postId: p.id, postName: p.name,
-      activeTime: Math.floor(randBetween(20000, 50000) * periodDays),
-      idleTime: Math.floor(randBetween(3000, 15000) * periodDays),
-      vehicleCount: Math.floor(randBetween(3, 6) * periodDays),
-    })),
-    workOrderMetrics: [
-      { status: 'completed', count: Math.floor(randBetween(25, 40) * periodDays) },
-      { status: 'in_progress', count: Math.floor(randBetween(5, 10)) },
-      { status: 'scheduled', count: Math.floor(randBetween(3, 8)) },
-      { status: 'no_show', count: Math.floor(randBetween(1, 4) * periodDays) },
-    ],
-  };
-}
-
-// ─── Audit Log ───
-function generateAuditLog(allWorkOrders) {
-  const logs = [];
-  const actions = ['create', 'update'];
-  const entities = ['workOrder', 'session', 'shift', 'post', 'user'];
-
-  // Generate 20 recent audit entries
-  for (let i = 0; i < 20; i++) {
-    const minutesAgo = Math.floor(randBetween(5, 600));
-    const action = pick(actions);
-    const entity = pick(entities);
-    const user = pick(['Старинский Андрей', 'Крылатов Максим', 'Эксузьян Андроник', 'admin']);
-
-    logs.push({
-      id: uuid(`audit-${i}`),
-      userId: uuid(`user-${user}`),
-      userName: user,
-      action,
-      entity,
-      entityId: uuid(`entity-${i}`),
-      oldData: action === 'update' ? JSON.stringify({ status: 'scheduled' }) : null,
-      newData: JSON.stringify({ status: action === 'create' ? 'scheduled' : 'in_progress' }),
-      ip: '192.168.1.' + Math.floor(randBetween(10, 200)),
-      createdAt: timeStr(addMin(NOW, -minutesAgo)),
     });
   }
 
-  logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  return { logs, total: logs.length };
+  await prisma.recommendation.createMany({
+    data: dbRecs.map(r => ({
+      id: r.id,
+      type: r.type,
+      zoneId: r.zoneId,
+      postId: r.postId,
+      message: r.message,
+      messageEn: r.messageEn,
+      status: r.status,
+    })),
+  });
+
+  await prisma.shift.createMany({
+    data: dbShifts.map(s => ({
+      id: s.id,
+      name: s.name,
+      date: s.date,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      status: s.status,
+      notes: s.notes,
+    })),
+  });
+
+  await prisma.shiftWorker.createMany({
+    data: dbShiftWorkers.map(sw => ({
+      id: sw.id,
+      shiftId: sw.shiftId,
+      name: sw.name,
+      role: sw.role,
+      postId: sw.postId,
+    })),
+  });
+
+  // Summary
+  const occupiedPosts = postStates.filter(p => p.status !== 'free');
+  console.log(`[DemoGen] DB updated at ${NOW.toLocaleTimeString()}`);
+  console.log(`  WOs: ${allWOsForDB.length} (completed: ${allWorkOrders.filter(w=>w.status==='completed').length}, in_progress: ${allWorkOrders.filter(w=>w.status==='in_progress').length}, scheduled: ${allWorkOrders.filter(w=>w.status==='scheduled').length})`);
+  console.log(`  Sessions: ${dbSessions.filter(s=>s.status==='active').length} active, ${dbSessions.filter(s=>s.status==='completed').length} completed`);
+  console.log(`  Events: ${eventsToInsert.length}, Recommendations: ${dbRecs.length}`);
+  console.log(`  Posts: ${occupiedPosts.length} occupied, ${freePosts.length} free`);
+  console.log(`  Shifts: ${dbShifts.length}`);
 }
 
-// ═══ RUN ═══
-generate();
-
-module.exports = { generate };
+// Export constants for use by analytics routes
+module.exports = { generate, WORKERS, MASTERS, POSTS, ZONES, CAMERAS, WORK_TYPES };

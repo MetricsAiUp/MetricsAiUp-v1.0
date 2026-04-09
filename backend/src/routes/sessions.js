@@ -14,12 +14,12 @@ router.get('/', authenticate, async (req, res) => {
         where,
         include: {
           zoneStays: {
-            where: { exitTime: null },
             include: { zone: true },
+            orderBy: { entryTime: 'desc' },
           },
           postStays: {
-            where: { endTime: null },
             include: { post: true },
+            orderBy: { startTime: 'desc' },
           },
         },
         orderBy: { entryTime: 'desc' },

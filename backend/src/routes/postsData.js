@@ -401,4 +401,115 @@ router.delete('/work-orders-crud/:id', async (req, res) => {
   }
 });
 
+// ─── GET /api/analytics-history — 30-day per-post analytics ───
+// Generated deterministically (seeded random) so it's consistent within a day.
+router.get('/analytics-history', async (req, res) => {
+  try {
+    const crypto = require('crypto');
+    function uuidSeed(seed) {
+      return crypto.createHash('md5').update(String(seed)).digest('hex');
+    }
+
+    const MOSCOW_OFFSET_MS = 3 * 60 * 60000;
+    const _now = new Date();
+    const NOW = new Date(_now.getTime() + (MOSCOW_OFFSET_MS + _now.getTimezoneOffset() * 60000));
+    const TODAY_BASE = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+
+    let _s = Math.floor(TODAY_BASE.getTime() / 86400000);
+    function sr() { _s = (_s * 16807 + 0) % 2147483647; return (_s - 1) / 2147483646; }
+    function rb(min, max) { return min + sr() * (max - min); }
+    function rt(n, d = 1) { return Math.round(n * (10 ** d)) / (10 ** d); }
+
+    const WORKERS_NAMES = [
+      'Павлович Сергей Леонидович', 'Романовский Денис Сергеевич',
+      'Филипеня Павел Григорьевич', 'Кондратенко Андрей Станиславович',
+      'Бортник Ярослав Константинович', 'Кендыш Александр Иванович',
+      'Швец Алексей Богданович', 'Воропай Александр Антонович',
+      'Бобров Александр Владимирович', 'Косачук Антон Николаевич',
+    ];
+    const MASTERS_NAMES = ['Крылатов Максим Геннадьевич', 'Эксузьян Андроник Андроникович', 'Прижилуцкий Юрий Анатольевич'];
+
+    function hourlyLoadBase(h, isWeekend) {
+      const curve = { 8: 0.35, 9: 0.55, 10: 0.78, 11: 0.85, 12: 0.75, 13: 0.55, 14: 0.72, 15: 0.80, 16: 0.70, 17: 0.55, 18: 0.40, 19: 0.25 };
+      return (curve[h] || 0.3) * (isWeekend ? 0.4 : 1.0);
+    }
+
+    const postTraits = Array.from({ length: 10 }, (_, i) => ({
+      occBase: 0.55 + (i % 3) * 0.1,
+      effBase: 0.60 + ((i + 1) % 4) * 0.08,
+      vehicleBase: i < 8 ? 4 : 3,
+    }));
+
+    const postTypes = { 0: 'heavy', 1: 'heavy', 2: 'heavy', 3: 'heavy', 4: 'light', 5: 'light', 6: 'light', 7: 'light', 8: 'special', 9: 'special' };
+
+    const posts = Array.from({ length: 10 }, (_, pi) => {
+      const trait = postTraits[pi];
+      const num = pi + 1;
+      const days = [];
+
+      for (let d = 29; d >= 0; d--) {
+        const day = new Date(TODAY_BASE);
+        day.setDate(day.getDate() - d);
+        const dateStr = day.toISOString().split('T')[0];
+        const dow = day.getDay();
+        const isWeekend = dow === 0 || dow === 6;
+
+        const dayNoise = rb(-0.1, 0.1);
+        const occ = Math.max(0.05, Math.min(0.98, trait.occBase + dayNoise + (isWeekend ? -0.3 : 0)));
+        const eff = Math.max(0.3, Math.min(0.98, trait.effBase + rb(-0.08, 0.08) + (isWeekend ? -0.15 : 0)));
+        const vehicles = isWeekend ? Math.max(1, Math.floor(trait.vehicleBase * 0.4 + rb(0, 1))) : Math.floor(trait.vehicleBase + rb(-1, 2));
+        const activeMin = rt(vehicles * rb(60, 120), 0);
+        const idleMin = rt(vehicles * rb(10, 40), 0);
+        const avgTime = vehicles > 0 ? Math.round(rb(45, 150)) : 0;
+        const avgWait = Math.round(rb(5, 35));
+        const workerPres = Math.max(0.5, Math.min(1, eff + rb(-0.05, 0.1)));
+        const plannedOrders = vehicles + Math.floor(rb(0, 2));
+        const completedOrders = Math.max(0, vehicles - Math.floor(rb(0, 1)));
+        const noShows = isWeekend ? 0 : (sr() > 0.8 ? 1 : 0);
+        const plannedH = rt(vehicles * rb(1.5, 2.5), 1);
+        const actualH = rt(plannedH * rb(0.85, 1.2), 1);
+
+        const hourly = [];
+        for (let h = 8; h <= 19; h++) {
+          const baseOcc = hourlyLoadBase(h, isWeekend);
+          const postOcc = Math.max(0, Math.min(1, baseOcc + (occ - 0.5) * 0.3 + rb(-0.1, 0.1)));
+          hourly.push({ hour: h, occupancy: rt(postOcc, 3), vehicles: postOcc > 0.5 ? 1 : (sr() > 0.5 ? 1 : 0) });
+        }
+
+        days.push({
+          date: dateStr, occupancyRate: rt(occ, 3), efficiency: rt(eff, 3),
+          vehicleCount: vehicles, avgTimePerVehicle: avgTime, avgWaitTime: avgWait,
+          activeMinutes: activeMin, idleMinutes: idleMin, workerPresence: rt(workerPres, 3),
+          plannedOrders, completedOrders, noShows, plannedHours: plannedH, actualHours: actualH, hourly,
+        });
+      }
+
+      return {
+        id: `post-${num}`, name: `Пост ${String(num).padStart(2, '0')}`, nameEn: `Post ${num}`,
+        type: postTypes[pi] || 'light',
+        worker: WORKERS_NAMES[pi % WORKERS_NAMES.length],
+        master: MASTERS_NAMES[pi % MASTERS_NAMES.length],
+        days,
+      };
+    });
+
+    const daily = [];
+    for (let d = 29; d >= 0; d--) {
+      const day = new Date(TODAY_BASE);
+      day.setDate(day.getDate() - d);
+      const dateStr = day.toISOString().split('T')[0];
+      let totalVehicles = 0, totalNoShows = 0;
+      posts.forEach(p => {
+        const dd = p.days.find(dd => dd.date === dateStr);
+        if (dd) { totalVehicles += dd.vehicleCount; totalNoShows += dd.noShows; }
+      });
+      daily.push({ date: dateStr, totalVehicles, totalNoShows });
+    }
+
+    res.json({ posts, daily });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

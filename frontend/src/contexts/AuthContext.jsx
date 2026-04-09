@@ -87,13 +87,9 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     get: async (url) => {
       try {
         return await request('GET', url);
-      } catch {
-        // Any error (401, network, backend down) — fallback to mock JSON
-        try {
-          const mockPath = urlToMockPath(url);
-          const data = await fetchJson(mockPath);
-          return { data };
-        } catch { return { data: null }; }
+      } catch (err) {
+        console.warn(`[API] GET ${url} failed:`, err.message);
+        return { data: null };
       }
     },
     post: (url, body) => request('POST', url, body),

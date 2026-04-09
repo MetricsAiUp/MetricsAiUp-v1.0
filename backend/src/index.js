@@ -115,9 +115,9 @@ server.listen(PORT, '0.0.0.0', () => {
   startReportScheduler();
 
   // Demo data auto-refresh: regenerate every 2 minutes so data "lives"
-  try { generateDemoData(); } catch (e) { console.error('[DemoGen] Initial run error:', e.message); }
+  generateDemoData().catch(e => console.error('[DemoGen] Initial run error:', e.message));
   setInterval(() => {
-    try { generateDemoData(); } catch (e) { console.error('[DemoGen] Refresh error:', e.message); }
+    generateDemoData().catch(e => console.error('[DemoGen] Refresh error:', e.message));
   }, 2 * 60 * 1000);
 });
 
