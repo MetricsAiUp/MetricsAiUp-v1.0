@@ -1,23 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity, Database, HardDrive, Camera, RefreshCw } from 'lucide-react';
+import { Activity, Database, HardDrive, Camera, RefreshCw, Wifi, WifiOff, Clock, Server, CircuitBoard } from 'lucide-react';
 
 function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (d > 0) return `${d}д ${h}ч ${m}м`;
+  if (h > 0) return `${h}ч ${m}м`;
+  return `${m}м`;
 }
 
-function StatusDot({ ok }) {
+function StatusBadge({ ok, label }) {
   return (
-    <span
-      className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
-      style={{ background: ok ? '#10b981' : '#ef4444' }}
-    />
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
+      style={{ background: ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: ok ? '#10b981' : '#ef4444' }}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: ok ? '#10b981' : '#ef4444' }} />
+      {label}
+    </span>
+  );
+}
+
+function MetricRow({ label, value, color }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span className="text-xs font-mono font-medium" style={{ color: color || 'var(--text-primary)' }}>{value}</span>
+    </div>
+  );
+}
+
+function ProgressBar({ percent, size = 'sm' }) {
+  const h = size === 'sm' ? 'h-1.5' : 'h-2.5';
+  const color = percent > 90 ? '#ef4444' : percent > 70 ? '#f59e0b' : '#10b981';
+  return (
+    <div className={`${h} w-full rounded-full overflow-hidden`} style={{ background: 'var(--bg-glass)' }}>
+      <div className={`${h} rounded-full transition-all duration-500`} style={{ width: `${percent}%`, background: color }} />
+    </div>
   );
 }
 
@@ -27,18 +47,15 @@ export default function Health() {
   const { user, api } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [spinning, setSpinning] = useState(false);
 
   const fetchHealth = useCallback(async () => {
+    setSpinning(true);
     try {
       const res = await api.get('/api/system-health');
       setData(res?.data || res);
-      setError(null);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch');
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* ignore */ }
+    finally { setLoading(false); setTimeout(() => setSpinning(false), 600); }
   }, [api]);
 
   useEffect(() => {
@@ -47,7 +64,6 @@ export default function Health() {
     return () => clearInterval(interval);
   }, [fetchHealth]);
 
-  // Admin-only check
   if (user?.role !== 'admin') {
     return (
       <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-muted)' }}>
@@ -59,204 +75,170 @@ export default function Health() {
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-muted)' }}>
-        {t('common.loading')}
+        <RefreshCw size={20} className="animate-spin mr-2" /> {t('common.loading')}
       </div>
     );
   }
 
   const mem = data?.backend?.memoryUsage;
-  const rssMB = mem ? (mem.rss / 1024 / 1024).toFixed(1) : '---';
-  const heapMB = mem ? (mem.heapUsed / 1024 / 1024).toFixed(1) : '---';
+  const rssMB = mem ? (mem.rss / 1024 / 1024).toFixed(0) : '—';
+  const heapMB = mem ? (mem.heapUsed / 1024 / 1024).toFixed(0) : '—';
+  const heapTotal = mem ? (mem.heapTotal / 1024 / 1024).toFixed(0) : 0;
+  const heapPercent = heapTotal > 0 ? Math.round((mem.heapUsed / mem.heapTotal) * 100) : 0;
+  const backendOk = data?.backend?.status === 'ok';
+  const dbOk = data?.database?.status === 'ok';
+  const onlineCams = Array.isArray(data?.cameras) ? data.cameras.filter(c => c.online).length : 0;
+  const totalCams = Array.isArray(data?.cameras) ? data.cameras.length : 0;
+  const diskPercent = data?.disk?.usagePercent || 0;
+  const diskUsed = data?.disk?.usedBytes ? (data.disk.usedBytes / 1073741824).toFixed(1) : '—';
+  const diskTotal = data?.disk?.totalBytes ? (data.disk.totalBytes / 1073741824).toFixed(0) : '—';
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-            <Activity size={20} style={{ color: 'var(--accent)' }} />
-            {t('health.title')}
+        <div className="flex items-center gap-2">
+          <Activity size={18} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+            {isRu ? 'Мониторинг системы' : 'System Monitor'}
           </h2>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {t('health.autoRefresh')}
-          </p>
         </div>
-        <button
-          onClick={fetchHealth}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm hover:opacity-80 transition-opacity"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
-        >
-          <RefreshCw size={14} />
+        <button onClick={fetchHealth}
+          className="p-2 rounded-lg hover:opacity-80 transition-all"
+          style={{ color: 'var(--text-muted)' }}>
+          <RefreshCw size={16} className={spinning ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      {error && (
-        <div className="p-3 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
-          {t('health.error')}: {error}
+      {/* Top row — main status indicators */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="glass px-3 py-2 flex items-center gap-2">
+          <Server size={14} style={{ color: backendOk ? '#10b981' : '#ef4444' }} />
+          <span className="text-sm font-bold" style={{ color: backendOk ? '#10b981' : '#ef4444' }}>
+            {backendOk ? 'Online' : 'Offline'}
+          </span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {data?.backend?.uptime ? formatUptime(data.backend.uptime) : ''}
+          </span>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {/* Backend card */}
-        <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <Activity size={18} style={{ color: 'var(--accent)' }} />
-            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{t('health.backend')}</span>
-            <StatusDot ok={data?.backend?.status === 'ok'} />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>{t('health.uptime')}</span>
-              <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{data?.backend?.uptime ? formatUptime(data.backend.uptime) : '---'}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>Version</span>
-              <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{data?.backend?.version || '---'}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>Node.js</span>
-              <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{data?.backend?.nodeVersion || '---'}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>RSS</span>
-              <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{rssMB} MB</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>Heap</span>
-              <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{heapMB} MB</span>
-            </div>
-          </div>
+        <div className="glass px-3 py-2 flex items-center gap-2">
+          <Database size={14} style={{ color: dbOk ? '#10b981' : '#ef4444' }} />
+          <span className="text-sm font-bold" style={{ color: dbOk ? '#10b981' : '#ef4444' }}>
+            {dbOk ? `${data.database.pingMs}ms` : 'Error'}
+          </span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{dbOk ? `${data.database.sizeMB} MB` : ''}</span>
         </div>
-
-        {/* Database card */}
-        <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <Database size={18} style={{ color: 'var(--accent)' }} />
-            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{t('health.database')}</span>
-            <StatusDot ok={data?.database?.status === 'ok'} />
-          </div>
-          {data?.database?.status === 'ok' ? (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'var(--text-muted)' }}>{t('health.ping')}</span>
-                <span className="font-mono" style={{ color: data.database.pingMs < 10 ? '#10b981' : data.database.pingMs < 50 ? '#f59e0b' : '#ef4444' }}>
-                  {data.database.pingMs}ms
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'var(--text-muted)' }}>{t('health.size')}</span>
-                <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{data.database.sizeMB} MB</span>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm" style={{ color: '#ef4444' }}>{data?.database?.error || t('health.error')}</div>
-          )}
+        <div className="glass px-3 py-2 flex items-center gap-2">
+          <Camera size={14} style={{ color: onlineCams > 0 ? '#10b981' : 'var(--text-muted)' }} />
+          <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{onlineCams}/{totalCams}</span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'камер' : 'cameras'}</span>
         </div>
-
-        {/* Cameras card */}
-        <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <Camera size={18} style={{ color: 'var(--accent)' }} />
-            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{t('health.cameras')}</span>
-          </div>
-          {Array.isArray(data?.cameras) ? (
-            <div className="space-y-1.5">
-              {data.cameras.map(cam => (
-                <div key={cam.id} className="flex items-center gap-2 text-sm">
-                  <StatusDot ok={cam.online} />
-                  <span className="flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{cam.id}</span>
-                  <span className="text-xs" style={{ color: cam.online ? '#10b981' : '#ef4444' }}>
-                    {cam.online ? t('health.online') : t('health.offline')}
-                  </span>
-                </div>
-              ))}
-              {data.cameras.length === 0 && (
-                <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('common.noData')}</div>
-              )}
-            </div>
-          ) : (
-            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('common.noData')}</div>
-          )}
+        <div className="glass px-3 py-2 flex items-center gap-2">
+          <HardDrive size={14} style={{ color: diskPercent > 90 ? '#ef4444' : diskPercent > 70 ? '#f59e0b' : '#10b981' }} />
+          <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{diskPercent}%</span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{diskUsed}/{diskTotal} GB</span>
         </div>
+      </div>
 
-        {/* 1C Sync card */}
-        <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <RefreshCw size={18} style={{ color: 'var(--accent)' }} />
-            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{t('health.sync1c')}</span>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>{t('health.lastSync')}</span>
-              <span className="font-mono text-xs" style={{ color: 'var(--text-primary)' }}>
-                {data?.sync1c?.lastSyncAt
-                  ? new Date(data.sync1c.lastSyncAt).toLocaleString(isRu ? 'ru-RU' : 'en-US')
-                  : t('health.never')
-                }
+      {/* Detail cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+        {/* Backend + Memory */}
+        <div className="glass p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Server size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Бэкенд' : 'Backend'}
               </span>
             </div>
-            {data?.sync1c?.status && data.sync1c.status !== 'never' && (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span style={{ color: 'var(--text-muted)' }}>{isRu ? 'Статус' : 'Status'}</span>
-                  <StatusDot ok={data.sync1c.status === 'success'} />
-                </div>
-                {data.sync1c.records != null && (
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: 'var(--text-muted)' }}>{isRu ? 'Записей' : 'Records'}</span>
-                    <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{data.sync1c.records}</span>
-                  </div>
-                )}
-                {data.sync1c.errors > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: 'var(--text-muted)' }}>{isRu ? 'Ошибок' : 'Errors'}</span>
-                    <span className="font-mono" style={{ color: '#ef4444' }}>{data.sync1c.errors}</span>
-                  </div>
-                )}
-              </>
-            )}
+            <StatusBadge ok={backendOk} label={backendOk ? 'OK' : 'Error'} />
+          </div>
+          <div className="divide-y" style={{ borderColor: 'var(--border-glass)' }}>
+            <MetricRow label={isRu ? 'Аптайм' : 'Uptime'} value={data?.backend?.uptime ? formatUptime(data.backend.uptime) : '—'} />
+            <MetricRow label="Node.js" value={data?.backend?.nodeVersion || '—'} />
+            <MetricRow label="RSS" value={`${rssMB} MB`} />
+            <MetricRow label="Heap" value={`${heapMB} / ${heapTotal} MB`} />
+          </div>
+          <ProgressBar percent={heapPercent} />
+          <div className="text-[10px] text-right" style={{ color: 'var(--text-muted)' }}>
+            Heap: {heapPercent}%
           </div>
         </div>
 
-        {/* Disk card */}
-        <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <HardDrive size={18} style={{ color: 'var(--accent)' }} />
-            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{t('health.disk')}</span>
+        {/* Cameras */}
+        <div className="glass p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Camera size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Камеры' : 'Cameras'}
+              </span>
+            </div>
+            <StatusBadge ok={onlineCams === totalCams && totalCams > 0} label={`${onlineCams}/${totalCams}`} />
           </div>
-          {data?.disk?.usagePercent != null ? (
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'var(--text-muted)' }}>{t('health.used')}</span>
-                <span className="font-mono" style={{ color: 'var(--text-primary)' }}>
-                  {((data.disk.usedBytes || 0) / 1073741824).toFixed(1)} GB
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span style={{ color: 'var(--text-muted)' }}>{t('health.available')}</span>
-                <span className="font-mono" style={{ color: 'var(--text-primary)' }}>
-                  {((data.disk.availableBytes || 0) / 1073741824).toFixed(1)} GB
-                </span>
-              </div>
-              {/* Progress bar */}
-              <div>
-                <div className="h-3 rounded-full overflow-hidden" style={{ background: 'var(--bg-glass)' }}>
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${data.disk.usagePercent}%`,
-                      background: data.disk.usagePercent > 90 ? '#ef4444' : data.disk.usagePercent > 70 ? '#f59e0b' : '#10b981',
-                    }}
-                  />
+          {totalCams > 0 ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              {data.cameras.map(cam => (
+                <div key={cam.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
+                  style={{ background: cam.online ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.06)' }}>
+                  {cam.online ? <Wifi size={11} style={{ color: '#10b981' }} /> : <WifiOff size={11} style={{ color: '#ef4444' }} />}
+                  <span style={{ color: cam.online ? '#10b981' : 'var(--text-muted)' }}>{cam.id}</span>
                 </div>
-                <div className="text-xs text-right mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {data.disk.usagePercent}%
-                </div>
-              </div>
+              ))}
             </div>
           ) : (
-            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('common.noData')}</div>
+            <div className="text-xs py-4 text-center" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Нет данных' : 'No data'}</div>
           )}
+        </div>
+
+        {/* Disk */}
+        <div className="glass p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <HardDrive size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Диск' : 'Disk'}
+              </span>
+            </div>
+            <StatusBadge ok={diskPercent < 80} label={`${diskPercent}%`} />
+          </div>
+          <ProgressBar percent={diskPercent} size="lg" />
+          <div className="flex items-center justify-between">
+            <MetricRow label={isRu ? 'Использовано' : 'Used'} value={`${diskUsed} GB`} />
+            <MetricRow label={isRu ? 'Всего' : 'Total'} value={`${diskTotal} GB`} />
+          </div>
+        </div>
+
+        {/* 1C Sync */}
+        <div className="glass p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={16} style={{ color: 'var(--accent)' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {isRu ? 'Синхронизация 1С' : '1C Sync'}
+              </span>
+            </div>
+            {data?.sync1c?.status && data.sync1c.status !== 'never' ? (
+              <StatusBadge ok={data.sync1c.status === 'success'} label={data.sync1c.status === 'success' ? 'OK' : 'Error'} />
+            ) : (
+              <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Никогда' : 'Never'}</span>
+            )}
+          </div>
+          <div className="divide-y" style={{ borderColor: 'var(--border-glass)' }}>
+            <MetricRow
+              label={isRu ? 'Последняя синхронизация' : 'Last sync'}
+              value={data?.sync1c?.lastSyncAt
+                ? new Date(data.sync1c.lastSyncAt).toLocaleString(isRu ? 'ru-RU' : 'en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                : '—'}
+            />
+            {data?.sync1c?.records != null && (
+              <MetricRow label={isRu ? 'Записей' : 'Records'} value={data.sync1c.records} />
+            )}
+            {data?.sync1c?.errors > 0 && (
+              <MetricRow label={isRu ? 'Ошибок' : 'Errors'} value={data.sync1c.errors} color="#ef4444" />
+            )}
+          </div>
         </div>
       </div>
     </div>
