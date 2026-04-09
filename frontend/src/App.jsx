@@ -25,6 +25,9 @@ const MapViewer = lazy(() => import('./pages/MapViewer'));
 const Shifts = lazy(() => import('./pages/Shifts'));
 const Audit = lazy(() => import('./pages/Audit'));
 const MyPost = lazy(() => import('./pages/MyPost'));
+const Health = lazy(() => import('./pages/Health'));
+const WorkerStats = lazy(() => import('./pages/WorkerStats'));
+const ReportSchedule = lazy(() => import('./pages/ReportSchedule'));
 
 function PageLoader() {
   return (
@@ -71,6 +74,9 @@ function AppRoutes() {
           <Route path="shifts" element={<Shifts />} />
           <Route path="audit" element={<Audit />} />
           <Route path="my-post" element={<MyPost />} />
+          <Route path="health" element={<Health />} />
+          <Route path="worker-stats/:workerName" element={<WorkerStats />} />
+          <Route path="report-schedule" element={<ReportSchedule />} />
         </Route>
       </Routes>
     </Suspense>

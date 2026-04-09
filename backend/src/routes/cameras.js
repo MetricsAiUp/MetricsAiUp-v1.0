@@ -4,6 +4,12 @@ const { authenticate, requirePermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { createCameraSchema, updateCameraSchema, setCameraZonesSchema } = require('../schemas/cameras');
 
+// GET /api/cameras/health — camera online statuses
+router.get('/health', authenticate, async (req, res) => {
+  const { getCameraStatuses } = require('../services/cameraHealthCheck');
+  res.json(getCameraStatuses());
+});
+
 // GET /api/cameras — list all active cameras with zone mappings
 router.get('/', authenticate, async (req, res) => {
   try {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Clock, ChevronLeft, ChevronRight, Plus, Users, Wrench,
@@ -422,7 +423,14 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
                       <td className="px-3 py-2" style={{ color: 'var(--text-primary)' }}>
                         <div className="flex items-center gap-1.5">
                           <RoleIcon size={12} style={{ color: 'var(--accent)' }} />
-                          {w.name}
+                          <Link
+                            to={`/worker-stats/${encodeURIComponent(w.name)}`}
+                            className="hover:underline"
+                            style={{ color: 'var(--accent)' }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            {w.name}
+                          </Link>
                         </div>
                       </td>
                       <td className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>
@@ -484,6 +492,7 @@ export default function Shifts() {
   const [showForm, setShowForm] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
   const [showHandover, setShowHandover] = useState(null);
+  const [conflictModal, setConflictModal] = useState(null);
 
   // Load shifts data
   useEffect(() => {
@@ -520,13 +529,43 @@ export default function Shifts() {
 
   const todayKey = formatDateKey(new Date());
 
+  // Conflict detection (client-side)
+  function detectClientConflicts(form) {
+    const conflicts = [];
+    // Duplicate workers on different posts in same shift
+    const nameMap = {};
+    for (const w of (form.workers || [])) {
+      if (nameMap[w.name] && w.postId && nameMap[w.name] !== w.postId) {
+        conflicts.push({ type: 'same_shift_duplicate', workerName: w.name, post1: nameMap[w.name], post2: w.postId });
+      }
+      if (w.postId) nameMap[w.name] = w.postId;
+    }
+    // Cross-shift conflicts on same day
+    const sameDayShifts = allShifts.filter(s => {
+      if (editingShift && s.id === editingShift.id) return false;
+      return s.date === form.date;
+    });
+    for (const w of (form.workers || [])) {
+      for (const es of sameDayShifts) {
+        const overlap = form.startTime < es.endTime && form.endTime > es.startTime;
+        if (overlap && es.workers?.some(ew => ew.name === w.name)) {
+          conflicts.push({
+            type: 'cross_shift_overlap',
+            workerName: w.name,
+            conflictingShiftName: es.name,
+            conflictingTime: `${es.startTime}-${es.endTime}`,
+          });
+        }
+      }
+    }
+    return conflicts;
+  }
+
   // CRUD
-  const handleSave = (form) => {
+  const doSave = (form) => {
     if (editingShift) {
-      // Update
       setAllShifts(prev => prev.map(s => s.id === editingShift.id ? { ...s, ...form } : s));
     } else {
-      // Create
       const newShift = {
         ...form,
         id: `shift-${Date.now()}`,
@@ -535,14 +574,22 @@ export default function Shifts() {
       };
       setAllShifts(prev => [...prev, newShift]);
     }
-    // Persist to localStorage
     const updated = editingShift
       ? allShifts.map(s => s.id === editingShift.id ? { ...s, ...form } : s)
       : [...allShifts, { ...form, id: `shift-${Date.now()}`, workOrdersCount: 0, completedCount: 0 }];
     localStorage.setItem('shiftsData', JSON.stringify({ shifts: updated }));
-
     setShowForm(false);
     setEditingShift(null);
+    setConflictModal(null);
+  };
+
+  const handleSave = (form) => {
+    const conflicts = detectClientConflicts(form);
+    if (conflicts.length > 0) {
+      setConflictModal({ conflicts, form });
+      return;
+    }
+    doSave(form);
   };
 
   const handleDelete = (shiftId) => {
@@ -753,6 +800,53 @@ export default function Shifts() {
           t={t}
           isRu={isRu}
         />
+      )}
+
+      {/* Conflict detection modal */}
+      {conflictModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div
+            className="w-full max-w-md rounded-2xl p-5 space-y-4"
+            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={18} style={{ color: 'var(--warning)' }} />
+              <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                {t('shifts.conflictDetected')}
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {conflictModal.conflicts.map((c, i) => (
+                <div key={i} className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid var(--warning)' }}>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{c.workerName}</span>
+                  {' '}
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    {c.type === 'same_shift_duplicate'
+                      ? `${t('shifts.duplicateWorker')}: ${c.post1} / ${c.post2}`
+                      : `${t('shifts.crossShiftConflict')} "${c.conflictingShiftName}" (${c.conflictingTime})`
+                    }
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setConflictModal(null)}
+                className="px-4 py-1.5 rounded-xl text-sm"
+                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+              >
+                {t('shifts.fixConflicts')}
+              </button>
+              <button
+                onClick={() => doSave(conflictModal.form)}
+                className="px-4 py-1.5 rounded-xl text-sm font-medium"
+                style={{ background: 'var(--warning)', color: '#fff' }}
+              >
+                {t('shifts.saveAnyway')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

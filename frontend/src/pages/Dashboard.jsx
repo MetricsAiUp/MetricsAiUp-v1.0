@@ -6,6 +6,8 @@ import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
 import { translateZone } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import PredictionWidget from '../components/PredictionWidget';
+import LiveSTOWidget from '../components/LiveSTOWidget';
+import SparkLine from '../components/SparkLine';
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
@@ -20,15 +22,20 @@ const EVENT_TYPES = {
   work_idle: { ru: 'Простой', en: 'Idle' },
 };
 
-function StatCard({ icon: Icon, label, value, color }) {
+function StatCard({ icon: Icon, label, value, color, sparkData, sparkKey }) {
   return (
     <div className="glass p-3 flex items-center gap-3">
       <div className="p-1.5 rounded-lg" style={{ background: color + '15' }}>
         <Icon size={16} style={{ color }} />
       </div>
-      <div>
+      <div className="flex-1 min-w-0">
         <span className="text-xl font-bold" style={{ color }}>{value}</span>
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
+        {sparkData && sparkKey && (
+          <div className="mt-1">
+            <SparkLine data={sparkData} dataKey={sparkKey} color={color} height={24} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -75,6 +82,7 @@ export default function Dashboard() {
   const [recommendations, setRecommendations] = useState([]);
   const [events, setEvents] = useState([]);
   const [eventFilter, setEventFilter] = useState('all');
+  const [trends, setTrends] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -86,6 +94,7 @@ export default function Dashboard() {
       setOverview(ovRes.data);
       setRecommendations(recRes.data);
       setEvents(evRes.data.events || []);
+      api.get('/api/dashboard/trends').then(r => setTrends(r.data || [])).catch(() => {});
     } catch (err) {
       console.error('Dashboard fetch error:', err);
     }
@@ -120,26 +129,37 @@ export default function Dashboard() {
           label={t('dashboard.activeSessions')}
           value={overview?.activeSessions || 0}
           color="var(--accent)"
+          sparkData={trends}
+          sparkKey="activeSessions"
         />
         <StatCard
           icon={CircleCheck}
           label={t('dashboard.freePosts')}
           value={freePostsCount}
           color="var(--success)"
+          sparkData={trends}
+          sparkKey="occupiedPosts"
         />
         <StatCard
           icon={Wrench}
           label={t('dashboard.occupiedPosts')}
           value={occupiedCount}
           color="var(--warning)"
+          sparkData={trends}
+          sparkKey="postStays"
         />
         <StatCard
           icon={Lightbulb}
           label={t('dashboard.recommendations')}
           value={overview?.activeRecommendations || 0}
           color="var(--info)"
+          sparkData={trends}
+          sparkKey="recommendations"
         />
       </div>
+
+      {/* Live STO Widget */}
+      <LiveSTOWidget />
 
       {/* ML Predictions */}
       <PredictionWidget />

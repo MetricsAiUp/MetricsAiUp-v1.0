@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bell, X, AlertTriangle, Clock, Car, Settings, Check, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { usePolling } from '../hooks/useSocket';
+import { useSocket } from '../hooks/useSocket';
 
 const STORAGE_KEY = 'notificationCenter';
 const MAX_NOTIFICATIONS = 50;
@@ -74,51 +74,49 @@ export default function NotificationCenter() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Poll recommendations for new critical events
-  const checkRecommendations = useCallback(async () => {
-    try {
-      const { data } = await api.get('/api/recommendations');
+  const seenIdsRef = useRef(new Set());
+
+  // Initial fetch of existing recommendations on mount
+  useEffect(() => {
+    api.get('/api/recommendations').then(({ data }) => {
       if (!data || !Array.isArray(data)) return;
+      // Mark existing ones as seen to avoid duplicates
+      data.forEach(rec => seenIdsRef.current.add(rec.id));
+      lastCheckRef.current = Date.now();
+    }).catch(() => {});
+  }, []);
 
-      const newOnes = data.filter(rec => {
-        const recTime = new Date(rec.createdAt || rec.created_at).getTime();
-        if (recTime <= lastCheckRef.current) return false;
-        if (!enabledTypes[rec.type]) return false;
-        return true;
-      });
+  // Live Socket.IO listener for new recommendations
+  const handleSocketRecommendation = useCallback((rec) => {
+    if (!rec || seenIdsRef.current.has(rec.id)) return;
+    seenIdsRef.current.add(rec.id);
 
-      if (newOnes.length > 0) {
-        lastCheckRef.current = Date.now();
-        const newNotifs = newOnes.map(rec => ({
-          id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          type: rec.type,
-          message: isRu ? rec.message : (rec.messageEn || rec.message),
-          postId: rec.postId,
-          zoneId: rec.zoneId,
-          time: new Date().toISOString(),
-          read: false,
-        }));
+    if (!enabledTypes[rec.type]) return;
 
-        setState(prev => ({
-          ...prev,
-          notifications: [...newNotifs, ...prev.notifications].slice(0, MAX_NOTIFICATIONS),
-        }));
+    const notif = {
+      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      type: rec.type,
+      message: isRu ? rec.message : (rec.messageEn || rec.message),
+      postId: rec.postId,
+      zoneId: rec.zoneId,
+      time: new Date().toISOString(),
+      read: false,
+    };
 
-        // Show toast for critical notifications
-        const critical = newNotifs.find(n => {
-          const typeInfo = NOTIFICATION_TYPES[n.type];
-          return typeInfo?.severity === 'critical';
-        });
-        if (critical) {
-          setToast(critical);
-          if (soundEnabled) playNotificationSound();
-          setTimeout(() => setToast(null), 5000);
-        }
-      }
-    } catch { /* ignore */ }
-  }, [api, enabledTypes, soundEnabled, isRu]);
+    setState(prev => ({
+      ...prev,
+      notifications: [notif, ...prev.notifications].slice(0, MAX_NOTIFICATIONS),
+    }));
 
-  usePolling(checkRecommendations, 10000);
+    const typeInfo = NOTIFICATION_TYPES[rec.type];
+    if (typeInfo?.severity === 'critical') {
+      setToast(notif);
+      if (soundEnabled) playNotificationSound();
+      setTimeout(() => setToast(null), 5000);
+    }
+  }, [enabledTypes, soundEnabled, isRu]);
+
+  useSocket('recommendation', handleSocketRecommendation);
 
   const playNotificationSound = () => {
     try {

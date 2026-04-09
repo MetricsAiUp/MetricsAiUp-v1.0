@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Shield, Search, ChevronLeft, ChevronRight, Filter, Download } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
 const ACTION_COLORS = {
@@ -35,6 +35,8 @@ export default function Audit() {
   const [filterUser, setFilterUser] = useState('');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -51,6 +53,14 @@ export default function Audit() {
     if (filterAction) result = result.filter(l => l.action === filterAction);
     if (filterEntity) result = result.filter(l => l.entity === filterEntity);
     if (filterUser) result = result.filter(l => l.userName?.toLowerCase().includes(filterUser.toLowerCase()));
+    if (dateFrom || dateTo) {
+      result = result.filter(l => {
+        const t = new Date(l.createdAt).getTime();
+        if (dateFrom && t < new Date(dateFrom).getTime()) return false;
+        if (dateTo && t > new Date(dateTo + 'T23:59:59').getTime()) return false;
+        return true;
+      });
+    }
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(l =>
@@ -63,13 +73,35 @@ export default function Audit() {
       );
     }
     return result;
-  }, [logs, filterAction, filterEntity, filterUser, search]);
+  }, [logs, filterAction, filterEntity, filterUser, search, dateFrom, dateTo]);
 
   const paginated = filtered.slice(page * perPage, (page + 1) * perPage);
   const totalPages = Math.ceil(filtered.length / perPage);
 
   const uniqueEntities = [...new Set(logs.map(l => l.entity))];
   const uniqueUsers = [...new Set(logs.map(l => l.userName).filter(Boolean))];
+
+  const handleExportCSV = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filterAction) params.set('action', filterAction);
+      if (filterEntity) params.set('entity', filterEntity);
+      if (dateFrom) params.set('from', dateFrom);
+      if (dateTo) params.set('to', dateTo);
+      const res = await api.get(`/api/audit-log/export-csv?${params.toString()}`, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('CSV export failed:', err);
+    }
+  };
 
   // Access control: admin only
   if (user?.role !== 'admin') {
@@ -142,6 +174,24 @@ export default function Audit() {
           <option value="">{isRu ? 'Все пользователи' : 'All users'}</option>
           {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
         </select>
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('audit.dateFrom')}</label>
+          <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(0); }}
+            className="px-2 py-1.5 rounded-lg text-xs border outline-none"
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('audit.dateTo')}</label>
+          <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(0); }}
+            className="px-2 py-1.5 rounded-lg text-xs border outline-none"
+            style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+        </div>
+        <button onClick={handleExportCSV}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all hover:opacity-80"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }}>
+          <Download size={14} />
+          {t('audit.exportCsv')}
+        </button>
       </div>
 
       {/* Table */}

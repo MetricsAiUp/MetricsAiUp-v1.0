@@ -250,12 +250,14 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
   );
 }
 
-function CameraIcon({ cam, isDark, isRu, onClick }) {
+function CameraIcon({ cam, isDark, isRu, onClick, online }) {
   const label = (isRu ? 'КАМ' : 'CAM') + cam.num;
+  const camColor = online === true ? '#10b981' : online === false ? '#94a3b8' : '#ef4444';
+  const camOpacity = online === false ? 0.5 : 1;
   return (
-    <Group x={cam.x} y={cam.y} onClick={() => onClick?.(cam.num)} onTap={() => onClick?.(cam.num)}>
-      <Circle radius={8} fill={isDark ? '#334155' : '#e2e8f0'} stroke="#ef4444" strokeWidth={1.5} />
-      <Circle radius={3} fill="#ef4444" />
+    <Group x={cam.x} y={cam.y} onClick={() => onClick?.(cam.num)} onTap={() => onClick?.(cam.num)} opacity={camOpacity}>
+      <Circle radius={8} fill={isDark ? '#334155' : '#e2e8f0'} stroke={camColor} strokeWidth={1.5} />
+      <Circle radius={3} fill={camColor} />
       <Text
         x={-20} y={10}
         width={40}
@@ -276,7 +278,7 @@ function CameraIcon({ cam, isDark, isRu, onClick }) {
   );
 }
 
-export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark = true, dashboardData = null, bgImageOpacity }) {
+export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark = true, dashboardData = null, bgImageOpacity, cameraStatuses = {} }) {
   const { i18n } = useTranslation();
   const containerRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 860, height: 460 });
@@ -404,9 +406,13 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
           })}
 
           {/* Cameras */}
-          {MAP_LAYOUT.cameras.map(cam => (
-            <CameraIcon key={cam.key} cam={cam} isDark={isDark} isRu={isRu} onClick={onCameraClick} />
-          ))}
+          {MAP_LAYOUT.cameras.map(cam => {
+            const camStatus = cameraStatuses[cam.key];
+            return (
+              <CameraIcon key={cam.key} cam={cam} isDark={isDark} isRu={isRu} onClick={onCameraClick}
+                online={camStatus?.online} />
+            );
+          })}
 
           {/* Entry arrows inside entry zone */}
           <Arrow

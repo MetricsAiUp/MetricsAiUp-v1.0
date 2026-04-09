@@ -5,8 +5,10 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, Legend, CartesianGrid, Area, AreaChart,
 } from 'recharts';
-import { FileSpreadsheet, FileText } from 'lucide-react';
+import { FileSpreadsheet, FileText, ArrowLeftRight } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import DeltaBadge from '../components/DeltaBadge';
+import WeeklyHeatmap from '../components/WeeklyHeatmap';
 import { exportToXlsx, exportToPdf, downloadChartAsPng } from '../utils/export';
 
 const POST_COLORS = ['#6366f1', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
@@ -53,6 +55,7 @@ export default function Analytics() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [ctxMenu, setCtxMenu] = useState(null);
   const [exporting, setExporting] = useState(null);
+  const [compareMode, setCompareMode] = useState(false);
 
   const containerRef = useRef(null);
   const chartRefs = useRef({});
@@ -151,6 +154,44 @@ export default function Analytics() {
     };
   }, [postSummaries]);
 
+  // Previous period data for comparison
+  const prevPostSummaries = useMemo(() => {
+    if (!compareMode || !history?.posts) return [];
+    return history.posts.map((post) => {
+      const days = post.days.slice(-periodDays * 2, -periodDays);
+      if (!days.length) return null;
+      const workDays = days.filter(d => d.vehicleCount > 0).length || 1;
+      return {
+        avgOccupancy: +(days.reduce((s, d) => s + d.occupancyRate, 0) / days.length * 100).toFixed(1),
+        avgEfficiency: +(days.reduce((s, d) => s + d.efficiency, 0) / days.length * 100).toFixed(1),
+        totalVehicles: days.reduce((s, d) => s + d.vehicleCount, 0),
+        totalActiveH: +(days.reduce((s, d) => s + d.activeMinutes, 0) / 60).toFixed(1),
+        totalIdleH: +(days.reduce((s, d) => s + d.idleMinutes, 0) / 60).toFixed(1),
+        totalNoShows: days.reduce((s, d) => s + d.noShows, 0),
+      };
+    }).filter(Boolean);
+  }, [compareMode, history, periodDays]);
+
+  const deltas = useMemo(() => {
+    if (!compareMode || !prevPostSummaries.length) return {};
+    const prev = {
+      avgOccupancy: +(prevPostSummaries.reduce((s, p) => s + p.avgOccupancy, 0) / prevPostSummaries.length).toFixed(1),
+      avgEfficiency: +(prevPostSummaries.reduce((s, p) => s + p.avgEfficiency, 0) / prevPostSummaries.length).toFixed(1),
+      totalVehicles: prevPostSummaries.reduce((s, p) => s + p.totalVehicles, 0),
+      totalActiveH: +(prevPostSummaries.reduce((s, p) => s + p.totalActiveH, 0)).toFixed(1),
+      totalIdleH: +(prevPostSummaries.reduce((s, p) => s + p.totalIdleH, 0)).toFixed(1),
+      totalNoShows: prevPostSummaries.reduce((s, p) => s + p.totalNoShows, 0),
+    };
+    return {
+      avgOccupancy: +(totals.avgOccupancy - prev.avgOccupancy).toFixed(1),
+      avgEfficiency: +(totals.avgEfficiency - prev.avgEfficiency).toFixed(1),
+      totalVehicles: totals.totalVehicles - prev.totalVehicles,
+      totalActiveH: +(totals.totalActiveH - prev.totalActiveH).toFixed(1),
+      totalIdleH: +(totals.totalIdleH - prev.totalIdleH).toFixed(1),
+      totalNoShows: totals.totalNoShows - prev.totalNoShows,
+    };
+  }, [compareMode, prevPostSummaries, totals]);
+
   // Data for occupancy pie chart
   const pieData = postSummaries.map(p => ({ name: p.name, value: p.avgOccupancy }));
 
@@ -211,6 +252,25 @@ export default function Analytics() {
       return { id: post.id, name: isRu ? post.name : post.nameEn, hours, color: POST_COLORS[pi] };
     });
   }, [filteredPosts, isRu]);
+
+  // Weekly heatmap data: aggregate by day of week
+  const weeklyHeatmapData = useMemo(() => {
+    if (!filteredPosts.length) return [];
+    const grid = Array.from({ length: 7 }, () => Array.from({ length: 12 }, () => ({ sum: 0, count: 0 })));
+    filteredPosts.forEach(post => {
+      post.days.forEach(day => {
+        const dow = (new Date(day.date).getDay() + 6) % 7;
+        (day.hourly || []).forEach(h => {
+          const hi = h.hour - 8;
+          if (hi >= 0 && hi < 12) { grid[dow][hi].sum += h.occupancy; grid[dow][hi].count++; }
+        });
+      });
+    });
+    return grid.map((row, dow) => ({
+      dayIndex: dow,
+      hours: row.map((cell, hi) => ({ hour: hi + 8, avgOccupancy: cell.count > 0 ? Math.round(cell.sum / cell.count * 100) : 0 })),
+    }));
+  }, [filteredPosts]);
 
   // Selected post detail
   const selPost = selectedPost ? filteredPosts.find(p => p.id === selectedPost) : null;
@@ -319,17 +379,31 @@ export default function Analytics() {
               {p.label}
             </button>
           ))}
+          <div className="w-px h-6" style={{ background: 'var(--border-glass)' }} />
+          <button
+            onClick={() => setCompareMode(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all"
+            style={{
+              background: compareMode ? 'var(--accent)' : 'var(--bg-glass)',
+              color: compareMode ? 'white' : 'var(--text-secondary)',
+              border: `1px solid ${compareMode ? 'var(--accent)' : 'var(--border-glass)'}`,
+            }}
+            title={t('analytics.vsPrevPeriod')}
+          >
+            <ArrowLeftRight size={14} />
+            <span className="hidden sm:inline">{t('analytics.compare')}</span>
+          </button>
         </div>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-        <StatCard label={isRu ? 'Ср. занятость' : 'Avg Occupancy'} value={`${totals.avgOccupancy}%`} color="#6366f1" />
-        <StatCard label={isRu ? 'Ср. эффективность' : 'Avg Efficiency'} value={`${totals.avgEfficiency}%`} color={totals.avgEfficiency >= 70 ? '#10b981' : '#f59e0b'} />
-        <StatCard label={isRu ? 'Всего авто' : 'Total Vehicles'} value={totals.totalVehicles} color="#3b82f6" />
-        <StatCard label={isRu ? 'Активных часов' : 'Active Hours'} value={totals.totalActiveH} color="#10b981" />
-        <StatCard label={isRu ? 'Часов простоя' : 'Idle Hours'} value={totals.totalIdleH} color="#ef4444" />
-        <StatCard label={isRu ? 'No-show' : 'No-show'} value={totals.totalNoShows} color="#f59e0b" />
+        <StatCard label={isRu ? 'Ср. занятость' : 'Avg Occupancy'} value={`${totals.avgOccupancy}%`} color="#6366f1" sub={compareMode && deltas.avgOccupancy !== undefined ? <DeltaBadge value={deltas.avgOccupancy} /> : undefined} />
+        <StatCard label={isRu ? 'Ср. эффективность' : 'Avg Efficiency'} value={`${totals.avgEfficiency}%`} color={totals.avgEfficiency >= 70 ? '#10b981' : '#f59e0b'} sub={compareMode && deltas.avgEfficiency !== undefined ? <DeltaBadge value={deltas.avgEfficiency} /> : undefined} />
+        <StatCard label={isRu ? 'Всего авто' : 'Total Vehicles'} value={totals.totalVehicles} color="#3b82f6" sub={compareMode && deltas.totalVehicles !== undefined ? <DeltaBadge value={deltas.totalVehicles} suffix="" /> : undefined} />
+        <StatCard label={isRu ? 'Активных часов' : 'Active Hours'} value={totals.totalActiveH} color="#10b981" sub={compareMode && deltas.totalActiveH !== undefined ? <DeltaBadge value={deltas.totalActiveH} suffix="h" /> : undefined} />
+        <StatCard label={isRu ? 'Часов простоя' : 'Idle Hours'} value={totals.totalIdleH} color="#ef4444" sub={compareMode && deltas.totalIdleH !== undefined ? <DeltaBadge value={deltas.totalIdleH} suffix="h" inverse /> : undefined} />
+        <StatCard label={isRu ? 'No-show' : 'No-show'} value={totals.totalNoShows} color="#f59e0b" sub={compareMode && deltas.totalNoShows !== undefined ? <DeltaBadge value={deltas.totalNoShows} suffix="" inverse /> : undefined} />
       </div>
 
       {/* Row 1: Occupancy trend + Vehicles trend */}
@@ -528,6 +602,13 @@ export default function Analytics() {
               </div>
             ))}
           </div>
+        </ChartCard>
+      )}
+
+      {/* Weekly Heatmap */}
+      {weeklyHeatmapData.length > 0 && (
+        <ChartCard title={t('analytics.weeklyHeatmapTitle')}>
+          <WeeklyHeatmap data={weeklyHeatmapData} isRu={isRu} />
         </ChartCard>
       )}
 

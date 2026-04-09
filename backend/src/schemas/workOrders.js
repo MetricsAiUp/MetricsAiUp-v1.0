@@ -16,6 +16,7 @@ const scheduleSchema = z.object({
     postId: z.string().min(1),
     startTime: z.string().min(1),
     endTime: z.string().min(1),
+    version: z.number().int().optional().nullable(),
   })).min(1),
 });
 

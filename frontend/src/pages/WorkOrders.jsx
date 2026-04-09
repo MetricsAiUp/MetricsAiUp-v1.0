@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import HelpButton from '../components/HelpButton';
+import DateRangePicker from '../components/DateRangePicker';
 
 export default function WorkOrders() {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,8 @@ export default function WorkOrders() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('scheduledTime');
   const [sortDir, setSortDir] = useState('desc');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const fetchOrders = () => {
     api.get('/api/work-orders')
@@ -48,6 +51,13 @@ export default function WorkOrders() {
     return orders
       .filter(o => statusFilter === 'all' || o.status === statusFilter)
       .filter(o => {
+        if (!dateFrom && !dateTo) return true;
+        const t = new Date(o.scheduledTime).getTime();
+        if (dateFrom && t < new Date(dateFrom).getTime()) return false;
+        if (dateTo && t > new Date(dateTo + 'T23:59:59').getTime()) return false;
+        return true;
+      })
+      .filter(o => {
         if (!search) return true;
         const q = search.toLowerCase();
         return (o.orderNumber || '').toLowerCase().includes(q) ||
@@ -76,7 +86,7 @@ export default function WorkOrders() {
         if (va > vb) return sortDir === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [orders, statusFilter, search, sortBy, sortDir]);
+  }, [orders, statusFilter, search, sortBy, sortDir, dateFrom, dateTo]);
 
   const toggleSort = (col) => {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -132,6 +142,7 @@ export default function WorkOrders() {
           placeholder={isRu ? 'Поиск по номеру ЗН, авто, типу работ...' : 'Search by WO number, plate, work type...'}
           className="px-4 py-2 rounded-xl text-sm outline-none flex-1 min-w-[200px]"
           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+        <DateRangePicker dateFrom={dateFrom} dateTo={dateTo} onDateFromChange={setDateFrom} onDateToChange={setDateTo} ns="workOrders" />
         <div className="flex gap-1.5">
           <button onClick={() => setStatusFilter('all')}
             className="px-3 py-1.5 rounded-lg text-xs" style={{

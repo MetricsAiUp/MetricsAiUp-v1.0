@@ -141,7 +141,7 @@ async function handleVehicleLeftZone(zoneId, session) {
 async function handlePostOccupied(zoneId, postId, session) {
   if (!postId) return;
 
-  await prisma.post.update({
+  const post = await prisma.post.update({
     where: { id: postId },
     data: { status: 'occupied' },
   });
@@ -154,12 +154,14 @@ async function handlePostOccupied(zoneId, postId, session) {
       },
     });
   }
+
+  emitPostStatusChanged(post, session?.plateNumber, null);
 }
 
 async function handlePostVacated(postId, session) {
   if (!postId) return;
 
-  await prisma.post.update({
+  const post = await prisma.post.update({
     where: { id: postId },
     data: { status: 'free' },
   });
@@ -178,10 +180,14 @@ async function handlePostVacated(postId, session) {
       });
     }
   }
+
+  emitPostStatusChanged(post, session?.plateNumber, null);
 }
 
 async function handleWorkerPresent(postId) {
   if (!postId) return;
+
+  const post = await prisma.post.findUnique({ where: { id: postId } });
 
   const stay = await prisma.postStay.findFirst({
     where: { postId, endTime: null },
@@ -194,6 +200,8 @@ async function handleWorkerPresent(postId) {
       data: { hasWorker: true },
     });
   }
+
+  if (post) emitPostStatusChanged(post, null, null);
 }
 
 async function handleWorkerAbsent(postId) {
@@ -211,16 +219,18 @@ async function handleWorkerAbsent(postId) {
     });
   }
 
-  await prisma.post.update({
+  const post = await prisma.post.update({
     where: { id: postId },
     data: { status: 'occupied_no_work' },
   });
+
+  emitPostStatusChanged(post, null, null);
 }
 
 async function handleWorkActivity(postId) {
   if (!postId) return;
 
-  await prisma.post.update({
+  const post = await prisma.post.update({
     where: { id: postId },
     data: { status: 'active_work' },
   });
@@ -236,12 +246,14 @@ async function handleWorkActivity(postId) {
       data: { isActive: true },
     });
   }
+
+  emitPostStatusChanged(post, null, null);
 }
 
 async function handleWorkIdle(postId) {
   if (!postId) return;
 
-  await prisma.post.update({
+  const post = await prisma.post.update({
     where: { id: postId },
     data: { status: 'occupied_no_work' },
   });
@@ -256,6 +268,26 @@ async function handleWorkIdle(postId) {
       where: { id: stay.id },
       data: { isActive: false },
     });
+  }
+
+  emitPostStatusChanged(post, null, null);
+}
+
+// --- Post status changed emit ---
+
+function emitPostStatusChanged(post, plateNumber, workerName) {
+  try {
+    const io = getIO();
+    io.to('all_events').emit('post:status_changed', {
+      postId: post.id,
+      postNumber: parseInt(post.name.match(/\d+/)?.[0] || '0'),
+      status: post.status,
+      plateNumber: plateNumber || null,
+      workerName: workerName || null,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    // Socket.IO not initialized yet — skip
   }
 }
 

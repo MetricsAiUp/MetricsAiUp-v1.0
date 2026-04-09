@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Stage, Layer, Rect, Circle, Text, Group, Line } from 'react-konva';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { usePolling } from '../hooks/useSocket';
+import { usePolling, useSocket } from '../hooks/useSocket';
 import { POST_STATUS_COLORS } from '../constants';
 import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
@@ -16,6 +16,7 @@ import {
 import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
 import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constants/mapTheme';
+import { useCameraStatus } from '../hooks/useCameraStatus';
 
 const ALL_CAMERAS = [
   { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
@@ -198,6 +199,7 @@ export default function MapViewer() {
   const [dashboardData, setDashboardData] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedCam, setSelectedCam] = useState(null);
+  const cameraStatuses = useCameraStatus();
   const [stageSize, setStageSize] = useState({ width: 900, height: 500 });
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -248,6 +250,18 @@ export default function MapViewer() {
 
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
   usePolling(fetchRealtime, 5000);
+
+  // Real-time post status updates via Socket.IO
+  useSocket('post:status_changed', (data) => {
+    setZonesData(prev => {
+      if (!prev) return prev;
+      return prev.map(zone => ({ ...zone, posts: zone.posts?.map(p => {
+        const num = parseInt(p.name?.match(/\d+/)?.[0], 10);
+        if (num !== data.postNumber) return p;
+        return { ...p, status: data.status };
+      }) }));
+    });
+  });
 
   // Use mapFrame from layout (or compute bounding box as fallback)
   const computeBounds = useCallback(() => {
@@ -577,8 +591,11 @@ export default function MapViewer() {
               }
               if (el.type === 'camera') {
                 const cn = getCamNum(el);
+                const camId = cn ? `cam${String(cn).padStart(2, '0')}` : null;
+                const camOnline = camId ? cameraStatuses[camId]?.online : undefined;
                 return (
                   <CameraEl key={el.id} el={el} isDark={isDark}
+                    online={camOnline}
                     onClick={() => cn && setSelectedCam(cn)} />
                 );
               }
@@ -701,8 +718,9 @@ function ZoneEl({ el, isDark, zonesData }) {
   );
 }
 
-function CameraEl({ el, isDark, onClick }) {
-  const fill = '#ef4444';
+function CameraEl({ el, isDark, onClick, online }) {
+  const fill = online === true ? '#10b981' : online === false ? '#94a3b8' : '#ef4444';
+  const groupOpacity = online === false ? 0.5 : 1;
   const w = el.width || 24, h = el.height || 24;
   const cx = w / 2, cy = h / 2;
   const dir = (el.data?.direction || 0) * Math.PI / 180;
@@ -716,7 +734,7 @@ function CameraEl({ el, isDark, onClick }) {
   const my = cy + Math.sin(dir) * range;
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}
-      onClick={onClick} onTap={onClick}>
+      onClick={onClick} onTap={onClick} opacity={groupOpacity}>
       {/* Light FOV cone */}
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
         fill={fill} opacity={isDark ? 0.08 : 0.06}

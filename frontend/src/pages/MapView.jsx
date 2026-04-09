@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { usePolling } from '../hooks/useSocket';
+import { usePolling, useSocket } from '../hooks/useSocket';
 import STOMap from '../components/STOMap';
 import { translateZone, translatePost } from '../utils/translate';
+import { useCameraStatus } from '../hooks/useCameraStatus';
 import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
 import {
@@ -209,6 +210,7 @@ export default function MapView() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [selectedCam, setSelectedCam] = useState(null);
+  const cameraStatuses = useCameraStatus();
 
   const fetchZones = async () => {
     try {
@@ -227,6 +229,18 @@ export default function MapView() {
       .catch(() => {});
   }, []);
   usePolling(fetchZones, 5000);
+
+  // Real-time post status updates via Socket.IO
+  useSocket('post:status_changed', (data) => {
+    setZones(prev => {
+      if (!prev) return prev;
+      return prev.map(zone => ({ ...zone, posts: zone.posts?.map(p => {
+        const num = parseInt(p.name?.match(/\d+/)?.[0], 10);
+        if (num !== data.postNumber) return p;
+        return { ...p, status: data.status };
+      }) }));
+    });
+  });
 
   const isDark = theme === 'dark';
 
@@ -274,6 +288,7 @@ export default function MapView() {
           onPostClick={(post) => setSelectedPost(post)}
           onCameraClick={(num) => setSelectedCam(num)}
           dashboardData={dashboardData}
+          cameraStatuses={cameraStatuses}
         />
       </div>
 

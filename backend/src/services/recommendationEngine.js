@@ -36,7 +36,8 @@ async function checkPostFree(postId) {
     const idleMinutes = (Date.now() - lastStay.endTime.getTime()) / 60000;
     if (idleMinutes > 30) {
       await createRecommendation('post_free', null, postId,
-        `Пост "${post.name}" свободен более ${Math.round(idleMinutes)} минут`);
+        `Пост "${post.name}" свободен более ${Math.round(idleMinutes)} минут`,
+        `Post "${post.name}" has been free for over ${Math.round(idleMinutes)} minutes`);
     }
   }
 }
@@ -62,7 +63,8 @@ async function checkWorkOvertime(postId) {
     const elapsed = (Date.now() - stay.startTime.getTime()) / 3600000;
     if (elapsed > wo.normHours * 1.2) {
       await createRecommendation('work_overtime', null, postId,
-        `Работа на посту превышает норму: ${elapsed.toFixed(1)}ч из ${wo.normHours}ч`);
+        `Работа на посту превышает норму: ${elapsed.toFixed(1)}ч из ${wo.normHours}ч`,
+        `Work on post exceeds norm: ${elapsed.toFixed(1)}h of ${wo.normHours}h`);
     }
   }
 }
@@ -77,7 +79,8 @@ async function checkVehicleIdle(postId) {
     const idleMinutes = (Date.now() - stay.startTime.getTime()) / 60000;
     if (idleMinutes > 15) {
       await createRecommendation('vehicle_idle', null, postId,
-        `Авто на посту без работника более ${Math.round(idleMinutes)} минут`);
+        `Авто на посту без работника более ${Math.round(idleMinutes)} минут`,
+        `Vehicle on post without worker for over ${Math.round(idleMinutes)} minutes`);
     }
   }
 }
@@ -95,7 +98,8 @@ async function checkCapacityAvailable(zoneId) {
 
   if (totalPosts > 0 && freePosts.length / totalPosts > 0.5) {
     await createRecommendation('capacity_available', zoneId, null,
-      `Зона "${zone.name}": ${freePosts.length} из ${totalPosts} постов свободны`);
+      `Зона "${zone.name}": ${freePosts.length} из ${totalPosts} постов свободны`,
+      `Zone "${zone.name}": ${freePosts.length} of ${totalPosts} posts are free`);
   }
 }
 
@@ -118,12 +122,13 @@ async function checkNoShow() {
     });
 
     await createRecommendation('no_show', null, null,
-      `Клиент не приехал: ЗН ${wo.orderNumber} (запись на ${wo.scheduledTime.toLocaleTimeString('ru')})`);
+      `Клиент не приехал: ЗН ${wo.orderNumber} (запись на ${wo.scheduledTime.toLocaleTimeString('ru')})`,
+      `Client no-show: WO ${wo.orderNumber} (scheduled at ${wo.scheduledTime.toLocaleTimeString('en')})`);
   }
 }
 
 // Создание рекомендации (без дублей)
-async function createRecommendation(type, zoneId, postId, message) {
+async function createRecommendation(type, zoneId, postId, message, messageEn) {
   const existing = await prisma.recommendation.findFirst({
     where: { type, zoneId, postId, status: 'active' },
   });
@@ -136,7 +141,7 @@ async function createRecommendation(type, zoneId, postId, message) {
 
   try {
     const io = getIO();
-    io.to('all_events').emit('recommendation', rec);
+    io.to('all_events').emit('recommendation', { ...rec, messageEn: messageEn || message });
   } catch {}
 
   return rec;

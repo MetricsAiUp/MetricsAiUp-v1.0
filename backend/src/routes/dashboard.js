@@ -78,4 +78,63 @@ router.get('/metrics', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/dashboard/trends — 7-day trend data for sparklines
+router.get('/trends', authenticate, async (req, res) => {
+  try {
+    const days = 7;
+    const results = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0); dayStart.setDate(dayStart.getDate() - i);
+      const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+      const [sessions, postStays, occupiedPosts, recs] = await Promise.all([
+        prisma.vehicleSession.count({ where: { entryTime: { gte: dayStart, lt: dayEnd } } }),
+        prisma.postStay.count({ where: { startTime: { gte: dayStart, lt: dayEnd } } }),
+        prisma.postStay.groupBy({ by: ['postId'], where: { startTime: { gte: dayStart, lt: dayEnd } } }).then(g => g.length),
+        prisma.recommendation.count({ where: { createdAt: { gte: dayStart, lt: dayEnd } } }),
+      ]);
+      results.push({ date: dayStart.toISOString().slice(0, 10), activeSessions: sessions, postStays, occupiedPosts, recommendations: recs });
+    }
+    res.json(results);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/dashboard/live — real-time STO status
+router.get('/live', authenticate, async (req, res) => {
+  try {
+    const activeSessions = await prisma.vehicleSession.count({ where: { status: 'active' } });
+    const posts = await prisma.post.findMany({
+      where: { isActive: true },
+      include: {
+        zone: { select: { name: true } },
+        stays: {
+          where: { endTime: null },
+          include: { vehicleSession: { select: { plateNumber: true } } },
+          take: 1,
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+    const totalPosts = posts.length;
+    const working = posts.filter(p => p.status === 'active_work').length;
+    const occupied = posts.filter(p => p.status !== 'free').length;
+    const free = posts.filter(p => p.status === 'free').length;
+    const idle = posts.filter(p => p.status === 'occupied_no_work').length;
+    res.json({
+      vehiclesOnSite: activeSessions,
+      totalPosts,
+      posts: posts.map(p => ({
+        id: p.id,
+        name: p.name,
+        zone: p.zone?.name,
+        status: p.status,
+        plateNumber: p.stays[0]?.vehicleSession?.plateNumber || null,
+        startTime: p.stays[0]?.startTime?.toISOString() || null,
+      })),
+      summary: { working, occupied, free, idle },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

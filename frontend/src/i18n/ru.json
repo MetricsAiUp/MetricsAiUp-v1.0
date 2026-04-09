@@ -22,7 +22,9 @@
     "logout": "Выйти",
     "shifts": "Смены",
     "audit": "Аудит-лог",
-    "myPost": "Мой пост"
+    "health": "Здоровье системы",
+    "myPost": "Мой пост",
+    "reportSchedule": "Расписание отчётов"
   },
   "shifts": {
     "title": "Управление сменами",
@@ -55,7 +57,12 @@
     "save": "Сохранить",
     "cancel": "Отмена",
     "delete": "Удалить",
-    "deleteConfirm": "Удалить эту смену?"
+    "deleteConfirm": "Удалить эту смену?",
+    "conflictDetected": "Обнаружены конфликты",
+    "duplicateWorker": "назначен на несколько постов",
+    "crossShiftConflict": "уже назначен в смену",
+    "saveAnyway": "Сохранить всё равно",
+    "fixConflicts": "Исправить"
   },
   "auth": {
     "login": "Войти",
@@ -160,7 +167,14 @@
     "in_progress": "В работе",
     "completed": "Завершён",
     "cancelled": "Отменён",
-    "no_show": "Не приехал"
+    "no_show": "Не приехал",
+    "dateFrom": "С",
+    "dateTo": "По",
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "thisWeek": "Неделя",
+    "thisMonth": "Месяц",
+    "allDates": "Все даты"
   },
   "recommendations": {
     "title": "Рекомендации",
@@ -381,6 +395,7 @@
   },
   "analytics": {
     "heatmapTitle": "Тепловая карта загрузки постов",
+    "weeklyHeatmapTitle": "Загрузка по дням недели и часам",
     "heatmapHour": "Час",
     "heatmapOccupancy": "Загрузка",
     "heatmapVehicles": "Авто",
@@ -392,10 +407,18 @@
     "daily": "По дням",
     "details": "Детали",
     "exportSuccess": "Экспорт завершён",
-    "exportError": "Ошибка экспорта"
+    "exportError": "Ошибка экспорта",
+    "compare": "Сравнить",
+    "vsPrevPeriod": "vs пред. период"
   },
   "audit": {
-    "title": "Аудит-лог"
+    "title": "Аудит-лог",
+    "dateFrom": "Дата от",
+    "dateTo": "Дата до",
+    "exportCsv": "Скачать CSV"
+  },
+  "notifications": {
+    "liveConnected": "Уведомления в реальном времени"
   },
   "timer": {
     "remaining": "Осталось",
@@ -415,7 +438,10 @@
     "vehicle": "Автомобиль",
     "workType": "Тип работ",
     "assignedPost": "Назначенный пост",
-    "noPost": "Пост не назначен"
+    "noPost": "Пост не назначен",
+    "warningNormHours": "80% нормочасов",
+    "overtimeAlert": "Превышение нормочасов!",
+    "pausedLabel": "На паузе"
   },
   "qr": {
     "title": "QR-код",
@@ -456,5 +482,62 @@
     "added": "Добавлено",
     "removed": "Удалено",
     "modified": "Изменено"
+  },
+  "liveWidget": {
+    "title": "Сейчас на СТО",
+    "vehiclesOnSite": "Авто на территории",
+    "working": "Работают",
+    "idle": "Простаивают",
+    "free": "Свободны",
+    "noVehicle": "Пусто"
+  },
+  "health": {
+    "title": "Здоровье системы",
+    "backend": "Бэкенд",
+    "database": "База данных",
+    "cameras": "Камеры",
+    "sync1c": "Синхронизация 1С",
+    "disk": "Диск",
+    "uptime": "Аптайм",
+    "ping": "Пинг",
+    "size": "Размер",
+    "lastSync": "Последняя синхронизация",
+    "used": "Занято",
+    "available": "Свободно",
+    "online": "Онлайн",
+    "offline": "Офлайн",
+    "autoRefresh": "Автообновление: 30с",
+    "ok": "Работает",
+    "error": "Ошибка",
+    "never": "Никогда"
+  },
+  "reportSchedule": {
+    "title": "Расписание отчётов",
+    "name": "Название",
+    "frequency": "Частота",
+    "daily": "Ежедневно",
+    "weekly": "Еженедельно",
+    "hour": "Час",
+    "minute": "Минута",
+    "format": "Формат",
+    "active": "Активно",
+    "lastRun": "Последний запуск",
+    "runNow": "Запустить сейчас",
+    "addNew": "Добавить расписание",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "noSchedules": "Нет расписаний"
+  },
+  "workerStats": {
+    "title": "Статистика работника",
+    "totalWO": "Заказ-наряды",
+    "normHours": "Нормо-часы",
+    "efficiency": "Эффективность",
+    "repairTypes": "Типы ремонта",
+    "recentOrders": "Последние ЗН",
+    "dailyOutput": "Выработка по дням",
+    "brands": "Марки авто",
+    "noData": "Нет данных",
+    "back": "Назад"
   }
 }

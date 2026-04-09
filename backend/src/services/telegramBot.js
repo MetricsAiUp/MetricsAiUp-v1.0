@@ -151,4 +151,19 @@ async function broadcastTelegram(message) {
   } catch { /* ignore */ }
 }
 
-module.exports = { initTelegramBot, sendTelegramNotification, broadcastTelegram };
+// Send document to specific chat
+async function sendTelegramDocument(chatId, buffer, filename, caption) {
+  if (!bot) return;
+  await bot.sendDocument(chatId, buffer, { caption }, { filename, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+// Broadcast document to all linked users
+async function broadcastDocument(buffer, filename, caption) {
+  if (!bot) return;
+  const links = await prisma.telegramLink.findMany();
+  for (const link of links) {
+    try { await sendTelegramDocument(link.chatId, buffer, filename, caption); } catch {}
+  }
+}
+
+module.exports = { initTelegramBot, sendTelegramNotification, broadcastTelegram, sendTelegramDocument, broadcastDocument };

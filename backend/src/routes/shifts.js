@@ -50,10 +50,54 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
+// --- Conflict detection ---
+async function detectConflicts(date, startTime, endTime, workers, excludeShiftId = null) {
+  const conflicts = [];
+  // Check for duplicate workers in same shift (different posts)
+  const nameMap = {};
+  for (const w of (workers || [])) {
+    if (nameMap[w.name] && w.postId && nameMap[w.name] !== w.postId) {
+      conflicts.push({ type: 'same_shift_duplicate', workerName: w.name, post1: nameMap[w.name], post2: w.postId });
+    }
+    if (w.postId) nameMap[w.name] = w.postId;
+  }
+  // Check cross-shift conflicts
+  const where = {};
+  // Parse date for query
+  const d = new Date(date);
+  const nextDay = new Date(d);
+  nextDay.setDate(nextDay.getDate() + 1);
+  where.date = { gte: d, lt: nextDay };
+  if (excludeShiftId) where.id = { not: excludeShiftId };
+  const existingShifts = await prisma.shift.findMany({ where, include: { workers: true } });
+  for (const w of (workers || [])) {
+    for (const es of existingShifts) {
+      const overlap = startTime < es.endTime && endTime > es.startTime;
+      if (overlap && es.workers.some(ew => ew.name === w.name)) {
+        conflicts.push({
+          type: 'cross_shift_overlap',
+          workerName: w.name,
+          conflictingShiftName: es.name,
+          conflictingTime: `${es.startTime}-${es.endTime}`,
+        });
+      }
+    }
+  }
+  return conflicts;
+}
+
 // POST /api/shifts — create shift
 router.post('/', authenticate, requirePermission('manage_shifts'), validate(createShiftSchema), async (req, res) => {
   try {
     const { name, date, startTime, endTime, status, notes, workers } = req.body;
+
+    // Conflict detection
+    if (workers && workers.length > 0) {
+      const conflicts = await detectConflicts(date, startTime, endTime, workers);
+      if (conflicts.length > 0 && !req.body.force) {
+        return res.status(409).json({ conflicts });
+      }
+    }
 
     const shift = await prisma.shift.create({
       data: {
@@ -84,6 +128,15 @@ router.post('/', authenticate, requirePermission('manage_shifts'), validate(crea
 router.put('/:id', authenticate, requirePermission('manage_shifts'), validate(updateShiftSchema), async (req, res) => {
   try {
     const { name, date, startTime, endTime, status, notes, workers } = req.body;
+
+    // Conflict detection on update
+    if (workers && workers.length > 0 && date && startTime && endTime) {
+      const conflicts = await detectConflicts(date, startTime, endTime, workers, req.params.id);
+      if (conflicts.length > 0 && !req.body.force) {
+        return res.status(409).json({ conflicts });
+      }
+    }
+
     const data = {};
     if (name !== undefined) data.name = name;
     if (date !== undefined) data.date = new Date(date);

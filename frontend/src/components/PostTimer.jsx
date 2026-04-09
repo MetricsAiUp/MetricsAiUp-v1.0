@@ -23,7 +23,7 @@ function formatDuration(ms) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export default function PostTimer({ estimatedEnd, startTime, size = 'md', className = '' }) {
+export default function PostTimer({ estimatedEnd, startTime, size = 'md', className = '', warningThreshold = 0.8 }) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -37,7 +37,16 @@ export default function PostTimer({ estimatedEnd, startTime, size = 'md', classN
   const startMs = startTime ? new Date(startTime).getTime() : endMs - 3600000;
   const totalMs = endMs - startMs;
   const remainingMs = endMs - now;
+  const progress = totalMs > 0 ? 1 - (remainingMs / totalMs) : 0;
   const { bg, text, pulse } = getTimerColor(remainingMs, totalMs);
+
+  // Warning border effect when progress exceeds threshold
+  const warningBorder = progress >= 1
+    ? '2px solid #ef4444'
+    : progress >= warningThreshold
+      ? `2px solid ${progress >= 0.95 ? '#ef4444' : '#f59e0b'}`
+      : 'none';
+  const shouldPulseBorder = progress >= warningThreshold;
 
   const sizes = {
     sm: { icon: 10, font: 'text-xs', px: 'px-1.5 py-0.5', iconSize: 10 },
@@ -48,8 +57,8 @@ export default function PostTimer({ estimatedEnd, startTime, size = 'md', classN
 
   return (
     <div
-      className={`inline-flex items-center gap-1 rounded-lg font-mono font-bold ${s.font} ${s.px} ${pulse ? 'animate-pulse' : ''} ${className}`}
-      style={{ background: bg, color: text }}
+      className={`inline-flex items-center gap-1 rounded-lg font-mono font-bold ${s.font} ${s.px} ${pulse || shouldPulseBorder ? 'animate-pulse' : ''} ${className}`}
+      style={{ background: bg, color: text, border: warningBorder }}
     >
       <Timer size={s.iconSize} />
       <span>{formatCountdown(remainingMs)}</span>

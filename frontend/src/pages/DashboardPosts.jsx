@@ -11,6 +11,7 @@ import ShiftSettings from '../components/dashboardPosts/ShiftSettings';
 import WorkOrderModal from '../components/dashboardPosts/WorkOrderModal';
 import FreeWorkOrdersTable from '../components/dashboardPosts/FreeWorkOrdersTable';
 import Legend from '../components/dashboardPosts/Legend';
+import ConflictModal from '../components/dashboardPosts/ConflictModal';
 import HelpButton from '../components/HelpButton';
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
@@ -34,6 +35,8 @@ export default function DashboardPosts() {
   const [showSettings, setShowSettings] = useState(false);
   const [pendingChanges, setPendingChanges] = useState([]);
   const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
+  const [dataConflicts, setDataConflicts] = useState(null);
+  const [snapshot, setSnapshot] = useState(null);
   const [currentShift, setCurrentShift] = useState(null);
   const [settings, setSettings] = useState({
     shiftStart: '08:00',
@@ -66,7 +69,7 @@ export default function DashboardPosts() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     setLoading(true);
     api.get('/api/dashboard-posts')
       .then(({ data: res }) => {
@@ -80,7 +83,22 @@ export default function DashboardPosts() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [api]);
+
+  useEffect(() => { fetchData(); }, []);
+
+  // Multi-user sync via polling (schedule:updated)
+  useEffect(() => {
+    const handler = () => { fetchData(); };
+    // If socket available, listen for schedule updates
+    try {
+      const socket = window.__metricsSocket;
+      if (socket) {
+        socket.on('schedule:updated', handler);
+        return () => socket.off('schedule:updated', handler);
+      }
+    } catch {}
+  }, [fetchData]);
 
   const handleSettingsChange = (newSettings) => {
     setSettings(newSettings);
@@ -111,6 +129,9 @@ export default function DashboardPosts() {
 
     const { type, itemId, fromPostId, toPostId, dropPercent } = dropData;
     const newStartMs = percentToTime(dropPercent, settings.shiftStart, settings.shiftEnd);
+
+    // Save snapshot for rollback on conflict
+    setSnapshot(JSON.parse(JSON.stringify(data)));
 
     setData(prev => {
       const newData = JSON.parse(JSON.stringify(prev));
@@ -210,22 +231,40 @@ export default function DashboardPosts() {
   }, [data, settings.shiftStart, settings.shiftEnd]);
 
   // Save schedule
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (forceOverwrite = false) => {
     if (pendingChanges.length === 0) return;
     setSaveStatus('saving');
 
     try {
-      // Try batch API
-      const assignments = pendingChanges.map(c => ({
-        workOrderId: c.workOrderId,
-        postId: c.postId,
-        startTime: c.startTime,
-        endTime: c.endTime,
-      }));
+      // Build assignments, include version for conflict detection
+      const assignments = pendingChanges.map(c => {
+        const assignment = {
+          workOrderId: c.workOrderId,
+          postId: c.postId,
+          startTime: c.startTime,
+          endTime: c.endTime,
+        };
+        // Include version unless forcing overwrite
+        if (!forceOverwrite && c.version !== undefined) {
+          assignment.version = c.version;
+        }
+        return assignment;
+      });
       await api.post('/api/work-orders/schedule', { assignments });
       setPendingChanges([]);
+      setSnapshot(null);
       setSaveStatus('saved');
-    } catch {
+    } catch (err) {
+      // Handle 409 conflict
+      if (err?.response?.status === 409 && err?.response?.data?.conflicts) {
+        // Rollback to snapshot
+        if (snapshot) {
+          setData(snapshot);
+        }
+        setDataConflicts(err.response.data.conflicts);
+        setSaveStatus('error');
+        return;
+      }
       // Backend not running — save to localStorage as fallback
       try {
         localStorage.setItem('dashboardPostsSchedule', JSON.stringify({
@@ -243,7 +282,7 @@ export default function DashboardPosts() {
 
     // Reset status after 2s
     setTimeout(() => setSaveStatus(null), 2000);
-  }, [pendingChanges, api, data]);
+  }, [pendingChanges, api, data, snapshot]);
 
   // Summary stats
   const stats = useMemo(() => {
@@ -470,6 +509,15 @@ export default function DashboardPosts() {
           onSettingsChange={handleSettingsChange}
           onClose={() => setShowSettings(false)}
           t={t}
+        />
+      )}
+
+      {dataConflicts && (
+        <ConflictModal
+          conflicts={dataConflicts}
+          onReload={() => { fetchData(); setDataConflicts(null); setPendingChanges([]); }}
+          onForce={() => { setDataConflicts(null); handleSave(true); }}
+          onClose={() => setDataConflicts(null)}
         />
       )}
     </div>

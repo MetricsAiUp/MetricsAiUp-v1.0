@@ -22,7 +22,9 @@
     "logout": "Logout",
     "shifts": "Shifts",
     "audit": "Audit Log",
-    "myPost": "My Post"
+    "health": "System Health",
+    "myPost": "My Post",
+    "reportSchedule": "Report Schedule"
   },
   "shifts": {
     "title": "Shift Management",
@@ -55,7 +57,12 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "deleteConfirm": "Delete this shift?"
+    "deleteConfirm": "Delete this shift?",
+    "conflictDetected": "Conflicts detected",
+    "duplicateWorker": "assigned to multiple posts",
+    "crossShiftConflict": "already assigned to shift",
+    "saveAnyway": "Save anyway",
+    "fixConflicts": "Fix"
   },
   "auth": {
     "login": "Sign In",
@@ -160,7 +167,14 @@
     "in_progress": "In Progress",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "no_show": "No Show"
+    "no_show": "No Show",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "Week",
+    "thisMonth": "Month",
+    "allDates": "All dates"
   },
   "recommendations": {
     "title": "Recommendations",
@@ -381,6 +395,7 @@
   },
   "analytics": {
     "heatmapTitle": "Post Load Heatmap",
+    "weeklyHeatmapTitle": "Workload by Weekday & Hour",
     "heatmapHour": "Hour",
     "heatmapOccupancy": "Occupancy",
     "heatmapVehicles": "Vehicles",
@@ -392,10 +407,18 @@
     "daily": "Daily",
     "details": "Details",
     "exportSuccess": "Export completed",
-    "exportError": "Export failed"
+    "exportError": "Export failed",
+    "compare": "Compare",
+    "vsPrevPeriod": "vs prev. period"
   },
   "audit": {
-    "title": "Audit Log"
+    "title": "Audit Log",
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+    "exportCsv": "Export CSV"
+  },
+  "notifications": {
+    "liveConnected": "Real-time notifications"
   },
   "timer": {
     "remaining": "Remaining",
@@ -415,7 +438,10 @@
     "vehicle": "Vehicle",
     "workType": "Work Type",
     "assignedPost": "Assigned Post",
-    "noPost": "No post assigned"
+    "noPost": "No post assigned",
+    "warningNormHours": "80% norm hours",
+    "overtimeAlert": "Norm hours exceeded!",
+    "pausedLabel": "Paused"
   },
   "qr": {
     "title": "QR Code",
@@ -456,5 +482,62 @@
     "added": "Added",
     "removed": "Removed",
     "modified": "Modified"
+  },
+  "liveWidget": {
+    "title": "Currently on site",
+    "vehiclesOnSite": "Vehicles on site",
+    "working": "Working",
+    "idle": "Idle",
+    "free": "Free",
+    "noVehicle": "Empty"
+  },
+  "health": {
+    "title": "System Health",
+    "backend": "Backend",
+    "database": "Database",
+    "cameras": "Cameras",
+    "sync1c": "1C Synchronization",
+    "disk": "Disk",
+    "uptime": "Uptime",
+    "ping": "Ping",
+    "size": "Size",
+    "lastSync": "Last Sync",
+    "used": "Used",
+    "available": "Available",
+    "online": "Online",
+    "offline": "Offline",
+    "autoRefresh": "Auto-refresh: 30s",
+    "ok": "OK",
+    "error": "Error",
+    "never": "Never"
+  },
+  "reportSchedule": {
+    "title": "Report Schedule",
+    "name": "Name",
+    "frequency": "Frequency",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "hour": "Hour",
+    "minute": "Minute",
+    "format": "Format",
+    "active": "Active",
+    "lastRun": "Last Run",
+    "runNow": "Run Now",
+    "addNew": "Add Schedule",
+    "save": "Save",
+    "delete": "Delete",
+    "noSchedules": "No schedules"
+  },
+  "workerStats": {
+    "title": "Worker Statistics",
+    "totalWO": "Work Orders",
+    "normHours": "Norm Hours",
+    "efficiency": "Efficiency",
+    "repairTypes": "Repair Types",
+    "recentOrders": "Recent Orders",
+    "dailyOutput": "Daily Output",
+    "brands": "Car Brands",
+    "noData": "No data",
+    "back": "Back"
   }
 }

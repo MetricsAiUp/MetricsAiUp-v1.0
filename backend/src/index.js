@@ -32,9 +32,13 @@ const photosRoutes = require('./routes/photos');
 const locationsRoutes = require('./routes/locations');
 const predictRoutes = require('./routes/predict');
 const postsDataRoutes = require('./routes/postsData');
+const healthRoutes = require('./routes/health');
+const workersRoutes = require('./routes/workers');
 const { startFileWatcher } = require('./services/sync1C');
 const { initTelegramBot } = require('./services/telegramBot');
 const { generate: generateDemoData } = require('./generateDemoData');
+const { startCameraHealthCheck } = require('./services/cameraHealthCheck');
+const { startReportScheduler } = require('./services/reportScheduler');
 
 const app = express();
 
@@ -82,6 +86,9 @@ app.use('/api/photos', photosRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/predict', predictRoutes);
 app.use('/api', postsDataRoutes);
+app.use('/api/system-health', healthRoutes);
+app.use('/api/workers', workersRoutes);
+app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check
@@ -104,6 +111,8 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Socket.IO] Ready for connections`);
   startFileWatcher();
   initTelegramBot();
+  startCameraHealthCheck();
+  startReportScheduler();
 
   // Demo data auto-refresh: regenerate every 2 minutes so data "lives"
   try { generateDemoData(); } catch (e) { console.error('[DemoGen] Initial run error:', e.message); }

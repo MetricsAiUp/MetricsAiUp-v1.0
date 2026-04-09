@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
+import { useWorkOrderTimer } from '../hooks/useWorkOrderTimer';
 import PostTimer from '../components/PostTimer';
 import {
-  Wrench, Car, Clock, Play, Pause, CheckCircle, Timer, FileText, User,
+  Wrench, Car, Clock, Play, Pause, CheckCircle, Timer, FileText, User, AlertTriangle,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
@@ -16,60 +17,82 @@ export default function MyPost() {
   const { user, api } = useAuth();
   const [data, setData] = useState(null);
   const [myPost, setMyPost] = useState(null);
-  const [workStatus, setWorkStatus] = useState('idle'); // idle | working | paused
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const [startedAt, setStartedAt] = useState(null);
+  const [activeWO, setActiveWO] = useState(null);
+
+  const timer = useWorkOrderTimer(activeWO, api);
 
   const fetchData = useCallback(async () => {
     try {
+      // Try to get real WO from API first
+      try {
+        const woRes = await api.get('/api/work-orders?status=in_progress&limit=50');
+        const orders = woRes?.data?.orders || woRes?.orders || [];
+        const myWO = orders.find(o =>
+          o.worker?.toLowerCase().includes(user?.firstName?.toLowerCase())
+        );
+        if (myWO) {
+          setActiveWO(myWO);
+        }
+      } catch { /* fallback to mock data */ }
+
       const res = await fetch(`${BASE}data/dashboard-posts.json?t=${Date.now()}`);
       if (res.ok) {
         const d = await res.json();
         setData(d);
-        // Find mechanic's assigned post from shifts or by user firstName match
         const posts = d?.posts || [];
         const found = posts.find(p => {
           const wo = p.timeline?.find(i => i.status === 'in_progress');
           return wo?.worker?.toLowerCase().includes(user?.firstName?.toLowerCase());
         }) || posts.find(p => p.number === (user?.assignedPost || 1));
         setMyPost(found || posts[0]);
+
+        // If no real WO found, use mock timeline data
+        if (!activeWO && found) {
+          const mockWO = found.timeline?.find(i => i.status === 'in_progress');
+          if (mockWO) setActiveWO(mockWO);
+        }
       }
     } catch { /* ignore */ }
-  }, [user]);
+  }, [user, api]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   usePolling(fetchData, 5000);
 
-  // Timer tick
-  useEffect(() => {
-    if (workStatus !== 'working') return;
-    const interval = setInterval(() => {
-      setElapsedMs(Date.now() - (startedAt || Date.now()));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [workStatus, startedAt]);
+  const handleStart = async () => {
+    try {
+      const res = await timer.start();
+      if (res?.data?.order) setActiveWO(res.data.order);
+      else fetchData();
+    } catch { /* fallback - just refetch */ fetchData(); }
+  };
+  const handlePause = async () => {
+    try {
+      const res = await timer.pause();
+      if (res?.data?.order) setActiveWO(res.data.order);
+      else fetchData();
+    } catch { fetchData(); }
+  };
+  const handleResume = async () => {
+    try {
+      const res = await timer.resume();
+      if (res?.data?.order) setActiveWO(res.data.order);
+      else fetchData();
+    } catch { fetchData(); }
+  };
+  const handleFinish = async () => {
+    try {
+      const res = await timer.complete();
+      if (res?.data?.order) setActiveWO(null);
+      else fetchData();
+    } catch { fetchData(); }
+  };
 
-  const handleStart = () => {
-    setWorkStatus('working');
-    setStartedAt(Date.now());
-  };
-  const handlePause = () => setWorkStatus('paused');
-  const handleResume = () => {
-    setWorkStatus('working');
-    setStartedAt(Date.now() - elapsedMs);
-  };
-  const handleFinish = () => {
-    setWorkStatus('idle');
-    setElapsedMs(0);
-    setStartedAt(null);
-    // In real app — POST /api/work-orders/:id/complete
-  };
-
-  const currentWO = myPost?.timeline?.find(i => i.status === 'in_progress');
+  const currentWO = activeWO || myPost?.timeline?.find(i => i.status === 'in_progress');
   const currentVehicle = myPost?.currentVehicle;
 
   const fmtElapsed = () => {
-    const s = Math.floor(elapsedMs / 1000);
+    const ms = timer.elapsedMs;
+    const s = Math.floor(ms / 1000);
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
@@ -175,6 +198,25 @@ export default function MyPost() {
             </span>
           </div>
 
+          {/* Warning badge */}
+          {timer.warningLevel === 'warning' && (
+            <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              <AlertTriangle size={14} /> {t('myPost.warningNormHours')}
+            </div>
+          )}
+          {(timer.warningLevel === 'critical' || timer.warningLevel === 'overtime') && (
+            <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold animate-pulse" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <AlertTriangle size={14} /> {t('myPost.overtimeAlert')}
+            </div>
+          )}
+
+          {/* Paused label */}
+          {timer.isPaused && (
+            <div className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+              <Pause size={14} /> {t('myPost.pausedLabel')}
+            </div>
+          )}
+
           {/* Deadline timer */}
           {(currentWO.endTime || currentWO.estimatedEnd) && (
             <div className="mb-4">
@@ -182,26 +224,45 @@ export default function MyPost() {
                 estimatedEnd={currentWO.endTime || currentWO.estimatedEnd}
                 startTime={currentWO.startTime}
                 size="lg"
+                warningThreshold={0.8}
               />
             </div>
           )}
 
           {/* Elapsed timer */}
           <div className="text-4xl font-mono font-bold mb-4"
-            style={{ color: workStatus === 'working' ? 'var(--accent)' : 'var(--text-muted)' }}>
+            style={{ color: timer.isRunning ? 'var(--accent)' : timer.isPaused ? '#f59e0b' : 'var(--text-muted)' }}>
             {fmtElapsed()}
           </div>
 
+          {/* Progress bar */}
+          {currentWO.normHours > 0 && (
+            <div className="mb-4 mx-auto max-w-[300px]">
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-glass)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(timer.percentUsed, 100)}%`,
+                    background: timer.warningLevel === 'overtime' ? '#ef4444' : timer.warningLevel === 'critical' ? '#ef4444' : timer.warningLevel === 'warning' ? '#f59e0b' : '#10b981',
+                  }}
+                />
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                {timer.percentUsed.toFixed(0)}%
+              </div>
+            </div>
+          )}
+
           {/* Control buttons */}
           <div className="flex gap-3 justify-center">
-            {workStatus === 'idle' && (
+            {!timer.isRunning && !timer.isPaused && currentWO.status !== 'completed' && (
               <button onClick={handleStart}
                 className="flex-1 max-w-[200px] flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
                 style={{ background: '#10b981' }}>
                 <Play size={24} /> {t('myPost.start')}
               </button>
             )}
-            {workStatus === 'working' && (
+            {timer.isRunning && (
               <>
                 <button onClick={handlePause}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
@@ -215,7 +276,7 @@ export default function MyPost() {
                 </button>
               </>
             )}
-            {workStatus === 'paused' && (
+            {timer.isPaused && (
               <>
                 <button onClick={handleResume}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
