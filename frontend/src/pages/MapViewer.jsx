@@ -672,11 +672,18 @@ export default function MapViewer() {
   );
 }
 
+function estimateTextH(text, fontSize, availW) {
+  // Estimate how many lines text will take when wrapped
+  const avgCharW = /[а-яА-ЯёЁ]/.test(text) ? fontSize * 0.65 : fontSize * 0.55;
+  const textW = text.length * avgCharW;
+  const lines = Math.max(1, Math.ceil(textW / Math.max(availW, 1)));
+  return lines * (fontSize + 2);
+}
+
 function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, postLabel, dashPost, isRu, onClick }) {
   const color = POST_STATUS_COLORS[status] || '#94a3b8';
   const fillBg = isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)';
   const w = el.width || 120, h = el.height || 80;
-  const headerH = 18;
   const pad = 5;
   const isFree = status === 'free';
   const isIdle = status === 'occupied_no_work';
@@ -690,13 +697,36 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
     return parts.length >= 2 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
   })() : null;
 
-  // Scale font sizes relative to card size
-  const sf = Math.min(w / 130, h / 100, 1.2);
-  const fs = (base) => Math.max(7, Math.round(base * sf));
+  const narrow = w < 90;
+  const headerH = narrow ? 28 : 22;
+  const innerW = w - pad * 2;
+  const fontSize = Math.max(7, Math.min(10, Math.round(w / 13)));
+  const smallFont = Math.max(7, fontSize - 1);
+
+  // Build content items with estimated heights
+  const items = [];
+  if (plate) items.push({ type: 'plate', text: plate, size: fontSize });
+  if (currentVehicle) items.push({ type: 'text', text: `${currentVehicle.brand} ${currentVehicle.model}`, size: smallFont, color: mutedFill });
+  if (workType) items.push({ type: 'text', text: workType, size: smallFont, bold: true, color: isDark ? '#a5b4fc' : '#6366f1' });
+  if (shortWorker) items.push({ type: 'text', text: shortWorker, size: smallFont, color: mutedFill });
+  if (currentWO) items.push({ type: 'text', text: `${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`, size: smallFont, color: mutedFill });
+
+  // Calculate y positions so each item starts after the previous one (including wraps)
+  let curY = headerH + 4;
+  const positioned = items.map(item => {
+    const y = curY;
+    if (item.type === 'plate') {
+      const plateH = Math.max(14, fontSize + 6);
+      curY += plateH + 3;
+      return { ...item, y, h: plateH };
+    }
+    const textH = estimateTextH(item.text, item.size, innerW);
+    curY += textH + 1;
+    return { ...item, y, h: textH };
+  });
 
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} onClick={onClick} onTap={onClick}>
-      {/* Card background */}
       <Rect width={w} height={h} fill={fillBg}
         stroke={color}
         strokeWidth={status === 'active_work' ? 2 : 1.5}
@@ -708,106 +738,62 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
       {/* Color header bar */}
       <Rect x={0} y={0} width={w} height={headerH} fill={color}
         cornerRadius={[6, 6, 0, 0]} opacity={0.9} />
-      <Text x={pad} y={3} text={postLabel} fontSize={fs(10)} fontStyle="bold" fill="#fff"
-        fontFamily="system-ui, sans-serif" />
-      <Text x={pad} y={3} text={statusLabel} fontSize={fs(8)} fill="rgba(255,255,255,0.9)"
-        width={w - pad * 2} align="right" fontFamily="system-ui, sans-serif" fontStyle="bold" />
+      {narrow ? (<>
+        <Text x={pad} y={2} text={postLabel}
+          width={innerW} height={13}
+          fontSize={8} fontStyle="bold" fill="#fff"
+          fontFamily="system-ui, sans-serif" wrap="none" ellipsis={true} />
+        <Text x={pad} y={14} text={statusLabel}
+          width={innerW} height={11}
+          fontSize={7} fill="rgba(255,255,255,0.85)"
+          fontFamily="system-ui, sans-serif" fontStyle="bold" wrap="none" ellipsis={true} />
+      </>) : (<>
+        <Text x={pad} y={2} text={postLabel}
+          width={w * 0.44} height={headerH - 2}
+          fontSize={9} fontStyle="bold" fill="#fff"
+          verticalAlign="middle" fontFamily="system-ui, sans-serif" wrap="none" ellipsis={true} />
+        <Text x={w * 0.44} y={2} text={statusLabel}
+          width={w * 0.56 - pad} height={headerH - 2}
+          fontSize={7} fill="rgba(255,255,255,0.85)"
+          align="right" verticalAlign="middle"
+          fontFamily="system-ui, sans-serif" fontStyle="bold" wrap="none" ellipsis={true} />
+      </>)}
 
       {isFree ? (
-        /* Free post — centered dash */
-        <Text
-          x={pad} y={headerH}
-          width={w - pad * 2} height={h - headerH}
-          text="—"
-          fontSize={14}
+        <Text x={pad} y={headerH} width={innerW} height={h - headerH}
+          text="—" fontSize={16}
           fill={isDark ? '#334155' : '#cbd5e1'}
-          align="center" verticalAlign="middle"
-        />
+          align="center" verticalAlign="middle" />
       ) : (<>
-        {/* Vehicle plate — prominent */}
-        {plate && (
-          <Group>
-            <Rect
-              x={pad} y={headerH + 4}
-              width={w - pad * 2} height={Math.max(15, fs(16))}
+        {positioned.map((item, i) => item.type === 'plate' ? (
+          <Group key={i}>
+            <Rect x={pad} y={item.y} width={innerW} height={item.h}
               fill={isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)'}
-              cornerRadius={3}
-            />
-            <Text
-              x={pad} y={headerH + 4}
-              width={w - pad * 2} height={Math.max(15, fs(16))}
-              text={plate}
-              fontSize={fs(10)} fontStyle="bold" fontFamily="monospace"
-              fill={textFill}
-              align="center" verticalAlign="middle"
-            />
+              cornerRadius={3} />
+            <Text x={pad} y={item.y} width={innerW} height={item.h}
+              text={item.text}
+              fontSize={item.size} fontStyle="bold" fontFamily="monospace"
+              fill={textFill} align="center" verticalAlign="middle"
+              wrap="none" ellipsis={true} />
           </Group>
-        )}
+        ) : (
+          <Text key={i} x={pad} y={item.y} width={innerW} height={item.h}
+            text={item.text}
+            fontSize={item.size}
+            fontStyle={item.bold ? 'bold' : 'normal'}
+            fill={item.color || textFill}
+            wrap="word" />
+        ))}
 
-        {/* Brand + Model */}
-        {currentVehicle && (
-          <Text
-            x={pad} y={headerH + 22 * sf}
-            width={w - pad * 2}
-            text={`${currentVehicle.brand} ${currentVehicle.model}`}
-            fontSize={fs(8)}
-            fill={mutedFill}
-            ellipsis={true}
-          />
-        )}
-
-        {/* Work type */}
-        {workType && (
-          <Text
-            x={pad} y={headerH + 32 * sf}
-            width={w - pad * 2}
-            text={workType}
-            fontSize={fs(8)} fontStyle="bold"
-            fill={isDark ? '#a5b4fc' : '#6366f1'}
-            ellipsis={true}
-          />
-        )}
-
-        {/* Worker name */}
-        {shortWorker && (
-          <Text
-            x={pad} y={headerH + 42 * sf}
-            width={w - pad * 2}
-            text={shortWorker}
-            fontSize={fs(8)}
-            fill={mutedFill}
-            ellipsis={true}
-          />
-        )}
-
-        {/* Time range */}
-        {currentWO && (
-          <Text
-            x={pad} y={headerH + 52 * sf}
-            width={w - pad * 2}
-            text={`${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`}
-            fontSize={fs(8)}
-            fill={mutedFill}
-          />
-        )}
-
-        {/* Idle indicator bar */}
         {isIdle && (
           <Group>
-            <Rect
-              x={pad} y={h - 16}
-              width={w - pad * 2} height={13}
+            <Rect x={pad} y={h - 16} width={innerW} height={13}
               fill={isDark ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.1)'}
-              cornerRadius={3}
-              stroke="rgba(234,179,8,0.3)" strokeWidth={1}
-            />
-            <Text
-              x={pad} y={h - 15}
-              width={w - pad * 2} height={11}
+              cornerRadius={3} stroke="rgba(234,179,8,0.3)" strokeWidth={1} />
+            <Text x={pad} y={h - 15} width={innerW} height={11}
               text={isRu ? 'Простой' : 'Idle'}
-              fontSize={fs(8)} fontStyle="bold" fill="#eab308"
-              align="center" verticalAlign="middle"
-            />
+              fontSize={8} fontStyle="bold" fill="#eab308"
+              align="center" verticalAlign="middle" />
           </Group>
         )}
       </>)}
