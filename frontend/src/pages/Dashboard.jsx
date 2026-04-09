@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
@@ -75,6 +75,9 @@ export default function Dashboard() {
   const [recommendations, setRecommendations] = useState([]);
   const [events, setEvents] = useState([]);
   const [eventFilter, setEventFilter] = useState('all');
+  const [recPage, setRecPage] = useState(1);
+  const [evtPage, setEvtPage] = useState(1);
+  const perPage = 5;
   const [trends, setTrends] = useState([]); // kept for future use
 
   const fetchData = async () => {
@@ -100,6 +103,19 @@ export default function Dashboard() {
     await api.put(`/api/recommendations/${id}/acknowledge`);
     setRecommendations(prev => prev.filter(r => r.id !== id));
   };
+
+  // Reset pages on data/filter change
+  useEffect(() => { setRecPage(1); }, [recommendations.length]);
+  useEffect(() => { setEvtPage(1); }, [eventFilter]);
+
+  const recTotalPages = Math.max(1, Math.ceil(recommendations.length / perPage));
+  const paginatedRecs = recommendations.slice((recPage - 1) * perPage, recPage * perPage);
+
+  const filteredEvents = useMemo(() =>
+    events.filter(ev => eventFilter === 'all' || ev.type === eventFilter),
+    [events, eventFilter]);
+  const evtTotalPages = Math.max(1, Math.ceil(filteredEvents.length / perPage));
+  const paginatedEvents = filteredEvents.slice((evtPage - 1) * perPage, evtPage * perPage);
 
   const freePostsCount = overview?.postsStatus?.find(p => p.status === 'free')?._count || 0;
   const occupiedCount = overview?.postsStatus
@@ -141,7 +157,7 @@ export default function Dashboard() {
                 {t('common.noData')}
               </div>
             ) : (
-              recommendations.map(rec => (
+              paginatedRecs.map(rec => (
                 <RecommendationCard
                   key={rec.id}
                   rec={rec}
@@ -152,6 +168,24 @@ export default function Dashboard() {
               ))
             )}
           </div>
+          {recTotalPages > 1 && (
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {(recPage - 1) * perPage + 1}–{Math.min(recPage * perPage, recommendations.length)} {isRu ? 'из' : 'of'} {recommendations.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setRecPage(p => p - 1)} disabled={recPage === 1}
+                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: recPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: recPage === 1 ? 0.5 : 1 }}>{'‹'}</button>
+                {Array.from({ length: recTotalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => setRecPage(p)}
+                    className="px-2 py-0.5 rounded text-xs font-medium"
+                    style={{ background: recPage === p ? 'var(--accent)' : 'var(--bg-glass)', color: recPage === p ? 'white' : 'var(--text-muted)' }}>{p}</button>
+                ))}
+                <button onClick={() => setRecPage(p => p + 1)} disabled={recPage === recTotalPages}
+                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: recPage === recTotalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: recPage === recTotalPages ? 0.5 : 1 }}>{'›'}</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recent Events */}
@@ -174,13 +208,13 @@ export default function Dashboard() {
             ))}
           </div>
           <div className="glass-static overflow-hidden">
-            {events.length === 0 ? (
+            {filteredEvents.length === 0 ? (
               <div className="p-4 text-center" style={{ color: 'var(--text-muted)' }}>
                 {t('common.noData')}
               </div>
             ) : (
               <div className="divide-y" style={{ borderColor: 'var(--border-glass)' }}>
-                {events.filter(ev => eventFilter === 'all' || ev.type === eventFilter).map(ev => (
+                {paginatedEvents.map(ev => (
                   <div key={ev.id} className="px-3 py-1.5 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -198,6 +232,24 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+          {evtTotalPages > 1 && (
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {(evtPage - 1) * perPage + 1}–{Math.min(evtPage * perPage, filteredEvents.length)} {isRu ? 'из' : 'of'} {filteredEvents.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setEvtPage(p => p - 1)} disabled={evtPage === 1}
+                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: evtPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: evtPage === 1 ? 0.5 : 1 }}>{'‹'}</button>
+                {Array.from({ length: evtTotalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => setEvtPage(p)}
+                    className="px-2 py-0.5 rounded text-xs font-medium"
+                    style={{ background: evtPage === p ? 'var(--accent)' : 'var(--bg-glass)', color: evtPage === p ? 'white' : 'var(--text-muted)' }}>{p}</button>
+                ))}
+                <button onClick={() => setEvtPage(p => p + 1)} disabled={evtPage === evtTotalPages}
+                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: evtPage === evtTotalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: evtPage === evtTotalPages ? 0.5 : 1 }}>{'›'}</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

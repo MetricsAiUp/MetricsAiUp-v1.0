@@ -17,6 +17,8 @@ export default function WorkOrders() {
   const [sortDir, setSortDir] = useState('desc');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
 
   const fetchOrders = () => {
     api.get('/api/work-orders')
@@ -87,6 +89,12 @@ export default function WorkOrders() {
         return 0;
       });
   }, [orders, statusFilter, search, sortBy, sortDir, dateFrom, dateTo]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [statusFilter, search, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const toggleSort = (col) => {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -176,7 +184,7 @@ export default function WorkOrders() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(wo => (
+            {paginated.map(wo => (
               <tr key={wo.id} className="hover:opacity-80 transition-opacity" style={{ borderBottom: '1px solid var(--border-glass)' }}>
                 <td className="px-4 py-3 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{wo.orderNumber}</td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{new Date(wo.scheduledTime).toLocaleString()}</td>
@@ -191,12 +199,70 @@ export default function WorkOrders() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {paginated.length === 0 && (
               <tr><td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'var(--text-muted)' }}>{t('common.noData')}</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {isRu ? 'Строк на странице:' : 'Rows per page:'}
+            </span>
+            <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
+              className="px-2 py-1 rounded-lg text-xs outline-none cursor-pointer"
+              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+              {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} {isRu ? 'из' : 'of'} {filtered.length}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(1)} disabled={page === 1}
+              className="px-2 py-1 rounded-lg text-xs transition-opacity"
+              style={{ background: 'var(--bg-glass)', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === 1 ? 0.5 : 1 }}>
+              {'«'}
+            </button>
+            <button onClick={() => setPage(p => p - 1)} disabled={page === 1}
+              className="px-2 py-1 rounded-lg text-xs transition-opacity"
+              style={{ background: 'var(--bg-glass)', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === 1 ? 0.5 : 1 }}>
+              {'‹'}
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+              .reduce((acc, p, i, arr) => {
+                if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) => p === '...' ? (
+                <span key={`dot-${i}`} className="px-1 text-xs" style={{ color: 'var(--text-muted)' }}>...</span>
+              ) : (
+                <button key={p} onClick={() => setPage(p)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: page === p ? 'var(--accent)' : 'var(--bg-glass)',
+                    color: page === p ? 'white' : 'var(--text-muted)',
+                  }}>{p}</button>
+              ))}
+            <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}
+              className="px-2 py-1 rounded-lg text-xs transition-opacity"
+              style={{ background: 'var(--bg-glass)', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === totalPages ? 0.5 : 1 }}>
+              {'›'}
+            </button>
+            <button onClick={() => setPage(totalPages)} disabled={page === totalPages}
+              className="px-2 py-1 rounded-lg text-xs transition-opacity"
+              style={{ background: 'var(--bg-glass)', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === totalPages ? 0.5 : 1 }}>
+              {'»'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
