@@ -3,217 +3,248 @@
 ## Среда
 - Docker-контейнер, рабочая директория: `/project`
 - **Домен:** `artisom.dev.metricsavto.com`
-- Все порты контейнера (80-65535) проброшены 1:1 на VPS `artisom.dev.metricsavto.com`
+- Все порты контейнера (80-65535) проброшены 1:1 на VPS
 - Node.js 20, Python 3.11, PHP 8.2, Go 1.22, git, curl, wget
 
-## Публичные URL и доступ
-- **Frontend:** `https://artisom.dev.metricsavto.com/` (Nginx на порту 8080 внутри → VPS проксирует)
+## Публичные URL
+- **Frontend:** `https://artisom.dev.metricsavto.com/` (Nginx :8080 → VPS проксирует)
 - **Backend API:** `https://artisom.dev.metricsavto.com:3001/api/` (Express HTTP)
-- **Backend HTTPS:** `https://artisom.dev.metricsavto.com:3444/api/` (Express HTTPS с SSL)
+- **Backend HTTPS:** `https://artisom.dev.metricsavto.com:3444/api/` (Express HTTPS)
+- **HLS Streaming:** `https://artisom.dev.metricsavto.com:8181/` (камеры)
 - **Любой порт:** `https://artisom.dev.metricsavto.com:{PORT}/`
-- WebSocket проксируется. 
+- WebSocket проксируется через Socket.IO
 
-## ВАЖНО: Запуск серверов
-- **Backend:** `cd /project/backend && node src/index.js` — слушает HTTP :3001 + HTTPS :3444
+## Запуск серверов
+- **Backend:** `cd /project/backend && node src/index.js` — HTTP :3001 + HTTPS :3444
 - **Frontend:** `cd /project/frontend && npm run build && cp -r dist/* /project/` — Nginx раздаёт статику
-- **НЕ ИСПОЛЬЗОВАТЬ localStorage как fallback для сохранения данных** — всегда работать через бэкенд API
+- **HLS:** `cd /project && node server.js` — RTSP→HLS стриминг :8181
+- **НЕ ИСПОЛЬЗОВАТЬ localStorage как fallback** — всегда работать через бэкенд API
 - При ошибках API — чинить бэкенд, а не обходить проблему
 
-## Стек проекта
-- **Frontend:** React 19 + Vite 8, Tailwind CSS 4, Recharts 3, react-konva 19, react-i18next (RU/EN)
-- **Backend:** Express 4 + Prisma ORM + SQLite (HTTP :3001 + HTTPS :3444)
-- **Роутинг:** HashRouter (React Router v7)
+## Стек
+- **Frontend:** React 19 + Vite 8, Tailwind CSS 4, Recharts 3, Konva 10 + react-konva 19, react-i18next (RU/EN), Socket.IO Client, HLS.js, jsPDF, xlsx
+- **Backend:** Express 4 + Prisma ORM + SQLite (HTTP :3001 + HTTPS :3444), Socket.IO, Zod, node-cron, web-push, node-telegram-bot-api
+- **Роутинг:** HashRouter (React Router v7), lazy-loaded страницы
 - **Иконки:** Lucide React (SVG), без emoji
 - **Дизайн:** Glassmorphism, тёмная + светлая тема (CSS Variables)
-- **Состояние:** React Context (Auth, Theme) + localStorage
-- **Карта СТО:** react-konva (Canvas), 860x460px
-- **Excel-парсинг:** xlsx (SheetJS) — загрузка файлов из 1С Альфа-Авто
+- **Состояние:** React Context (Auth, Theme, Toast) + localStorage
+- **PWA:** Service Worker (sw.js), manifest.json, push-уведомления
 
 ## Архитектура
 ```
 /project
 ├── frontend/src/
-│   ├── App.jsx              # HashRouter, 13 маршрутов + ProtectedRoute
-│   ├── main.jsx             # React.StrictMode + createRoot
-│   ├── components/
-│   │   ├── Layout.jsx       # Sidebar + Header (тема, язык, юзер) + Outlet
+│   ├── App.jsx              # HashRouter, 20 маршрутов + ProtectedRoute (lazy-loaded)
+│   ├── main.jsx             # ThemeProvider → ToastProvider → AuthProvider → AppRoutes
+│   ├── components/          # 17 компонентов + подпапки (dashboardPosts/, postsDetail/)
+│   │   ├── Layout.jsx       # Sidebar + Header + Outlet
 │   │   ├── Sidebar.jsx      # Навигация, фильтрация по user.pages
-│   │   ├── STOMap.jsx        # Карта СТО (react-konva), 10 постов, 10 камер
-│   │   └── HelpButton.jsx   # Контекстная справка (9 разделов)
-│   ├── pages/
-│   │   ├── Dashboard.jsx     # KPI-карточки, рекомендации, события (usePolling 5с)
-│   │   ├── DashboardPosts.jsx # Gantt-таймлайн ЗН по постам (963 LOC)
-│   │   ├── PostsDetail.jsx   # Аналитика по постам, master-detail (1169 LOC)
-│   │   ├── MapView.jsx       # Карта СТО + модальные окна постов и камер
-│   │   ├── Sessions.jsx      # Сессии авто с модалкой деталей
-│   │   ├── WorkOrders.jsx    # Заказ-наряды из 1С
-│   │   ├── Events.jsx        # Журнал событий с фильтрами
-│   │   ├── Analytics.jsx     # 6 графиков Recharts (area, bar, pie)
-│   │   ├── Data1C.jsx        # Данные 1С: Excel-импорт, 3 таба, пагинация, сортировка
-│   │   ├── Cameras.jsx       # 10 камер, зоны покрытия
+│   │   ├── STOMap.jsx        # Карта СТО (Konva)
+│   │   ├── HelpButton.jsx   # Контекстная справка
+│   │   ├── DateRangePicker, DeltaBadge, PostTimer, QRBadge
+│   │   ├── LiveSTOWidget, PredictionWidget, SparkLine, WeeklyHeatmap
+│   │   ├── PhotoGallery, CameraStreamModal, LocationSwitcher
+│   │   ├── NotificationCenter, Skeleton
+│   │   └── dashboardPosts/  # GanttTimeline, TimelineRow, WorkOrderModal, ConflictModal, ShiftSettings
+│   ├── pages/               # 20 страниц
+│   │   ├── Dashboard.jsx     # KPI-карточки, рекомендации, события (polling 5с)
+│   │   ├── DashboardPosts.jsx # Gantt-таймлайн ЗН, drag-n-drop, конфликт-детекция (521 LOC)
+│   │   ├── PostsDetail.jsx   # Аналитика по постам, master-detail (226 LOC)
+│   │   ├── MapViewer.jsx     # Konva live-карта с постами и камерами
+│   │   ├── MapEditor.jsx     # Drag-drop редактор карты, 8 типов элементов (1244 LOC)
+│   │   ├── Sessions.jsx      # Сессии авто, QR-код, привязка ЗН
+│   │   ├── WorkOrders.jsx    # Заказ-наряды, CSV-импорт, start/pause/complete
+│   │   ├── Events.jsx        # Журнал событий, 10 типов, фильтры, auto-refresh
+│   │   ├── Analytics.jsx     # Графики Recharts, экспорт XLSX/PDF/PNG (655 LOC)
+│   │   ├── Data1C.jsx        # Данные 1С: Excel-импорт, sync, export (926 LOC)
+│   │   ├── Cameras.jsx       # 10 камер, зоны покрытия, HLS стримы
 │   │   ├── CameraMapping.jsx # Маппинг камера↔зона, приоритеты
 │   │   ├── Users.jsx         # CRUD пользователей, роли, доступ к страницам
+│   │   ├── Shifts.jsx        # Недельное расписание смен, worker assignment
+│   │   ├── Audit.jsx         # Аудит-лог действий, фильтры, CSV-экспорт
+│   │   ├── MyPost.jsx        # Пост работника, таймер ЗН, play/pause/complete
+│   │   ├── Health.jsx        # Системный статус (admin only)
+│   │   ├── WorkerStats.jsx   # Аналитика по работнику, графики
+│   │   ├── ReportSchedule.jsx # Расписание автоотчётов
 │   │   └── Login.jsx         # Авторизация
 │   ├── contexts/
-│   │   ├── AuthContext.jsx   # Авторизация, API-клиент, permissions, updateCurrentUser
-│   │   └── ThemeContext.jsx  # Тема dark/light → CSS class + localStorage
-│   ├── hooks/useSocket.js    # usePolling(callback, interval) — интервальный опрос
-│   ├── utils/translate.js    # translateZone(), translatePost() — перевод названий
-│   └── i18n/                 # ru.json, en.json (~197 ключей каждый)
+│   │   ├── AuthContext.jsx   # Авторизация, API-клиент, permissions, Socket.IO
+│   │   ├── ThemeContext.jsx  # Тема dark/light
+│   │   └── ToastContext.jsx  # Toast-уведомления (success/error/warning/info)
+│   ├── hooks/
+│   │   ├── useSocket.js      # usePolling, useSocket, useSubscribe, connectSocket
+│   │   ├── useWorkOrderTimer.js # Таймер ЗН с warningLevel
+│   │   └── useCameraStatus.js   # Статус камер через Socket.IO
+│   ├── utils/
+│   │   ├── translate.js      # translateZone(), translatePost()
+│   │   └── export.js         # exportToXlsx(), exportToPdf(), downloadChartAsPng()
+│   └── i18n/                 # ru.json, en.json (~543 строки, ~512 ключей)
 ├── backend/
 │   ├── src/
-│   │   ├── index.js          # Express сервер (порт 3001)
-│   │   ├── routes/           # auth, zones, posts, events, sessions, workOrders, recommendations, dashboard
-│   │   ├── middleware/auth.js # JWT верификация
-│   │   ├── services/         # eventProcessor, recommendationEngine
+│   │   ├── index.js          # Express, HTTP :3001 + HTTPS :3444, Socket.IO, фоновые сервисы
+│   │   ├── routes/           # 22 модуля (см. Backend API)
+│   │   ├── middleware/       # auth.js, auditLog.js, validate.js (Zod), asyncHandler.js
+│   │   ├── services/         # 7 сервисов (см. Backend Services)
 │   │   └── config/           # socket.js, database.js (Prisma)
-│   └── prisma/               # schema.prisma, миграции, seed
-├── data/                     # 25 JSON файлов (моки) ← FRONTEND ЧИТАЕТ ОТСЮДА
-├── api/                      # 22 JSON файлов (копия data/, НЕ используется фронтом)
-├── assets/                   # Vite билд-ассеты (JS ~1.56MB, CSS ~24KB)
+│   └── prisma/               # schema.prisma (22 модели), миграции, seed.js
+├── data/                     # 29 JSON файлов (моки/fallback)
+├── assets/                   # Vite билд-ассеты
 ├── server.js                 # HLS-стриминг камер (порт 8181, FFmpeg RTSP→HLS)
+├── sw.js                     # Service Worker v11 (network-first, push)
+├── manifest.json             # PWA манифест
 └── index.html                # Entry point
 ```
 
-## КРИТИЧНО: Загрузка данных (data flow)
+## Backend API — 22 модуля маршрутов (70+ эндпоинтов)
 
-### Два способа загрузки JSON:
-1. **Через AuthContext `api.get()`** — трансформирует URL:
-   - `/api/dashboard/overview` → `data/dashboard-overview.json`
-   - `/api/sessions?status=completed` → `data/sessions-completed.json`
-   - `/api/dashboard/metrics?period=7d` → `data/dashboard-metrics-7d.json`
-2. **Через локальный `fetchApi()`** — прямой fetch:
-   - `fetchApi('dashboard-posts')` → `data/dashboard-posts.json`
-   - Используется в: DashboardPosts, PostsDetail, MapView, Users, Sidebar
+| Модуль | Путь | Ключевые операции |
+|--------|------|-------------------|
+| auth | `/api/auth` | login, refresh, logout, me, register |
+| dashboard | `/api/dashboard` | overview, metrics(?period=24h\|7d\|30d), trends, live |
+| posts | `/api/posts` | CRUD, статусы (free/occupied/occupied_no_work/active_work) |
+| zones | `/api/zones` | CRUD, типы (repair/waiting/entry/parking/free) |
+| events | `/api/events` | POST от CV-системы, GET с фильтрами |
+| sessions | `/api/sessions` | active/completed, связь с ZoneStay/PostStay |
+| workOrders | `/api/work-orders` | CSV-импорт, schedule (версионирование), start/pause/resume/complete |
+| recommendations | `/api/recommendations` | GET active, PUT acknowledge |
+| cameras | `/api/cameras` | CRUD, health, zone mapping с приоритетами |
+| users | `/api/users` | CRUD, role assignment, page access |
+| shifts | `/api/shifts` | CRUD, worker assignment, conflict detection, complete |
+| data1c | `/api/1c` | import XLSX, export XLSX, sync-history, planning/workers/stats |
+| mapLayout | `/api/map-layout` | CRUD с версионированием, restore |
+| auditLog | `/api/audit-log` | GET с фильтрами, CSV export |
+| predict | `/api/predict` | load, load/week, duration, free, health |
+| postsData | `/api/posts-analytics`, `/api/dashboard-posts`, `/api/analytics-history` | Аналитика постов |
+| workers | `/api/workers` | Список, stats с daily breakdown |
+| health | `/api/system-health` | backend, database, cameras, disk status |
+| push | `/api/push` | VAPID key, subscribe, send |
+| photos | `/api/photos` | Upload base64, gallery, delete |
+| locations | `/api/locations` | CRUD (multi-tenancy) |
+| reportSchedule | `/api/report-schedules` | CRUD, run (generate XLSX) |
 
-### Кто как загружает:
-| Страница | Источник данных |
-|----------|----------------|
-| Dashboard | `api.get('/api/dashboard/overview')`, `api.get('/api/recommendations')`, `api.get('/api/events')` |
-| DashboardPosts | `fetchApi('dashboard-posts')` |
-| PostsDetail | `fetchApi('posts-analytics')`, `fetchApi('dashboard-posts')` |
-| MapView | `fetchApi('dashboard-posts')`, `fetchApi('posts')` |
-| Sessions | `api.get('/api/sessions?status=...')`, `api.get('/api/work-orders')` |
-| WorkOrders | `api.get('/api/work-orders')` |
-| Analytics | `api.get('/api/analytics-history')` |
-| Events | `api.get('/api/events?limit=50')` |
-| Data1C | `api.get('/api/1c-stats')`, `api.get('/api/1c-planning')`, `api.get('/api/1c-workers')` + localStorage |
-| Users | `fetchApi('users')` с fallback на localStorage |
-| CameraMapping | Только localStorage (`cameraMappingData`) |
-| Sidebar | `fetch('data/posts-analytics.json')` |
+## Backend Services (фоновые)
 
-### ВАЖНО: JSON моки в `/project/data/`, НЕ в `/project/api/`!
-- Nginx проксирует `/api/*` на backend (порты 3001→3000→3002)
-- Backend не запущен → `/api/` возвращает ошибку
-- Frontend читает из `/data/*.json` через `fetchJson()` с `BASE = './'`
-- **При добавлении нового JSON мока — класть в `/project/data/`**
+| Сервис | Файл | Что делает |
+|--------|------|-----------|
+| Event Processor | eventProcessor.js | Обработка CV-событий → сессии, статусы постов, Socket.IO |
+| Recommendation Engine | recommendationEngine.js | 5 проверок: post_free (>30мин), overtime (>120%), idle (>15мин), capacity, no_show |
+| 1C Sync | sync1C.js | File watcher `/data/1c-import/`, парсинг XLSX, JSON-генерация |
+| Camera Health | cameraHealthCheck.js | Пинг каждые 30с, Socket.IO emit |
+| Telegram Bot | telegramBot.js | /start, /status, /post N, /free, /report |
+| Report Scheduler | reportScheduler.js | node-cron, XLSX генерация, Telegram delivery |
+| Server Export | serverExport.js | XLSX export утилиты |
+
+## Middleware
+
+| Файл | Назначение |
+|------|-----------|
+| auth.js | JWT верификация (Bearer), requirePermission(...keys) |
+| auditLog.js | Логирование мутаций (create/update/delete) с old/new data |
+| validate.js | Zod-валидация request body |
+| asyncHandler.js | Обёртка async handlers, Prisma P2025 errors |
+
+## База данных — Prisma + SQLite (22 модели)
+
+**RBAC:** User → UserRole → Role → RolePermission → Permission
+- 15 permissions: view_dashboard, view_analytics, manage_zones, manage_users, manage_cameras и др.
+- 5 ролей: admin (все), director (view), manager (dashboard+WO), mechanic (посты), viewer (dashboard)
+
+**Зоны/Посты:** Zone (5 зон) → Post (10 постов: heavy 1-4, light 5-8, special 9-10)
+
+**Камеры:** Camera (10 RTSP) → CameraZone (приоритеты 0-10)
+
+**Сессии:** VehicleSession → ZoneStay, PostStay (hasWorker, isActive, activeTime, idleTime)
+
+**Заказ-наряды:** WorkOrder (externalId, status, normHours, version для конфликтов) → WorkOrderLink
+
+**Смены:** Shift → ShiftWorker (name, role, postId)
+
+**Прочее:** Event (10 типов, confidence, cameraSources), Recommendation, AuditLog, SyncLog, MapLayout → MapLayoutVersion, Photo, PushSubscription, TelegramLink, ReportSchedule, Location
+
+## Socket.IO Events
+
+**Клиент → Сервер:** subscribe:zone, subscribe:post, subscribe:all
+**Сервер → Клиент:** post:status_changed, schedule:updated, workOrder:started/completed, camera:status, recommendation, event, zone:update, post:update
+
+## Data Flow
+
+Все страницы загружают данные через `api.get()` из AuthContext → запросы идут на backend `/api/*`.
+Backend отдаёт данные из Prisma/SQLite. JSON-моки в `/data/` используются только как fallback при недоступности backend.
+
+**Fallback-цепочка:** Backend API → JSON моки в `/data/` → localStorage (только users, camera mapping)
 
 ## localStorage ключи
 | Ключ | Что хранит | Где используется |
 |------|------------|------------------|
-| `token` | JWT-токен (fake, base64) | AuthContext |
-| `currentUser` | Объект текущего пользователя (pages, permissions) | AuthContext |
-| `usersData` | Отредактированные пользователи (перезаписывает мок) | Users.jsx, AuthContext.login |
-| `language` | `ru` / `en` | i18n, Login, Header |
+| `token` | JWT-токен | AuthContext |
+| `currentUser` | Объект текущего пользователя | AuthContext |
+| `language` | `ru` / `en` | i18n |
 | `theme` | `dark` / `light` | ThemeContext |
-| `1c-imported-planning` | Импортированные данные планирования | Data1C.jsx |
-| `1c-imported-workers` | Импортированные данные выработки | Data1C.jsx |
-| `cameraMappingData` | Маппинг камер по зонам | CameraMapping.jsx |
-| `dashboardPostsSettings` | Настройки таймлайна (смена, кол-во постов) | DashboardPosts.jsx |
+| `dashboardPostsSettings` | Настройки таймлайна | DashboardPosts |
+| `dashboardPostsSchedule` | Локальный кэш расписания | DashboardPosts |
+| `cameraMappingData` | Маппинг камер по зонам | CameraMapping |
 
-**Приоритет:** localStorage > JSON мок (для users, 1C data). При сохранении пользователя через UI — обновляется и `usersData`, и `currentUser` (если это текущий юзер).
-
-## Система доступа (RBAC)
-- **Роли:** admin, manager, viewer, mechanic
-- **Доступ к страницам:** массив `pages` у каждого пользователя
+## RBAC — Система доступа
+- **Роли:** admin, director, manager, mechanic, viewer
+- **Доступ к страницам:** массив `pages` у пользователя
 - **Sidebar** фильтрует по `user.pages.includes(pageId)` (admin видит всё)
-- **При редактировании пользователя:** `updateCurrentUser()` обновляет сессию без перелогина
-- **Маппинг pages → permissions:** `PAGE_PERMISSIONS` в AuthContext (для hasPermission)
+- **Middleware:** `requirePermission('manage_users')` на backend
+- **Frontend:** `hasPermission(key)` из AuthContext
 
-## Карта СТО (STOMap.jsx)
-- Верхний ряд постов: 5, 6, 7, 8, 9
-- Нижний ряд постов: 1, 2, 3, 4, 10
-- Зона проезда между рядами
-- Въезд/выезд слева напротив проезда
-- Парковка по бокам от въезда (сверху и снизу)
-- Камеры 10шт в зоне проезда и на стенах
-- По клику на пост — модальное окно с инфой + кнопка перехода на страницу Посты
+## Карта СТО
+- **MapViewer:** live-карта на Konva, постоянно обновляется (polling/Socket.IO)
+- **MapEditor:** drag-drop редактор, 8 типов элементов (building, post, zone, camera, door, wall, label, infozone)
+- **Размер:** 46540x30690mm, snap-to-grid 10px
+- **Версионирование:** сохранение в БД, история версий, restore
 
-## Данные 1С (Data1C.jsx)
-- **3 таба:** Статистика, Планирование (60 записей, 16 колонок), Выработка (866 записей, 15 колонок)
-- **Excel-импорт:** загрузка .xlsx через drag-n-drop, парсинг xlsx, проверка дублей, кнопка "Сохранить"
-- **Дедупликация:** планирование по (номер + рабочее место + начало), выработка по (номер + сотрудник + дата начала)
-- **Пагинация:** 25/50/100 строк на страницу, сортировка по всем колонкам
+## 1С Интеграция
+- **Import:** XLSX через drag-n-drop или file watcher (`/data/1c-import/`)
+- **Export:** XLSX генерация с фильтрами
+- **Sync Log:** история операций в БД
+- **3 JSON файла:** 1c-planning.json, 1c-workers.json, 1c-stats.json
 
 ## Билд и деплой
 ```bash
-cd /project/frontend && npm run build
-cp -r dist/* /project/
+cd /project/frontend && npm run build && cp -r dist/* /project/
 ```
-Nginx раздаёт из `/project/` автоматически. Новый билд — новые хеши в assets/.
+Nginx раздаёт из `/project/`. После билда — бампить `CACHE_NAME` в `sw.js`.
 
 ## Правила
-- **НЕ делай git commit и git push без прямой команды пользователя**
+- **НЕ делать git commit и git push без прямой команды пользователя**
+- **Данные ТОЛЬКО через БД (Prisma/SQLite)**, не редактировать JSON-моки напрямую
+- **НЕ ИСПОЛЬЗОВАТЬ localStorage как fallback** — чинить бэкенд
+- **Менять ТОЛЬКО то, что просят** — не трогать лишние файлы и БД
 - Все файлы только в `/project`
 - Dev server на `0.0.0.0`
-- i18n: все тексты через `t('key')`, оба языка (ru.json + en.json, ~197 ключей)
+- i18n: все тексты через `t('key')`, оба языка (ru.json + en.json, ~512 ключей)
 - Иконки: только Lucide React, без emoji
-- JSON моки: класть в `/project/data/`, НЕ в `/project/api/`
-- fetchJson: `${BASE}data/${path}.json` (BASE = './')
-- При создании нового `fetchApi()` в компоненте — использовать путь `data/`, не `api/`
+- После каждого билда фронта — бампить CACHE_NAME в sw.js
 
-## Nginx конфигурация (/etc/nginx/sites-enabled/default)
-- **Нет прав записи** (owner: root) — редактировать нельзя
+## Nginx (/etc/nginx/sites-enabled/default)
+- **Нет прав записи** (owner: root)
 - `/api/*` → proxy на backend (3001 → 3000 → 3002 fallback)
-- `/socket.io/` → WebSocket proxy (тот же каскад портов)
+- `/socket.io/` → WebSocket proxy
+- `/cam-api/*` → proxy на HLS сервер :8181
+- `/hls/*` → статика `/project/hls/` с CORS
 - `/` → SPA fallback (`try_files $uri $uri/ /index.html`)
-- `*.php` → PHP-FPM
-- **Статические JSON в `/data/` не конфликтуют с proxy** (только `/api/` проксируется)
 
-## Backend (запущен)
-- Express 4 + Prisma ORM + SQLite (`backend/.env: DATABASE_URL=file:./dev.db`)
-- JWT авторизация (bcryptjs, jsonwebtoken)
-- Socket.IO для real-time
-- 8 модулей маршрутов: auth, zones, posts, events, sessions, workOrders, recommendations, dashboard
-- Порт: 3001 (настраивается через `.env`)
-- Запуск: `cd /project/backend && npm run dev`
-
-## Крупные файлы (кандидаты на рефакторинг)
-- `PostsDetail.jsx` — 1169 LOC
-- `DashboardPosts.jsx` — 963 LOC
-- `Data1C.jsx` — 585 LOC
-- `CameraMapping.jsx` — 458 LOC
-- `STOMap.jsx` — 455 LOC
-
-## SSL/HTTPS Сертификаты
-SSL-сертификат для домена `artisom.dev.metricsavto.com` (Let's Encrypt) доступен в контейнере:
-- **Сертификат (fullchain):** `/project/.ssl/fullchain.pem`
-- **Приватный ключ:** `/project/.ssl/privkey.pem`
+## SSL/HTTPS
+- **Сертификат:** `/project/.ssl/fullchain.pem`
+- **Ключ:** `/project/.ssl/privkey.pem`
 - **Домен:** `artisom.dev.metricsavto.com`
 - **Истекает:** 2026-07-05
 
-Используй эти файлы для настройки HTTPS в Express, nginx или любом другом сервере.
+## Seed-пользователи
+| Email | Роль | Имя |
+|-------|------|-----|
+| admin@metricsai.up | admin | Admin MetricsAI |
+| demo@metricsai.up | manager | Генри Форд |
+| manager@metricsai.up | manager | Сергей Петров |
+| mechanic@metricsai.up | mechanic | Иван Козлов (неактивен) |
 
-Пример для Express (Node.js):
-```js
-const https = require("https");
-const fs = require("fs");
-const app = require("./app"); // Express app
-
-https.createServer({
-  cert: fs.readFileSync("/project/.ssl/fullchain.pem"),
-  key: fs.readFileSync("/project/.ssl/privkey.pem"),
-}, app).listen(3001, "0.0.0.0");
-```
-
-Пример для nginx:
-```nginx
-server {
-    listen 443 ssl;
-    ssl_certificate /project/.ssl/fullchain.pem;
-    ssl_certificate_key /project/.ssl/privkey.pem;
-    ...
-}
-```
-
-**ВАЖНО:** Все порты контейнера (80-65535) проброшены 1:1 на VPS `artisom.dev.metricsavto.com`. Если ты слушаешь на порту 3001 — он доступен как `https://artisom.dev.metricsavto.com:3001/`.
+## Крупные файлы
+- `MapEditor.jsx` — 1244 LOC
+- `Data1C.jsx` — 926 LOC
+- `Analytics.jsx` — 655 LOC
+- `DashboardPosts.jsx` — 521 LOC
+- `CameraMapping.jsx` — 312 LOC
