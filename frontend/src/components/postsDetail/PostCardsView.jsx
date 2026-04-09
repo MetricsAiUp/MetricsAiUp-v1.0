@@ -104,7 +104,7 @@ export default function PostCardsView({ posts, navigate }) {
             </div>
 
             {/* WO count + workers + works */}
-            <div className="flex items-start gap-4 text-xs overflow-hidden" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex items-start gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
               <div className="relative group">
                 <div className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{d.workOrders?.length || 0}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '9px' }}>{isRu ? 'ЗН' : 'WO'}</div>
