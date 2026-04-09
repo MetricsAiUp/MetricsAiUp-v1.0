@@ -45,7 +45,7 @@ export default function LocationSwitcher() {
       </button>
       {open && (
         <div className="absolute right-0 mt-1 p-1 rounded-lg shadow-lg z-30"
-          style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', minWidth: 160 }}>
+          style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)', minWidth: 160 }}>
           {locations.map(loc => (
             <button key={loc.id}
               onClick={() => handleSelect(loc)}

@@ -7,7 +7,7 @@ import { translateZone } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import PredictionWidget from '../components/PredictionWidget';
 import LiveSTOWidget from '../components/LiveSTOWidget';
-import SparkLine from '../components/SparkLine';
+
 
 const EVENT_TYPES = {
   vehicle_entered_zone: { ru: 'Авто въехало', en: 'Vehicle entered' },
@@ -22,21 +22,14 @@ const EVENT_TYPES = {
   work_idle: { ru: 'Простой', en: 'Idle' },
 };
 
-function StatCard({ icon: Icon, label, value, color, sparkData, sparkKey }) {
+function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="glass p-3 flex items-center gap-3">
-      <div className="p-1.5 rounded-lg" style={{ background: color + '15' }}>
-        <Icon size={16} style={{ color }} />
+    <div className="glass px-3 py-2 flex items-center gap-2">
+      <div className="p-1 rounded-md" style={{ background: color + '15' }}>
+        <Icon size={14} style={{ color }} />
       </div>
-      <div className="flex-1 min-w-0">
-        <span className="text-xl font-bold" style={{ color }}>{value}</span>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
-        {sparkData && sparkKey && (
-          <div className="mt-1">
-            <SparkLine data={sparkData} dataKey={sparkKey} color={color} height={24} />
-          </div>
-        )}
-      </div>
+      <span className="text-lg font-bold leading-none" style={{ color }}>{value}</span>
+      <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{label}</span>
     </div>
   );
 }
@@ -82,7 +75,7 @@ export default function Dashboard() {
   const [recommendations, setRecommendations] = useState([]);
   const [events, setEvents] = useState([]);
   const [eventFilter, setEventFilter] = useState('all');
-  const [trends, setTrends] = useState([]);
+  const [trends, setTrends] = useState([]); // kept for future use
 
   const fetchData = async () => {
     try {
@@ -124,38 +117,10 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <StatCard
-          icon={Car}
-          label={t('dashboard.activeSessions')}
-          value={overview?.activeSessions || 0}
-          color="var(--accent)"
-          sparkData={trends}
-          sparkKey="activeSessions"
-        />
-        <StatCard
-          icon={CircleCheck}
-          label={t('dashboard.freePosts')}
-          value={freePostsCount}
-          color="var(--success)"
-          sparkData={trends}
-          sparkKey="occupiedPosts"
-        />
-        <StatCard
-          icon={Wrench}
-          label={t('dashboard.occupiedPosts')}
-          value={occupiedCount}
-          color="var(--warning)"
-          sparkData={trends}
-          sparkKey="postStays"
-        />
-        <StatCard
-          icon={Lightbulb}
-          label={t('dashboard.recommendations')}
-          value={overview?.activeRecommendations || 0}
-          color="var(--info)"
-          sparkData={trends}
-          sparkKey="recommendations"
-        />
+        <StatCard icon={Car} label={t('dashboard.activeSessions')} value={overview?.activeSessions || 0} color="var(--accent)" />
+        <StatCard icon={CircleCheck} label={t('dashboard.freePosts')} value={freePostsCount} color="var(--success)" />
+        <StatCard icon={Wrench} label={t('dashboard.occupiedPosts')} value={occupiedCount} color="var(--warning)" />
+        <StatCard icon={Lightbulb} label={t('dashboard.recommendations')} value={overview?.activeRecommendations || 0} color="var(--info)" />
       </div>
 
       {/* Live STO Widget */}

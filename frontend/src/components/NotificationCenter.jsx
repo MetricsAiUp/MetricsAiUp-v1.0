@@ -178,7 +178,7 @@ export default function NotificationCenter() {
       {/* Dropdown */}
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 max-h-[70vh] rounded-xl shadow-2xl overflow-hidden z-50"
-          style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)' }}>
+          style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}>
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid var(--border-glass)' }}>
             <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -264,7 +264,7 @@ export default function NotificationCenter() {
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 right-4 z-50 w-80 rounded-xl shadow-2xl p-3 flex items-start gap-3 animate-slide-in"
-          style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: `2px solid ${NOTIFICATION_TYPES[toast.type]?.color || '#ef4444'}` }}>
+          style={{ background: 'var(--bg-primary)', border: `2px solid ${NOTIFICATION_TYPES[toast.type]?.color || '#ef4444'}` }}>
           <AlertTriangle size={18} style={{ color: NOTIFICATION_TYPES[toast.type]?.color || '#ef4444', flexShrink: 0, marginTop: 2 }} />
           <div className="flex-1">
             <div className="text-xs font-bold mb-0.5" style={{ color: NOTIFICATION_TYPES[toast.type]?.color || '#ef4444' }}>
