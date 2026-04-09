@@ -768,39 +768,85 @@ export default function MapEditor() {
           style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)', width: 130 }}
         />
         <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.pdf,application/pdf" className="hidden" onChange={handleBgUpload} />
-        <button onClick={() => fileInputRef.current?.click()} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={i18n.language === 'ru' ? 'Загрузить фон' : 'Upload bg'}><Upload size={14} /></button>
+        {[
+          { key: 'upload', onClick: () => fileInputRef.current?.click(), icon: Upload, tip: { ru: 'Загрузить фон (PNG, JPG, PDF)', en: 'Upload background (PNG, JPG, PDF)' }, color: 'var(--text-secondary)' },
+        ].map(btn => (
+          <div key={btn.key} className="relative group">
+            <button onClick={btn.onClick} className="p-1 rounded hover:opacity-80" style={{ color: btn.color }}>
+              <btn.icon size={14} />
+            </button>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg whitespace-nowrap"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px' }}>
+              {btn.tip[i18n.language === 'ru' ? 'ru' : 'en']}
+            </div>
+          </div>
+        ))}
         <button onClick={() => loadImageFromUrl('/data/sto-plan.png')} className="px-1.5 py-0.5 rounded text-[10px] hover:opacity-80" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           {i18n.language === 'ru' ? 'План' : 'Plan'}
         </button>
         {bgImage && (<>
-          <button onClick={() => { setBgImage(null); setBgDataUrl(null); }} className="p-1 rounded hover:opacity-80" style={{ color: '#ef4444' }} title={i18n.language === 'ru' ? 'Убрать фон' : 'Remove bg'}><X size={14} /></button>
+          <div className="relative group">
+            <button onClick={() => { setBgImage(null); setBgDataUrl(null); }} className="p-1 rounded hover:opacity-80" style={{ color: '#ef4444' }}>
+              <X size={14} />
+            </button>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg whitespace-nowrap"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px' }}>
+              {i18n.language === 'ru' ? 'Убрать фон' : 'Remove bg'}
+            </div>
+          </div>
           <input type="range" min="0" max="100" value={Math.round(bgOpacity * 100)}
             onChange={e => setBgOpacity(+e.target.value / 100)}
-            title={`${Math.round(bgOpacity * 100)}%`}
+            title={`${i18n.language === 'ru' ? 'Прозрачность' : 'Opacity'}: ${Math.round(bgOpacity * 100)}%`}
             style={{ width: 50, accentColor: 'var(--accent)' }} />
         </>)}
         <div style={{ width: 1, height: 16, background: 'var(--border-glass)' }} />
         <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] hover:opacity-80 disabled:opacity-50" style={{ background: 'var(--accent)', color: '#fff' }}>
           <Save size={12} /> {saving ? '...' : t('common.save')}
         </button>
-        <button onClick={handleLoad} disabled={loading} className="p-1 rounded hover:opacity-80 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }} title={i18n.language === 'ru' ? 'Загрузить' : 'Load'}><RefreshCw size={14} /></button>
-        <button onClick={handleExport} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title={i18n.language === 'ru' ? 'Экспорт JSON' : 'Export JSON'}><Download size={14} /></button>
-        <button onClick={handleClear} className="p-1 rounded hover:opacity-80" style={{ color: '#ef4444' }} title={i18n.language === 'ru' ? 'Очистить' : 'Clear'}><Trash2 size={14} /></button>
+        {[
+          { key: 'load', onClick: handleLoad, icon: RefreshCw, tip: { ru: 'Загрузить с сервера', en: 'Load from server' }, color: 'var(--text-secondary)', disabled: loading },
+          { key: 'export', onClick: handleExport, icon: Download, tip: { ru: 'Экспорт JSON', en: 'Export JSON' }, color: 'var(--text-secondary)' },
+          { key: 'clear', onClick: handleClear, icon: Trash2, tip: { ru: 'Очистить всё', en: 'Clear all' }, color: '#ef4444' },
+        ].map(btn => (
+          <div key={btn.key} className="relative group">
+            <button onClick={btn.onClick} disabled={btn.disabled} className="p-1 rounded hover:opacity-80 disabled:opacity-50" style={{ color: btn.color }}>
+              <btn.icon size={14} />
+            </button>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg whitespace-nowrap"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px' }}>
+              {btn.tip[i18n.language === 'ru' ? 'ru' : 'en']}
+            </div>
+          </div>
+        ))}
         <div className="flex-1" />
-        <button onClick={undo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title="Ctrl+Z"><Undo2 size={14} /></button>
-        <button onClick={redo} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }} title="Ctrl+Shift+Z"><Redo2 size={14} /></button>
-        <div style={{ width: 1, height: 16, background: 'var(--border-glass)' }} />
-        <button onClick={() => setSnapEnabled(!snapEnabled)} className="p-1 rounded hover:opacity-80" style={{ color: snapEnabled ? 'var(--accent)' : 'var(--text-muted)' }} title={t('mapEditor.snap')}><Magnet size={14} /></button>
-        <button onClick={() => setShowGrid(!showGrid)} className="p-1 rounded hover:opacity-80" style={{ color: showGrid ? 'var(--accent)' : 'var(--text-muted)' }} title={t('mapEditor.grid')}><Grid3X3 size={14} /></button>
-        <button onClick={zoomIn} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><ZoomIn size={14} /></button>
-        <button onClick={zoomOut} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><ZoomOut size={14} /></button>
-        <button onClick={resetView} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-secondary)' }}><RotateCcw size={14} /></button>
+        {[
+          { key: 'undo', onClick: undo, icon: Undo2, tip: { ru: 'Отменить (Ctrl+Z)', en: 'Undo (Ctrl+Z)' }, color: 'var(--text-secondary)' },
+          { key: 'redo', onClick: redo, icon: Redo2, tip: { ru: 'Повторить (Ctrl+Shift+Z)', en: 'Redo (Ctrl+Shift+Z)' }, color: 'var(--text-secondary)' },
+          { key: 'sep1', sep: true },
+          { key: 'snap', onClick: () => setSnapEnabled(!snapEnabled), icon: Magnet, tip: { ru: 'Привязка к сетке', en: 'Snap to grid' }, color: snapEnabled ? 'var(--accent)' : 'var(--text-muted)' },
+          { key: 'grid', onClick: () => setShowGrid(!showGrid), icon: Grid3X3, tip: { ru: 'Сетка', en: 'Grid' }, color: showGrid ? 'var(--accent)' : 'var(--text-muted)' },
+          { key: 'zoomIn', onClick: zoomIn, icon: ZoomIn, tip: { ru: 'Приблизить', en: 'Zoom in' }, color: 'var(--text-secondary)' },
+          { key: 'zoomOut', onClick: zoomOut, icon: ZoomOut, tip: { ru: 'Отдалить', en: 'Zoom out' }, color: 'var(--text-secondary)' },
+          { key: 'reset', onClick: resetView, icon: RotateCcw, tip: { ru: 'Сбросить вид', en: 'Reset view' }, color: 'var(--text-secondary)' },
+        ].map(btn => btn.sep ? (
+          <div key={btn.key} style={{ width: 1, height: 16, background: 'var(--border-glass)' }} />
+        ) : (
+          <div key={btn.key} className="relative group">
+            <button onClick={btn.onClick} className="p-1 rounded hover:opacity-80" style={{ color: btn.color }}>
+              <btn.icon size={14} />
+            </button>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg whitespace-nowrap"
+              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px' }}>
+              {btn.tip[i18n.language === 'ru' ? 'ru' : 'en']}
+            </div>
+          </div>
+        ))}
         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{Math.round(stageScale * 100)}%</span>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Toolbar */}
-        <div className="glass-static flex flex-col gap-1 p-2 flex-shrink-0" style={{ width: 52, borderRight: '1px solid var(--border-glass)' }}>
+        <div className="glass-static flex flex-col gap-0.5 p-1.5 flex-shrink-0" style={{ width: 44, borderRight: '1px solid var(--border-glass)' }}>
           {TOOLS.map(tl => {
             const Icon = tl.icon;
             const active = tool === tl.id;
@@ -808,25 +854,29 @@ export default function MapEditor() {
             return (
               <div key={tl.id} className="relative group">
                 <button onClick={() => { setTool(tl.id); if (tl.id !== 'select') setSelectedId(null); }}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg transition-all"
-                  style={{ background: active ? 'var(--accent)' : 'transparent', color: active ? '#fff' : 'var(--text-secondary)' }}>
-                  <Icon size={16} />
+                  className="flex items-center justify-center w-8 h-8 rounded-md transition-all"
+                  style={{
+                    background: active ? 'var(--accent)' : 'transparent',
+                    color: active ? '#fff' : 'var(--text-secondary)',
+                    boxShadow: active ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
+                  }}>
+                  <Icon size={15} />
                 </button>
-                <div className="absolute left-12 top-0 z-50 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg"
-                  style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px', whiteSpace: 'nowrap', minWidth: 180, maxWidth: 280, whiteSpace: 'normal' }}>
+                <div className="absolute top-0 z-50 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg"
+                  style={{ left: 'calc(100% + 8px)', background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px', minWidth: 180, maxWidth: 260 }}>
                   <div className="font-bold text-xs mb-1" style={{ color: 'var(--accent)' }}>{tl.label}</div>
-                  {tl.tip?.[isRu ? 'ru' : 'en']}
+                  <div style={{ lineHeight: 1.4 }}>{tl.tip?.[isRu ? 'ru' : 'en']}</div>
                 </div>
               </div>
             );
           })}
           <div className="flex-1" />
           <div className="relative group">
-            <button className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ color: 'var(--text-muted)' }}>
-              <span style={{ fontSize: 14 }}>?</span>
+            <button className="flex items-center justify-center w-8 h-8 rounded-md" style={{ color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 13 }}>?</span>
             </button>
-            <div className="absolute left-12 bottom-0 z-50 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg"
-              style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px', minWidth: 220, maxWidth: 300 }}>
+            <div className="absolute bottom-0 z-50 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg"
+              style={{ left: 'calc(100% + 8px)', background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '11px', minWidth: 220, maxWidth: 300 }}>
               <div className="font-bold text-xs mb-2" style={{ color: 'var(--accent)' }}>
                 {i18n.language === 'ru' ? 'Как пользоваться' : 'How to use'}
               </div>
