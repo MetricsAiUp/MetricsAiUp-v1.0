@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Car, Truck, Wrench, Clock, User, AlertTriangle, ScrollText,
   Camera, Image, ChevronRight, ChevronDown, ArrowLeft, BarChart3, Calendar, FileText,
@@ -559,6 +560,8 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
 
 export default function PostDetailPanel({ selectedPost, dashData, period, setPeriod, showCustom, setShowCustom, customFrom, setCustomFrom, customTo, setCustomTo, navigate, setModal }) {
   const { t, i18n } = useTranslation();
+  const { isElementVisible } = useAuth();
+  const elVis = (id) => isElementVisible('posts-detail', id);
   const isRu = i18n.language === 'ru';
 
   return (
@@ -620,7 +623,7 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
       </div>
 
       {/* Timeline */}
-      {period === 'today' && (
+      {elVis('pd.timeline') && period === 'today' && (
         <PostTimeline
           dashPost={dashData?.posts?.find(p => p.number === selectedPost.number)}
           shiftStart={dashData?.settings?.shiftStart || '08:00'}
@@ -629,39 +632,51 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
       )}
 
       {/* Summary cards */}
-      <SummaryCards post={selectedPost} t={t} />
+      {elVis('pd.summary') && <SummaryCards post={selectedPost} t={t} />}
 
-      <CollapsibleSection icon={FileText} title={t('postsDetail.workOrders')} count={selectedPost.today.workOrders.length}
-        extra={selectedPost.today.workOrders.length > 3 && <button onClick={() => setModal({ type: 'workOrders', data: selectedPost.today.workOrders })} className="text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>{t('postsDetail.showAll')}</button>}
-      >
-        <WorkOrdersSection workOrders={selectedPost.today.workOrders} />
-      </CollapsibleSection>
+      {elVis('pd.workOrders') && (
+        <CollapsibleSection icon={FileText} title={t('postsDetail.workOrders')} count={selectedPost.today.workOrders.length}
+          extra={selectedPost.today.workOrders.length > 3 && <button onClick={() => setModal({ type: 'workOrders', data: selectedPost.today.workOrders })} className="text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>{t('postsDetail.showAll')}</button>}
+        >
+          <WorkOrdersSection workOrders={selectedPost.today.workOrders} />
+        </CollapsibleSection>
+      )}
 
-      <CollapsibleSection icon={Users} title={t('postsDetail.workers')} count={selectedPost.today.workers.length}>
-        <WorkersSection workers={selectedPost.today.workers} />
-      </CollapsibleSection>
+      {elVis('pd.workers') && (
+        <CollapsibleSection icon={Users} title={t('postsDetail.workers')} count={selectedPost.today.workers.length}>
+          <WorkersSection workers={selectedPost.today.workers} />
+        </CollapsibleSection>
+      )}
 
-      {selectedPost.today.alerts.length > 0 && (
+      {elVis('pd.alerts') && selectedPost.today.alerts.length > 0 && (
         <CollapsibleSection icon={AlertTriangle} title={t('postsDetail.alerts')} count={selectedPost.today.alerts.length} color="var(--warning)">
           <AlertsSection alerts={selectedPost.today.alerts} />
         </CollapsibleSection>
       )}
 
-      <CollapsibleSection icon={ScrollText} title={t('postsDetail.eventLog')} count={selectedPost.today.eventLog.length}>
-        <EventLogSection events={selectedPost.today.eventLog} />
-      </CollapsibleSection>
+      {elVis('pd.eventLog') && (
+        <CollapsibleSection icon={ScrollText} title={t('postsDetail.eventLog')} count={selectedPost.today.eventLog.length}>
+          <EventLogSection events={selectedPost.today.eventLog} />
+        </CollapsibleSection>
+      )}
 
-      <CollapsibleSection icon={BarChart3} title={t('postsDetail.statistics')}>
-        <StatsSection stats={selectedPost.today.workStats} t={t} />
-      </CollapsibleSection>
+      {elVis('pd.statistics') && (
+        <CollapsibleSection icon={BarChart3} title={t('postsDetail.statistics')}>
+          <StatsSection stats={selectedPost.today.workStats} t={t} />
+        </CollapsibleSection>
+      )}
 
-      <CollapsibleSection icon={Camera} title={t('postsDetail.cameras')}>
-        <CamerasSection cameras={selectedPost.today.cameras} plateImage={selectedPost.today.currentPlateImage} t={t} />
-      </CollapsibleSection>
+      {elVis('pd.cameras') && (
+        <CollapsibleSection icon={Camera} title={t('postsDetail.cameras')}>
+          <CamerasSection cameras={selectedPost.today.cameras} plateImage={selectedPost.today.currentPlateImage} t={t} />
+        </CollapsibleSection>
+      )}
 
-      <CollapsibleSection icon={Calendar} title={t('postsDetail.calendarLoad')}>
-        <CalendarSection calendar={selectedPost.calendar} post={selectedPost} t={t} />
-      </CollapsibleSection>
+      {elVis('pd.calendar') && (
+        <CollapsibleSection icon={Calendar} title={t('postsDetail.calendarLoad')}>
+          <CalendarSection calendar={selectedPost.calendar} post={selectedPost} t={t} />
+        </CollapsibleSection>
+      )}
     </>
   );
 }

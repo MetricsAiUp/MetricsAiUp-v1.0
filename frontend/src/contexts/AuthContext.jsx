@@ -33,6 +33,15 @@ const PAGE_ELEMENTS = {
   'posts-detail': [
     { id: 'postsList', label: { ru: 'Список постов', en: 'Posts List' } },
     { id: 'detailPanel', label: { ru: 'Панель деталей', en: 'Detail Panel' } },
+    { id: 'pd.timeline', label: { ru: 'Таймлайн', en: 'Timeline' } },
+    { id: 'pd.summary', label: { ru: 'План/Факт/Загрузка', en: 'Plan/Fact/Load' } },
+    { id: 'pd.workOrders', label: { ru: 'Заказ-наряды', en: 'Work Orders' } },
+    { id: 'pd.workers', label: { ru: 'Исполнители', en: 'Workers' } },
+    { id: 'pd.alerts', label: { ru: 'Предупреждения', en: 'Alerts' } },
+    { id: 'pd.eventLog', label: { ru: 'Лог событий', en: 'Event Log' } },
+    { id: 'pd.statistics', label: { ru: 'Статистика', en: 'Statistics' } },
+    { id: 'pd.cameras', label: { ru: 'Камеры', en: 'Cameras' } },
+    { id: 'pd.calendar', label: { ru: 'Календарь загрузки', en: 'Calendar Load' } },
   ],
   analytics: [
     { id: 'summaryStats', label: { ru: 'Сводные показатели', en: 'Summary Stats' } },
