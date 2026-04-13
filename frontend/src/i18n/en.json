@@ -244,6 +244,18 @@
     "shiftEnd": "Shift End",
     "postsCount": "Number of Posts",
     "mode": "Mode",
+    "weekSchedule": "Weekly Schedule",
+    "dayOff": "Off",
+    "copyToAll": "Apply to all days",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
     "currentTime": "Current time",
     "status_completed": "Completed",
     "status_in_progress": "In Progress",

@@ -593,8 +593,9 @@ async function generate() {
     })),
   });
 
+  const uniqueSessions = [...new Map(dbSessions.map(s => [s.id, s])).values()];
   await prisma.vehicleSession.createMany({
-    data: dbSessions.map(s => ({
+    data: uniqueSessions.map(s => ({
       id: s.id,
       plateNumber: s.plateNumber,
       entryTime: s.entryTime,

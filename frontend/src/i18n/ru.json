@@ -244,6 +244,18 @@
     "shiftEnd": "Конец смены",
     "postsCount": "Количество постов",
     "mode": "Режим",
+    "weekSchedule": "Расписание по дням",
+    "dayOff": "Вых",
+    "copyToAll": "Применить ко всем дням",
+    "days": {
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thu": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Вс"
+    },
     "currentTime": "Текущее время",
     "status_completed": "Завершён",
     "status_in_progress": "В работе",

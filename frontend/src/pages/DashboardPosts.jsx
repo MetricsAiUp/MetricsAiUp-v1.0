@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
 import GanttTimeline from '../components/dashboardPosts/GanttTimeline';
-import ShiftSettings from '../components/dashboardPosts/ShiftSettings';
+import ShiftSettings, { getTodayShift } from '../components/dashboardPosts/ShiftSettings';
 import WorkOrderModal from '../components/dashboardPosts/WorkOrderModal';
 import FreeWorkOrdersTable from '../components/dashboardPosts/FreeWorkOrdersTable';
 import Legend from '../components/dashboardPosts/Legend';
@@ -101,6 +101,8 @@ export default function DashboardPosts() {
     localStorage.setItem('dashboardPostsSettings', JSON.stringify(newSettings));
   };
 
+  const todayShift = useMemo(() => getTodayShift(settings), [settings]);
+
   const handleBlockClick = (item, post) => {
     setSelectedItem(item);
     setSelectedPost(post);
@@ -124,7 +126,7 @@ export default function DashboardPosts() {
     if (!data) return;
 
     const { type, itemId, fromPostId, toPostId, dropPercent } = dropData;
-    const newStartMs = percentToTime(dropPercent, settings.shiftStart, settings.shiftEnd);
+    const newStartMs = percentToTime(dropPercent, todayShift.shiftStart, todayShift.shiftEnd);
 
     // Save snapshot for rollback on conflict
     setSnapshot(JSON.parse(JSON.stringify(data)));
@@ -224,7 +226,7 @@ export default function DashboardPosts() {
 
       return newData;
     });
-  }, [data, settings.shiftStart, settings.shiftEnd]);
+  }, [data, todayShift.shiftStart, todayShift.shiftEnd]);
 
   // Save schedule
   const handleSave = useCallback(async (forceOverwrite = false) => {
@@ -288,7 +290,7 @@ export default function DashboardPosts() {
     let completedWO = 0, totalNormHours = 0, totalActualHours = 0;
     let idleMinutes = 0, overdueMinutes = 0, savedMinutes = 0;
     const now = new Date();
-    const { start: shiftStartMs } = getShiftBounds(settings.shiftStart, settings.shiftEnd);
+    const { start: shiftStartMs } = getShiftBounds(todayShift.shiftStart, todayShift.shiftEnd);
 
     posts.forEach(p => {
       const tl = p.timeline.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
@@ -326,7 +328,7 @@ export default function DashboardPosts() {
     };
 
     return { occupied, free, completedWO, totalNormHours: Math.round(totalNormHours * 10) / 10, idleTime: fmtMin(idleMinutes), overdueTime: fmtMin(overdueMinutes), savedTime: fmtMin(savedMinutes) };
-  }, [posts, settings.shiftStart, settings.shiftEnd]);
+  }, [posts, todayShift.shiftStart, todayShift.shiftEnd]);
 
   if (loading) {
     return (
@@ -346,7 +348,7 @@ export default function DashboardPosts() {
             <HelpButton pageKey="dashboardPosts" />
           </h2>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {t('dashboardPosts.subtitle')} · {settings.shiftStart} – {settings.shiftEnd}
+            {t('dashboardPosts.subtitle')} · {todayShift.shiftStart} – {todayShift.shiftEnd}
             {settings.mode === 'demo' && (
               <span className="ml-2 px-1.5 py-0.5 rounded text-xs font-medium"
                 style={{ background: 'var(--warning)', color: '#000' }}>
@@ -479,8 +481,8 @@ export default function DashboardPosts() {
       {/* Gantt Timeline */}
       <GanttTimeline
         posts={posts}
-        shiftStart={settings.shiftStart}
-        shiftEnd={settings.shiftEnd}
+        shiftStart={todayShift.shiftStart}
+        shiftEnd={todayShift.shiftEnd}
         onBlockClick={handleBlockClick}
         onDrop={handleDrop}
         conflictItemIds={conflictItemIds}
