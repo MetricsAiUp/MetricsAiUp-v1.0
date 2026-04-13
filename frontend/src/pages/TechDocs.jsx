@@ -364,7 +364,7 @@ export default function TechDocs() {
           : 'ORM: Prisma 5.20. DB: SQLite (~57 MB). File: backend/prisma/dev.db.'
         }</P>
         <Sub>RBAC</Sub>
-        <P>User \u2192 UserRole \u2192 Role \u2192 RolePermission \u2192 Permission</P>
+        <P>User (+ hiddenElements JSON) → UserRole → Role → RolePermission → Permission</P>
         <Table
           headers={[isRu ? '\u0420\u043e\u043b\u044c' : 'Role', 'Permissions']}
           rows={[
@@ -544,8 +544,12 @@ export default function TechDocs() {
         <SectionTitle id="contexts">{isRu ? '11. \u041a\u043e\u043d\u0442\u0435\u043a\u0441\u0442\u044b' : '11. Contexts'}</SectionTitle>
         <Sub>AuthContext</Sub>
         <P>{isRu
-          ? 'user, loading, login(), logout(), hasPermission(), updateCurrentUser(), api {get, post, put, delete}. JWT 24\u0447 + refresh 7\u0434. Mock login \u043f\u0440\u0438 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e\u0441\u0442\u0438 backend.'
-          : 'user, loading, login(), logout(), hasPermission(), updateCurrentUser(), api {get, post, put, delete}. JWT 24h + refresh 7d. Mock login when backend unavailable.'
+          ? 'user, loading, login(), logout(), hasPermission(), isElementVisible(pageId, elementId), updateCurrentUser(), api {get, post, put, delete}. JWT 24ч + refresh 7д. Mock login при недоступности backend.'
+          : 'user, loading, login(), logout(), hasPermission(), isElementVisible(pageId, elementId), updateCurrentUser(), api {get, post, put, delete}. JWT 24h + refresh 7d. Mock login when backend unavailable.'
+        }</P>
+        <P>{isRu
+          ? 'PAGE_ELEMENTS — реестр крупных элементов по страницам (виджеты, секции). user.hiddenElements[] хранится в БД, загружается через /api/auth/me.'
+          : 'PAGE_ELEMENTS — registry of major page elements (widgets, sections). user.hiddenElements[] stored in DB, loaded via /api/auth/me.'
         }</P>
         <Sub>ThemeContext</Sub>
         <P>{isRu ? 'theme (dark/light), toggleTheme(). \u0421\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u0442\u0441\u044f \u0432 localStorage.' : 'theme (dark/light), toggleTheme(). Saved to localStorage.'}</P>
@@ -571,12 +575,21 @@ export default function TechDocs() {
         {/* Section 14 — RBAC */}
         <SectionTitle id="rbac">{isRu ? '14. RBAC \u2014 \u0421\u0438\u0441\u0442\u0435\u043c\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430' : '14. RBAC \u2014 Access Control'}</SectionTitle>
         <P>{isRu
-          ? '5 \u0440\u043e\u043b\u0435\u0439: admin, director, manager, mechanic, viewer. 15 permissions. \u041a\u0430\u0436\u0434\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u0438\u043c\u0435\u0435\u0442 \u043c\u0430\u0441\u0441\u0438\u0432 pages[] \u0434\u043b\u044f \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0430\u043c.'
+          ? '5 ролей: admin, director, manager, mechanic, viewer. 15 permissions. Каждый пользователь имеет массив pages[] для доступа к страницам.'
           : '5 roles: admin, director, manager, mechanic, viewer. 15 permissions. Each user has pages[] array for page access.'
         }</P>
         <P>{isRu
-          ? 'Backend: requirePermission() middleware. Frontend: hasPermission() + Sidebar \u0444\u0438\u043b\u044c\u0442\u0440\u0430\u0446\u0438\u044f \u043f\u043e user.pages.'
+          ? 'Backend: requirePermission() middleware. Frontend: hasPermission() + Sidebar фильтрация по user.pages.'
           : 'Backend: requirePermission() middleware. Frontend: hasPermission() + Sidebar filters by user.pages.'
+        }</P>
+        <Sub>{isRu ? 'Видимость элементов' : 'Element Visibility'}</Sub>
+        <P>{isRu
+          ? 'Помимо доступа к страницам, администратор может скрывать крупные элементы (виджеты, секции, графики) на страницах для каждого пользователя. Настройки хранятся в БД (user.hiddenElements). Поддерживаемые страницы: Dashboard (5 элементов), Дашборд постов (4), Посты-детали (11 включая секции панели), Аналитика (7).'
+          : 'Beyond page access, admin can hide major elements (widgets, sections, charts) per user. Settings stored in DB (user.hiddenElements). Supported pages: Dashboard (5 elements), Dashboard Posts (4), Posts Detail (11 incl. panel sections), Analytics (7).'
+        }</P>
+        <P>{isRu
+          ? 'Frontend: isElementVisible(pageId, elementId) из AuthContext. Backend: PUT /api/users/:id принимает hiddenElements[], GET /api/auth/me отдаёт.'
+          : 'Frontend: isElementVisible(pageId, elementId) from AuthContext. Backend: PUT /api/users/:id accepts hiddenElements[], GET /api/auth/me returns it.'
         }</P>
 
         {/* Section 15 — i18n */}
