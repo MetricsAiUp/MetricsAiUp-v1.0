@@ -147,6 +147,21 @@ const ROLE_DEFAULT_PAGES = {
   viewer: ['dashboard', 'posts-detail', 'map'],
 };
 
+// Load user overrides (hiddenElements, pages) from localStorage usersData
+function getUserOverrides(email) {
+  try {
+    const saved = localStorage.getItem('usersData');
+    if (!saved) return {};
+    const { users } = JSON.parse(saved);
+    const found = users?.find(u => u.email?.toLowerCase() === email?.toLowerCase());
+    if (!found) return {};
+    const overrides = {};
+    if (found.hiddenElements?.length) overrides.hiddenElements = found.hiddenElements;
+    if (found.pages?.length) overrides.pages = found.pages;
+    return overrides;
+  } catch { return {}; }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,7 +185,13 @@ export function AuthProvider({ children }) {
     if (tokenRef.current) {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
-        try { setUser(JSON.parse(savedUser)); } catch { /* ignore */ }
+        try {
+          const parsed = JSON.parse(savedUser);
+          const overrides = getUserOverrides(parsed.email);
+          if (overrides.hiddenElements) parsed.hiddenElements = overrides.hiddenElements;
+          if (overrides.pages) parsed.pages = overrides.pages;
+          setUser(parsed);
+        } catch { /* ignore */ }
       }
     }
     setLoading(false);
@@ -196,10 +217,14 @@ export function AuthProvider({ children }) {
           permissions = me.permissions || [];
           pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
         }
+        const overrides = getUserOverrides(data.user.email);
         const userData = {
           id: data.user.id, email: data.user.email,
           firstName: data.user.firstName, lastName: data.user.lastName,
-          role, roles: [role], pages, permissions,
+          role, roles: [role],
+          pages: overrides.pages || pages,
+          hiddenElements: overrides.hiddenElements || [],
+          permissions,
         };
         localStorage.setItem('currentUser', JSON.stringify(userData));
         setUser(userData);
