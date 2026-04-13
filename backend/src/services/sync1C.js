@@ -6,6 +6,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const logger = require('../config/logger');
 
 const DATA_DIR = path.join(__dirname, '../../../data');
 const IMPORT_DIR = path.join(DATA_DIR, '1c-import');
@@ -16,7 +17,7 @@ let prisma = null;
 try {
   prisma = require('../config/database');
 } catch (e) {
-  console.warn('[sync1C] Prisma not available, using file-based sync logs');
+  logger.warn('Prisma not available, using file-based sync logs');
 }
 
 const SYNC_LOG_FILE = path.join(DATA_DIR, '1c-sync-log.json');
@@ -412,7 +413,7 @@ function startFileWatcher(intervalMs = 5 * 60 * 1000) {
   fs.mkdirSync(IMPORT_DIR, { recursive: true });
   fs.mkdirSync(PROCESSED_DIR, { recursive: true });
 
-  console.log(`[sync1C] File watcher started, checking ${IMPORT_DIR} every ${intervalMs / 1000}s`);
+  logger.info('File watcher started', { dir: IMPORT_DIR, intervalSec: intervalMs / 1000 });
 
   const checkFiles = async () => {
     try {
@@ -421,20 +422,20 @@ function startFileWatcher(intervalMs = 5 * 60 * 1000) {
       const files = fs.readdirSync(IMPORT_DIR).filter(f => /\.(xlsx|xls)$/i.test(f));
       if (!files.length) return;
 
-      console.log(`[sync1C] Found ${files.length} file(s) to process`);
+      logger.info('Found files to process', { count: files.length });
 
       for (const file of files) {
         const filepath = path.join(IMPORT_DIR, file);
         try {
           const buffer = fs.readFileSync(filepath);
           const result = await importFromXlsx(buffer, file, 'auto');
-          console.log(`[sync1C] Processed ${file}: imported=${result.imported}, duplicates=${result.duplicates}`);
+          logger.info('Processed file', { file, imported: result.imported, duplicates: result.duplicates });
 
           // Move to processed
           const destPath = path.join(PROCESSED_DIR, `${Date.now()}_${file}`);
           fs.renameSync(filepath, destPath);
         } catch (e) {
-          console.error(`[sync1C] Error processing ${file}:`, e.message);
+          logger.error('Error processing file', { file, error: e.message });
           await createSyncLogEntry({
             type: 'import',
             source: 'auto',
@@ -447,7 +448,7 @@ function startFileWatcher(intervalMs = 5 * 60 * 1000) {
         }
       }
     } catch (e) {
-      console.error('[sync1C] File watcher error:', e.message);
+      logger.error('File watcher error', { error: e.message });
     }
   };
 
@@ -460,7 +461,7 @@ function stopFileWatcher() {
   if (watcherInterval) {
     clearInterval(watcherInterval);
     watcherInterval = null;
-    console.log('[sync1C] File watcher stopped');
+    logger.info('File watcher stopped');
   }
 }
 

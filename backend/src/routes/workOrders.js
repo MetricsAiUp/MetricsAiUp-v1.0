@@ -6,7 +6,48 @@ const { importCsvSchema, assignSchema, scheduleSchema } = require('../schemas/wo
 const { parse } = require('csv-parse/sync');
 const fs = require('fs');
 
-// GET /api/work-orders
+/**
+ * @openapi
+ * /api/work-orders:
+ *   get:
+ *     summary: List work orders with optional filters
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by work order status
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Max number of orders to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Pagination offset
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by scheduled date (from)
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by scheduled date (to)
+ *     responses:
+ *       200:
+ *         description: Paginated list of work orders with total count
+ */
 router.get('/', authenticate, async (req, res) => {
   try {
     const { status, limit = 50, offset = 0, dateFrom, dateTo } = req.query;
@@ -39,7 +80,33 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/work-orders/import-csv — импорт из CSV
+/**
+ * @openapi
+ * /api/work-orders/import-csv:
+ *   post:
+ *     summary: Import work orders from CSV data
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [csvData]
+ *             properties:
+ *               csvData:
+ *                 type: string
+ *                 description: Raw CSV content with headers
+ *     responses:
+ *       201:
+ *         description: Import successful with count and created orders
+ *       400:
+ *         description: Missing csvData
+ *       403:
+ *         description: Insufficient permissions
+ */
 router.post('/import-csv', authenticate, requirePermission('manage_work_orders'), validate(importCsvSchema), async (req, res) => {
   try {
     const { csvData } = req.body;
@@ -72,7 +139,45 @@ router.post('/import-csv', authenticate, requirePermission('manage_work_orders')
   }
 });
 
-// PUT /api/work-orders/:id/assign — assign/move a work order to a post with specific time
+/**
+ * @openapi
+ * /api/work-orders/{id}/assign:
+ *   put:
+ *     summary: Assign or move a work order to a post with specific time
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Work order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [postId, startTime, endTime]
+ *             properties:
+ *               postId:
+ *                 type: string
+ *               startTime:
+ *                 type: string
+ *                 format: date-time
+ *               endTime:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Work order assigned successfully
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Work order not found
+ */
 router.put('/:id/assign', authenticate, requirePermission('manage_work_orders'), validate(assignSchema), async (req, res) => {
   try {
     const { id } = req.params;
@@ -97,7 +202,49 @@ router.put('/:id/assign', authenticate, requirePermission('manage_work_orders'),
   }
 });
 
-// POST /api/work-orders/schedule — batch update multiple work orders
+/**
+ * @openapi
+ * /api/work-orders/schedule:
+ *   post:
+ *     summary: Batch update multiple work orders with conflict detection
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [assignments]
+ *             properties:
+ *               assignments:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     workOrderId:
+ *                       type: string
+ *                     postId:
+ *                       type: string
+ *                     postNumber:
+ *                       type: integer
+ *                     startTime:
+ *                       type: string
+ *                       format: date-time
+ *                     endTime:
+ *                       type: string
+ *                       format: date-time
+ *                     version:
+ *                       type: integer
+ *     responses:
+ *       200:
+ *         description: Batch update successful with updated count
+ *       403:
+ *         description: Insufficient permissions
+ *       409:
+ *         description: Version conflict detected
+ */
 router.post('/schedule', authenticate, requirePermission('manage_work_orders'), validate(scheduleSchema), async (req, res) => {
   try {
     const { assignments } = req.body;
@@ -129,7 +276,29 @@ router.post('/schedule', authenticate, requirePermission('manage_work_orders'), 
   }
 });
 
-// POST /api/work-orders/:id/start
+/**
+ * @openapi
+ * /api/work-orders/{id}/start:
+ *   post:
+ *     summary: Start a work order
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Work order ID
+ *     responses:
+ *       200:
+ *         description: Work order started with server time
+ *       404:
+ *         description: Work order not found
+ *       409:
+ *         description: Work order already in progress
+ */
 router.post('/:id/start', authenticate, async (req, res) => {
   try {
     const wo = await prisma.workOrder.findUnique({ where: { id: req.params.id } });
@@ -146,7 +315,29 @@ router.post('/:id/start', authenticate, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/work-orders/:id/pause
+/**
+ * @openapi
+ * /api/work-orders/{id}/pause:
+ *   post:
+ *     summary: Pause an in-progress work order
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Work order ID
+ *     responses:
+ *       200:
+ *         description: Work order paused with server time
+ *       404:
+ *         description: Work order not found
+ *       409:
+ *         description: Work order cannot be paused (not in progress or already paused)
+ */
 router.post('/:id/pause', authenticate, async (req, res) => {
   try {
     const wo = await prisma.workOrder.findUnique({ where: { id: req.params.id } });
@@ -157,7 +348,27 @@ router.post('/:id/pause', authenticate, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/work-orders/:id/resume
+/**
+ * @openapi
+ * /api/work-orders/{id}/resume:
+ *   post:
+ *     summary: Resume a paused work order
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Work order ID
+ *     responses:
+ *       200:
+ *         description: Work order resumed, estimated end adjusted for pause duration
+ *       409:
+ *         description: Work order is not paused
+ */
 router.post('/:id/resume', authenticate, async (req, res) => {
   try {
     const wo = await prisma.workOrder.findUnique({ where: { id: req.params.id } });
@@ -170,7 +381,27 @@ router.post('/:id/resume', authenticate, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/work-orders/:id/complete
+/**
+ * @openapi
+ * /api/work-orders/{id}/complete:
+ *   post:
+ *     summary: Complete a work order and calculate actual hours
+ *     tags: [WorkOrders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Work order ID
+ *     responses:
+ *       200:
+ *         description: Work order completed with actual hours calculated
+ *       404:
+ *         description: Work order not found
+ */
 router.post('/:id/complete', authenticate, async (req, res) => {
   try {
     const wo = await prisma.workOrder.findUnique({ where: { id: req.params.id } });

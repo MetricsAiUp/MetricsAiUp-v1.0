@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
+const logger = require('../config/logger');
 
 let webpush;
 try {
@@ -15,13 +16,13 @@ try {
   } else {
     const vapidKeys = webpush.generateVAPIDKeys();
     webpush.setVapidDetails('mailto:admin@metricsai.up', vapidKeys.publicKey, vapidKeys.privateKey);
-    console.log('[Push] Generated VAPID keys. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in .env for persistence');
-    console.log('[Push] Public:', vapidKeys.publicKey);
+    logger.info('Generated VAPID keys. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in .env for persistence');
+    logger.info('VAPID public key', { publicKey: vapidKeys.publicKey });
     process.env.VAPID_PUBLIC_KEY = vapidKeys.publicKey;
     process.env.VAPID_PRIVATE_KEY = vapidKeys.privateKey;
   }
 } catch (err) {
-  console.log('[Push] web-push not available:', err.message);
+  logger.info('web-push not available', { error: err.message });
 }
 
 // GET /api/push/vapid-key — get VAPID public key

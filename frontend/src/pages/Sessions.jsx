@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera, QrCode } from 'lucide-react';
+import Pagination from '../components/Pagination';
 import { translateZone, translatePost } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import QRBadge from '../components/QRBadge';
@@ -404,63 +405,8 @@ export default function Sessions() {
         </table>
       </div>
 
-      {/* Pagination */}
-      {filtered.length > 0 && (
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {isRu ? 'Строк на странице:' : 'Rows per page:'}
-            </span>
-            <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
-              className="px-2 py-1 rounded-lg text-xs outline-none cursor-pointer"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
-              {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} {isRu ? 'из' : 'of'} {filtered.length}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setPage(1)} disabled={page === 1}
-              className="px-2 py-1 rounded-lg text-xs transition-opacity"
-              style={{ background: 'var(--bg-glass)', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === 1 ? 0.5 : 1 }}>
-              {'«'}
-            </button>
-            <button onClick={() => setPage(p => p - 1)} disabled={page === 1}
-              className="px-2 py-1 rounded-lg text-xs transition-opacity"
-              style={{ background: 'var(--bg-glass)', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === 1 ? 0.5 : 1 }}>
-              {'‹'}
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-              .reduce((acc, p, i, arr) => {
-                if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
-                acc.push(p);
-                return acc;
-              }, [])
-              .map((p, i) => p === '...' ? (
-                <span key={`dot-${i}`} className="px-1 text-xs" style={{ color: 'var(--text-muted)' }}>...</span>
-              ) : (
-                <button key={p} onClick={() => setPage(p)}
-                  className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                  style={{
-                    background: page === p ? 'var(--accent)' : 'var(--bg-glass)',
-                    color: page === p ? 'white' : 'var(--text-muted)',
-                  }}>{p}</button>
-              ))}
-            <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}
-              className="px-2 py-1 rounded-lg text-xs transition-opacity"
-              style={{ background: 'var(--bg-glass)', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === totalPages ? 0.5 : 1 }}>
-              {'›'}
-            </button>
-            <button onClick={() => setPage(totalPages)} disabled={page === totalPages}
-              className="px-2 py-1 rounded-lg text-xs transition-opacity"
-              style={{ background: 'var(--bg-glass)', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === totalPages ? 0.5 : 1 }}>
-              {'»'}
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} totalItems={filtered.length}
+        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
 
       {/* Modal */}
       {selectedSession && (

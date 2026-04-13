@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Download, AlertCircle, CheckCircle2, Loader2, History } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, X, Check, Database, Users, BarChart3, Car, Clock, Wrench, Save, RefreshCw, Download, AlertCircle, CheckCircle2, Loader2, History } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import Pagination from '../components/Pagination';
 import * as XLSX from 'xlsx';
 
 const STATUS_LABELS = {
@@ -143,15 +144,6 @@ function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', 
   const to = Math.min((safePage + 1) * pageSize, filtered.length);
 
   const handleSearchChange = (e) => { setSearch(e.target.value); setPage(0); };
-  const handlePageSize = (e) => { setPageSize(Number(e.target.value)); setPage(0); };
-
-  const PgBtn = ({ onClick, disabled, children }) => (
-    <button onClick={onClick} disabled={disabled}
-      className="p-1 rounded-md transition-all disabled:opacity-30"
-      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
-      {children}
-    </button>
-  );
 
   return (
     <div className="space-y-3">
@@ -193,28 +185,10 @@ function SortableTable({ data, columns, lang, searchFields, defaultSort = 'id', 
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {from}–{to} {isRu ? 'из' : 'of'} {filtered.length}
-          </span>
-          <select value={pageSize} onChange={handlePageSize}
-            className="text-xs px-2 py-1 rounded-md outline-none cursor-pointer"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
-            {PAGE_SIZES.map(s => <option key={s} value={s}>{s} / {isRu ? 'стр' : 'page'}</option>)}
-          </select>
-        </div>
-        <div className="flex items-center gap-1">
-          <PgBtn onClick={() => setPage(0)} disabled={safePage === 0}><ChevronsLeft size={14} /></PgBtn>
-          <PgBtn onClick={() => setPage(p => Math.max(0, p - 1))} disabled={safePage === 0}><ChevronLeft size={14} /></PgBtn>
-          <span className="text-xs px-2 font-medium" style={{ color: 'var(--text-primary)' }}>
-            {safePage + 1} / {totalPages}
-          </span>
-          <PgBtn onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1}><ChevronRight size={14} /></PgBtn>
-          <PgBtn onClick={() => setPage(totalPages - 1)} disabled={safePage >= totalPages - 1}><ChevronsRight size={14} /></PgBtn>
-        </div>
-      </div>
+      <Pagination page={safePage + 1} totalPages={totalPages} totalItems={filtered.length}
+        perPage={pageSize} perPageOptions={PAGE_SIZES}
+        onPageChange={(p) => setPage(p - 1)} onPerPageChange={(pp) => { setPageSize(pp); setPage(0); }}
+        compact />
     </div>
   );
 }

@@ -325,18 +325,18 @@ export default function TechDocs() {
           : 'The project architecture follows a classic client-server model with clear separation of concerns. Frontend and backend live in a single repository (monorepo) but are built and deployed separately. The frontend is built via Vite into static files served by Nginx, while the backend runs as a long-lived Node.js process.'
         }</P>
         <Code>{`/project
-\u251c\u2500\u2500 frontend/src/       # React 19, 20 pages, 17+ components, 3 contexts, 3 hooks
+\u251c\u2500\u2500 frontend/src/       # React 19, 20 pages, 19+ components, 3 contexts, 4 hooks
 \u2502   \u251c\u2500\u2500 pages/          # 20 lazy-loaded pages (Dashboard, Analytics, MapEditor, etc.)
-\u2502   \u251c\u2500\u2500 components/     # 17 shared + dashboardPosts/ (8) + postsDetail/ (4)
+\u2502   \u251c\u2500\u2500 components/     # 19 shared + dashboardPosts/ (8) + postsDetail/ (4)
 \u2502   \u251c\u2500\u2500 contexts/       # AuthContext, ThemeContext, ToastContext
-\u2502   \u251c\u2500\u2500 hooks/          # useSocket, useWorkOrderTimer, useCameraStatus
+\u2502   \u251c\u2500\u2500 hooks/          # useSocket, useWorkOrderTimer, useCameraStatus, useAsync
 \u2502   \u251c\u2500\u2500 utils/          # translate.js, export.js
 \u2502   \u2514\u2500\u2500 i18n/           # ru.json, en.json (~512 keys)
 \u251c\u2500\u2500 backend/src/        # Express 4, 23 route modules, 7 background services
 \u2502   \u251c\u2500\u2500 routes/         # 23 modules: auth, dashboard, posts, zones, events, etc.
 \u2502   \u251c\u2500\u2500 services/       # EventProcessor, RecommendationEngine, Sync1C, etc.
 \u2502   \u251c\u2500\u2500 middleware/     # auth, auditLog, validate, asyncHandler
-\u2502   \u2514\u2500\u2500 config/         # socket.js, database.js (Prisma client)
+\u2502   \u2514\u2500\u2500 config/         # socket.js, database.js, logger.js, authCache.js
 \u251c\u2500\u2500 backend/prisma/     # schema.prisma (22+ models), migrations, seed.js
 \u251c\u2500\u2500 data/               # 29 JSON mock files (fallback data)
 \u251c\u2500\u2500 server.js           # HLS streaming server :8181 (FFmpeg RTSP\u2192HLS)
@@ -430,11 +430,13 @@ Frontend (React) \u2500\u2500 api.get/post \u2500\u2500\u25b6 Express \u2500\u25
         }</P>
         <Code>{`# Frontend build & deploy
 cd /project/frontend && npm run build && cp -r dist/* /project/
+# ${isRu ? 'prebuild скрипт автоматически очищает старые assets перед сборкой' : 'prebuild script automatically cleans old assets before building'}
 # ${isRu ? 'После билда — обязательно бампить CACHE_NAME в sw.js' : 'After build — must bump CACHE_NAME in sw.js'}
 
 # Backend start
 cd /project/backend && node src/index.js
 # ${isRu ? 'Запускает HTTP :3001 + HTTPS :3444 + Socket.IO + фоновые сервисы' : 'Starts HTTP :3001 + HTTPS :3444 + Socket.IO + background services'}
+# ${isRu ? 'Swagger UI доступен на /api-docs (OpenAPI 3.0)' : 'Swagger UI available at /api-docs (OpenAPI 3.0)'}
 
 # HLS streaming
 cd /project && node server.js
@@ -617,10 +619,20 @@ cd /project && node server.js
         <Table
           headers={[isRu ? 'Файл' : 'File', isRu ? 'Назначение' : 'Purpose', isRu ? 'Детали' : 'Details']}
           rows={[
-            ['auth.js', isRu ? 'JWT верификация и авторизация' : 'JWT verification and authorization', isRu ? 'Декодирует Bearer token, загружает пользователя из Prisma с ролями/permissions, устанавливает req.user с полями pages, hiddenElements, permissions. requirePermission(...keys) проверяет наличие нужных разрешений.' : 'Decodes Bearer token, loads user from Prisma with roles/permissions, sets req.user with pages, hiddenElements, permissions fields. requirePermission(...keys) checks for required permissions.'],
+            ['auth.js', isRu ? 'JWT верификация и авторизация' : 'JWT verification and authorization', isRu ? 'Декодирует Bearer token, загружает пользователя из Prisma с ролями/permissions (кэшируется через authCache.js с TTL 15 мин), устанавливает req.user с полями pages, hiddenElements, permissions. requirePermission(...keys) проверяет наличие нужных разрешений.' : 'Decodes Bearer token, loads user from Prisma with roles/permissions (cached via authCache.js with 15min TTL), sets req.user with pages, hiddenElements, permissions fields. requirePermission(...keys) checks for required permissions.'],
             ['auditLog.js', isRu ? 'Логирование мутаций' : 'Mutation logging', isRu ? 'Перехватывает ответы с кодом 2xx на мутирующие запросы (POST/PUT/PATCH/DELETE). Записывает action, entity, entityId, oldData, newData, userId, ip, userAgent в AuditLog.' : 'Intercepts 2xx responses on mutating requests (POST/PUT/PATCH/DELETE). Records action, entity, entityId, oldData, newData, userId, ip, userAgent to AuditLog.'],
             ['validate.js', isRu ? 'Zod-валидация' : 'Zod validation', isRu ? 'Принимает Zod-схему, парсит request.body. При ошибке возвращает 400 с детальным описанием невалидных полей.' : 'Takes a Zod schema, parses request.body. On error returns 400 with detailed description of invalid fields.'],
             ['asyncHandler.js', isRu ? 'Обёртка async + Prisma ошибки' : 'Async wrapper + Prisma errors', isRu ? 'Оборачивает async route handlers для ловли отклонённых промисов. Преобразует Prisma P2025 (Record not found) в HTTP 404.' : 'Wraps async route handlers to catch rejected promises. Converts Prisma P2025 (Record not found) to HTTP 404.'],
+          ]}
+        />
+        <Sub>{isRu ? 'Конфигурация (config/)' : 'Configuration (config/)'}</Sub>
+        <Table
+          headers={[isRu ? 'Файл' : 'File', isRu ? 'Назначение' : 'Purpose', isRu ? 'Детали' : 'Details']}
+          rows={[
+            ['logger.js', isRu ? 'Структурированное логирование (Winston)' : 'Structured logging (Winston)', isRu ? 'JSON-формат в production, colorize в dev. Ротация файлов: error.log (5MB x3), combined.log (10MB x5). Уровень настраивается через LOG_LEVEL.' : 'JSON format in production, colorize in dev. File rotation: error.log (5MB x3), combined.log (10MB x5). Level configurable via LOG_LEVEL.'],
+            ['authCache.js', isRu ? 'In-Memory кэш авторизации' : 'In-memory auth cache', isRu ? 'Map с TTL 15 мин. Кэширует результат 4-уровневого Prisma include (User→Roles→Permissions). Инвалидируется при update/delete пользователя.' : 'Map with 15min TTL. Caches result of 4-level Prisma include (User→Roles→Permissions). Invalidated on user update/delete.'],
+            ['socket.js', isRu ? 'Socket.IO инициализация' : 'Socket.IO initialization', isRu ? 'JWT auth middleware, подписки на каналы zone:/post:/all_events.' : 'JWT auth middleware, subscriptions to zone:/post:/all_events channels.'],
+            ['database.js', isRu ? 'Prisma клиент' : 'Prisma client', isRu ? 'Singleton PrismaClient с настройками логирования.' : 'Singleton PrismaClient with logging settings.'],
           ]}
         />
         <Sub>{isRu ? 'Порядок глобальных Express middleware' : 'Global Express Middleware Order'}</Sub>
@@ -742,6 +754,8 @@ cd /project && node server.js
             ['NotificationCenter', isRu ? 'Центр уведомлений' : 'Notification center', isRu ? 'Bell icon + dropdown с последними уведомлениями и рекомендациями' : 'Bell icon + dropdown with recent notifications and recommendations'],
             ['Skeleton', isRu ? 'Placeholder загрузки' : 'Loading placeholder', isRu ? 'Анимированные placeholder блоки пока данные загружаются' : 'Animated placeholder blocks while data loads'],
             ['STOMap', isRu ? 'Карта СТО (Konva)' : 'STO Map (Konva)', isRu ? 'Konva canvas с зонами, постами, камерами для MapViewer' : 'Konva canvas with zones, posts, cameras for MapViewer'],
+            ['ErrorBoundary', isRu ? 'Обработчик ошибок React' : 'React error boundary', isRu ? 'Ловит ошибки рендера в дочерних компонентах, показывает fallback UI с кнопкой «Повторить»' : 'Catches render errors in child components, shows fallback UI with Retry button'],
+            ['Pagination', isRu ? 'Универсальная пагинация' : 'Universal pagination', isRu ? 'Поддерживает compact/full режимы, perPage селектор, ellipsis, клиентскую и серверную пагинацию. Используется в 7 страницах.' : 'Supports compact/full modes, perPage selector, ellipsis, client and server-side pagination. Used in 7 pages.'],
           ]}
         />
 
@@ -799,8 +813,8 @@ cd /project && node server.js
         {/* Section 12 — Hooks */}
         <SectionTitle id="hooks">{isRu ? '12. Хуки' : '12. Hooks'}</SectionTitle>
         <P>{isRu
-          ? 'Три кастомных хука инкапсулируют сложную логику взаимодействия с Socket.IO, таймеры заказ-нарядов и мониторинг камер.'
-          : 'Three custom hooks encapsulate complex logic for Socket.IO interaction, work order timers, and camera monitoring.'
+          ? 'Четыре кастомных хука инкапсулируют сложную логику взаимодействия с Socket.IO, таймеры заказ-нарядов, мониторинг камер и универсальные API-запросы.'
+          : 'Four custom hooks encapsulate complex logic for Socket.IO interaction, work order timers, camera monitoring, and universal API requests.'
         }</P>
 
         <Sub>useSocket</Sub>
@@ -821,12 +835,19 @@ cd /project && node server.js
           : 'Hook for tracking camera status via Socket.IO. Subscribes to camera:status event and maintains Map<camId, { online, lastCheck }>. Backend CameraHealthCheck pings each camera every 30 seconds and emits the result. The hook allows any component to know the current status of a specific camera without additional API requests.'
         }</P>
 
+        <Sub>useAsync</Sub>
+        <P>{isRu
+          ? 'Универсальный хук для API-запросов. Принимает URL и опции (enabled, deps, transform, initialData). Возвращает { data, loading, error, refetch }. Автоматически выполняет запрос через api.get() при монтировании и при изменении deps. mountedRef предотвращает setState на размонтированных компонентах. transform позволяет преобразовать ответ API перед сохранением в state.'
+          : 'Universal hook for API requests. Takes URL and options (enabled, deps, transform, initialData). Returns { data, loading, error, refetch }. Automatically fetches via api.get() on mount and when deps change. mountedRef prevents setState on unmounted components. transform allows transforming API response before storing in state.'
+        }</P>
+
         <Table
           headers={[isRu ? 'Хук' : 'Hook', isRu ? 'Входные данные' : 'Input', isRu ? 'Выходные данные' : 'Output']}
           rows={[
             ['useSocket', isRu ? 'JWT token при connect' : 'JWT token on connect', 'connectSocket, disconnectSocket, usePolling, useSubscribe, useSocketStatus'],
             ['useWorkOrderTimer', isRu ? 'WorkOrder объект' : 'WorkOrder object', 'elapsedMs, percentUsed, warningLevel, start, pause, resume, complete'],
             ['useCameraStatus', isRu ? 'Нет (авто-подписка)' : 'None (auto-subscribe)', 'Map<camId, { online, lastCheck }>'],
+            ['useAsync', isRu ? 'URL, { enabled, deps, transform, initialData }' : 'URL, { enabled, deps, transform, initialData }', '{ data, loading, error, refetch }'],
           ]}
         />
 
@@ -1105,6 +1126,9 @@ cd /project/frontend && npm test
             ['xlsx', '0.18.5', isRu ? 'Генерация/парсинг XLSX файлов' : 'XLSX file generation/parsing'],
             ['web-push', '3.6.7', isRu ? 'Web Push уведомления (VAPID)' : 'Web Push notifications (VAPID)'],
             ['node-telegram-bot-api', '0.67.0', isRu ? 'Telegram Bot API клиент' : 'Telegram Bot API client'],
+            ['winston', '3.x', isRu ? 'Структурированное логирование с ротацией файлов' : 'Structured logging with file rotation'],
+            ['swagger-jsdoc', '6.x', isRu ? 'Генерация OpenAPI спецификации из JSDoc' : 'OpenAPI spec generation from JSDoc'],
+            ['swagger-ui-express', '5.x', isRu ? 'Swagger UI на /api-docs' : 'Swagger UI at /api-docs'],
           ]}
         />
 

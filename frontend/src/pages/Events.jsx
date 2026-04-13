@@ -4,9 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
 import { translateZone, translatePost } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
+import Pagination from '../components/Pagination';
 import {
   Car, LogOut, Move, Clock, Square, SquareCheck, UserCheck, UserX,
-  Wrench, Pause, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+  Wrench, Pause,
   ArrowUpDown, Search, RefreshCw,
 } from 'lucide-react';
 
@@ -274,38 +275,10 @@ export default function Events() {
           </tbody>
         </table>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-3 py-2.5" style={{ borderTop: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {page * perPage + 1}–{Math.min((page + 1) * perPage, filtered.length)} {isRu ? 'из' : 'of'} {filtered.length}
-            </span>
-            <select value={perPage} onChange={e => setPerPage(Number(e.target.value))}
-              className="px-1.5 py-0.5 rounded text-xs border outline-none"
-              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }}>
-              {PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setPage(0)} disabled={page === 0}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>
-              <ChevronsLeft size={16} />
-            </button>
-            <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-xs px-2 font-medium" style={{ color: 'var(--text-primary)' }}>{page + 1} / {totalPages}</span>
-            <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>
-              <ChevronRight size={16} />
-            </button>
-            <button onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>
-              <ChevronsRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination page={page + 1} totalPages={totalPages} totalItems={filtered.length}
+          perPage={perPage} perPageOptions={PER_PAGE_OPTIONS}
+          onPageChange={(p) => setPage(p - 1)} onPerPageChange={(pp) => { setPerPage(pp); setPage(0); }}
+          compact />
       </div>
     </div>
   );

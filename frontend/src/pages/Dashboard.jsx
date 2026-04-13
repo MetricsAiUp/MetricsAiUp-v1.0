@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
 import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
+import Pagination from '../components/Pagination';
 import { translateZone } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import PredictionWidget from '../components/PredictionWidget';
@@ -171,24 +172,8 @@ export default function Dashboard() {
               ))
             )}
           </div>
-          {recTotalPages > 1 && (
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {(recPage - 1) * perPage + 1}–{Math.min(recPage * perPage, recommendations.length)} {isRu ? 'из' : 'of'} {recommendations.length}
-              </span>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setRecPage(p => p - 1)} disabled={recPage === 1}
-                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: recPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: recPage === 1 ? 0.5 : 1 }}>{'‹'}</button>
-                {Array.from({ length: recTotalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => setRecPage(p)}
-                    className="px-2 py-0.5 rounded text-xs font-medium"
-                    style={{ background: recPage === p ? 'var(--accent)' : 'var(--bg-glass)', color: recPage === p ? 'white' : 'var(--text-muted)' }}>{p}</button>
-                ))}
-                <button onClick={() => setRecPage(p => p + 1)} disabled={recPage === recTotalPages}
-                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: recPage === recTotalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: recPage === recTotalPages ? 0.5 : 1 }}>{'›'}</button>
-              </div>
-            </div>
-          )}
+          <Pagination page={recPage} totalPages={recTotalPages} totalItems={recommendations.length}
+            perPage={perPage} onPageChange={setRecPage} showPerPage={false} />
         </div>}
 
         {/* Recent Events */}
@@ -235,24 +220,8 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          {evtTotalPages > 1 && (
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {(evtPage - 1) * perPage + 1}–{Math.min(evtPage * perPage, filteredEvents.length)} {isRu ? 'из' : 'of'} {filteredEvents.length}
-              </span>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setEvtPage(p => p - 1)} disabled={evtPage === 1}
-                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: evtPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: evtPage === 1 ? 0.5 : 1 }}>{'‹'}</button>
-                {Array.from({ length: evtTotalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => setEvtPage(p)}
-                    className="px-2 py-0.5 rounded text-xs font-medium"
-                    style={{ background: evtPage === p ? 'var(--accent)' : 'var(--bg-glass)', color: evtPage === p ? 'white' : 'var(--text-muted)' }}>{p}</button>
-                ))}
-                <button onClick={() => setEvtPage(p => p + 1)} disabled={evtPage === evtTotalPages}
-                  className="px-2 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', color: evtPage === evtTotalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: evtPage === evtTotalPages ? 0.5 : 1 }}>{'›'}</button>
-              </div>
-            </div>
-          )}
+          <Pagination page={evtPage} totalPages={evtTotalPages} totalItems={filteredEvents.length}
+            perPage={perPage} onPageChange={setEvtPage} showPerPage={false} />
         </div>}
       </div>
     </div>

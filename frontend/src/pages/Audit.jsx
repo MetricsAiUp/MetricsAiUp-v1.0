@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, Search, ChevronLeft, ChevronRight, Download, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Shield, Search, Download } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import Pagination from '../components/Pagination';
 
 const ACTION_COLORS = {
   create: '#10b981',
@@ -218,75 +219,10 @@ export default function Audit() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-3 py-2.5" style={{ borderTop: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {total > 0 ? `${rangeStart}–${rangeEnd} ${isRu ? 'из' : 'of'} ${total}` : (isRu ? 'Нет записей' : 'No entries')}
-            </span>
-            <select value={perPage} onChange={e => { setPerPage(+e.target.value); setPage(0); }}
-              className="px-1.5 py-0.5 rounded text-xs border outline-none"
-              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }}>
-              {PER_PAGE_OPTIONS.map(n => (
-                <option key={n} value={n}>{n} / {isRu ? 'стр' : 'page'}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-0.5">
-            <button onClick={() => goToPage(0)} disabled={page === 0}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--text-secondary)' }}>
-              <ChevronsLeft size={16} />
-            </button>
-            <button onClick={() => goToPage(page - 1)} disabled={page === 0}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--text-secondary)' }}>
-              <ChevronLeft size={16} />
-            </button>
-            {/* Page numbers */}
-            <PageNumbers current={page} total={totalPages} onGoTo={goToPage} />
-            <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages - 1}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--text-secondary)' }}>
-              <ChevronRight size={16} />
-            </button>
-            <button onClick={() => goToPage(totalPages - 1)} disabled={page >= totalPages - 1}
-              className="p-1 rounded disabled:opacity-20 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--text-secondary)' }}>
-              <ChevronsRight size={16} />
-            </button>
-          </div>
-        </div>
+        <Pagination page={page + 1} totalPages={totalPages} totalItems={total}
+          perPage={perPage} perPageOptions={PER_PAGE_OPTIONS}
+          onPageChange={(p) => goToPage(p - 1)} onPerPageChange={(pp) => { setPerPage(pp); setPage(0); }} />
       </div>
-    </div>
-  );
-}
-
-/* Page number buttons */
-function PageNumbers({ current, total, onGoTo }) {
-  if (total <= 1) return null;
-  const pages = [];
-  const show = 5;
-  let start = Math.max(0, current - Math.floor(show / 2));
-  let end = Math.min(total, start + show);
-  if (end - start < show) start = Math.max(0, end - show);
-
-  for (let i = start; i < end; i++) pages.push(i);
-
-  return (
-    <div className="flex items-center gap-0.5 mx-1">
-      {start > 0 && <span className="text-[10px] px-1" style={{ color: 'var(--text-muted)' }}>...</span>}
-      {pages.map(p => (
-        <button key={p} onClick={() => onGoTo(p)}
-          className="min-w-[24px] h-6 rounded text-xs font-medium transition-all"
-          style={{
-            background: p === current ? 'var(--accent)' : 'transparent',
-            color: p === current ? '#fff' : 'var(--text-secondary)',
-          }}>
-          {p + 1}
-        </button>
-      ))}
-      {end < total && <span className="text-[10px] px-1" style={{ color: 'var(--text-muted)' }}>...</span>}
     </div>
   );
 }

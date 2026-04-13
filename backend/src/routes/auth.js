@@ -51,7 +51,32 @@ function setRefreshCookie(res, refreshToken) {
   });
 }
 
-// POST /api/auth/login
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user and get JWT tokens
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful, returns access token and user info
+ *       401:
+ *         description: Invalid email or password
+ *       429:
+ *         description: Too many login attempts
+ */
 router.post('/login', validate(loginSchema), async (req, res) => {
   const ip = req.ip || req.connection.remoteAddress;
   if (!checkRateLimit(ip)) {
@@ -86,7 +111,18 @@ router.post('/login', validate(loginSchema), async (req, res) => {
   }
 });
 
-// POST /api/auth/refresh — get new access token using refresh cookie
+/**
+ * @openapi
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token using refresh cookie
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: New access token and rotated refresh cookie
+ *       401:
+ *         description: Refresh token missing, expired, or invalid
+ */
 router.post('/refresh', async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
   if (!refreshToken) {
@@ -118,18 +154,73 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-// POST /api/auth/logout — clear refresh cookie
+/**
+ * @openapi
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout and clear refresh cookie
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Refresh cookie cleared
+ */
 router.post('/logout', (req, res) => {
   res.clearCookie('refreshToken', { path: '/api/auth' });
   res.json({ message: 'OK' });
 });
 
-// GET /api/auth/me
+/**
+ * @openapi
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current authenticated user info
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user object with roles and permissions
+ *       401:
+ *         description: Not authenticated
+ */
 router.get('/me', authenticate, (req, res) => {
   res.json(req.user);
 });
 
-// POST /api/auth/register (admin only)
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user (admin only)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               roleIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *       403:
+ *         description: Insufficient permissions
+ */
 router.post('/register', authenticate, validate(registerSchema), async (req, res) => {
   if (!req.user.permissions.includes('manage_users')) {
     return res.status(403).json({ error: 'Недостаточно прав' });

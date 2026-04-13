@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const prisma = require('../config/database');
 const { generateReportXlsx } = require('./serverExport');
+const logger = require('../config/logger');
 
 function shouldRun(schedule, now) {
   if (now.getHours() !== schedule.hour || now.getMinutes() !== schedule.minute) return false;
@@ -29,13 +30,13 @@ function startReportScheduler() {
               else { await broadcastDocument(buffer, filename, `Report: ${filename}`); }
             } catch {}
             await prisma.reportSchedule.update({ where: { id: s.id }, data: { lastRunAt: now } });
-            console.log(`Report sent: ${s.name}`);
-          } catch (err) { console.error(`Report error for ${s.name}:`, err.message); }
+            logger.info('Report sent', { name: s.name });
+          } catch (err) { logger.error('Report error', { name: s.name, error: err.message }); }
         }
       }
     } catch {}
   });
-  console.log('Report scheduler started');
+  logger.info('Report scheduler started');
 }
 
 module.exports = { startReportScheduler };

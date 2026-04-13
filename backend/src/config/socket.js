@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const logger = require('./logger');
 
 let io = null;
 
@@ -24,7 +25,7 @@ function initSocket(server) {
   });
 
   io.on('connection', (socket) => {
-    console.log(`[Socket.IO] Client connected: ${socket.id}${socket.userId ? ` (user: ${socket.userId})` : ''}`);
+    logger.info('Client connected', { socketId: socket.id, userId: socket.userId || null });
 
     // Подписка на обновления зоны
     socket.on('subscribe:zone', (zoneId) => {
@@ -42,7 +43,7 @@ function initSocket(server) {
     });
 
     socket.on('disconnect', () => {
-      console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+      logger.info('Client disconnected', { socketId: socket.id });
     });
   });
 

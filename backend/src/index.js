@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const logger = require('./config/logger');
 
 const { initSocket } = require('./config/socket');
 const prisma = require('./config/database');
@@ -58,8 +59,30 @@ if (fs.existsSync(SSL_CERT) && fs.existsSync(SSL_KEY)) {
     key: fs.readFileSync(SSL_KEY),
   }, app);
   initSocket(httpsServer);
-  console.log('[Server] SSL certificates loaded');
+  logger.info('SSL certificates loaded');
 }
+
+// Swagger API docs
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: { title: 'MetricsAiUp API', version: '1.0.0', description: 'API мониторинга СТО' },
+    servers: [
+      { url: 'https://artisom.dev.metricsavto.com:3444', description: 'HTTPS' },
+      { url: 'http://localhost:3001', description: 'Development' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      },
+    },
+    security: [{ bearerAuth: [] }],
+  },
+  apis: ['./src/routes/*.js'],
+});
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false, frameguard: false }));
@@ -110,8 +133,8 @@ const PORT = process.env.PORT || 3001;
 const PROXY_PORT = 8080; // VPS proxies artisom.dev.metricsavto.com → container:8080
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Server] HTTP running on http://0.0.0.0:${PORT}`);
-  console.log(`[Socket.IO] Ready for connections`);
+  logger.info('HTTP server started', { port: PORT });
+  logger.info('Socket.IO ready for connections');
   startFileWatcher();
   initTelegramBot();
   startCameraHealthCheck();
@@ -122,17 +145,17 @@ server.listen(PORT, '0.0.0.0', () => {
   const demoControl = {
     start() {
       if (demoInterval) return;
-      console.log('[DemoGen] Starting demo data generator');
-      generateDemoData().catch(e => console.error('[DemoGen] Initial run error:', e.message));
+      logger.info('Starting demo data generator');
+      generateDemoData().catch(e => logger.error('DemoGen initial run error', { error: e.message }));
       demoInterval = setInterval(() => {
-        generateDemoData().catch(e => console.error('[DemoGen] Refresh error:', e.message));
+        generateDemoData().catch(e => logger.error('DemoGen refresh error', { error: e.message }));
       }, 2 * 60 * 1000);
     },
     stop() {
       if (demoInterval) {
         clearInterval(demoInterval);
         demoInterval = null;
-        console.log('[DemoGen] Stopped demo data generator');
+        logger.info('Stopped demo data generator');
       }
     },
   };
@@ -143,7 +166,7 @@ server.listen(PORT, '0.0.0.0', () => {
   if (appSettings.mode === 'demo') {
     demoControl.start();
   } else {
-    console.log('[DemoGen] Mode is "live" — demo generator disabled');
+    logger.info('Mode is "live" — demo generator disabled');
   }
 });
 
@@ -152,8 +175,8 @@ if (parseInt(PORT) !== PROXY_PORT) {
   const proxyServer = http.createServer(app);
   initSocket(proxyServer);
   proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
-    console.log(`[Server] HTTP running on http://0.0.0.0:${PROXY_PORT} (VPS proxy)`);
-    console.log(`[Server] Frontend: https://artisom.dev.metricsavto.com/`);
+    logger.info('VPS proxy server started', { port: PROXY_PORT });
+    logger.info('Frontend: https://artisom.dev.metricsavto.com/');
   });
 }
 
@@ -161,16 +184,16 @@ if (parseInt(PORT) !== PROXY_PORT) {
 if (httpsServer) {
   const HTTPS_PORT = parseInt(PORT) + 443;
   httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
-    console.log(`[Server] HTTPS running on https://0.0.0.0:${HTTPS_PORT}`);
+    logger.info('HTTPS server started', { port: HTTPS_PORT });
   });
 }
 
 // Keep alive — don't crash on uncaught errors
 process.on('uncaughtException', (err) => {
-  console.error('[Server] Uncaught exception:', err.message);
+  logger.error('Uncaught exception', { error: err.message });
 });
 process.on('unhandledRejection', (err) => {
-  console.error('[Server] Unhandled rejection:', err?.message || err);
+  logger.error('Unhandled rejection', { error: err?.message || err });
 });
 
 // Graceful shutdown

@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const { importSchema } = require('../schemas/data1c');
 const sync1C = require('../services/sync1C');
+const logger = require('../config/logger');
 
 const DATA_DIR = path.join(__dirname, '../../../data');
 
@@ -42,7 +43,7 @@ router.post('/import', async (req, res) => {
       ...result,
     });
   } catch (e) {
-    console.error('[data1c] Import error:', e);
+    logger.error('Import error', { error: e.message });
     res.status(500).json({ error: 'Import failed', message: e.message });
   }
 });
@@ -57,7 +58,7 @@ router.post('/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="work-orders-export.xlsx"`);
     res.send(buffer);
   } catch (e) {
-    console.error('[data1c] Export error:', e);
+    logger.error('Export error', { error: e.message });
     res.status(500).json({ error: 'Export failed', message: e.message });
   }
 });
@@ -69,7 +70,7 @@ router.get('/sync-history', async (req, res) => {
     const history = await sync1C.getSyncHistory(limit);
     res.json(history);
   } catch (e) {
-    console.error('[data1c] Sync history error:', e);
+    logger.error('Sync history error', { error: e.message });
     res.status(500).json({ error: 'Failed to get sync history', message: e.message });
   }
 });

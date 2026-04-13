@@ -2,7 +2,18 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 
-// GET /api/dashboard/overview — общая сводка
+/**
+ * @openapi
+ * /api/dashboard/overview:
+ *   get:
+ *     summary: Get general STO overview (sessions, zones, posts, recommendations)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Overview data with active sessions, zone vehicles, post statuses, recommendations count
+ */
 router.get('/overview', authenticate, async (req, res) => {
   try {
     const [
@@ -40,7 +51,26 @@ router.get('/overview', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/dashboard/metrics — метрики по зонам и постам
+/**
+ * @openapi
+ * /api/dashboard/metrics:
+ *   get:
+ *     summary: Get zone and post metrics for a given period
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d]
+ *           default: 24h
+ *         description: Time period for metrics aggregation
+ *     responses:
+ *       200:
+ *         description: Zone metrics, post metrics, and work order metrics
+ */
 router.get('/metrics', authenticate, async (req, res) => {
   try {
     const { period = '24h' } = req.query;
@@ -78,7 +108,18 @@ router.get('/metrics', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/dashboard/trends — 7-day trend data for sparklines
+/**
+ * @openapi
+ * /api/dashboard/trends:
+ *   get:
+ *     summary: Get 7-day trend data for sparklines
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of daily trend data (sessions, post stays, occupied posts, recommendations)
+ */
 router.get('/trends', authenticate, async (req, res) => {
   try {
     const days = 7;
@@ -98,7 +139,18 @@ router.get('/trends', authenticate, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/dashboard/live — real-time STO status
+/**
+ * @openapi
+ * /api/dashboard/live:
+ *   get:
+ *     summary: Get real-time STO status with post details
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Live data with vehicles on site, post statuses, and summary counts
+ */
 router.get('/live', authenticate, async (req, res) => {
   try {
     const activeSessions = await prisma.vehicleSession.count({ where: { status: 'active' } });

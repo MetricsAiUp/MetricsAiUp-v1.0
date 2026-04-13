@@ -1,18 +1,19 @@
 const prisma = require('../config/database');
+const logger = require('../config/logger');
 
 let bot = null;
 
 function initTelegramBot() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
-    console.log('[TelegramBot] No TELEGRAM_BOT_TOKEN set, bot disabled');
+    logger.info('No TELEGRAM_BOT_TOKEN set, bot disabled');
     return null;
   }
 
   try {
     const TelegramBot = require('node-telegram-bot-api');
     bot = new TelegramBot(token, { polling: true });
-    console.log('[TelegramBot] Bot started');
+    logger.info('Telegram bot started');
 
     // /start — link account
     bot.onText(/\/start (.+)/, async (msg, match) => {
@@ -122,7 +123,7 @@ function initTelegramBot() {
 
     return bot;
   } catch (err) {
-    console.error('[TelegramBot] Failed to start:', err.message);
+    logger.error('Telegram bot failed to start', { error: err.message });
     return null;
   }
 }
@@ -136,7 +137,7 @@ async function sendTelegramNotification(userId, message) {
       await bot.sendMessage(link.chatId, message);
     }
   } catch (err) {
-    console.error('[TelegramBot] Send error:', err.message);
+    logger.error('Telegram send error', { error: err.message });
   }
 }
 

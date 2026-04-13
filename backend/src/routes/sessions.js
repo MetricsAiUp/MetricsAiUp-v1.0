@@ -2,7 +2,37 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 
-// GET /api/sessions — активные сессии авто
+/**
+ * @openapi
+ * /api/sessions:
+ *   get:
+ *     summary: List vehicle sessions with zone and post stays
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           default: active
+ *         description: Filter by session status
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Max number of sessions to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Pagination offset
+ *     responses:
+ *       200:
+ *         description: Paginated list of sessions with total count
+ */
 router.get('/', authenticate, async (req, res) => {
   try {
     const { status = 'active', limit = 50, offset = 0 } = req.query;
@@ -35,7 +65,27 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/sessions/:id
+/**
+ * @openapi
+ * /api/sessions/{id}:
+ *   get:
+ *     summary: Get session by ID with full details
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Session ID
+ *     responses:
+ *       200:
+ *         description: Session with zone stays, post stays, work order links, and events
+ *       404:
+ *         description: Session not found
+ */
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const session = await prisma.vehicleSession.findUnique({
