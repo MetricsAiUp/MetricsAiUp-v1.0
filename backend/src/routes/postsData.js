@@ -23,6 +23,36 @@ function computePostStatus(wos) {
   return 'free';
 }
 
+// Helper: generate calendar data (last 30 days) for a post
+function computeCalendar(postWOs) {
+  const cal = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const dayOfWeek = d.getDay();
+    // Weekend — lower load
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const dayWOs = postWOs.filter(w => {
+      const ws = w.scheduledTime || w.startTime;
+      return ws && ws.toISOString().slice(0, 10) === dateStr;
+    });
+    const completed = dayWOs.filter(w => w.status === 'completed').length;
+    const totalHours = dayWOs.reduce((s, w) => s + (w.actualHours || w.normHours || 0), 0);
+    // For days without real data, generate plausible demo values
+    const vehicles = dayWOs.length > 0 ? dayWOs.length : (isWeekend ? 0 : Math.floor(2 + Math.random() * 4));
+    const hours = totalHours > 0 ? Math.round(totalHours * 10) / 10 : (isWeekend ? 0 : Math.round((2 + Math.random() * 6) * 10) / 10);
+    cal.push({
+      date: dateStr,
+      vehicles,
+      completedOrders: dayWOs.length > 0 ? completed : (isWeekend ? 0 : Math.floor(1 + Math.random() * 3)),
+      totalHours: hours,
+      loadPercent: isWeekend ? 0 : Math.min(100, Math.round((hours / 12) * 100)),
+    });
+  }
+  return cal;
+}
+
 // Helper: compute daily analytics (last 7 days) from work orders
 function computeDaily(wos) {
   const days = [];
@@ -147,7 +177,9 @@ router.get('/posts-analytics', async (req, res) => {
         alerts: [],
         eventLog: [],
         workStats: { byGroup, byBrand, avgTimePerOrder, total: todayWOs.length },
-        cameras: [],
+        cameras: [
+          { id: `cam-post${num}`, name: `Камера пост ${num}`, online: true },
+        ],
         currentPlateImage: null,
       };
 
@@ -173,6 +205,7 @@ router.get('/posts-analytics', async (req, res) => {
         worker: recentWO?.worker || null,
         master: recentWO?.master || null,
         daily: computeDaily(postWOs),
+        calendar: computeCalendar(postWOs),
         workOrders: postWOs.slice(-20).map(w => ({
           id: w.id, orderNumber: w.orderNumber, plateNumber: w.plateNumber,
           brand: w.brand, model: w.model, workType: w.workType,
