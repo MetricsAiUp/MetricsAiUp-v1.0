@@ -7,6 +7,7 @@ hls/
 .autostart.sh
 backend/.env
 frontend/dist/
+assets/
 screenshot-*.png
 backend/prisma/dev.db
 api.php

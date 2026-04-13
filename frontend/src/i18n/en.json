@@ -312,7 +312,9 @@
     "normHours": "Norm hours",
     "maxCapacity": "Max capacity",
     "workOrders": "Work orders",
-    "workers": "Workers"
+    "workers": "Workers",
+    "errorOccurred": "Something went wrong",
+    "retry": "Retry"
   },
   "users": {
     "title": "Users",

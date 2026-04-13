@@ -4,6 +4,7 @@ const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { createUserSchema, updateUserSchema } = require('../schemas/users');
+const authCache = require('../config/authCache');
 
 // Role-to-pages mapping (mirrors frontend PAGE_PERMISSIONS keys)
 const ROLE_DEFAULT_PAGES = {
@@ -234,6 +235,8 @@ router.put('/:id', requirePermission('manage_users'), validate(updateUserSchema)
       include: USER_INCLUDE,
     });
 
+    authCache.invalidate(id);
+
     res.json(formatUser(user));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -261,6 +264,8 @@ router.delete('/:id', requirePermission('manage_users'), async (req, res) => {
       where: { id },
       data: { isActive: false },
     });
+
+    authCache.invalidate(id);
 
     res.json({ message: 'Пользователь деактивирован', id });
   } catch (err) {

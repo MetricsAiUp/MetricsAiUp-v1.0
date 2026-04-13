@@ -1,6 +1,23 @@
 # Спецификация: Средний приоритет
 
 > 5 задач | Общая оценка: 3-4 часа
+> **Актуализировано:** 2026-04-13
+
+### Статус задач
+
+| # | Задача | Статус | Примечание |
+|---|--------|--------|------------|
+| MP-1 | Pagination компонент | ❌ Не сделано | Пагинация добавлена inline в Sessions, WorkOrders, Dashboard (коммит 54ccf5c), но общий компонент НЕ создан. В 5+ страницах есть `{/* Pagination */}` плейсхолдеры |
+| MP-2 | useAsync хук | ❌ Не сделано | Хук не создан, все страницы используют ручной useState+useEffect |
+| MP-3 | Winston логирование | ❌ Не сделано | winston не установлен, console.log/error повсюду |
+| MP-4 | Swagger/OpenAPI | ❌ Не сделано | Пакеты не установлены, аннотаций нет |
+| MP-5 | Тесты | 🔶 Частично | Есть 24 тест-файла (компоненты, хуки, routes). Нет: contexts/, Pagination, ErrorBoundary, useAsync тестов |
+
+### Изменения с момента написания (08.04 → 13.04)
+- **Inline пагинация** добавлена в Sessions, WorkOrders, Dashboard — MP-1 стал даже важнее (унифицировать разные inline-реализации)
+- **Server-side pagination** добавлена на Audit (коммит 991388e) — MP-1 должен поддерживать серверную пагинацию
+- Добавлена **TechDocs** страница (1188 LOC) — MP-4 Swagger теперь менее срочен (есть ручная документация)
+- Новые backend сервисы (demo generator, settings) — MP-3 Winston ещё актуальнее
 
 ---
 
@@ -182,14 +199,20 @@ import Pagination from '../components/Pagination';
 ```
 
 ### Страницы для рефакторинга
-| Страница | Текущий размер блока | После |
-|----------|---------------------|-------|
-| Sessions.jsx | ~55 строк | 4 строки |
-| WorkOrders.jsx | ~55 строк | 4 строки |
-| Audit.jsx | ~38 строк | 4 строки |
-| Events.jsx | ~30 строк | 4 строки |
-| Dashboard.jsx (recommendations) | ~18 строк | 4 строки |
-| Dashboard.jsx (events) | ~18 строк | 4 строки |
+| Страница | Текущий размер блока | Тип пагинации | После |
+|----------|---------------------|---------------|-------|
+| Sessions.jsx | ~55 строк (inline) | клиентская | 4 строки |
+| WorkOrders.jsx | ~55 строк (inline) | клиентская | 4 строки |
+| Audit.jsx | ~38 строк | **серверная** (limit/offset) | 4 строки |
+| Events.jsx | ~30 строк | клиентская | 4 строки |
+| Dashboard.jsx (recommendations) | ~18 строк (inline) | клиентская | 4 строки |
+| Dashboard.jsx (events) | ~18 строк (inline) | клиентская | 4 строки |
+| Data1C.jsx | плейсхолдер `{/* Pagination */}` | нет реализации | 4 строки |
+
+### Уточнение (13.04)
+Компонент должен поддерживать **оба режима** пагинации:
+- **Клиентская** (Sessions, WorkOrders, Events, Dashboard) — `totalItems` считается из массива
+- **Серверная** (Audit) — `totalItems` приходит из API, `onPageChange` вызывает refetch с offset
 
 ### Ожидаемый эффект
 - ~210 строк дублирования → 1 компонент ~100 строк
@@ -520,13 +543,17 @@ router.get('/', authenticate, asyncHandler(async (req, res) => { ... }));
 
 ## MP-5. Увеличение покрытия тестами
 
-### Текущее состояние
-- 24 тестовых файла
-- Страницы: 0% покрытие
-- Контексты: 0%
+### Текущее состояние (обновлено 13.04)
+- **24 тестовых файла** в 4 директориях:
+  - `frontend/src/components/__tests__/` — 6 файлов (SparkLine, WeeklyHeatmap, LiveSTOWidget, ConflictModal, DateRangePicker, DeltaBadge)
+  - `frontend/src/hooks/__tests__/` — 1 файл (useWorkOrderTimer)
+  - `backend/src/__tests__/` — 3 файла (cameraHealthCheck, reportScheduler, serverExport)
+  - `backend/src/__tests__/routes/` — 4 файла (health, auditLog, workOrders, shifts)
+  - `frontend/src/test/` — 18 legacy-тестов
+- Контексты: **0%** (нет `contexts/__tests__/`)
+- Страницы: **0%**
 - Хуки: ~15% (только useWorkOrderTimer)
-- Компоненты: ~20% (базовые snapshot-тесты)
-- Utils: ~60%
+- Компоненты: ~20%
 
 ### Целевое покрытие: 60%
 
@@ -595,3 +622,10 @@ backend/src/services/__tests__/
 **Общее время:** ~5-6 часов
 **Параллельность:** MP-1, MP-2, MP-3, MP-4 — независимы
 **MP-5** лучше делать после MP-1 и MP-2 (тестировать новые компоненты)
+
+---
+
+## Примечание по приоритетам (13.04)
+- **MP-4 (Swagger)** понижен в срочности — TechDocs.jsx (1188 LOC) уже содержит подробную документацию API
+- **MP-1 (Pagination)** повышен в срочности — inline-пагинация уже добавлена в 4 страницы с разными реализациями, дублирование растёт
+- **MP-3 (Winston)** повышен — добавлены новые сервисы (demo generator, settings), ещё больше console.log

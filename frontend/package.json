@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "rm -rf ../assets/*.js ../assets/*.css 2>/dev/null || true",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -13,7 +14,6 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
-    "axios": "^1.13.6",
     "hls.js": "^1.6.15",
     "html2canvas": "^1.4.1",
     "i18next": "^25.9.0",

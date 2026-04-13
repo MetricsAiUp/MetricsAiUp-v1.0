@@ -774,8 +774,8 @@ cd /project && node server.js
           : 'hasPermission(key) checks if the current user has a specific permission. isElementVisible(pageId, elementId) checks if a specific widget/section is visible for the user — cross-references with hiddenElements array loaded from DB via /api/auth/me. updateCurrentUser(data) updates local user state without re-fetching from server.'
         }</P>
         <P>{isRu
-          ? 'API-клиент (api) — axios-обёртка с автоматическим добавлением Authorization: Bearer заголовка и базового URL. Предоставляет методы get, post, put, delete. При получении 401 автоматически пытается обновить access token через refresh endpoint.'
-          : 'The API client (api) is an axios wrapper with automatic Authorization: Bearer header and base URL injection. Provides get, post, put, delete methods. On 401, automatically attempts to refresh the access token via the refresh endpoint.'
+          ? 'API-клиент (api) — fetch-обёртка с автоматическим добавлением Authorization: Bearer заголовка и базового URL. Предоставляет методы get, post, put, delete. При получении 401 автоматически пытается обновить access token через refresh endpoint.'
+          : 'The API client (api) is a fetch wrapper with automatic Authorization: Bearer header and base URL injection. Provides get, post, put, delete methods. On 401, automatically attempts to refresh the access token via the refresh endpoint.'
         }</P>
 
         <Sub>PAGE_ELEMENTS</Sub>
@@ -1087,7 +1087,6 @@ cd /project/frontend && npm test
             ['jspdf + html2canvas', '4.2.1', isRu ? 'Экспорт в PDF' : 'PDF export'],
             ['xlsx', '0.18.5', isRu ? 'Экспорт/импорт XLSX (SheetJS)' : 'XLSX export/import (SheetJS)'],
             ['lucide-react', '0.577.0', isRu ? 'SVG-иконки (единственный источник иконок)' : 'SVG icons (sole icon source)'],
-            ['axios', '1.13.x', isRu ? 'HTTP-клиент для API-запросов' : 'HTTP client for API requests'],
           ]}
         />
 

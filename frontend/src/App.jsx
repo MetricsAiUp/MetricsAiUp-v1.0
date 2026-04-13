@@ -4,6 +4,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
+import { useTranslation } from 'react-i18next';
 import './i18n';
 
 // Lazy-loaded pages (code splitting)
@@ -49,6 +51,7 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const { t } = useTranslation();
 
   if (loading) return null;
 
@@ -56,7 +59,13 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route path="/" element={
+          <ProtectedRoute>
+            <ErrorBoundary fallbackTitle={t('common.errorOccurred')} retryLabel={t('common.retry')}>
+              <Layout />
+            </ErrorBoundary>
+          </ProtectedRoute>
+        }>
           <Route index element={<Dashboard />} />
           <Route path="dashboard-posts" element={<DashboardPosts />} />
           <Route path="posts-detail" element={<PostsDetail />} />

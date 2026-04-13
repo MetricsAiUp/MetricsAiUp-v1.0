@@ -97,6 +97,7 @@ model Zone {
   cameras   CameraZone[]
   recommendations Recommendation[]
 
+  @@index([isActive])
   @@map("zones")
 }
 
@@ -116,6 +117,8 @@ model Post {
   events Event[]
   recommendations Recommendation[]
 
+  @@index([isActive])
+  @@index([zoneId])
   @@map("posts")
 }
 
@@ -167,6 +170,8 @@ model VehicleSession {
   events         Event[]
   workOrderLinks WorkOrderLink[]
 
+  @@index([status])
+  @@index([trackId, status])
   @@map("vehicle_sessions")
 }
 
@@ -203,6 +208,8 @@ model PostStay {
   vehicleSession VehicleSession @relation(fields: [vehicleSessionId], references: [id])
   workOrderLinks WorkOrderLink[]
 
+  @@index([vehicleSessionId, endTime])
+  @@index([postId, endTime])
   @@map("post_stays")
 }
 
@@ -271,6 +278,8 @@ model WorkOrder {
 
   @@index([postNumber])
   @@index([status])
+  @@index([status, scheduledTime])
+  @@index([scheduledTime])
   @@map("work_orders")
 }
 
@@ -309,6 +318,8 @@ model Recommendation {
   zone Zone? @relation(fields: [zoneId], references: [id])
   post Post? @relation(fields: [postId], references: [id])
 
+  @@index([status])
+  @@index([type, zoneId, postId, status])
   @@map("recommendations")
 }
 

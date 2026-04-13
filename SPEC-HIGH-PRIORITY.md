@@ -1,6 +1,24 @@
 # Спецификация: Высокий приоритет
 
 > 5 задач | Общая оценка: ~1-1.5 часа
+> **Актуализировано:** 2026-04-13
+
+### Статус задач
+
+| # | Задача | Статус | Примечание |
+|---|--------|--------|------------|
+| HP-1 | DB индексы | ❌ Не сделано | Есть только @@index на Event, WorkOrder(postNumber, status), AuditLog, Photo, PushSubscription. Остальные 10+ индексов отсутствуют |
+| HP-2 | Auth кэш | ❌ Не сделано | authCache.js не создан, auth.js делает полный Prisma include на каждый запрос |
+| HP-3 | ErrorBoundary | ❌ Не сделано | Компонент отсутствует, i18n ключи не добавлены |
+| HP-4 | Удалить axios | ❌ Не сделано | axios в package.json, но НЕ импортируется в коде (только упоминание в TechDocs) |
+| HP-5 | Очистка assets | ❌ Не сделано | 1407 JS-файлов в /project/assets/ (~103 MB), prebuild скрипт не добавлен, assets/ не в .gitignore |
+
+### Изменения с момента написания (08.04 → 13.04)
+- Добавлена фича **element visibility** (hiddenElements) — хранится в БД через API, не localStorage
+- Добавлена страница **TechDocs** с PDF-экспортом
+- Добавлен **DEMO/LIVE mode switch** через backend API
+- Добавлена **пагинация** на WorkOrders, Sessions, Dashboard (inline, не компонентом)
+- Каждый билд добавляет ~26 новых chunk-файлов в assets/ — HP-5 стал ещё актуальнее
 
 ---
 
@@ -73,8 +91,16 @@ model Recommendation {
 }
 ```
 
+### Уточнение: уже существующие индексы
+В schema.prisma уже есть:
+- `WorkOrder`: `@@index([postNumber])`, `@@index([status])` — **но нет** `@@index([status, scheduledTime])` и `@@index([scheduledTime])`
+- `Event`: `@@index([type])`, `@@index([zoneId])`, `@@index([createdAt])`
+- `AuditLog`: `@@index([userId, action, entity, createdAt])`
+
+Нужно добавить **только недостающие** (см. таблицы Tier 1 и Tier 2 выше).
+
 ### Шаги
-1. Добавить `@@index` директивы в `schema.prisma`
+1. Добавить `@@index` директивы в `schema.prisma` (только недостающие)
 2. `cd backend && npx prisma migrate dev --name add-performance-indexes`
 3. `npx prisma migrate status` — проверить
 4. Перезапустить backend
@@ -285,6 +311,9 @@ cd /project/frontend && npm uninstall axios
 grep -r "axios" frontend/src/  # должен быть пустой результат
 ```
 
+### Уточнение
+Единственное упоминание axios в коде — строка в TechDocs.jsx (документация). После удаления пакета нужно обновить текст в TechDocs, если он ссылается на axios.
+
 ### Ожидаемый эффект
 - node_modules: -2 MB
 - Чище зависимости
@@ -322,9 +351,12 @@ cd /project/frontend && npm run build && cp -r dist/* /project/
 assets/
 ```
 
+### Уточнение (13.04)
+Проблема усугубилась: **1407 JS-файлов (~103 MB)** в assets/. Каждый билд добавляет ~26 chunk-файлов. С 08.04 было ~5 билдов → +130 файлов.
+
 ### Ожидаемый эффект
-- Дисковое пространство: ~86 MB → ~5 MB
-- `git status` чище (нет сотен untracked файлов)
+- Дисковое пространство: ~103 MB → ~5 MB
+- `git status` чище (нет 1400+ untracked файлов)
 
 ### Риск: **Низкий** — assets пересоздаются при каждом билде
 

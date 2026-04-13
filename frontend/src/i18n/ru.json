@@ -312,7 +312,9 @@
     "normHours": "Нормочасы",
     "maxCapacity": "Макс. ёмкость",
     "workOrders": "Заказ-наряды",
-    "workers": "Исполнители"
+    "workers": "Исполнители",
+    "errorOccurred": "Произошла ошибка",
+    "retry": "Повторить"
   },
   "users": {
     "title": "Пользователи",
