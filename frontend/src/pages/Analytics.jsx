@@ -49,7 +49,8 @@ const customTooltipStyle = {
 
 export default function Analytics() {
   const { t, i18n } = useTranslation();
-  const { api } = useAuth();
+  const { api, isElementVisible } = useAuth();
+  const elVis = (id) => isElementVisible('analytics', id);
   const [history, setHistory] = useState(null);
   const [period, setPeriod] = useState('30d');
   const [selectedPost, setSelectedPost] = useState(null);
@@ -397,17 +398,17 @@ export default function Analytics() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+      {elVis('summaryStats') && <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         <StatCard label={isRu ? 'Ср. занятость' : 'Avg Occupancy'} value={`${totals.avgOccupancy}%`} color="#6366f1" sub={compareMode && deltas.avgOccupancy !== undefined ? <DeltaBadge value={deltas.avgOccupancy} /> : undefined} />
         <StatCard label={isRu ? 'Ср. эффективность' : 'Avg Efficiency'} value={`${totals.avgEfficiency}%`} color={totals.avgEfficiency >= 70 ? '#10b981' : '#f59e0b'} sub={compareMode && deltas.avgEfficiency !== undefined ? <DeltaBadge value={deltas.avgEfficiency} /> : undefined} />
         <StatCard label={isRu ? 'Всего авто' : 'Total Vehicles'} value={totals.totalVehicles} color="#3b82f6" sub={compareMode && deltas.totalVehicles !== undefined ? <DeltaBadge value={deltas.totalVehicles} suffix="" /> : undefined} />
         <StatCard label={isRu ? 'Активных часов' : 'Active Hours'} value={totals.totalActiveH} color="#10b981" sub={compareMode && deltas.totalActiveH !== undefined ? <DeltaBadge value={deltas.totalActiveH} suffix="h" /> : undefined} />
         <StatCard label={isRu ? 'Часов простоя' : 'Idle Hours'} value={totals.totalIdleH} color="#ef4444" sub={compareMode && deltas.totalIdleH !== undefined ? <DeltaBadge value={deltas.totalIdleH} suffix="h" inverse /> : undefined} />
         <StatCard label={isRu ? 'No-show' : 'No-show'} value={totals.totalNoShows} color="#f59e0b" sub={compareMode && deltas.totalNoShows !== undefined ? <DeltaBadge value={deltas.totalNoShows} suffix="" inverse /> : undefined} />
-      </div>
+      </div>}
 
       {/* Row 1: Occupancy trend + Vehicles trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {elVis('trendsCharts') && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard title={isRu ? 'Загрузка постов по дням (%)' : 'Post Occupancy Trend (%)'} chartRef={getChartRef('occupancy-trend')} onContextMenu={(e) => handleChartContextMenu(e, 'occupancy-trend')}>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={trendData}>
@@ -436,10 +437,10 @@ export default function Analytics() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-      </div>
+      </div>}
 
       {/* Row 2: Ranking + Pie */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {elVis('rankingCharts') && <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ranking */}
         <ChartCard title={isRu ? 'Рейтинг постов по загрузке' : 'Post Ranking by Occupancy'} chartRef={getChartRef('ranking')} onContextMenu={(e) => handleChartContextMenu(e, 'ranking')}>
           <div className="space-y-2">
@@ -486,10 +487,10 @@ export default function Analytics() {
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
-      </div>
+      </div>}
 
       {/* Row 3: Plan vs Fact */}
-      <ChartCard title={isRu ? 'План vs Факт по постам (часы)' : 'Plan vs Actual by Post (hours)'} chartRef={getChartRef('plan-fact')} onContextMenu={(e) => handleChartContextMenu(e, 'plan-fact')}>
+      {elVis('planFactChart') && <ChartCard title={isRu ? 'План vs Факт по постам (часы)' : 'Plan vs Actual by Post (hours)'} chartRef={getChartRef('plan-fact')} onContextMenu={(e) => handleChartContextMenu(e, 'plan-fact')}>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={planFactData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
@@ -501,10 +502,10 @@ export default function Analytics() {
             <Bar dataKey={isRu ? 'Факт (ч)' : 'Actual (h)'} fill="#f59e0b" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </ChartCard>
+      </ChartCard>}
 
       {/* Comparison table */}
-      <ChartCard title={isRu ? 'Сравнительная таблица постов' : 'Post Comparison Table'}>
+      {elVis('comparisonTable') && <ChartCard title={isRu ? 'Сравнительная таблица постов' : 'Post Comparison Table'}>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -542,10 +543,10 @@ export default function Analytics() {
             </tbody>
           </table>
         </div>
-      </ChartCard>
+      </ChartCard>}
 
       {/* Heatmap */}
-      {heatmapData.length > 0 && (
+      {elVis('heatmaps') && heatmapData.length > 0 && (
         <ChartCard title={t('analytics.heatmapTitle')}>
           <div>
             <table className="w-full text-xs table-fixed">
@@ -606,14 +607,14 @@ export default function Analytics() {
       )}
 
       {/* Weekly Heatmap */}
-      {weeklyHeatmapData.length > 0 && (
+      {elVis('heatmaps') && weeklyHeatmapData.length > 0 && (
         <ChartCard title={t('analytics.weeklyHeatmapTitle')}>
           <WeeklyHeatmap data={weeklyHeatmapData} isRu={isRu} />
         </ChartCard>
       )}
 
       {/* Selected post detail */}
-      {selPost && selSummary && (
+      {elVis('postDetail') && selPost && selSummary && (
         <ChartCard title={`${selSummary.name} — ${isRu ? 'детализация' : 'details'}`}>
           <div className="flex justify-end mb-2">
             <button onClick={() => setSelectedPost(null)} className="text-xs px-3 py-1 rounded-lg"

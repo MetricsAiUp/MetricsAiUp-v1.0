@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Users as UsersIcon, Plus, X, Check, Shield, Eye, EyeOff, Wrench, UserCog,
-  ToggleLeft, ToggleRight, Pencil, Trash2,
+  ToggleLeft, ToggleRight, Pencil, Trash2, ChevronDown, ChevronRight, LayoutGrid,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import { PAGE_ELEMENTS } from '../contexts/AuthContext';
 
 const ROLE_ICONS = { admin: Shield, manager: UserCog, viewer: Eye, mechanic: Wrench };
 const ROLE_COLORS = { admin: '#8b5cf6', manager: '#3b82f6', viewer: '#64748b', mechanic: '#10b981' };
@@ -69,7 +70,7 @@ export default function Users() {
   };
 
   if (editUser || showNew) {
-    const user = editUser || { email: '', firstName: '', lastName: '', password: '', role: 'viewer', isActive: true, pages: ['dashboard'] };
+    const user = editUser || { email: '', firstName: '', lastName: '', password: '', role: 'viewer', isActive: true, pages: ['dashboard'], hiddenElements: [] };
     return <UserForm user={user} roles={roles} pages={availablePages} lang={lang} isRu={isRu}
       onSave={handleSave} onCancel={() => { setEditUser(null); setShowNew(false); }} />;
   }
@@ -185,13 +186,24 @@ export default function Users() {
 
 function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
   const isNew = !user.id || user.id.startsWith('user-new');
-  const [form, setForm] = useState({ ...user });
+  const [form, setForm] = useState({ ...user, hiddenElements: user.hiddenElements || [] });
   const [showPass, setShowPass] = useState(false);
+  const [expandedPage, setExpandedPage] = useState(null);
 
   const togglePage = (pageId) => {
     setForm(prev => ({
       ...prev,
       pages: prev.pages.includes(pageId) ? prev.pages.filter(p => p !== pageId) : [...prev.pages, pageId],
+    }));
+  };
+
+  const toggleElement = (pageId, elementId) => {
+    const key = `${pageId}.${elementId}`;
+    setForm(prev => ({
+      ...prev,
+      hiddenElements: prev.hiddenElements.includes(key)
+        ? prev.hiddenElements.filter(e => e !== key)
+        : [...prev.hiddenElements, key],
     }));
   };
 
@@ -276,6 +288,66 @@ function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
           })}
         </div>
       </div>
+
+      {/* Elements visibility per page */}
+      {form.pages.some(p => PAGE_ELEMENTS[p]) && (
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <LayoutGrid size={14} style={{ color: 'var(--accent)' }} />
+            <label className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+              {isRu ? 'Видимость элементов' : 'Element Visibility'}
+            </label>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+              {form.hiddenElements.length > 0
+                ? (isRu ? `${form.hiddenElements.length} скрыто` : `${form.hiddenElements.length} hidden`)
+                : (isRu ? 'Все видны' : 'All visible')}
+            </span>
+          </div>
+          <div className="space-y-1">
+            {form.pages.filter(p => PAGE_ELEMENTS[p]).map(pageId => {
+              const pageInfo = pages.find(p => p.id === pageId);
+              const elements = PAGE_ELEMENTS[pageId];
+              const isExpanded = expandedPage === pageId;
+              const hiddenCount = elements.filter(el => form.hiddenElements.includes(`${pageId}.${el.id}`)).length;
+              return (
+                <div key={pageId}>
+                  <button
+                    onClick={() => setExpandedPage(isExpanded ? null : pageId)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-all hover:opacity-80"
+                    style={{ background: isExpanded ? 'var(--accent-light)' : 'transparent', border: `1px solid ${isExpanded ? 'var(--accent)' : 'var(--border-glass)'}`, color: isExpanded ? 'var(--accent)' : 'var(--text-secondary)' }}>
+                    {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                    <span className="font-medium">{pageInfo?.label?.[lang] || pageId}</span>
+                    <span className="ml-auto text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      {elements.length - hiddenCount}/{elements.length}
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1 mt-1 ml-4">
+                      {elements.map(el => {
+                        const key = `${pageId}.${el.id}`;
+                        const visible = !form.hiddenElements.includes(key);
+                        return (
+                          <button key={el.id}
+                            onClick={() => toggleElement(pageId, el.id)}
+                            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] transition-all text-left"
+                            style={{
+                              background: visible ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.08)',
+                              border: `1px solid ${visible ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.2)'}`,
+                              color: visible ? 'var(--success)' : 'var(--text-muted)',
+                            }}>
+                            {visible ? <Eye size={10} /> : <EyeOff size={10} />}
+                            {el.label[lang]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <button onClick={onCancel}

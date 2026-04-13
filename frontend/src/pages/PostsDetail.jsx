@@ -47,7 +47,8 @@ function ListModal({ title, children, onClose }) {
 export default function PostsDetail() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, isElementVisible } = useAuth();
+  const elVis = (id) => isElementVisible('posts-detail', id);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -92,7 +93,7 @@ export default function PostsDetail() {
     <div className="p-4">
       <div>
         {selectedPost ? (
-          <PostDetailPanel
+          elVis('detailPanel') && <PostDetailPanel
             selectedPost={selectedPost}
             dashData={dashData}
             period={period}
@@ -107,7 +108,7 @@ export default function PostsDetail() {
             setModal={setModal}
           />
         ) : (
-          <div>
+          elVis('postsList') && <div>
             {/* Header with period + view toggle */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')} <HelpButton pageKey="postsDetail" /></h2>

@@ -70,7 +70,8 @@ function RecommendationCard({ rec, onAcknowledge, t, isRu }) {
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, isElementVisible } = useAuth();
+  const elVis = (id) => isElementVisible('dashboard', id);
   const [overview, setOverview] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [events, setEvents] = useState([]);
@@ -132,22 +133,24 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <StatCard icon={Car} label={t('dashboard.activeSessions')} value={overview?.activeSessions || 0} color="var(--accent)" />
-        <StatCard icon={CircleCheck} label={t('dashboard.freePosts')} value={freePostsCount} color="var(--success)" />
-        <StatCard icon={Wrench} label={t('dashboard.occupiedPosts')} value={occupiedCount} color="var(--warning)" />
-        <StatCard icon={Lightbulb} label={t('dashboard.recommendations')} value={overview?.activeRecommendations || 0} color="var(--info)" />
-      </div>
+      {elVis('statCards') && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <StatCard icon={Car} label={t('dashboard.activeSessions')} value={overview?.activeSessions || 0} color="var(--accent)" />
+          <StatCard icon={CircleCheck} label={t('dashboard.freePosts')} value={freePostsCount} color="var(--success)" />
+          <StatCard icon={Wrench} label={t('dashboard.occupiedPosts')} value={occupiedCount} color="var(--warning)" />
+          <StatCard icon={Lightbulb} label={t('dashboard.recommendations')} value={overview?.activeRecommendations || 0} color="var(--info)" />
+        </div>
+      )}
 
       {/* Live STO Widget */}
-      <LiveSTOWidget />
+      {elVis('liveWidget') && <LiveSTOWidget />}
 
       {/* ML Predictions */}
-      <PredictionWidget />
+      {elVis('predictionWidget') && <PredictionWidget />}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recommendations */}
-        <div>
+        {elVis('recommendations') && <div>
           <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('recommendations.title')}
           </h3>
@@ -186,10 +189,10 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Recent Events */}
-        <div>
+        {elVis('recentEvents') && <div>
           <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('dashboard.recentEvents')}
           </h3>
@@ -250,7 +253,7 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
       </div>
     </div>
   );

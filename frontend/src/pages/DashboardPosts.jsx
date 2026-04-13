@@ -22,7 +22,8 @@ import { Users } from 'lucide-react';
 export default function DashboardPosts() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api, appMode } = useAuth();
+  const { api, appMode, isElementVisible } = useAuth();
+  const elVis = (id) => isElementVisible('dashboard-posts', id);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -405,7 +406,7 @@ export default function DashboardPosts() {
       </div>
 
       {/* Current Shift Indicator */}
-      {currentShift && (
+      {elVis('currentShift') && currentShift && (
         <Link
           to="/shifts"
           className="flex items-center gap-3 px-3 py-2 rounded-xl hover:opacity-90 transition-opacity"
@@ -432,7 +433,7 @@ export default function DashboardPosts() {
       )}
 
       {/* Summary stats */}
-      <div className="flex flex-wrap gap-2">
+      {elVis('headerStats') && <div className="flex flex-wrap gap-2">
         {[
           { label: isRu ? '\u0417\u0430\u043d\u044f\u0442\u043e' : 'Occupied', value: stats.occupied, color: 'var(--accent)', icon: CircleDot,
             tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u043e\u0441\u0442\u043e\u0432, \u043d\u0430 \u043a\u043e\u0442\u043e\u0440\u044b\u0445 \u0441\u0435\u0439\u0447\u0430\u0441 \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044c' : 'Number of posts currently occupied by a vehicle' },
@@ -466,23 +467,23 @@ export default function DashboardPosts() {
             <span className="text-sm font-bold" style={{ color: card.color }}>{card.value}</span>
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Legend */}
       <Legend t={t} />
 
       {/* Gantt Timeline */}
-      <GanttTimeline
+      {elVis('ganttTimeline') && <GanttTimeline
         posts={posts}
         shiftStart={todayShift.shiftStart}
         shiftEnd={todayShift.shiftEnd}
         onBlockClick={handleBlockClick}
         onDrop={handleDrop}
         conflictItemIds={conflictItemIds}
-      />
+      />}
 
       {/* Free work orders */}
-      <FreeWorkOrdersTable orders={data?.freeWorkOrders} t={t} />
+      {elVis('freeOrders') && <FreeWorkOrdersTable orders={data?.freeWorkOrders} t={t} />}
 
       {/* Modals */}
       {selectedItem && (

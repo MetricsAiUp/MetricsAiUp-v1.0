@@ -15,6 +15,36 @@ const fetchJson = async (path) => {
   return res.json();
 };
 
+// Registry of major page elements (widgets/sections) that can be hidden per user
+const PAGE_ELEMENTS = {
+  dashboard: [
+    { id: 'statCards', label: { ru: 'KPI-карточки', en: 'KPI Cards' } },
+    { id: 'liveWidget', label: { ru: 'Live СТО', en: 'Live STO' } },
+    { id: 'predictionWidget', label: { ru: 'Прогнозы AI', en: 'AI Predictions' } },
+    { id: 'recommendations', label: { ru: 'Рекомендации', en: 'Recommendations' } },
+    { id: 'recentEvents', label: { ru: 'Последние события', en: 'Recent Events' } },
+  ],
+  'dashboard-posts': [
+    { id: 'headerStats', label: { ru: 'Статистика смены', en: 'Shift Stats' } },
+    { id: 'currentShift', label: { ru: 'Текущая смена', en: 'Current Shift' } },
+    { id: 'ganttTimeline', label: { ru: 'Gantt-таймлайн', en: 'Gantt Timeline' } },
+    { id: 'freeOrders', label: { ru: 'Свободные ЗН', en: 'Free Work Orders' } },
+  ],
+  'posts-detail': [
+    { id: 'postsList', label: { ru: 'Список постов', en: 'Posts List' } },
+    { id: 'detailPanel', label: { ru: 'Панель деталей', en: 'Detail Panel' } },
+  ],
+  analytics: [
+    { id: 'summaryStats', label: { ru: 'Сводные показатели', en: 'Summary Stats' } },
+    { id: 'trendsCharts', label: { ru: 'Графики трендов', en: 'Trend Charts' } },
+    { id: 'rankingCharts', label: { ru: 'Рейтинг и диаграммы', en: 'Ranking & Charts' } },
+    { id: 'planFactChart', label: { ru: 'План vs Факт', en: 'Plan vs Actual' } },
+    { id: 'comparisonTable', label: { ru: 'Сравнительная таблица', en: 'Comparison Table' } },
+    { id: 'heatmaps', label: { ru: 'Тепловые карты', en: 'Heatmaps' } },
+    { id: 'postDetail', label: { ru: 'Детализация поста', en: 'Post Detail' } },
+  ],
+};
+
 const PAGE_PERMISSIONS = {
   'dashboard': ['view_dashboard'],
   'dashboard-posts': ['view_dashboard'],
@@ -197,7 +227,7 @@ export function AuthProvider({ children }) {
     const permissions = buildPermissions(found.pages, found.role);
     const userData = {
       id: found.id, email: found.email, firstName: found.firstName, lastName: found.lastName,
-      roles: [found.role], role: found.role, pages: found.pages, permissions,
+      roles: [found.role], role: found.role, pages: found.pages, hiddenElements: found.hiddenElements || [], permissions,
     };
     const fakeToken = btoa(JSON.stringify({ userId: found.id, ts: Date.now() }));
     localStorage.setItem('token', fakeToken);
@@ -237,6 +267,11 @@ export function AuthProvider({ children }) {
 
   const hasPermission = (key) => user?.permissions?.includes(key) || false;
 
+  const isElementVisible = (pageId, elementId) => {
+    if (!user?.hiddenElements?.length) return true;
+    return !user.hiddenElements.includes(`${pageId}.${elementId}`);
+  };
+
   // Load app mode from backend on login
   useEffect(() => {
     if (user && tokenRef.current) {
@@ -264,6 +299,7 @@ export function AuthProvider({ children }) {
     const userData = {
       ...user,
       pages: updatedUser.pages,
+      hiddenElements: updatedUser.hiddenElements || [],
       role: updatedUser.role,
       roles: [updatedUser.role],
       firstName: updatedUser.firstName,
@@ -275,10 +311,11 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, updateCurrentUser, api, appMode, toggleAppMode }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, isElementVisible, updateCurrentUser, api, appMode, toggleAppMode }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export const useAuth = () => useContext(AuthContext);
+export { PAGE_ELEMENTS };
