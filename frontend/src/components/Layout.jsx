@@ -20,6 +20,45 @@ function SocketIndicator() {
   );
 }
 
+function ModeBadge() {
+  const { t } = useTranslation();
+  const { user, appMode, toggleAppMode } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const isDemo = appMode === 'demo';
+
+  if (isAdmin) {
+    return (
+      <button
+        onClick={() => toggleAppMode(isDemo ? 'live' : 'demo')}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:opacity-80"
+        style={{
+          background: isDemo ? 'rgba(234, 179, 8, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+          color: isDemo ? 'var(--warning)' : 'var(--success)',
+          border: `1px solid ${isDemo ? 'rgba(234, 179, 8, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`,
+        }}
+        title={t(isDemo ? 'settings.switchToLive' : 'settings.switchToDemo')}
+      >
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: isDemo ? 'var(--warning)' : 'var(--success)' }} />
+        {isDemo ? 'DEMO' : 'LIVE'}
+      </button>
+    );
+  }
+
+  // Non-admin: read-only badge
+  return (
+    <span
+      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium"
+      style={{
+        background: isDemo ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+        color: isDemo ? 'var(--warning)' : 'var(--success)',
+      }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: isDemo ? 'var(--warning)' : 'var(--success)' }} />
+      {isDemo ? 'DEMO' : 'LIVE'}
+    </span>
+  );
+}
+
 function Header({ onToggleSidebar, onToggleCollapse, collapsed }) {
   const { i18n } = useTranslation();
   const { user, logout } = useAuth();
@@ -75,6 +114,9 @@ function Header({ onToggleSidebar, onToggleCollapse, collapsed }) {
           <Globe size={14} />
           <span className="hidden md:inline">{isRu ? 'English' : 'Русский'}</span>
         </button>
+
+        {/* App mode */}
+        <ModeBadge />
 
         {/* Socket status */}
         <SocketIndicator />

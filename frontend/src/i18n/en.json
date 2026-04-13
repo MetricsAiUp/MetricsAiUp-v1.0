@@ -186,6 +186,10 @@
     "vehicle_idle": "Vehicle idle",
     "acknowledge": "Acknowledge"
   },
+  "settings": {
+    "switchToLive": "Switch to Live mode",
+    "switchToDemo": "Switch to Demo mode"
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark"

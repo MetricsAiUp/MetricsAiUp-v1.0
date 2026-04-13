@@ -185,28 +185,6 @@ export default function ShiftSettings({ settings, onSettingsChange, onClose, t }
             />
           </div>
 
-          {/* Mode */}
-          <div>
-            <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-secondary)' }}>
-              {t('dashboardPosts.mode')}
-            </label>
-            <div className="flex gap-2">
-              {['demo', 'live'].map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setLocal({ ...local, mode })}
-                  className="flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all"
-                  style={{
-                    background: local.mode === mode ? 'var(--accent)' : 'var(--bg-glass)',
-                    color: local.mode === mode ? '#fff' : 'var(--text-secondary)',
-                    border: `1px solid ${local.mode === mode ? 'var(--accent)' : 'var(--border-glass)'}`,
-                  }}
-                >
-                  {mode === 'demo' ? 'Demo' : 'Live'}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="flex gap-2 mt-6">

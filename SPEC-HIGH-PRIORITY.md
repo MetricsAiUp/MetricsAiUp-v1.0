@@ -1,274 +1,344 @@
 # Спецификация: Высокий приоритет
 
-> 5 задач | Общая оценка: 24-31 час
+> 5 задач | Общая оценка: ~1-1.5 часа
 
 ---
 
-## 1. Валидация входных данных на бэкенде
-**Оценка:** 2-3 часа | **Сложность:** Простая
+## HP-1. Индексы базы данных
 
 ### Проблема
-POST/PUT маршруты принимают `req.body` напрямую без проверки. Можно отправить невалидные данные, сломать БД или вызвать ошибку. Например, создать пользователя без email или зону с пустым именем.
+Отсутствуют индексы на часто фильтруемых полях. Запросы к сессиям, постам, заказ-нарядам, event processor делают full table scan по SQLite.
+
+### Затронутые модели и поля
+
+**Tier 1 — Критические (event processing, dashboard):**
+
+| Модель | Поле(я) | Тип | Кто использует |
+|--------|---------|-----|----------------|
+| `VehicleSession` | `status` | single | sessions.js, dashboard.js (`/overview`, `/live`) |
+| `VehicleSession` | `trackId, status` | composite | eventProcessor.js — `findFirst` при каждом CV-событии |
+| `PostStay` | `vehicleSessionId, endTime` | composite | eventProcessor.js — поиск открытых stay (5+ вызовов) |
+| `PostStay` | `postId, endTime` | composite | eventProcessor.js — handleWorkerPresent, handleWorkActivity |
+| `Post` | `isActive` | single | posts.js, dashboard.js, postsData.js — каждый запрос постов |
+| `WorkOrder` | `status, scheduledTime` | composite | workOrders.js, recommendationEngine.js |
+
+**Tier 2 — Операционные:**
+
+| Модель | Поле(я) | Тип | Кто использует |
+|--------|---------|-----|----------------|
+| `Zone` | `isActive` | single | zones.js — все запросы зон |
+| `Post` | `zoneId` | single | posts.js — фильтр по зоне |
+| `Recommendation` | `status` | single | recommendations.js, dashboard.js |
+| `WorkOrder` | `scheduledTime` | single | postsData.js, dashboard.js — range-запросы |
+| `Recommendation` | `type, zoneId, postId, status` | composite | recommendationEngine.js — dedup |
+
+### План реализации
+
+Добавить в `backend/prisma/schema.prisma`:
+
+```prisma
+model VehicleSession {
+  // ...existing fields...
+  @@index([status])
+  @@index([trackId, status])
+}
+
+model PostStay {
+  // ...existing fields...
+  @@index([vehicleSessionId, endTime])
+  @@index([postId, endTime])
+}
+
+model Post {
+  // ...existing fields...
+  @@index([isActive])
+  @@index([zoneId])
+}
+
+model Zone {
+  // ...existing fields...
+  @@index([isActive])
+}
+
+model WorkOrder {
+  // ...existing fields... (уже есть postNumber, status)
+  @@index([status, scheduledTime])
+  @@index([scheduledTime])
+}
+
+model Recommendation {
+  // ...existing fields...
+  @@index([status])
+  @@index([type, zoneId, postId, status])
+}
+```
+
+### Шаги
+1. Добавить `@@index` директивы в `schema.prisma`
+2. `cd backend && npx prisma migrate dev --name add-performance-indexes`
+3. `npx prisma migrate status` — проверить
+4. Перезапустить backend
+
+### Ожидаемый эффект
+- Event processing: -60% латентность (findFirst по trackId)
+- Dashboard API: -40% время ответа (status фильтры)
+- Recommendation dedup: -50% (composite индекс)
+
+### Риск: **Низкий** (additive миграция, не меняет данные)
+
+---
+
+## HP-2. Кэширование авторизации (In-Memory)
+
+### Проблема
+На **каждый** HTTP-запрос выполняется 4-уровневый Prisma include:
+```
+User → UserRole[] → Role → RolePermission[] → Permission
+```
+Для пользователя с 2 ролями и 15 permissions = ~35 записей из 5 таблиц на **каждый** запрос.
+
+### Текущий код
+`backend/src/middleware/auth.js:19-34`:
+```javascript
+const user = await prisma.user.findUnique({
+  where: { id: payload.userId },
+  include: {
+    roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } },
+  },
+});
+```
+
+### Решение: In-Memory Map с TTL + invalidation
+
+#### Новый файл: `backend/src/config/authCache.js`
+```javascript
+const AUTH_CACHE_TTL = 15 * 60 * 1000; // 15 минут
+const cache = new Map();
+
+function get(userId) {
+  const entry = cache.get(userId);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > AUTH_CACHE_TTL) {
+    cache.delete(userId);
+    return null;
+  }
+  return entry.data;
+}
+
+function set(userId, data) {
+  cache.set(userId, { data, ts: Date.now() });
+}
+
+function invalidate(userId) {
+  cache.delete(userId);
+}
+
+function invalidateAll() {
+  cache.clear();
+}
+
+module.exports = { get, set, invalidate, invalidateAll };
+```
+
+#### Изменения в `auth.js`
+```javascript
+const authCache = require('../config/authCache');
+
+async function authenticate(req, res, next) {
+  // ...JWT verify...
+
+  let user = authCache.get(payload.userId);
+  if (!user) {
+    user = await prisma.user.findUnique({ /* ...existing include... */ });
+    if (user) authCache.set(payload.userId, user);
+  }
+
+  // ...build permissions, attach req.user...
+}
+```
+
+#### Invalidation — добавить в `routes/users.js`
+```javascript
+const authCache = require('../config/authCache');
+
+// PUT /api/users/:id — после обновления:
+authCache.invalidate(req.params.id);
+
+// DELETE /api/users/:id — после деактивации:
+authCache.invalidate(req.params.id);
+```
+
+### Ожидаемый эффект
+- 95% cache hit rate (типичная 8-часовая сессия, TTL 15 мин)
+- Auth middleware: ~15ms → <1ms на повторных запросах
+- Нагрузка на БД: -90% по auth-запросам
+
+### Риск: **Средний** — нужно корректно инвалидировать при смене ролей
+
+---
+
+## HP-3. React ErrorBoundary
+
+### Проблема
+Нет Error Boundary — падение любого компонента (ошибка рендера, null reference) роняет всё приложение белым экраном без возможности восстановления.
 
 ### Решение
-- Установить **Zod** (лёгкая библиотека валидации с TypeScript поддержкой)
-- Создать middleware `validate(schema)` который проверяет `req.body` перед обработкой
-- Для каждого эндпоинта — своя Zod-схема
 
-### Схемы валидации
+#### Новый файл: `frontend/src/components/ErrorBoundary.jsx`
+```jsx
+import { Component } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
-| Эндпоинт | Обязательные поля | Ограничения |
-|----------|-------------------|-------------|
-| POST /api/auth/login | email, password | email формат, password мин. 1 символ |
-| POST /api/users | email, password, firstName | email уникален, password мин. 6, firstName мин. 1 |
-| PUT /api/users/:id | — | email формат если передан, password мин. 6 если передан |
-| POST /api/zones | name, type | type ∈ [repair, waiting, entry, parking, free] |
-| POST /api/posts | name, zoneId | type ∈ [light, heavy, special] |
-| POST /api/work-orders/import-csv | csvData | непустая строка |
-| POST /api/map-layout | name | name мин. 1 символ |
-| POST /api/cameras | name, rtspUrl | rtspUrl начинается с rtsp:// |
+export default class ErrorBoundary extends Component {
+  state = { hasError: false, error: null };
 
-### Формат ошибок
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('[ErrorBoundary]', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8"
+          style={{ color: 'var(--text-primary)' }}>
+          <AlertTriangle size={48} style={{ color: 'var(--accent)', marginBottom: '1rem' }} />
+          <h2 className="text-lg font-bold mb-2">
+            {this.props.fallbackTitle || 'Something went wrong'}
+          </h2>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+            {this.state.error?.message}
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-4 py-2 rounded-xl text-sm font-medium"
+            style={{ background: 'var(--accent)', color: '#fff' }}
+          >
+            {this.props.retryLabel || 'Retry'}
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+#### Интеграция в `App.jsx`
+Обернуть каждый lazy-loaded route в ErrorBoundary:
+```jsx
+import ErrorBoundary from './components/ErrorBoundary';
+
+<Route path="/analytics" element={
+  <ErrorBoundary>
+    <Suspense fallback={<PageLoader />}><Analytics /></Suspense>
+  </ErrorBoundary>
+} />
+```
+
+Или обернуть `<Layout>` целиком (проще, защищает все вложенные routes):
+```jsx
+<Route element={
+  <ErrorBoundary fallbackTitle={t('common.errorOccurred')} retryLabel={t('common.retry')}>
+    <Layout />
+  </ErrorBoundary>
+}>
+  {/* ...all child routes... */}
+</Route>
+```
+
+#### i18n ключи (добавить)
+```json
+// ru.json → common
+"errorOccurred": "Произошла ошибка",
+"retry": "Повторить"
+
+// en.json → common
+"errorOccurred": "Something went wrong",
+"retry": "Retry"
+```
+
+### Ожидаемый эффект
+- Падение одной страницы не роняет приложение
+- Пользователь видит понятное сообщение + кнопку «Повторить»
+- Console.error сохраняет стектрейс для отладки
+
+### Риск: **Низкий**
+
+---
+
+## HP-4. Удалить неиспользуемый axios
+
+### Проблема
+`axios@^1.13.6` в `frontend/package.json` — не используется нигде в коде. Все API-запросы идут через `fetch()` обёртку в `AuthContext.jsx`.
+
+### Шаги
+```bash
+cd /project/frontend && npm uninstall axios
+```
+
+### Проверка
+```bash
+grep -r "axios" frontend/src/  # должен быть пустой результат
+```
+
+### Ожидаемый эффект
+- node_modules: -2 MB
+- Чище зависимости
+
+### Риск: **Низкий**
+
+---
+
+## HP-5. Очистка stale build assets
+
+### Проблема
+В `/project/assets/` скопились ~1,210 старых JS/CSS чанков (~86 MB). Каждый `npm run build && cp -r dist/*` добавляет новые файлы, но не удаляет старые. Это засоряет `git status` и диск.
+
+### Решение
+
+#### Вариант A: Скрипт prebuild (постоянное решение)
+Добавить в `frontend/package.json`:
 ```json
 {
-  "error": "Ошибка валидации",
-  "details": [
-    { "field": "email", "message": "Поле email обязательно" },
-    { "field": "password", "message": "Пароль минимум 6 символов" }
-  ]
+  "scripts": {
+    "prebuild": "rm -rf ../assets/*.js ../assets/*.css 2>/dev/null || true",
+    "build": "vite build"
+  }
 }
 ```
 
-### Файлы
-- Новый: `backend/src/middleware/validate.js`
-- Новый: `backend/src/schemas/` (по файлу на модуль)
-- Изменить: все файлы в `backend/src/routes/`
+#### Вариант B: Одноразовая очистка
+```bash
+rm -rf /project/assets/*.js /project/assets/*.css
+cd /project/frontend && npm run build && cp -r dist/* /project/
+```
 
-### План реализации
-1. `npm install zod`
-2. Создать middleware `validate.js`
-3. Создать схемы для auth, users, zones, posts, cameras, mapLayout, workOrders
-4. Подключить middleware к каждому POST/PUT маршруту
-5. Тесты: отправить невалидные данные → получить 400 с деталями
+#### Добавить в `.gitignore`
+```
+assets/
+```
+
+### Ожидаемый эффект
+- Дисковое пространство: ~86 MB → ~5 MB
+- `git status` чище (нет сотен untracked файлов)
+
+### Риск: **Низкий** — assets пересоздаются при каждом билде
 
 ---
 
-## 2. Drag-and-drop планировщик заказ-нарядов
-**Оценка:** 6-8 часов | **Сложность:** Сложная
+## Порядок выполнения
 
-### Проблема
-Таймлайн DashboardPosts показывает ЗН на постах, но нельзя перемещать. Мастер-приёмщик планирует смену вручную, записывая на бумаге или в Excel. Свободные ЗН висят в очереди, но их нельзя "забронировать" на конкретный пост и время.
+| # | Задача | Оценка | Зависимости | Риск |
+|---|--------|--------|-------------|------|
+| 1 | HP-4: Удалить axios | 2 мин | нет | Низкий |
+| 2 | HP-5: Очистка assets | 5 мин | нет | Низкий |
+| 3 | HP-3: ErrorBoundary | 15 мин | нет | Низкий |
+| 4 | HP-1: DB индексы | 10 мин | нет | Низкий |
+| 5 | HP-2: Auth кэш | 30 мин | нет | Средний |
 
-### Решение
-Расширить страницу DashboardPosts интерактивным планировщиком:
-
-### Функциональность
-
-**Drag горизонтально (ось времени):**
-- Хватаем блок ЗН → тянем влево/вправо → меняется время начала
-- Конец автоматически пересчитывается по нормо-часам
-- Snap к 15-минутным интервалам
-
-**Drag вертикально (между постами):**
-- Тянем блок ЗН с одного поста на другой → ЗН переназначается
-- Визуальная подсветка "зоны сброса" при наведении
-
-**Drag из очереди:**
-- Свободные ЗН из таблицы внизу → можно перетащить на пост
-- При drop → назначается время начала (позиция курсора) и пост
-
-**Проверка коллизий:**
-- Если два ЗН пересекаются по времени на одном посту → красная рамка
-- Tooltip: "Конфликт: ЗН 12345 (10:00-11:30) пересекается с ЗН 67890 (11:00-12:00)"
-
-**Сохранение:**
-- Кнопка "Сохранить расписание" → batch PUT /api/work-orders/schedule
-- Автосохранение каждые 30 сек (черновик)
-
-### Бэкенд API
-```
-PUT /api/work-orders/:id/assign
-Body: { postId, scheduledTime, estimatedEndTime }
-
-POST /api/work-orders/schedule
-Body: { assignments: [{ workOrderId, postId, scheduledTime }] }
-```
-
-### Файлы
-- Изменить: `frontend/src/pages/DashboardPosts.jsx`
-- Изменить: `frontend/src/components/dashboardPosts/TimelineRow.jsx`
-- Изменить: `frontend/src/components/dashboardPosts/FreeWorkOrdersTable.jsx`
-- Новый: `backend/src/routes/workOrders.js` (новые эндпоинты)
-
-### План реализации
-1. Бэкенд: добавить PUT /api/work-orders/:id/assign и POST schedule
-2. TimelineRow: добавить draggable блоки (react-konva или HTML5 drag)
-3. Коллизионный детектор: проверка пересечений по времени
-4. FreeWorkOrdersTable: drag source для свободных ЗН
-5. Визуальная обратная связь: подсветка drop zone, snap, тултипы
-6. Кнопка "Сохранить" → batch API call
-7. Тесты
-
----
-
-## 3. Двусторонняя синхронизация с 1С Альфа-Авто
-**Оценка:** 4-6 часов | **Сложность:** Средняя
-
-### Проблема
-Данные из 1С загружаются вручную через Excel. Завершённые ЗН не возвращаются обратно в 1С. Двойной ввод данных. Задержка между реальным завершением работы и отражением в 1С.
-
-### Решение
-
-**Вариант A (файловый обмен):**
-1. **Импорт:** Бэкенд-сервис мониторит папку `/data/1c-import/` каждые 5 мин. Новые .xlsx → автопарсинг → запись в БД → перемещение в `/data/1c-import/processed/`
-2. **Экспорт:** Кнопка "Выгрузить в 1С" → генерирует xlsx в формате 1С с завершёнными ЗН → скачивание или сохранение в `/data/1c-export/`
-
-**Вариант B (REST API 1С, если есть):**
-1. Бэкенд подключается к HTTP-сервису 1С напрямую
-2. Pull: GET новые ЗН из 1С → создание в нашей БД
-3. Push: POST завершённые ЗН обратно → 1С обновляет статус
-
-**Лог синхронизации:**
-- Таблица `SyncLog { id, direction, recordCount, errors, createdAt }`
-- UI: страница Data1C → новый таб "Синхронизация" с историей
-
-### Файлы
-- Новый: `backend/src/services/sync1C.js`
-- Изменить: `backend/src/routes/workOrders.js` (эндпоинт экспорта)
-- Изменить: `frontend/src/pages/Data1C.jsx` (таб синхронизации)
-- Новый: Prisma модель `SyncLog`
-
-### План реализации
-1. Prisma модель SyncLog + миграция
-2. Сервис sync1C.js: парсинг xlsx (уже есть код в parse1C.js)
-3. Эндпоинт POST /api/1c/export → xlsx с завершёнными ЗН
-4. Фоновый job: проверка /data/1c-import/ каждые 5 мин
-5. UI: таб "Синхронизация" с логом и кнопками
-6. Тесты
-
----
-
-## 4. Экспорт аналитики в Excel/PDF
-**Оценка:** 3-4 часа | **Сложность:** Простая
-
-### Проблема
-Страница Analytics показывает 6 графиков и таблицу сравнения, но нельзя скачать для отчёта директору. На совещании нужно показать цифры — сейчас только скриншот.
-
-### Решение
-
-**Экспорт в Excel (xlsx):**
-```
-Лист 1 "KPI": загрузка%, эффективность%, авто/день, простой, no-show
-Лист 2 "Посты": таблица сравнения (11 колонок × 10 постов)
-Лист 3 "История": 30 дней × метрики по каждому дню
-Лист 4 "По часам": hourly breakdown для выбранного поста
-```
-
-**Экспорт в PDF:**
-```
-Страница 1: Шапка (логотип, дата, период) + KPI карточки
-Страница 2: Графики (как изображения через html2canvas)
-Страница 3: Таблица сравнения постов
-```
-
-**Экспорт отдельного графика:**
-- Правый клик на графике → "Скачать как PNG"
-- Recharts → SVG → canvas → PNG
-
-### Файлы
-- Изменить: `frontend/src/pages/Analytics.jsx` (кнопки экспорта)
-- Новый: `frontend/src/utils/export.js` (утилиты экспорта)
-- Установить: `jspdf`, `html2canvas`
-
-### План реализации
-1. Установить jspdf + html2canvas
-2. Утилита exportToXlsx: формирование листов из данных Analytics
-3. Утилита exportToPdf: рендер графиков в canvas → PDF
-4. Кнопки "Excel" и "PDF" в header страницы Analytics
-5. Контекстное меню графика → "Скачать PNG"
-6. Тесты
-
----
-
-## 5. Управление сменами
-**Оценка:** 8-10 часов | **Сложность:** Сложная
-
-### Проблема
-DashboardPosts имеет настройку начало/конец смены (08:00-20:00), но это просто UI-рамка. Нет реального управления: кто работает в какую смену, сколько людей на смене, передача смены между мастерами.
-
-### Решение
-
-**Новая страница `/shifts`:**
-
-**Вид 1: Календарь смен (неделя)**
-```
-         Пн        Вт        Ср        Чт        Пт        Сб
-Утро   [Иванов]  [Иванов]  [Петров]  [Петров]  [Иванов]  [—]
-08-14  [Сидоров] [Сидоров] [Козлов]  [Козлов]  [Сидоров] [—]
-
-Вечер  [Петров]  [Петров]  [Иванов]  [Иванов]  [Козлов]  [—]
-14-20  [Козлов]  [Козлов]  [Сидоров] [Сидоров] [—]       [—]
-```
-
-**Вид 2: Смена (детали)**
-```
-Смена: Утренняя | 08:00-14:00 | Пн 07.04.2026
-Мастер: Крылатов М.Г.
-Механики: Пузанов С.А. (пост 3), Иванов И.И. (пост 5)
-ЗН на смену: 12 | Выполнено: 8 | В работе: 3 | Ожидание: 1
-```
-
-**Вид 3: Передача смены**
-```
-Завершение смены → Акт передачи:
-- Пост 3: ЗН 12345 в работе (осталось ~1.5ч)
-- Пост 7: свободен
-- Пост 5: авто АВ123 без работника (ожидание запчастей)
-→ [Подтвердить передачу]
-```
-
-### Prisma модели
-```prisma
-model Shift {
-  id        String   @id @default(uuid())
-  name      String   // "Утренняя", "Вечерняя"
-  startTime String   // "08:00"
-  endTime   String   // "14:00"
-  date      DateTime
-  masterId  String?
-  notes     String?
-  status    String   @default("planned") // planned, active, completed
-  workers   ShiftWorker[]
-}
-
-model ShiftWorker {
-  id       String @id @default(uuid())
-  shiftId  String
-  userId   String
-  postId   String? // привязка к посту
-  shift    Shift  @relation(...)
-}
-```
-
-### API эндпоинты
-```
-GET    /api/shifts?date=2026-04-07&week=true
-POST   /api/shifts
-PUT    /api/shifts/:id
-DELETE /api/shifts/:id
-POST   /api/shifts/:id/complete  (завершение с актом передачи)
-```
-
-### Файлы
-- Новая страница: `frontend/src/pages/Shifts.jsx`
-- Новые модели: Prisma Shift, ShiftWorker
-- Новый роут: `backend/src/routes/shifts.js`
-- Интеграция: DashboardPosts показывает текущую смену
-
-### План реализации
-1. Prisma модели + миграция
-2. REST API (CRUD + complete)
-3. Страница Shifts: календарь + детали + передача
-4. Интеграция с DashboardPosts (текущая смена)
-5. Роут, sidebar, i18n
-6. Тесты
+**Общее время:** ~1–1.5 часа
+**Параллельность:** HP-1, HP-3, HP-4, HP-5 — полностью независимы

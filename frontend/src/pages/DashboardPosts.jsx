@@ -22,7 +22,7 @@ import { Users } from 'lucide-react';
 export default function DashboardPosts() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -37,7 +37,6 @@ export default function DashboardPosts() {
     shiftStart: '08:00',
     shiftEnd: '20:00',
     postsCount: 10,
-    mode: 'demo',
   });
 
   useEffect(() => {
@@ -349,12 +348,6 @@ export default function DashboardPosts() {
           </h2>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             {t('dashboardPosts.subtitle')} · {todayShift.shiftStart} – {todayShift.shiftEnd}
-            {settings.mode === 'demo' && (
-              <span className="ml-2 px-1.5 py-0.5 rounded text-xs font-medium"
-                style={{ background: 'var(--warning)', color: '#000' }}>
-                DEMO
-              </span>
-            )}
           </p>
         </div>
         <div className="flex items-center gap-2">

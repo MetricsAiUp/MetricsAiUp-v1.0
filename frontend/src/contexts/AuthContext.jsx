@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { connectSocket, disconnectSocket } from '../hooks/useSocket';
+import { connectSocket, disconnectSocket, getSocket } from '../hooks/useSocket';
 
 const AuthContext = createContext();
 
@@ -111,6 +111,7 @@ const ROLE_DEFAULT_PAGES = {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [appMode, setAppMode] = useState(localStorage.getItem('appMode') || 'demo');
   const tokenRef = useRef(localStorage.getItem('token'));
 
   const setToken = useCallback((t) => {
@@ -210,6 +211,18 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (user && tokenRef.current) {
       connectSocket(tokenRef.current);
+      // Listen for mode changes from other clients
+      const socket = getSocket();
+      if (socket) {
+        const handleModeChange = (settings) => {
+          if (settings?.mode) {
+            setAppMode(settings.mode);
+            localStorage.setItem('appMode', settings.mode);
+          }
+        };
+        socket.on('settings:changed', handleModeChange);
+        return () => { socket.off('settings:changed', handleModeChange); };
+      }
     }
     return () => { if (!user) disconnectSocket(); };
   }, [user]);
@@ -223,6 +236,28 @@ export function AuthProvider({ children }) {
   };
 
   const hasPermission = (key) => user?.permissions?.includes(key) || false;
+
+  // Load app mode from backend on login
+  useEffect(() => {
+    if (user && tokenRef.current) {
+      api.get('/api/settings').then(res => {
+        if (res.data?.mode) {
+          setAppMode(res.data.mode);
+          localStorage.setItem('appMode', res.data.mode);
+        }
+      });
+    }
+  }, [user]);
+
+  const toggleAppMode = async (newMode) => {
+    try {
+      await api.put('/api/settings', { mode: newMode });
+      setAppMode(newMode);
+      localStorage.setItem('appMode', newMode);
+    } catch (err) {
+      console.error('[AppMode] Failed to switch:', err.message);
+    }
+  };
 
   const updateCurrentUser = (updatedUser) => {
     const permissions = buildPermissions(updatedUser.pages, updatedUser.role);
@@ -240,7 +275,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, updateCurrentUser, api }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, updateCurrentUser, api, appMode, toggleAppMode }}>
       {children}
     </AuthContext.Provider>
   );

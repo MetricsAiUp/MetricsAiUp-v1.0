@@ -186,6 +186,10 @@
     "vehicle_idle": "Авто без работ",
     "acknowledge": "Принять"
   },
+  "settings": {
+    "switchToLive": "Переключить в рабочий режим (Live)",
+    "switchToDemo": "Переключить в демо-режим (Demo)"
+  },
   "theme": {
     "light": "Светлая",
     "dark": "Тёмная"

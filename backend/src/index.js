@@ -39,12 +39,14 @@ const { initTelegramBot } = require('./services/telegramBot');
 const { generate: generateDemoData } = require('./generateDemoData');
 const { startCameraHealthCheck } = require('./services/cameraHealthCheck');
 const { startReportScheduler } = require('./services/reportScheduler');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 
 // Create HTTP server (for nginx proxy on localhost)
 const server = http.createServer(app);
 const io = initSocket(server);
+app.set('io', io);
 
 // Also create HTTPS server if SSL certs available (for direct external access)
 const SSL_CERT = '/project/.ssl/fullchain.pem';
@@ -89,6 +91,7 @@ app.use('/api', postsDataRoutes);
 app.use('/api/system-health', healthRoutes);
 app.use('/api/workers', workersRoutes);
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
+app.use('/api/settings', settingsRoutes);
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check
@@ -114,11 +117,34 @@ server.listen(PORT, '0.0.0.0', () => {
   startCameraHealthCheck();
   startReportScheduler();
 
-  // Demo data auto-refresh: regenerate every 2 minutes so data "lives"
-  generateDemoData().catch(e => console.error('[DemoGen] Initial run error:', e.message));
-  setInterval(() => {
-    generateDemoData().catch(e => console.error('[DemoGen] Refresh error:', e.message));
-  }, 2 * 60 * 1000);
+  // Demo data auto-refresh: controlled by app mode setting
+  let demoInterval = null;
+  const demoControl = {
+    start() {
+      if (demoInterval) return;
+      console.log('[DemoGen] Starting demo data generator');
+      generateDemoData().catch(e => console.error('[DemoGen] Initial run error:', e.message));
+      demoInterval = setInterval(() => {
+        generateDemoData().catch(e => console.error('[DemoGen] Refresh error:', e.message));
+      }, 2 * 60 * 1000);
+    },
+    stop() {
+      if (demoInterval) {
+        clearInterval(demoInterval);
+        demoInterval = null;
+        console.log('[DemoGen] Stopped demo data generator');
+      }
+    },
+  };
+  app.set('demoControl', demoControl);
+
+  // Start demo generator only if mode is 'demo'
+  const appSettings = settingsRoutes.readSettings();
+  if (appSettings.mode === 'demo') {
+    demoControl.start();
+  } else {
+    console.log('[DemoGen] Mode is "live" — demo generator disabled');
+  }
 });
 
 // Also listen on 8080 for VPS proxy (same app, just another HTTP server)
