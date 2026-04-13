@@ -147,21 +147,6 @@ const ROLE_DEFAULT_PAGES = {
   viewer: ['dashboard', 'posts-detail', 'map'],
 };
 
-// Load user overrides (hiddenElements, pages) from localStorage usersData
-function getUserOverrides(email) {
-  try {
-    const saved = localStorage.getItem('usersData');
-    if (!saved) return {};
-    const { users } = JSON.parse(saved);
-    const found = users?.find(u => u.email?.toLowerCase() === email?.toLowerCase());
-    if (!found) return {};
-    const overrides = {};
-    if (found.hiddenElements?.length) overrides.hiddenElements = found.hiddenElements;
-    if (found.pages?.length) overrides.pages = found.pages;
-    return overrides;
-  } catch { return {}; }
-}
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -185,13 +170,7 @@ export function AuthProvider({ children }) {
     if (tokenRef.current) {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
-        try {
-          const parsed = JSON.parse(savedUser);
-          const overrides = getUserOverrides(parsed.email);
-          if (overrides.hiddenElements) parsed.hiddenElements = overrides.hiddenElements;
-          if (overrides.pages) parsed.pages = overrides.pages;
-          setUser(parsed);
-        } catch { /* ignore */ }
+        try { setUser(JSON.parse(savedUser)); } catch { /* ignore */ }
       }
     }
     setLoading(false);
@@ -210,21 +189,18 @@ export function AuthProvider({ children }) {
         const meRes = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { Authorization: `Bearer ${data.token}` },
         });
-        let role = 'viewer', pages = [], permissions = [];
+        let role = 'viewer', pages = [], permissions = [], hiddenElements = [];
         if (meRes.ok) {
           const me = await meRes.json();
           role = me.role || me.roles?.[0] || 'viewer';
           permissions = me.permissions || [];
           pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
+          hiddenElements = me.hiddenElements || [];
         }
-        const overrides = getUserOverrides(data.user.email);
         const userData = {
           id: data.user.id, email: data.user.email,
           firstName: data.user.firstName, lastName: data.user.lastName,
-          role, roles: [role],
-          pages: overrides.pages || pages,
-          hiddenElements: overrides.hiddenElements || [],
-          permissions,
+          role, roles: [role], pages, hiddenElements, permissions,
         };
         localStorage.setItem('currentUser', JSON.stringify(userData));
         setUser(userData);
@@ -301,10 +277,10 @@ export function AuthProvider({ children }) {
 
   const hasPermission = (key) => user?.permissions?.includes(key) || false;
 
-  const isElementVisible = (pageId, elementId) => {
+  const isElementVisible = useCallback((pageId, elementId) => {
     if (!user?.hiddenElements?.length) return true;
     return !user.hiddenElements.includes(`${pageId}.${elementId}`);
-  };
+  }, [user]);
 
   // Load app mode from backend on login
   useEffect(() => {

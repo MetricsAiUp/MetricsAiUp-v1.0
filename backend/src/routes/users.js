@@ -58,6 +58,9 @@ function formatUser(user) {
   // Derive pages from primary role
   const pages = ROLE_DEFAULT_PAGES[primaryRole] || ROLE_DEFAULT_PAGES.viewer;
 
+  let hiddenElements = [];
+  try { hiddenElements = JSON.parse(user.hiddenElements || '[]'); } catch {}
+
   return {
     id: user.id,
     email: user.email,
@@ -66,6 +69,7 @@ function formatUser(user) {
     role: primaryRole,
     roles: roleNames,
     pages,
+    hiddenElements,
     permissions: [...permissions],
     isActive: user.isActive,
     createdAt: user.createdAt,
@@ -184,7 +188,7 @@ router.post('/', requirePermission('manage_users'), validate(createUserSchema), 
 router.put('/:id', requirePermission('manage_users'), validate(updateUserSchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, firstName, lastName, roleIds, isActive } = req.body;
+    const { email, password, firstName, lastName, roleIds, isActive, hiddenElements, roleName } = req.body;
 
     // Check user exists
     const existing = await prisma.user.findUnique({ where: { id } });
@@ -206,15 +210,21 @@ router.put('/:id', requirePermission('manage_users'), validate(updateUserSchema)
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;
     if (isActive !== undefined) data.isActive = isActive;
+    if (hiddenElements !== undefined) data.hiddenElements = JSON.stringify(hiddenElements);
     if (password) {
       data.password = await bcrypt.hash(password, 10);
     }
 
     // Update roles if provided: delete existing, recreate
-    if (roleIds !== undefined) {
+    let resolvedRoleIds = roleIds;
+    if (!resolvedRoleIds && roleName) {
+      const role = await prisma.role.findUnique({ where: { name: roleName } });
+      if (role) resolvedRoleIds = [role.id];
+    }
+    if (resolvedRoleIds !== undefined) {
       await prisma.userRole.deleteMany({ where: { userId: id } });
       data.roles = {
-        create: roleIds.map((roleId) => ({ roleId })),
+        create: resolvedRoleIds.map((roleId) => ({ roleId })),
       };
     }
 

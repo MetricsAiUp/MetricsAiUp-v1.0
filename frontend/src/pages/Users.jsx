@@ -21,18 +21,10 @@ export default function Users() {
   const [showNew, setShowNew] = useState(false);
 
   useEffect(() => {
-    const loadData = async () => {
-      const saved = localStorage.getItem('usersData');
-      if (saved) {
-        try { setData(JSON.parse(saved)); setLoading(false); return; } catch { /* ignore */ }
-      }
-      try {
-        const { data: d } = await api.get('/api/users');
-        setData(d);
-      } catch { /* fallback */ }
-      setLoading(false);
-    };
-    loadData();
+    api.get('/api/users')
+      .then(({ data: d }) => setData(d))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading || !data) return <div className="p-4 text-center text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Загрузка...' : 'Loading...'}</div>;
@@ -40,33 +32,54 @@ export default function Users() {
   const { users, roles, availablePages } = data;
   const lang = isRu ? 'ru' : 'en';
 
-  const persistUsers = (newData) => { localStorage.setItem('usersData', JSON.stringify(newData)); };
-
-  const handleSave = (userForm) => {
-    const prev = data;
-    const exists = prev.users.find(u => u.id === userForm.id);
-    let newData;
-    if (exists) {
-      const updatedUser = { ...exists, ...userForm };
-      if (!userForm.password || userForm.password.trim() === '') updatedUser.password = exists.password || 'demo123';
-      newData = { ...prev, users: prev.users.map(u => u.id === exists.id ? updatedUser : u) };
-    } else {
-      const newUser = { ...userForm, id: `user-${Date.now()}`, createdAt: new Date().toISOString().slice(0, 10) };
-      if (!newUser.password || newUser.password.trim() === '') newUser.password = 'demo123';
-      newData = { ...prev, users: [...prev.users, newUser] };
+  const handleSave = async (userForm) => {
+    try {
+      let savedUser;
+      if (userForm.id && !userForm.id.startsWith('user-')) {
+        // Update existing user via API
+        const body = {
+          firstName: userForm.firstName,
+          lastName: userForm.lastName,
+          email: userForm.email,
+          isActive: userForm.isActive,
+          hiddenElements: userForm.hiddenElements || [],
+          roleName: userForm.role,
+        };
+        if (userForm.password && userForm.password.trim() !== '') body.password = userForm.password;
+        const { data: updated } = await api.put(`/api/users/${userForm.id}`, body);
+        savedUser = updated;
+        setData(prev => ({ ...prev, users: prev.users.map(u => u.id === userForm.id ? savedUser : u) }));
+      } else {
+        // Create new user via API
+        const body = {
+          firstName: userForm.firstName,
+          lastName: userForm.lastName,
+          email: userForm.email,
+          password: userForm.password || 'demo123',
+          roleIds: userForm.roleId ? [userForm.roleId] : [],
+        };
+        const { data: created } = await api.post('/api/users', body);
+        savedUser = created;
+        setData(prev => ({ ...prev, users: [...prev.users, savedUser] }));
+      }
+      // Update current user session if editing self
+      if (savedUser && savedUser.email?.toLowerCase() === currentUser?.email?.toLowerCase()) {
+        updateCurrentUser(savedUser);
+      }
+    } catch (err) {
+      console.error('Save user failed:', err);
     }
-    persistUsers(newData);
-    setData(newData);
-    const savedUser = newData.users.find(u => u.email?.toLowerCase() === currentUser?.email?.toLowerCase());
-    if (savedUser) updateCurrentUser(savedUser);
     setEditUser(null);
     setShowNew(false);
   };
 
-  const handleDelete = (id) => {
-    const newData = { ...data, users: data.users.filter(u => u.id !== id) };
-    persistUsers(newData);
-    setData(newData);
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/api/users/${id}`);
+      setData(prev => ({ ...prev, users: prev.users.filter(u => u.id !== id) }));
+    } catch (err) {
+      console.error('Delete user failed:', err);
+    }
   };
 
   if (editUser || showNew) {

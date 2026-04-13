@@ -14,7 +14,9 @@ const updateUserSchema = z.object({
   lastName: z.string().min(1).optional(),
   password: z.string().min(6).optional(),
   roleIds: z.array(z.number().int()).optional(),
+  roleName: z.string().optional(),
   isActive: z.boolean().optional(),
+  hiddenElements: z.array(z.string()).optional(),
 });
 
 module.exports = { createUserSchema, updateUserSchema };

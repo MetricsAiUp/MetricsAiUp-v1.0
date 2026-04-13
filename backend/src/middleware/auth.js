@@ -57,6 +57,9 @@ async function authenticate(req, res, next) {
       viewer: ['dashboard', 'posts-detail', 'map'],
     };
 
+    let hiddenElements = [];
+    try { hiddenElements = JSON.parse(user.hiddenElements || '[]'); } catch {}
+
     req.user = {
       id: user.id,
       email: user.email,
@@ -65,6 +68,7 @@ async function authenticate(req, res, next) {
       roles: roleNames,
       role: primaryRole,
       pages: ROLE_PAGES[primaryRole] || ['dashboard'],
+      hiddenElements,
       permissions: [...permissions],
     };
 
