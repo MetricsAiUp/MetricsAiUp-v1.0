@@ -84,18 +84,91 @@ function computeDaily(wos) {
   return days;
 }
 
+// Get shift bounds for a given date from settings
+function getShiftBoundsForDate(settings, date) {
+  const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const d = date ? new Date(date) : new Date();
+  const jsDay = d.getDay(); // 0=Sun
+  const dayMap = [6, 0, 1, 2, 3, 4, 5];
+  const dayKey = DAYS[dayMap[jsDay]];
+  const ws = settings.weekSchedule;
+
+  let startStr = '08:00', endStr = '22:00';
+  if (ws && ws[dayKey] && !ws[dayKey].dayOff) {
+    startStr = ws[dayKey].start || startStr;
+    endStr = ws[dayKey].end || endStr;
+  } else {
+    startStr = settings.shiftStart || '08:00';
+    endStr = settings.shiftEnd || '22:00';
+  }
+
+  const dateStr = d.toISOString().split('T')[0];
+  const shiftStart = new Date(`${dateStr}T${startStr}:00`).getTime();
+  const shiftEnd = new Date(`${dateStr}T${endStr}:00`).getTime();
+  const maxMs = shiftEnd - shiftStart;
+  const maxH = maxMs / 3600000;
+  return { shiftStart, shiftEnd, maxMs, maxH, dayOff: !!(ws && ws[dayKey] && ws[dayKey].dayOff) };
+}
+
+// Get period date range from query params
+function getPeriodRange(period, from, to) {
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  switch (period) {
+    case 'yesterday': {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      const ds = d.toISOString().split('T')[0];
+      return { dateFrom: ds, dateTo: ds };
+    }
+    case 'week': {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 6);
+      return { dateFrom: d.toISOString().split('T')[0], dateTo: todayStr };
+    }
+    case 'month': {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 29);
+      return { dateFrom: d.toISOString().split('T')[0], dateTo: todayStr };
+    }
+    case 'custom':
+      return { dateFrom: from || todayStr, dateTo: to || todayStr };
+    default: // today
+      return { dateFrom: todayStr, dateTo: todayStr };
+  }
+}
+
 // GET /api/posts-analytics — per-post analytics from DB
 router.get('/posts-analytics', async (req, res) => {
   try {
     // In live mode — return monitoring data
     const curSettings = settingsReader.readSettings();
     const proxy = req.app.get('monitoringProxy');
-    // Calculate occupancy metrics from history timeline (last 12h shift only)
+    const { period, from, to } = req.query;
+    const { dateFrom, dateTo } = getPeriodRange(period, from, to);
+    const shiftBounds = getShiftBoundsForDate(curSettings, dateFrom);
+    // For multi-day periods, use average shift duration
+    if (dateFrom !== dateTo) {
+      const d1 = new Date(dateFrom);
+      const d2 = new Date(dateTo);
+      const days = Math.max(1, Math.round((d2 - d1) / 86400000) + 1);
+      let totalMs = 0;
+      for (let i = 0; i < days; i++) {
+        const d = new Date(d1);
+        d.setDate(d.getDate() + i);
+        const sb = getShiftBoundsForDate(curSettings, d);
+        totalMs += sb.maxMs;
+      }
+      shiftBounds.maxMs = totalMs;
+      shiftBounds.maxH = totalMs / 3600000;
+      shiftBounds.shiftStart = new Date(`${dateFrom}T00:00:00`).getTime();
+      shiftBounds.shiftEnd = new Date(`${dateTo}T23:59:59`).getTime();
+    }
+
+    // Calculate occupancy metrics from history timeline within shift bounds
     function calcMetrics(history, currentStatus, worksInProgress) {
-      const maxH = 12;
-      const maxMs = maxH * 3600000;
-      const now = Date.now();
-      const shiftStart = now - maxMs; // 12 hours ago
+      const { shiftStart, maxMs, maxH } = shiftBounds;
+      const now = Math.min(Date.now(), shiftBounds.shiftEnd);
 
       let occupiedMs = 0;
       let workingMs = 0;
@@ -156,7 +229,7 @@ router.get('/posts-analytics', async (req, res) => {
           type: POST_TYPES[mp.postNumber] || 'light',
           zone: mp.externalZoneName,
           status: mp.status,
-          maxCapacityHours: 12,
+          maxCapacityHours: shiftBounds.maxH,
           occupancy: m.loadPercent,
           efficiency: m.efficiency,
           vehiclesToday: occupiedEntries.length,
@@ -223,7 +296,7 @@ router.get('/posts-analytics', async (req, res) => {
           type: 'zone',
           zone: mz.externalZoneName,
           status: mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : 'free',
-          maxCapacityHours: 12,
+          maxCapacityHours: shiftBounds.maxH,
           occupancy: m.loadPercent,
           efficiency: m.efficiency,
           vehiclesToday: occupiedEntries.length,
@@ -316,10 +389,9 @@ router.get('/posts-analytics', async (req, res) => {
       // Find worker/master from most recent WO
       const recentWO = postWOs.filter(w => w.worker).slice(-1)[0];
 
-      const maxCapacityHours = 12;
       const planHours = Math.round(totalNorm * 10) / 10;
       const factHours = Math.round(totalActual * 10) / 10;
-      const loadPercent = Math.min(100, Math.round((factHours / maxCapacityHours) * 100));
+      const loadPercent = Math.min(100, Math.round((factHours / shiftBounds.maxH) * 100));
 
       // Build workers list from today's WOs
       const workersMap = {};
@@ -381,7 +453,7 @@ router.get('/posts-analytics', async (req, res) => {
         type: POST_TYPES[num] || 'light',
         zone: POST_ZONES[num] || '',
         status: computePostStatus(todayWOs),
-        maxCapacityHours,
+        maxCapacityHours: shiftBounds.maxH,
         today,
         occupancy: loadPercent,
         efficiency: totalNorm > 0 ? Math.round((totalActual / totalNorm) * 100 * 10) / 10 : 0,
@@ -426,7 +498,7 @@ router.get('/posts-analytics', async (req, res) => {
         type: 'zone',
         zone: dbZ?.name || `Свободная зона ${String(num).padStart(2, '0')}`,
         status: dbZ && dbZ._count?.stays > 0 ? 'occupied' : 'free',
-        maxCapacityHours: 12,
+        maxCapacityHours: shiftBounds.maxH,
         occupancy: 0,
         efficiency: 0,
         vehiclesToday: 0,
@@ -450,6 +522,7 @@ router.get('/dashboard-posts', async (req, res) => {
   try {
     // In live mode — return data from monitoring proxy
     const settings = settingsReader.readSettings();
+    const shiftBounds = getTodayShiftBounds(settings);
     const proxy = req.app.get('monitoringProxy');
     if (settings.mode === 'live' && proxy && proxy.isRunning()) {
       const monPosts = proxy.getPosts();
@@ -499,7 +572,7 @@ router.get('/dashboard-posts', async (req, res) => {
       });
 
       return res.json({
-        settings: { shiftStart: '08:00', shiftEnd: '20:00', postsCount: 10, mode: 'live' },
+        settings: { shiftStart: curSettings.shiftStart || '08:00', shiftEnd: curSettings.shiftEnd || '22:00', postsCount: curSettings.postsCount || 10, weekSchedule: curSettings.weekSchedule, mode: 'live' },
         posts,
         freeWorkOrders: [],
       });
@@ -594,7 +667,7 @@ router.get('/dashboard-posts', async (req, res) => {
     }
 
     res.json({
-      settings: { shiftStart: '08:00', shiftEnd: '20:00', postsCount: 10, mode: 'db' },
+      settings: { shiftStart: curSettings.shiftStart || '08:00', shiftEnd: curSettings.shiftEnd || '22:00', postsCount: curSettings.postsCount || 10, weekSchedule: curSettings.weekSchedule, mode: 'db' },
       posts,
       freeWorkOrders: freeWOs.map(w => ({
         id: w.id,

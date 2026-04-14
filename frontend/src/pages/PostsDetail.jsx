@@ -67,14 +67,19 @@ export default function PostsDetail() {
 
   useEffect(() => {
     setLoading(true);
+    const params = new URLSearchParams();
+    if (period) params.set('period', period);
+    if (period === 'custom' && customFrom) params.set('from', customFrom);
+    if (period === 'custom' && customTo) params.set('to', customTo);
+    const qs = params.toString() ? `?${params}` : '';
     Promise.all([
-      api.get('/api/posts-analytics'),
+      api.get(`/api/posts-analytics${qs}`),
       api.get('/api/dashboard-posts'),
     ])
       .then(([{ data: res }, { data: dash }]) => { setData(res); setDashData(dash); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [period, customFrom, customTo]);
 
   const selectedPost = useMemo(() => {
     if (!data?.posts) return null;

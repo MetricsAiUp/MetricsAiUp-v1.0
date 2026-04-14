@@ -37,17 +37,19 @@ export default function DashboardPosts() {
   const [currentShift, setCurrentShift] = useState(null);
   const [settings, setSettings] = useState({
     shiftStart: '08:00',
-    shiftEnd: '20:00',
+    shiftEnd: '22:00',
     postsCount: 10,
   });
 
+  // Load settings from backend
   useEffect(() => {
-    const saved = localStorage.getItem('dashboardPostsSettings');
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved));
-      } catch (e) { /* ignore */ }
-    }
+    api.get('/api/settings')
+      .then(({ data: s }) => {
+        if (s.weekSchedule || s.shiftStart) {
+          setSettings(prev => ({ ...prev, ...s }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Load current shift
@@ -72,10 +74,7 @@ export default function DashboardPosts() {
       .then(({ data: res }) => {
         setData(res);
         if (res.settings) {
-          const saved = localStorage.getItem('dashboardPostsSettings');
-          if (!saved) {
-            setSettings(res.settings);
-          }
+          setSettings(prev => ({ ...prev, ...res.settings }));
         }
       })
       .catch(() => {})
@@ -99,7 +98,12 @@ export default function DashboardPosts() {
 
   const handleSettingsChange = (newSettings) => {
     setSettings(newSettings);
-    localStorage.setItem('dashboardPostsSettings', JSON.stringify(newSettings));
+    api.put('/api/settings', {
+      weekSchedule: newSettings.weekSchedule,
+      postsCount: newSettings.postsCount,
+      shiftStart: newSettings.shiftStart,
+      shiftEnd: newSettings.shiftEnd,
+    }).catch(() => {});
   };
 
   const todayShift = useMemo(() => getTodayShift(settings), [settings]);
@@ -264,19 +268,7 @@ export default function DashboardPosts() {
         setSaveStatus('error');
         return;
       }
-      // Backend not running — save to localStorage as fallback
-      try {
-        localStorage.setItem('dashboardPostsSchedule', JSON.stringify({
-          changes: pendingChanges,
-          savedAt: new Date().toISOString(),
-          posts: data?.posts,
-          freeWorkOrders: data?.freeWorkOrders,
-        }));
-        setPendingChanges([]);
-        setSaveStatus('saved');
-      } catch {
-        setSaveStatus('error');
-      }
+      setSaveStatus('error');
     }
 
     // Reset status after 2s

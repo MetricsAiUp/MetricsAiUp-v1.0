@@ -39,11 +39,15 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   }
 
   const current = readSettings();
-  const { mode } = req.body;
+  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd } = req.body;
 
   if (mode && ['demo', 'live'].includes(mode)) {
     current.mode = mode;
   }
+  if (weekSchedule !== undefined) current.weekSchedule = weekSchedule;
+  if (postsCount !== undefined) current.postsCount = postsCount;
+  if (shiftStart !== undefined) current.shiftStart = shiftStart;
+  if (shiftEnd !== undefined) current.shiftEnd = shiftEnd;
 
   writeSettings(current);
 
