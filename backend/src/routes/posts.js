@@ -29,6 +29,70 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/posts/:id
+// GET /api/posts/by-number/:number/history — full history for a post by number
+router.get('/by-number/:number/history', authenticate, async (req, res) => {
+  try {
+    const padded = String(req.params.number).padStart(2, '0');
+    const post = await prisma.post.findFirst({
+      where: { name: `Пост ${padded}`, isActive: true },
+      include: { zone: true },
+    });
+    if (!post) return res.status(404).json({ error: `Post ${req.params.number} not found` });
+
+    const { from, to, limit = 200 } = req.query;
+    const dateFilter = {};
+    if (from) dateFilter.gte = new Date(from);
+    if (to) dateFilter.lte = new Date(to);
+
+    const [events, stays, workOrders] = await Promise.all([
+      prisma.event.findMany({
+        where: {
+          postId: post.id,
+          ...(from || to ? { createdAt: dateFilter } : {}),
+        },
+        include: { vehicleSession: true, camera: true },
+        orderBy: { createdAt: 'desc' },
+        take: parseInt(limit),
+      }),
+      prisma.postStay.findMany({
+        where: {
+          postId: post.id,
+          ...(from || to ? { startTime: dateFilter } : {}),
+        },
+        include: { vehicleSession: true },
+        orderBy: { startTime: 'desc' },
+        take: parseInt(limit),
+      }),
+      prisma.workOrder.findMany({
+        where: {
+          postNumber: parseInt(req.params.number),
+          ...(from || to ? { scheduledTime: dateFilter } : {}),
+        },
+        orderBy: { scheduledTime: 'desc' },
+        take: parseInt(limit),
+      }),
+    ]);
+
+    res.json({
+      post: { id: post.id, name: post.name, type: post.type, status: post.status, zone: post.zone },
+      events,
+      stays,
+      workOrders,
+      summary: {
+        totalEvents: events.length,
+        totalStays: stays.length,
+        totalWorkOrders: workOrders.length,
+        uniquePlates: [...new Set([
+          ...events.filter(e => e.vehicleSession?.plateNumber).map(e => e.vehicleSession.plateNumber),
+          ...stays.filter(s => s.vehicleSession?.plateNumber).map(s => s.vehicleSession.plateNumber),
+        ])].length,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const post = await prisma.post.findUnique({

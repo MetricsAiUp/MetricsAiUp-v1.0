@@ -31,6 +31,8 @@ const WorkerStats = lazy(() => import('./pages/WorkerStats'));
 const ReportSchedule = lazy(() => import('./pages/ReportSchedule'));
 const TechDocs = lazy(() => import('./pages/TechDocs'));
 const LiveDebug = lazy(() => import('./pages/LiveDebug'));
+const PostHistory = lazy(() => import('./pages/PostHistory'));
+const ZoneHistory = lazy(() => import('./pages/PostHistory').then(m => ({ default: m.ZoneHistory })));
 
 function PageLoader() {
   return (
@@ -86,6 +88,8 @@ function AppRoutes() {
           <Route path="my-post" element={<MyPost />} />
           <Route path="health" element={<Health />} />
           <Route path="worker-stats/:workerName" element={<WorkerStats />} />
+          <Route path="post-history/:postNumber" element={<PostHistory />} />
+          <Route path="zone-history/:zoneName" element={<ZoneHistory />} />
           <Route path="report-schedule" element={<ReportSchedule />} />
           <Route path="tech-docs" element={<TechDocs />} />
         </Route>

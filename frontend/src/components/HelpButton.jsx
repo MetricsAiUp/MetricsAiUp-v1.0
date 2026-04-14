@@ -2896,6 +2896,132 @@ const HELP_CONTENT = {
       ],
     },
   },
+
+  // ────────────────────────────
+  // ИСТОРИЯ ПОСТА
+  // ────────────────────────────
+  postHistory: {
+    ru: {
+      title: 'История поста',
+      intro: 'Подробная хронология событий на конкретном посту: смены статусов, автомобили, работы, присутствие работников. Данные обновляются автоматически.',
+      sections: [
+        {
+          heading: 'Выбор периода',
+          items: [
+            '**Сегодня / Вчера / 3 дня / 7 дней / 30 дней** — быстрый выбор временного диапазона.',
+            '**Произвольный период** — введите даты «от» и «до» вручную.',
+            '**Все** — показать всю доступную историю.',
+            'Все карточки статистики и таблица пересчитываются при смене периода.',
+          ],
+        },
+        {
+          heading: 'Карточки статистики',
+          items: [
+            '**Всего** — общее количество событий за выбранный период.',
+            '**Свободен** — сколько раз пост был зафиксирован как свободный.',
+            '**Занят** — автомобиль на посту (с работой или без).',
+            '**В работе** — активная работа подтверждена системой CV.',
+            '**Авто** — количество уникальных госномеров за период.',
+          ],
+        },
+        {
+          heading: 'Фильтры и поиск',
+          items: [
+            'Фильтр по статусу: Все, Свободен, Занят, В работе.',
+            'Текстовый поиск: ищет по госномеру, марке авто, описанию работ.',
+            'Фильтры комбинируются с выбранным периодом.',
+          ],
+        },
+        {
+          heading: 'Таблица событий',
+          items: [
+            '**Время** — точное время фиксации события (дата, часы, минуты, секунды).',
+            '**Статус** — цветной индикатор: зелёный (свободен), жёлтый (занят), фиолетовый (в работе), красный (простой).',
+            '**Госномер** — номер автомобиля (если есть), с подсветкой.',
+            '**Детали** — описание работ или открытые детали (капот, двери и т.д.).',
+            '**Люди** — количество людей, зафиксированных на посту.',
+            '**Точность** — уверенность системы CV: HIGH (зелёный), MEDIUM (жёлтый), LOW (красный).',
+          ],
+        },
+        {
+          heading: 'Сортировка',
+          items: [
+            'Клик на заголовок колонки — сортировка по этому полю.',
+            'Повторный клик — переключение ASC/DESC.',
+            'Иконка стрелки показывает текущее направление сортировки.',
+          ],
+        },
+        {
+          heading: 'Модальное окно (на карте)',
+          items: [
+            'Открывается по кнопке истории в карточке поста на карте.',
+            'Компактный вид: список событий с сортировкой и фильтрацией.',
+            'Кнопка «Полная страница» — переход на отдельную страницу с полным функционалом.',
+          ],
+        },
+      ],
+    },
+    en: {
+      title: 'Post History',
+      intro: 'Detailed event timeline for a specific post: status changes, vehicles, work activities, worker presence. Auto-refreshing data.',
+      sections: [
+        {
+          heading: 'Period Selection',
+          items: [
+            '**Today / Yesterday / 3 days / 7 days / 30 days** — quick time range selection.',
+            '**Custom period** — enter from/to dates manually.',
+            '**All** — show all available history.',
+            'All stat cards and table recalculate on period change.',
+          ],
+        },
+        {
+          heading: 'Statistics Cards',
+          items: [
+            '**Total** — total event count for selected period.',
+            '**Free** — times the post was recorded as free.',
+            '**Occupied** — vehicle on post (with or without work).',
+            '**Active** — active work confirmed by CV system.',
+            '**Vehicles** — unique plate numbers in the period.',
+          ],
+        },
+        {
+          heading: 'Filters and Search',
+          items: [
+            'Status filter: All, Free, Occupied, Active work.',
+            'Text search: searches by plate, car brand, work description.',
+            'Filters combine with the selected period.',
+          ],
+        },
+        {
+          heading: 'Events Table',
+          items: [
+            '**Time** — exact event timestamp (date, hours, minutes, seconds).',
+            '**Status** — color indicator: green (free), yellow (occupied), purple (active work), red (idle).',
+            '**Plate** — vehicle plate number (if available), highlighted.',
+            '**Details** — work description or open parts (hood, doors, etc.).',
+            '**People** — number of people detected on post.',
+            '**Confidence** — CV system confidence: HIGH (green), MEDIUM (yellow), LOW (red).',
+          ],
+        },
+        {
+          heading: 'Sorting',
+          items: [
+            'Click column header — sort by that field.',
+            'Click again — toggle ASC/DESC.',
+            'Arrow icon shows current sort direction.',
+          ],
+        },
+        {
+          heading: 'Modal View (on map)',
+          items: [
+            'Opens from the history button on post card on the map.',
+            'Compact view: event list with sorting and filtering.',
+            '"Full page" button — navigate to dedicated page with full features.',
+          ],
+        },
+      ],
+    },
+  },
 };
 
 // ═══════════════════════════════════════════════

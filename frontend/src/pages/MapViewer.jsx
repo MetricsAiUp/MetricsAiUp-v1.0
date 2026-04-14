@@ -18,6 +18,7 @@ import PostTimer from '../components/PostTimer';
 import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constants/mapTheme';
 import { translateWorksDesc } from '../utils/translate';
 import { useCameraStatus } from '../hooks/useCameraStatus';
+import { PostHistoryModal } from './PostHistory';
 
 const ALL_CAMERAS = [
   { num: '00', loc: { ru: 'Шлагбаум', en: 'Barrier' }, covers: { ru: 'Шлагбаум', en: 'Barrier' } },
@@ -429,6 +430,8 @@ export default function MapViewer() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedZone, setSelectedZone] = useState(null); // zone name string
   const [selectedCam, setSelectedCam] = useState(null);
+  const [historyPost, setHistoryPost] = useState(null); // { postNum, history[] } for modal
+  const [historyZone, setHistoryZone] = useState(null); // { zoneName, history[] } for modal
   const [rawState, setRawState] = useState([]); // raw external API data for modals
   const cameraStatuses = useCameraStatus();
   const [stageSize, setStageSize] = useState({ width: 900, height: 500 });
@@ -929,7 +932,15 @@ export default function MapViewer() {
         <PostModal postNum={selectedPost} dashboardData={dashboardData}
           monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
           onClose={() => setSelectedPost(null)} onGoToPost={handleGoToPost}
-          onGoToHistory={() => { setSelectedPost(null); navigate('/live-debug'); }}
+          onGoToHistory={() => {
+            const rawItems = rawState || [];
+            const liveItem = rawItems.find(item => {
+              const m = item.zone?.match(/^Пост\s+(\d{2})/);
+              return m && parseInt(m[1], 10) === selectedPost;
+            });
+            setHistoryPost({ postNum: selectedPost, history: liveItem?.history || [] });
+            setSelectedPost(null);
+          }}
           t={t} isRu={isRu} />
       )}
 
@@ -938,8 +949,33 @@ export default function MapViewer() {
         <ZoneModal zoneName={selectedZone}
           monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
           onClose={() => setSelectedZone(null)}
-          onGoToHistory={() => { setSelectedZone(null); navigate('/live-debug'); }}
+          onGoToHistory={() => {
+            const rawItems = rawState || [];
+            const liveItem = rawItems.find(item => item.zone === selectedZone);
+            setHistoryZone({ zoneName: selectedZone, history: liveItem?.history || [] });
+            setSelectedZone(null);
+          }}
           t={t} isRu={isRu} />
+      )}
+
+      {/* Post History Modal */}
+      {historyPost && (
+        <PostHistoryModal
+          postNumber={historyPost.postNum}
+          historyData={historyPost.history}
+          onClose={() => setHistoryPost(null)}
+          onOpenFullPage={() => { setHistoryPost(null); navigate(`/post-history/${historyPost.postNum}`); }}
+        />
+      )}
+
+      {/* Zone History Modal */}
+      {historyZone && (
+        <PostHistoryModal
+          postNumber={historyZone.zoneName}
+          historyData={historyZone.history}
+          onClose={() => setHistoryZone(null)}
+          onOpenFullPage={() => { setHistoryZone(null); navigate(`/zone-history/${encodeURIComponent(historyZone.zoneName)}`); }}
+        />
       )}
 
       {/* Camera Modal */}
