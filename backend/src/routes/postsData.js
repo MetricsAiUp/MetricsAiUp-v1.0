@@ -116,8 +116,10 @@ router.get('/posts-analytics', async (req, res) => {
         const dur = Math.max(0, clampedEnd - clampedStart);
 
         if (dur > 0) {
-          if (cur.status !== 'free') occupiedMs += dur;
-          if (cur.worksInProgress) workingMs += dur;
+          if (cur.status !== 'free') {
+            occupiedMs += dur;
+            if (cur.worksInProgress) workingMs += dur;
+          }
         }
       }
 
