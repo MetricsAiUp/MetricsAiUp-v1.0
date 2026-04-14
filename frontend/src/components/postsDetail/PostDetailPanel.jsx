@@ -189,16 +189,38 @@ function AlertsSection({ alerts }) {
 }
 
 function EventLogSection({ events }) {
+  const { i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
+  const [showAll, setShowAll] = useState(false);
   if (!events.length) return null;
-  const visible = events.slice(0, 5);
+  // Show latest first
+  const sorted = [...events].sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+  const visible = showAll ? sorted : sorted.slice(0, 10);
+  const statusColor = (type) => type === 'post_occupied' ? 'var(--warning)' : 'var(--success)';
   return (
-    <div className="space-y-1">
-      {visible.map(ev => (
-        <div key={ev.id} className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:opacity-80" style={{ background: 'var(--bg-glass)' }}>
-          <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{formatTime(ev.time)}</span>
-          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{ev.description}</span>
-        </div>
-      ))}
+    <div>
+      <div className="space-y-1 max-h-80 overflow-auto">
+        {visible.map(ev => {
+          const car = ev.car || {};
+          const carInfo = [car.make, car.model].filter(Boolean).join(' ');
+          const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
+          return (
+            <div key={ev.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)' }}>
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: statusColor(ev.type) }} />
+              <span className="text-[11px] font-mono flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{ts}</span>
+              <span className="text-[11px] flex-shrink-0" style={{ color: statusColor(ev.type) }}>{ev.description}</span>
+              {car.plate && <span className="text-[11px] font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{car.plate}</span>}
+              {carInfo && <span className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{carInfo}</span>}
+              {ev.peopleCount > 0 && <span className="text-[10px] px-1 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>{ev.peopleCount} {isRu ? 'чел' : 'ppl'}</span>}
+            </div>
+          );
+        })}
+      </div>
+      {sorted.length > 10 && (
+        <button onClick={() => setShowAll(!showAll)} className="mt-2 text-[11px] hover:opacity-80" style={{ color: 'var(--accent)' }}>
+          {showAll ? (isRu ? 'Свернуть' : 'Collapse') : (isRu ? `Показать все ${sorted.length}` : `Show all ${sorted.length}`)}
+        </button>
+      )}
     </div>
   );
 }
