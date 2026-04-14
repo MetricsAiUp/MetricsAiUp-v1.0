@@ -759,6 +759,7 @@ export default function MapEditor() {
     <div ref={pageRef} className="flex flex-col overflow-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Top Bar */}
       <div className="glass-static flex items-center gap-1 px-2 py-1 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+        <HelpButton pageKey="mapEditor" />
         <input
           type="text"
           value={mapName}

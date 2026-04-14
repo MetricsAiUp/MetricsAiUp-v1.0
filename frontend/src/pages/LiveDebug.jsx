@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin, Camera, Video } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 import { translateWorksDesc } from '../utils/translate';
 
 const AUTO_REFRESH_INTERVAL = 10000;
@@ -273,6 +274,7 @@ export default function LiveDebug() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('liveDebug.title')}</h1>
+          <HelpButton pageKey="liveDebug" />
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
             <Radio size={10} className="animate-pulse" /> LIVE
           </span>

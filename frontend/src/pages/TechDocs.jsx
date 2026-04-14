@@ -7,12 +7,12 @@ const SECTIONS = [
   { id: 'architecture', titleRu: '2. Архитектура', titleEn: '2. Architecture' },
   { id: 'infrastructure', titleRu: '3. Инфраструктура и деплой', titleEn: '3. Infrastructure & Deploy' },
   { id: 'database', titleRu: '4. База данных (22 модели)', titleEn: '4. Database (22 models)' },
-  { id: 'api', titleRu: '5. Backend API (70+ эндпоинтов)', titleEn: '5. Backend API (70+ endpoints)' },
-  { id: 'services', titleRu: '6. Backend Services', titleEn: '6. Backend Services' },
+  { id: 'api', titleRu: '5. Backend API (24 модуля, 70+ эндпоинтов)', titleEn: '5. Backend API (24 modules, 70+ endpoints)' },
+  { id: 'services', titleRu: '6. Backend Services (8 сервисов)', titleEn: '6. Backend Services (8 services)' },
   { id: 'middleware', titleRu: '7. Middleware', titleEn: '7. Middleware' },
   { id: 'socketio', titleRu: '8. Socket.IO', titleEn: '8. Socket.IO' },
-  { id: 'pages', titleRu: '9. Frontend — Страницы (20)', titleEn: '9. Frontend — Pages (20)' },
-  { id: 'components', titleRu: '10. Frontend — Компоненты', titleEn: '10. Frontend — Components' },
+  { id: 'pages', titleRu: '9. Frontend — Страницы (22)', titleEn: '9. Frontend — Pages (22)' },
+  { id: 'components', titleRu: '10. Frontend — Компоненты (32)', titleEn: '10. Frontend — Components (32)' },
   { id: 'contexts', titleRu: '11. Контексты (Auth, Theme, Toast)', titleEn: '11. Contexts (Auth, Theme, Toast)' },
   { id: 'hooks', titleRu: '12. Хуки', titleEn: '12. Hooks' },
   { id: 'utils', titleRu: '13. Утилиты', titleEn: '13. Utilities' },
@@ -26,6 +26,9 @@ const SECTIONS = [
   { id: 'deps', titleRu: '21. Зависимости проекта', titleEn: '21. Project Dependencies' },
   { id: 'env', titleRu: '22. Переменные окружения', titleEn: '22. Environment Variables' },
   { id: 'seed', titleRu: '23. Seed-данные', titleEn: '23. Seed Data' },
+  { id: 'monitoring', titleRu: '24. Мониторинг и Live-режим', titleEn: '24. Monitoring & Live Mode' },
+  { id: 'telegram', titleRu: '25. Telegram-бот', titleEn: '25. Telegram Bot' },
+  { id: 'audit', titleRu: '26. Система аудита', titleEn: '26. Audit System' },
 ];
 
 function TocItem({ section, isRu, isActive, onClick }) {
@@ -101,7 +104,7 @@ export default function TechDocs() {
   const [activeSection, setActiveSection] = useState('overview');
   const [exporting, setExporting] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const generatedDate = '2026-04-13';
+  const generatedDate = '2026-04-14';
 
   useEffect(() => {
     const container = contentRef.current;
@@ -133,8 +136,6 @@ export default function TechDocs() {
       const content = contentRef.current;
       if (!content) return;
 
-      // Clone content into an unconstrained off-screen container
-      // This avoids the parent flex container height clipping issue
       const clone = content.cloneNode(true);
       clone.style.cssText = `
         position: absolute; left: -9999px; top: 0;
@@ -148,7 +149,6 @@ export default function TechDocs() {
       const fullH = clone.scrollHeight;
       const fullW = clone.offsetWidth;
 
-      // Render in vertical chunks of 2500px to stay within browser canvas limits
       const CHUNK = 2500;
       const chunks = [];
       for (let y = 0; y < fullH; y += CHUNK) {
@@ -168,7 +168,6 @@ export default function TechDocs() {
 
       document.body.removeChild(clone);
 
-      // Build PDF page-by-page from chunks
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
@@ -283,639 +282,722 @@ export default function TechDocs() {
             MetricsAiUp — {isRu ? 'Техническая документация' : 'Technical Documentation'}
           </h1>
           <div className="flex gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <span>{isRu ? 'Версия' : 'Version'}: 1.0</span>
+            <span>{isRu ? 'Версия' : 'Version'}: 2.0</span>
             <span>{isRu ? 'Дата' : 'Date'}: {generatedDate}</span>
             <span>{isRu ? 'Система мониторинга автосервиса' : 'Auto Service Monitoring System'}</span>
           </div>
         </div>
 
-        {/* Section 1 — Overview */}
+        {/* ============================================================ */}
+        {/* Section 1 — System Overview */}
+        {/* ============================================================ */}
         <SectionTitle id="overview">{isRu ? '1. Обзор системы' : '1. System Overview'}</SectionTitle>
         <P>{isRu
-          ? 'MetricsAiUp — полнофункциональная система мониторинга автосервиса (СТО), обеспечивающая real-time отслеживание автомобилей по 5 зонам и 10 постам, управление заказ-нарядами с полным жизненным циклом, интеграцию с 1С ERP, видеонаблюдение через 10 RTSP-камер с HLS-стримингом, AI-рекомендации, Telegram-бот, и PWA с push-уведомлениями.'
-          : 'MetricsAiUp is a full-featured auto service (STO) monitoring system providing real-time vehicle tracking across 5 zones and 10 posts, work order lifecycle management, 1C ERP integration, video surveillance through 10 RTSP cameras with HLS streaming, AI recommendations, Telegram bot, and PWA with push notifications.'
+          ? 'MetricsAiUp -- полнофункциональная система мониторинга автосервиса (СТО), обеспечивающая real-time отслеживание автомобилей по 5 зонам и 10 постам, управление заказ-нарядами с полным жизненным циклом, интеграцию с 1С ERP, видеонаблюдение через 10 RTSP-камер с HLS-стримингом, AI-рекомендации, Telegram-бот для оперативного доступа, PWA с push-уведомлениями, и расширенную аналитику с экспортом в XLSX/PDF.'
+          : 'MetricsAiUp is a full-featured auto service (STO) monitoring system providing real-time vehicle tracking across 5 zones and 10 posts, work order lifecycle management, 1C ERP integration, video surveillance through 10 RTSP cameras with HLS streaming, AI-powered recommendations, a Telegram bot for quick access, PWA with push notifications, and advanced analytics with XLSX/PDF export.'
         }</P>
+
+        <Sub>{isRu ? 'Целевая аудитория' : 'Target Audience'}</Sub>
         <P>{isRu
-          ? 'Система спроектирована для трёх основных ролей пользователей: механиков (управление заказ-нарядами на постах, таймеры работ), менеджеров (планирование через Gantt-таймлайн, контроль загрузки, распределение ресурсов), и директоров (аналитика, KPI, стратегические отчёты). Администраторы имеют полный доступ ко всем функциям, включая управление пользователями, ролями и настройками видимости элементов интерфейса.'
-          : 'The system is designed for three primary user roles: mechanics (managing work orders at posts, work timers), managers (planning via Gantt timeline, load monitoring, resource allocation), and directors (analytics, KPIs, strategic reports). Administrators have full access to all features, including user management, roles, and UI element visibility settings.'
+          ? 'Система спроектирована для четырёх основных ролей пользователей, каждая со своим набором инструментов и уровнем доступа:'
+          : 'The system is designed for four primary user roles, each with its own set of tools and access level:'
         }</P>
+        <Table
+          headers={[isRu ? 'Роль' : 'Role', isRu ? 'Основные задачи' : 'Primary Tasks', isRu ? 'Ключевые страницы' : 'Key Pages']}
+          rows={[
+            [isRu ? 'Механик' : 'Mechanic', isRu ? 'Управление заказ-нарядами на своём посту, таймеры работ, play/pause/complete, просмотр текущей загрузки' : 'Managing work orders at own post, work timers, play/pause/complete, viewing current load', 'MyPost, Dashboard'],
+            [isRu ? 'Менеджер' : 'Manager', isRu ? 'Планирование через Gantt-таймлайн, контроль загрузки постов, распределение ЗН, управление сменами, импорт данных 1С' : 'Planning via Gantt timeline, post load monitoring, WO assignment, shift management, 1C data import', 'DashboardPosts, WorkOrders, Shifts, Sessions, Data1C'],
+            [isRu ? 'Директор' : 'Director', isRu ? 'Аналитика и KPI, стратегические отчёты, мониторинг общей эффективности, просмотр событий и рекомендаций' : 'Analytics and KPIs, strategic reports, overall efficiency monitoring, viewing events and recommendations', 'Dashboard, Analytics, PostsDetail, Events, Cameras'],
+            [isRu ? 'Администратор' : 'Admin', isRu ? 'Полный доступ: управление пользователями и ролями, настройка видимости элементов UI, аудит-лог, системный мониторинг, редактор карты' : 'Full access: user and role management, UI element visibility configuration, audit log, system monitoring, map editor', isRu ? 'Все 22 страницы' : 'All 22 pages'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Источники данных' : 'Data Sources'}</Sub>
         <P>{isRu
-          ? 'Данные поступают из нескольких источников: система компьютерного зрения (CV) отправляет события через POST /api/events без авторизации, ERP 1С экспортирует XLSX-файлы с планированием и выработкой, камеры передают RTSP-потоки, а пользователи взаимодействуют через веб-интерфейс. Все данные агрегируются в единую SQLite базу через Prisma ORM и распространяются в real-time через Socket.IO.'
-          : 'Data flows from multiple sources: the computer vision (CV) system sends events via POST /api/events without authentication, 1C ERP exports XLSX files with planning and production data, cameras transmit RTSP streams, and users interact through the web interface. All data is aggregated into a single SQLite database via Prisma ORM and distributed in real-time through Socket.IO.'
+          ? 'Данные поступают из нескольких независимых источников, каждый из которых подключается к системе своим способом:'
+          : 'Data flows from multiple independent sources, each connecting to the system in its own way:'
         }</P>
-        <P>{isRu
-          ? 'Фронтенд построен как SPA на React 19 с Vite 8, использует HashRouter для маршрутизации (20 lazy-loaded страниц), Tailwind CSS 4 для стилизации с поддержкой тёмной и светлой темы (glassmorphism-дизайн), Recharts для аналитических графиков, и Konva для интерактивной карты СТО. Бэкенд работает на Express 4 с двойным прослушиванием (HTTP :3001 + HTTPS :3444), 23 модулями маршрутов (70+ эндпоинтов), и 7 фоновыми сервисами.'
-          : 'The frontend is built as an SPA on React 19 with Vite 8, uses HashRouter for routing (20 lazy-loaded pages), Tailwind CSS 4 for styling with dark and light theme support (glassmorphism design), Recharts for analytical charts, and Konva for the interactive STO map. The backend runs on Express 4 with dual listeners (HTTP :3001 + HTTPS :3444), 23 route modules (70+ endpoints), and 7 background services.'
-        }</P>
+        <Table
+          headers={[isRu ? 'Источник' : 'Source', isRu ? 'Протокол' : 'Protocol', isRu ? 'Частота' : 'Frequency', isRu ? 'Описание' : 'Description']}
+          rows={[
+            [isRu ? 'CV-система (компьютерное зрение)' : 'CV System (computer vision)', 'POST /api/events (no auth)', isRu ? 'По событию (real-time)' : 'Event-driven (real-time)', isRu ? 'Распознавание номерных знаков, отслеживание движения авто по зонам и постам, 10 типов событий' : 'License plate recognition, vehicle movement tracking across zones and posts, 10 event types'],
+            ['1C ERP', isRu ? 'XLSX-файлы (drag-drop или file watcher)' : 'XLSX files (drag-drop or file watcher)', isRu ? 'По расписанию / вручную' : 'Scheduled / manual', isRu ? 'Планирование работ, выработка, данные по работникам (16+ колонок на файл)' : 'Work planning, production data, worker data (16+ columns per file)'],
+            [isRu ? 'RTSP-камеры (10 шт.)' : 'RTSP Cameras (10)', 'RTSP -> FFmpeg -> HLS', isRu ? 'Непрерывный поток' : 'Continuous stream', isRu ? 'Видеопотоки конвертируются в HLS (2с сегменты), доступны через веб-интерфейс' : 'Video streams converted to HLS (2s segments), accessible via web interface'],
+            [isRu ? 'Внешний CV API (live-режим)' : 'External CV API (live mode)', 'GET polling (10s)', isRu ? 'Каждые 10 секунд' : 'Every 10 seconds', isRu ? 'MonitoringProxy получает состояние зон/постов от внешней CV-системы для live-мониторинга' : 'MonitoringProxy fetches zone/post state from external CV system for live monitoring'],
+            [isRu ? 'Пользовательский ввод' : 'User Input', 'REST API + WebSocket', isRu ? 'По действию' : 'On action', isRu ? 'Создание/редактирование ЗН, управление сменами, настройки камер, карта СТО' : 'WO creation/editing, shift management, camera settings, STO map'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Ключевые возможности' : 'Key Features'}</Sub>
+        <Table
+          headers={[isRu ? 'Функция' : 'Feature', isRu ? 'Описание' : 'Description']}
+          rows={[
+            [isRu ? 'Real-time мониторинг' : 'Real-time monitoring', isRu ? 'Отслеживание автомобилей по 5 зонам и 10 постам, обновление через Socket.IO + polling 5с' : 'Vehicle tracking across 5 zones and 10 posts, updates via Socket.IO + 5s polling'],
+            [isRu ? 'Gantt-таймлайн' : 'Gantt timeline', isRu ? 'Визуальное планирование ЗН с drag-n-drop, обнаружение конфликтов, оптимистичная блокировка' : 'Visual WO planning with drag-n-drop, conflict detection, optimistic locking'],
+            [isRu ? 'Интерактивная карта' : 'Interactive map', isRu ? 'Konva canvas 46540x30690мм, 8 типов элементов, live-режим с цветовой индикацией статусов' : 'Konva canvas 46540x30690mm, 8 element types, live mode with status color indicators'],
+            [isRu ? 'Видеонаблюдение' : 'Video surveillance', isRu ? '10 RTSP-камер, HLS-стриминг, мониторинг здоровья камер каждые 30с' : '10 RTSP cameras, HLS streaming, camera health monitoring every 30s'],
+            [isRu ? 'AI-рекомендации' : 'AI recommendations', isRu ? '5 типов алертов: свободный пост, превышение времени, простой, перегрузка, неявка' : '5 alert types: free post, overtime, idle, overload, no-show'],
+            [isRu ? 'Интеграция 1С' : '1C integration', isRu ? 'Импорт/экспорт XLSX, автоматический file watcher, дедупликация, sync log' : 'XLSX import/export, automatic file watcher, deduplication, sync log'],
+            [isRu ? 'RBAC' : 'RBAC', isRu ? '5 ролей, 15+ разрешений, настройка страниц и элементов UI для каждого пользователя' : '5 roles, 15+ permissions, per-user page and UI element configuration'],
+            [isRu ? 'Аналитика и экспорт' : 'Analytics & export', isRu ? 'Recharts графики, экспорт XLSX (4 листа), PDF, PNG, автоотчёты по расписанию' : 'Recharts charts, XLSX export (4 sheets), PDF, PNG, scheduled auto-reports'],
+            [isRu ? 'PWA' : 'PWA', isRu ? 'Service Worker (network-first), Web Push уведомления, оффлайн-режим для статики' : 'Service Worker (network-first), Web Push notifications, offline mode for static files'],
+            [isRu ? 'Telegram-бот' : 'Telegram bot', isRu ? '5 команд, привязка к аккаунту, доставка автоотчётов в формате XLSX' : '5 commands, account binding, auto-report delivery in XLSX format'],
+            [isRu ? 'Двуязычность' : 'Bilingual', isRu ? 'Полная поддержка RU/EN через i18next (613 строк, ~512 ключей в каждом файле)' : 'Full RU/EN support via i18next (613 lines, ~512 keys per file)'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Технологический стек' : 'Technology Stack'}</Sub>
         <Table
           headers={[isRu ? 'Слой' : 'Layer', isRu ? 'Технологии' : 'Technologies', isRu ? 'Назначение' : 'Purpose']}
           rows={[
-            ['Frontend', 'React 19.2, Vite 8, Tailwind CSS 4, Recharts 3, Konva 10, react-i18next, Socket.IO Client, HLS.js, jsPDF, xlsx', isRu ? 'SPA с 20 страницами, real-time обновления, PWA' : 'SPA with 20 pages, real-time updates, PWA'],
-            ['Backend', 'Express 4, Prisma ORM, SQLite, Socket.IO 4, Zod, node-cron, web-push, node-telegram-bot-api', isRu ? '23 модуля API, 7 фоновых сервисов, JWT auth' : '23 API modules, 7 background services, JWT auth'],
-            [isRu ? 'Стриминг' : 'Streaming', 'FFmpeg (RTSP \u2192 HLS), Node.js HTTPS :8181', isRu ? '10 камер, сегменты 2с, автоперезапуск' : '10 cameras, 2s segments, auto-restart'],
-            [isRu ? 'Инфраструктура' : 'Infrastructure', 'Nginx :8080, Let\'s Encrypt SSL, WireGuard VPN', isRu ? 'Reverse proxy, SSL termination, порты 1:1' : 'Reverse proxy, SSL termination, 1:1 port mapping'],
+            ['Frontend', 'React 19.2, Vite 8, Tailwind CSS 4, Recharts 3, Konva 10, react-konva 19, react-i18next, Socket.IO Client 4.8, HLS.js 1.6, jsPDF 4.2, xlsx 0.18, Lucide React 0.577', isRu ? 'SPA с 22 страницами, 32 компонентами, real-time обновления, PWA' : 'SPA with 22 pages, 32 components, real-time updates, PWA'],
+            ['Backend', 'Express 4.21, Prisma 5.20, SQLite, Socket.IO 4.8, Zod 4.3, node-cron 4.2, web-push 3.6, node-telegram-bot-api 0.67, Winston 3.x, Helmet 7.1', isRu ? '24 модуля API (70+ эндпоинтов), 8 фоновых сервисов, JWT auth, Swagger UI' : '24 API modules (70+ endpoints), 8 background services, JWT auth, Swagger UI'],
+            [isRu ? 'Стриминг' : 'Streaming', 'FFmpeg (RTSP -> HLS), Node.js HTTPS :8181', isRu ? '10 камер, 2с сегменты, 6 в плейлисте (~12с задержка), автоперезапуск' : '10 cameras, 2s segments, 6 in playlist (~12s delay), auto-restart'],
+            [isRu ? 'Инфраструктура' : 'Infrastructure', 'Docker, Nginx :8080, Let\'s Encrypt SSL, WireGuard VPN', isRu ? 'Reverse proxy, SSL termination, порты 80-65535 1:1 на VPS' : 'Reverse proxy, SSL termination, ports 80-65535 1:1 to VPS'],
             [isRu ? 'Тестирование' : 'Testing', 'Vitest, React Testing Library, jsdom', isRu ? 'Юнит и интеграционные тесты фронтенда' : 'Frontend unit and integration tests'],
           ]}
         />
 
+
+        {/* ============================================================ */}
         {/* Section 2 — Architecture */}
+        {/* ============================================================ */}
         <SectionTitle id="architecture">{isRu ? '2. Архитектура' : '2. Architecture'}</SectionTitle>
         <P>{isRu
-          ? 'Архитектура проекта следует классической клиент-серверной модели с чётким разделением ответственности. Фронтенд и бэкенд живут в одном репозитории (монорепо), но собираются и деплоятся отдельно. Фронтенд билдится через Vite в статические файлы и раздаётся Nginx, а бэкенд работает как долгоживущий Node.js-процесс.'
-          : 'The project architecture follows a classic client-server model with clear separation of concerns. Frontend and backend live in a single repository (monorepo) but are built and deployed separately. The frontend is built via Vite into static files served by Nginx, while the backend runs as a long-lived Node.js process.'
+          ? 'Архитектура проекта следует классической клиент-серверной модели с чётким разделением ответственности. Фронтенд и бэкенд живут в одном репозитории (монорепо), но собираются и деплоятся отдельно. Фронтенд билдится через Vite в статические файлы и раздаётся Nginx, а бэкенд работает как долгоживущий Node.js-процесс с 8 фоновыми сервисами.'
+          : 'The project architecture follows a classic client-server model with clear separation of concerns. Frontend and backend live in a single repository (monorepo) but are built and deployed separately. The frontend is built via Vite into static files served by Nginx, while the backend runs as a long-lived Node.js process with 8 background services.'
         }</P>
+
+        <Sub>{isRu ? 'Структура файлов' : 'File Structure'}</Sub>
         <Code>{`/project
-\u251c\u2500\u2500 frontend/src/       # React 19, 20 pages, 19+ components, 3 contexts, 4 hooks
-\u2502   \u251c\u2500\u2500 pages/          # 20 lazy-loaded pages (Dashboard, Analytics, MapEditor, etc.)
-\u2502   \u251c\u2500\u2500 components/     # 19 shared + dashboardPosts/ (8) + postsDetail/ (4)
-\u2502   \u251c\u2500\u2500 contexts/       # AuthContext, ThemeContext, ToastContext
-\u2502   \u251c\u2500\u2500 hooks/          # useSocket, useWorkOrderTimer, useCameraStatus, useAsync
-\u2502   \u251c\u2500\u2500 utils/          # translate.js, export.js
-\u2502   \u2514\u2500\u2500 i18n/           # ru.json, en.json (~512 keys)
-\u251c\u2500\u2500 backend/src/        # Express 4, 23 route modules, 7 background services
-\u2502   \u251c\u2500\u2500 routes/         # 23 modules: auth, dashboard, posts, zones, events, etc.
-\u2502   \u251c\u2500\u2500 services/       # EventProcessor, RecommendationEngine, Sync1C, etc.
-\u2502   \u251c\u2500\u2500 middleware/     # auth, auditLog, validate, asyncHandler
-\u2502   \u2514\u2500\u2500 config/         # socket.js, database.js, logger.js, authCache.js
-\u251c\u2500\u2500 backend/prisma/     # schema.prisma (22+ models), migrations, seed.js
-\u251c\u2500\u2500 data/               # 29 JSON mock files (fallback data)
-\u251c\u2500\u2500 server.js           # HLS streaming server :8181 (FFmpeg RTSP\u2192HLS)
-\u251c\u2500\u2500 sw.js               # Service Worker (network-first, push notifications)
-\u251c\u2500\u2500 manifest.json       # PWA manifest
-\u2514\u2500\u2500 index.html          # SPA entry point (served by Nginx)`}</Code>
+\u251c\u2500\u2500 frontend/src/           # React 19, 22 pages, 32 components, 3 contexts, 4 hooks
+\u2502   \u251c\u2500\u2500 pages/              # 22 lazy-loaded pages (Dashboard, Analytics, MapEditor, TechDocs, etc.)
+\u2502   \u251c\u2500\u2500 components/         # 19 shared + dashboardPosts/ (9 files) + postsDetail/ (4 files) + __tests__/
+\u2502   \u2502   \u251c\u2500\u2500 dashboardPosts/ # GanttTimeline, TimelineRow, TimelineHeader, WorkOrderModal, ConflictModal,
+\u2502   \u2502   \u2502                   # FreeWorkOrdersTable, ShiftSettings, Legend, constants.js
+\u2502   \u2502   \u2514\u2500\u2500 postsDetail/    # PostDetailPanel, PostCardsView, PostTableView, CollapsibleSection
+\u2502   \u251c\u2500\u2500 contexts/           # AuthContext (338 LOC), ThemeContext, ToastContext
+\u2502   \u251c\u2500\u2500 hooks/              # useSocket, useWorkOrderTimer, useCameraStatus, useAsync
+\u2502   \u251c\u2500\u2500 utils/              # translate.js, export.js
+\u2502   \u2514\u2500\u2500 i18n/               # ru.json (613 lines), en.json (613 lines), ~512 keys
+\u251c\u2500\u2500 backend/src/            # Express 4, 24 route modules, 8 background services
+\u2502   \u251c\u2500\u2500 routes/             # 24 modules: auth, dashboard, posts, zones, events, cameras, sessions,
+\u2502   \u2502                       # workOrders, recommendations, users, shifts, data1c, mapLayout, auditLog,
+\u2502   \u2502                       # predict, postsData, workers, health, push, photos, locations,
+\u2502   \u2502                       # reportSchedule, monitoring, settings (3960 LOC total)
+\u2502   \u251c\u2500\u2500 services/           # eventProcessor (308 LOC), recommendationEngine, monitoringProxy (340 LOC),
+\u2502   \u2502                       # cameraHealthCheck, sync1C, telegramBot, reportScheduler, serverExport
+\u2502   \u251c\u2500\u2500 middleware/         # auth.js, auditLog.js, validate.js, asyncHandler.js
+\u2502   \u2514\u2500\u2500 config/             # socket.js, database.js, logger.js, authCache.js
+\u251c\u2500\u2500 backend/prisma/         # schema.prisma (22+ models), migrations/, seed.js
+\u251c\u2500\u2500 data/                   # 29 JSON mock/fallback files + 1c-import/ (file watcher target)
+\u251c\u2500\u2500 .ssl/                   # fullchain.pem, privkey.pem (Let's Encrypt, expires 2026-07-05)
+\u251c\u2500\u2500 server.js               # HLS streaming server :8181 (FFmpeg RTSP\u2192HLS, 10 cameras)
+\u251c\u2500\u2500 sw.js                   # Service Worker v20 (network-first, push)
+\u251c\u2500\u2500 manifest.json           # PWA manifest
+\u2514\u2500\u2500 index.html              # SPA entry point (served by Nginx)`}</Code>
 
         <Sub>{isRu ? 'Иерархия React-контекстов' : 'React Context Hierarchy'}</Sub>
         <P>{isRu
-          ? 'Приложение оборачивается в три вложенных провайдера в строгом порядке: ThemeProvider (CSS-переменные для тёмной/светлой темы) -> ToastProvider (глобальные уведомления) -> AuthProvider (авторизация, API-клиент, permissions). Такой порядок гарантирует, что AuthProvider может использовать toast для показа ошибок авторизации, а все компоненты ниже имеют доступ к теме и уведомлениям.'
-          : 'The application wraps in three nested providers in strict order: ThemeProvider (CSS variables for dark/light theme) -> ToastProvider (global notifications) -> AuthProvider (auth, API client, permissions). This order ensures AuthProvider can use toast for auth errors, and all components below have access to theme and notifications.'
+          ? 'Приложение оборачивается в три вложенных провайдера в строгом порядке. ThemeProvider должен быть внешним, так как устанавливает CSS-переменные для всех дочерних компонентов. ToastProvider следующий, чтобы AuthProvider мог показывать toast-ошибки. AuthProvider последний перед роутером, чтобы все страницы имели доступ к авторизации и API-клиенту.'
+          : 'The application wraps in three nested providers in strict order. ThemeProvider must be outermost as it sets CSS variables for all child components. ToastProvider is next so AuthProvider can show toast errors. AuthProvider is last before the router so all pages have access to auth and API client.'
         }</P>
-        <Code>{`ThemeProvider          // dark/light CSS variables
-  \u2514\u2500 ToastProvider        // success/error/warning/info notifications
-      \u2514\u2500 AuthProvider       // user state, JWT, api client, permissions
-          \u2514\u2500 HashRouter       // client-side routing (20 routes)
-              \u2514\u2500 Layout         // Header + Sidebar + Outlet
-                  \u2514\u2500 Pages        // lazy-loaded via React.lazy + Suspense`}</Code>
+        <Code>{`ThemeProvider              // dark/light CSS variables (:root)
+  \u2514\u2500 ToastProvider            // success/error/warning/info (max 3 simultaneous)
+      \u2514\u2500 AuthProvider           // user state, JWT, api client, permissions, Socket.IO connect
+          \u2514\u2500 HashRouter           // client-side routing (22 routes)
+              \u251c\u2500 /login             // Login page (public)
+              \u2514\u2500 ProtectedRoute     // JWT check, redirect to /login if no token
+                  \u2514\u2500 Layout           // Header (theme toggle, lang, notifications) + Sidebar + Outlet
+                      \u2514\u2500 Suspense       // loading fallback (Skeleton)
+                          \u2514\u2500 Pages        // lazy-loaded via React.lazy()`}</Code>
 
-        <Sub>{isRu ? 'Поток данных (Data Flow)' : 'Data Flow'}</Sub>
+        <Sub>{isRu ? 'Основной поток данных (Data Flow)' : 'Primary Data Flow'}</Sub>
         <P>{isRu
-          ? 'Основной поток данных в системе начинается с внешних источников. CV-система (компьютерное зрение) распознаёт номерные знаки автомобилей и их позиции, отправляя события через POST /api/events без авторизации. EventProcessor обрабатывает эти события, создавая или обновляя VehicleSession, ZoneStay и PostStay записи, а затем обновляет статусы постов. Каждое изменение статуса немедленно транслируется через Socket.IO всем подключённым клиентам.'
-          : 'The main data flow begins with external sources. The CV (computer vision) system recognizes license plates and vehicle positions, sending events via POST /api/events without authentication. EventProcessor processes these events, creating or updating VehicleSession, ZoneStay and PostStay records, then updating post statuses. Every status change is immediately broadcast via Socket.IO to all connected clients.'
-        }</P>
-        <P>{isRu
-          ? 'RecommendationEngine периодически анализирует текущее состояние СТО и генерирует 5 типов рекомендаций: свободный пост более 30 минут, превышение нормативного времени более 120%, простой работника более 15 минут, достижение максимальной загрузки, и неявка запланированного автомобиля. Рекомендации также транслируются через Socket.IO и отображаются на Dashboard.'
-          : 'RecommendationEngine periodically analyzes current STO state and generates 5 recommendation types: post free for over 30 minutes, norm time exceeded over 120%, worker idle over 15 minutes, capacity reached, and scheduled vehicle no-show. Recommendations are also broadcast via Socket.IO and displayed on Dashboard.'
+          ? 'Основной поток начинается с внешних источников. CV-система отправляет события через POST /api/events без авторизации. EventProcessor (308 строк) обрабатывает каждое событие, создавая/обновляя VehicleSession, ZoneStay и PostStay, а затем обновляет статус поста. Каждое изменение транслируется через Socket.IO. Клиенты получают обновления мгновенно через подписки или с минимальной задержкой через polling.'
+          : 'The main data flow begins with external sources. The CV system sends events via POST /api/events without authentication. EventProcessor (308 LOC) processes each event, creating/updating VehicleSession, ZoneStay and PostStay, then updates post status. Every change is broadcast via Socket.IO. Clients receive updates instantly via subscriptions or with minimal delay via polling.'
         }</P>
         <Code>{`CV System \u2500\u2500 POST /api/events (no auth) \u2500\u2500\u25b6 EventProcessor (308 LOC)
     \u2502                                            \u2502
     \u2502                                    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510
     \u2502                                    \u2502 VehicleSession  \u2502
-    \u2502                                    \u2502 ZoneStay        \u2502
+    \u2502                                    \u2502 ZoneStay        \u2502\u2500\u2500\u25b6 Prisma \u2500\u25b6 SQLite (dev.db)
     \u2502                                    \u2502 PostStay        \u2502
     \u2502                                    \u2502 Post.status     \u2502
     \u2502                                    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518
     \u2502                                            \u2502
     \u2502                                    Socket.IO broadcast
+    \u2502                                   (post:status_changed, event, zone:update)
     \u2502                                            \u2502
 Frontend (React) \u2500\u2500 api.get/post \u2500\u2500\u25b6 Express \u2500\u2500 Prisma \u2500\u2500\u25b6 SQLite
     \u2502                                            \u2502
     \u2514\u2500\u2500 HLS.js :8181 \u2500\u2500\u2500\u2500\u25b6 FFmpeg \u25c0\u2500\u2500\u2500\u2500\u2500\u2500 RTSP cameras (10)
 
-1C ERP \u2500\u2500 XLSX files \u2500\u2500\u25b6 Sync1C (file watcher) \u2500\u2500\u25b6 JSON + DB`}</Code>
+1C ERP \u2500\u2500 XLSX files \u2500\u2500\u25b6 Sync1C (file watcher /data/1c-import/) \u2500\u2500\u25b6 JSON + DB
 
+MonitoringProxy \u2500\u2500 GET external CV API (10s) \u2500\u2500\u25b6 /api/monitoring/* \u2500\u2500\u25b6 Frontend
+                                                                   (live mode)`}</Code>
+
+        <Sub>{isRu ? 'Fallback-цепочка' : 'Fallback Chain'}</Sub>
         <P>{isRu
-          ? 'Fallback-цепочка при недоступности данных: Backend API (основной источник) -> JSON-моки в /data/ (29 файлов, используются как seed/fallback) -> localStorage (только для token, currentUser, theme, language). Система спроектирована так, чтобы все данные хранились в БД через Prisma; localStorage используется исключительно для клиентских настроек.'
-          : 'Fallback chain when data is unavailable: Backend API (primary source) -> JSON mocks in /data/ (29 files, used as seed/fallback) -> localStorage (only for token, currentUser, theme, language). The system is designed so all data is stored in DB via Prisma; localStorage is used exclusively for client-side settings.'
+          ? 'При недоступности данных система использует fallback-цепочку: (1) Backend API -- основной источник данных из Prisma/SQLite; (2) JSON-моки в /data/ (29 файлов) -- используются как seed и fallback при пустой БД; (3) localStorage -- ТОЛЬКО для клиентских настроек (token, currentUser, theme, language). Система спроектирована так, чтобы все данные хранились в БД; localStorage НЕ используется как замена API.'
+          : 'When data is unavailable, the system uses a fallback chain: (1) Backend API -- primary data source from Prisma/SQLite; (2) JSON mocks in /data/ (29 files) -- used as seed and fallback for empty DB; (3) localStorage -- ONLY for client settings (token, currentUser, theme, language). The system is designed so all data is stored in DB; localStorage is NOT used as API replacement.'
         }</P>
 
-        {/* Section 3 — Infrastructure */}
+
+        {/* ============================================================ */}
+        {/* Section 3 — Infrastructure & Deploy */}
+        {/* ============================================================ */}
         <SectionTitle id="infrastructure">{isRu ? '3. Инфраструктура и деплой' : '3. Infrastructure & Deploy'}</SectionTitle>
         <P>{isRu
-          ? 'Проект развёрнут в Docker-контейнере с рабочей директорией /project. Контейнер подключён к VPS через WireGuard VPN, при этом все порты 80-65535 проброшены 1:1 на VPS. Это означает, что любой сервис внутри контейнера доступен извне по его реальному порту через домен artisom.dev.metricsavto.com.'
-          : 'The project is deployed in a Docker container with working directory /project. The container is connected to a VPS via WireGuard VPN, with all ports 80-65535 mapped 1:1 to the VPS. This means any service inside the container is accessible externally on its actual port via the domain artisom.dev.metricsavto.com.'
+          ? 'Проект развёрнут в Docker-контейнере (Node.js 20, Python 3.11, PHP 8.2, Go 1.22) с рабочей директорией /project. Контейнер подключён к VPS через WireGuard VPN, при этом все порты 80-65535 проброшены 1:1 на VPS. Это означает, что любой сервис внутри контейнера доступен извне по его реальному порту через домен artisom.dev.metricsavto.com.'
+          : 'The project is deployed in a Docker container (Node.js 20, Python 3.11, PHP 8.2, Go 1.22) with working directory /project. The container is connected to a VPS via WireGuard VPN, with all ports 80-65535 mapped 1:1 to the VPS. Any service inside the container is accessible externally on its actual port via the domain artisom.dev.metricsavto.com.'
         }</P>
-        <P>{isRu
-          ? 'Nginx работает на порту 8080 как reverse proxy и раздаёт статические файлы фронтенда. Конфигурация Nginx принадлежит root и не может быть изменена из контейнера. Express слушает на двух портах: HTTP :3001 (основной) и HTTPS :3444 (с SSL-сертификатом). HLS-сервер работает на :8181 и конвертирует RTSP-потоки камер в HLS через FFmpeg.'
-          : 'Nginx runs on port 8080 as a reverse proxy and serves frontend static files. Nginx configuration is owned by root and cannot be modified from the container. Express listens on two ports: HTTP :3001 (primary) and HTTPS :3444 (with SSL certificate). The HLS server runs on :8181 and converts RTSP camera streams to HLS via FFmpeg.'
-        }</P>
+
+        <Sub>{isRu ? 'Карта портов' : 'Port Map'}</Sub>
         <Table
-          headers={[isRu ? 'Сервер' : 'Server', isRu ? 'Порт' : 'Port', isRu ? 'Протокол' : 'Protocol', isRu ? 'Назначение' : 'Purpose']}
+          headers={[isRu ? 'Сервер' : 'Server', isRu ? 'Порт' : 'Port', isRu ? 'Протокол' : 'Protocol', isRu ? 'Назначение' : 'Purpose', isRu ? 'Публичный URL' : 'Public URL']}
           rows={[
-            ['Nginx', '8080', 'HTTP', isRu ? 'Reverse proxy, статика фронтенда, SPA fallback' : 'Reverse proxy, frontend static files, SPA fallback'],
-            ['Express', '3001', 'HTTP', isRu ? 'REST API + Socket.IO (основной)' : 'REST API + Socket.IO (primary)'],
-            ['Express', '3444', 'HTTPS', isRu ? 'REST API + Socket.IO (SSL, те же роуты)' : 'REST API + Socket.IO (SSL, same routes)'],
-            ['HLS Server', '8181', 'HTTPS', isRu ? 'RTSP->HLS конвертация, раздача .m3u8/.ts' : 'RTSP->HLS conversion, serving .m3u8/.ts'],
-            ['VPS Proxy', '443', 'HTTPS', isRu ? 'Внешний HTTPS через VPS' : 'External HTTPS via VPS'],
+            ['Nginx', '8080', 'HTTP', isRu ? 'Reverse proxy, SPA fallback, статика фронтенда из /project/' : 'Reverse proxy, SPA fallback, frontend static from /project/', 'https://artisom.dev.metricsavto.com/'],
+            ['Express', '3001', 'HTTP', isRu ? 'REST API + Socket.IO (основной, fallback от Nginx)' : 'REST API + Socket.IO (primary, Nginx fallback)', 'https://artisom.dev.metricsavto.com:3001/api/'],
+            ['Express', '3444', 'HTTPS', isRu ? 'REST API + Socket.IO (SSL, те же роуты, прямой доступ)' : 'REST API + Socket.IO (SSL, same routes, direct access)', 'https://artisom.dev.metricsavto.com:3444/api/'],
+            ['HLS Server', '8181', 'HTTPS', isRu ? 'RTSP->HLS конвертация, .m3u8/.ts раздача, API камер' : 'RTSP->HLS conversion, .m3u8/.ts serving, camera API', 'https://artisom.dev.metricsavto.com:8181/'],
+            ['VPS Proxy', '443', 'HTTPS', isRu ? 'Внешний HTTPS (Let\'s Encrypt) -> Nginx 8080' : 'External HTTPS (Let\'s Encrypt) -> Nginx 8080', 'https://artisom.dev.metricsavto.com/'],
           ]}
         />
+
         <Sub>{isRu ? 'SSL-сертификат' : 'SSL Certificate'}</Sub>
         <P>{isRu
           ? 'Домен: artisom.dev.metricsavto.com. Сертификат Let\'s Encrypt расположен в /project/.ssl/fullchain.pem, приватный ключ в /project/.ssl/privkey.pem. Срок действия до 2026-07-05. Сертификат используется Express (HTTPS :3444) и HLS-сервером (:8181). Nginx на VPS имеет свой сертификат для проксирования на порт 443.'
-          : 'Domain: artisom.dev.metricsavto.com. Let\'s Encrypt certificate located at /project/.ssl/fullchain.pem, private key at /project/.ssl/privkey.pem. Valid until 2026-07-05. The certificate is used by Express (HTTPS :3444) and the HLS server (:8181). Nginx on the VPS has its own certificate for proxying on port 443.'
+          : 'Domain: artisom.dev.metricsavto.com. Let\'s Encrypt certificate at /project/.ssl/fullchain.pem, private key at /project/.ssl/privkey.pem. Valid until 2026-07-05. Used by Express (HTTPS :3444) and HLS server (:8181). Nginx on VPS has its own certificate for proxying on port 443.'
         }</P>
+
         <Sub>{isRu ? 'Конфигурация Nginx' : 'Nginx Configuration'}</Sub>
         <P>{isRu
-          ? 'Nginx слушает на порту 8080 как default_server. Все запросы /api/* проксируются на Express с каскадным fallback (3001 -> 3000 -> 3002). WebSocket-подключения /socket.io/* проксируются с поддержкой upgrade. Камерный API /cam-api/* перенаправляется на HLS-сервер :8181. HLS-файлы /hls/* раздаются статически из /project/hls/ с CORS-заголовками. Все остальные запросы обрабатываются как SPA (try_files -> index.html).'
-          : 'Nginx listens on port 8080 as default_server. All /api/* requests are proxied to Express with cascade fallback (3001 -> 3000 -> 3002). WebSocket connections /socket.io/* are proxied with upgrade support. Camera API /cam-api/* is redirected to HLS server :8181. HLS files /hls/* are served statically from /project/hls/ with CORS headers. All other requests are handled as SPA (try_files -> index.html).'
+          ? 'Nginx слушает на порту 8080 как default_server. Конфигурация принадлежит root и не может быть изменена из контейнера. Маршрутизация запросов:'
+          : 'Nginx listens on port 8080 as default_server. Configuration is owned by root and cannot be modified from the container. Request routing:'
         }</P>
         <Code>{`Port 8080 (default_server)
   /api/*       \u2192 proxy http://127.0.0.1:3001 (fallback: 3000, 3002)
-  /socket.io/* \u2192 proxy + WebSocket upgrade (Connection: upgrade)
+  /socket.io/* \u2192 proxy + WebSocket upgrade (Connection: upgrade, Upgrade: websocket)
   /cam-api/*   \u2192 proxy http://127.0.0.1:8181/api/
   /hls/*       \u2192 static /project/hls/ + CORS (Access-Control-Allow-Origin: *)
-  /*           \u2192 SPA fallback (try_files $uri $uri/ /index.html)`}</Code>
+  /*           \u2192 SPA fallback (try_files $uri $uri/ /index.html)
+
+# ${isRu ? 'API fallback каскад: если 3001 недоступен, пробует 3000, затем 3002' : 'API fallback cascade: if 3001 is down, tries 3000, then 3002'}
+# ${isRu ? 'WebSocket: proxy_http_version 1.1, proxy_set_header Upgrade $http_upgrade' : 'WebSocket: proxy_http_version 1.1, proxy_set_header Upgrade $http_upgrade'}`}</Code>
+
         <Sub>{isRu ? 'Билд и деплой' : 'Build & Deploy'}</Sub>
         <P>{isRu
-          ? 'Процесс деплоя фронтенда состоит из трёх шагов: (1) сборка React-приложения через Vite, (2) копирование собранных файлов в корень /project/ откуда их раздаёт Nginx, (3) обновление CACHE_NAME в sw.js для инвалидации кеша Service Worker. Бэкенд перезапускается простым рестартом Node.js-процесса.'
-          : 'The frontend deploy process consists of three steps: (1) building the React app via Vite, (2) copying built files to /project/ root where Nginx serves them, (3) updating CACHE_NAME in sw.js to invalidate the Service Worker cache. The backend is restarted by simply restarting the Node.js process.'
+          ? 'Процесс деплоя фронтенда состоит из трёх обязательных шагов. Prebuild-скрипт в package.json автоматически очищает старые assets перед сборкой, чтобы избежать конфликтов хешей. После копирования файлов необходимо обновить CACHE_NAME в sw.js -- это единственный способ заставить Service Worker обновить кеш у всех клиентов.'
+          : 'The frontend deploy process consists of three mandatory steps. The prebuild script in package.json automatically cleans old assets before building to avoid hash conflicts. After copying files, CACHE_NAME in sw.js must be updated -- this is the only way to force Service Worker to refresh cache for all clients.'
         }</P>
         <Code>{`# Frontend build & deploy
 cd /project/frontend && npm run build && cp -r dist/* /project/
-# ${isRu ? 'prebuild скрипт автоматически очищает старые assets перед сборкой' : 'prebuild script automatically cleans old assets before building'}
-# ${isRu ? 'После билда — обязательно бампить CACHE_NAME в sw.js' : 'After build — must bump CACHE_NAME in sw.js'}
+# ${isRu ? 'prebuild: автоочистка старых assets' : 'prebuild: auto-clean old assets'}
+# ${isRu ? 'ОБЯЗАТЕЛЬНО: бампить CACHE_NAME в sw.js (текущий: metricsaiup-v20)' : 'REQUIRED: bump CACHE_NAME in sw.js (current: metricsaiup-v20)'}
 
 # Backend start
 cd /project/backend && node src/index.js
-# ${isRu ? 'Запускает HTTP :3001 + HTTPS :3444 + Socket.IO + фоновые сервисы' : 'Starts HTTP :3001 + HTTPS :3444 + Socket.IO + background services'}
-# ${isRu ? 'Swagger UI доступен на /api-docs (OpenAPI 3.0)' : 'Swagger UI available at /api-docs (OpenAPI 3.0)'}
+# ${isRu ? 'HTTP :3001 + HTTPS :3444 + Socket.IO + 8 фоновых сервисов' : 'HTTP :3001 + HTTPS :3444 + Socket.IO + 8 background services'}
+# ${isRu ? 'Swagger UI: /api-docs (OpenAPI 3.0)' : 'Swagger UI: /api-docs (OpenAPI 3.0)'}
 
 # HLS streaming
 cd /project && node server.js
-# ${isRu ? 'RTSP->HLS конвертация на порту 8181' : 'RTSP->HLS conversion on port 8181'}`}</Code>
+# ${isRu ? 'RTSP->HLS конвертация на порту 8181 (HTTPS)' : 'RTSP->HLS conversion on port 8181 (HTTPS)'}
 
+# Database
+cd /project/backend && npx prisma migrate deploy  # ${isRu ? 'применить миграции' : 'apply migrations'}
+cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузить seed-данные' : 'load seed data'}`}</Code>
+
+
+        {/* ============================================================ */}
         {/* Section 4 — Database */}
+        {/* ============================================================ */}
         <SectionTitle id="database">{isRu ? '4. База данных (Prisma + SQLite, 22 модели)' : '4. Database (Prisma + SQLite, 22 models)'}</SectionTitle>
         <P>{isRu
-          ? 'Система использует Prisma 5.20 как ORM с SQLite в качестве базы данных. Файл БД расположен в backend/prisma/dev.db. SQLite выбран за простоту развёртывания (один файл, без отдельного сервера), достаточную производительность для single-node установки, и отличную совместимость с Prisma. Миграции управляются через prisma migrate, seed-данные загружаются через prisma db seed.'
-          : 'The system uses Prisma 5.20 as ORM with SQLite as the database. The DB file is located at backend/prisma/dev.db. SQLite was chosen for its deployment simplicity (single file, no separate server), sufficient performance for single-node installations, and excellent compatibility with Prisma. Migrations are managed via prisma migrate, seed data is loaded via prisma db seed.'
-        }</P>
-        <P>{isRu
-          ? 'Схема содержит 22+ моделей, охватывающих все аспекты системы: RBAC (пользователи, роли, разрешения), физическую структуру СТО (зоны, посты, камеры), отслеживание автомобилей (сессии, пребывание в зонах/на постах), производственные процессы (заказ-наряды, смены), и системные функции (аудит, пуш-уведомления, Telegram, отчёты).'
-          : 'The schema contains 22+ models covering all system aspects: RBAC (users, roles, permissions), physical STO structure (zones, posts, cameras), vehicle tracking (sessions, zone/post stays), production processes (work orders, shifts), and system functions (audit, push notifications, Telegram, reports).'
+          ? 'Система использует Prisma 5.20 как ORM с SQLite. Файл БД: backend/prisma/dev.db. SQLite выбран за простоту (один файл, без сервера), достаточную производительность для single-node установки, и совместимость с Prisma. Миграции через prisma migrate, seed-данные через prisma db seed (backend/prisma/seed.js).'
+          : 'The system uses Prisma 5.20 as ORM with SQLite. DB file: backend/prisma/dev.db. SQLite was chosen for simplicity (single file, no server), sufficient performance for single-node installations, and Prisma compatibility. Migrations via prisma migrate, seed data via prisma db seed (backend/prisma/seed.js).'
         }</P>
 
-        <Sub>{isRu ? 'RBAC — модель доступа' : 'RBAC — Access Model'}</Sub>
+        <Sub>{isRu ? 'RBAC -- цепочка доступа (5 уровней)' : 'RBAC -- Access Chain (5 levels)'}</Sub>
         <P>{isRu
-          ? 'Система доступа построена на пятиуровневой цепочке: User -> UserRole -> Role -> RolePermission -> Permission. Каждый пользователь может иметь одну роль через связь UserRole. Роль содержит набор разрешений (permissions) через RolePermission. Помимо этого, у пользователя есть JSON-поле hiddenElements, позволяющее администратору скрывать конкретные виджеты и секции на страницах для каждого пользователя индивидуально.'
-          : 'The access system is built on a five-level chain: User -> UserRole -> Role -> RolePermission -> Permission. Each user can have one role via UserRole relation. A role contains a set of permissions via RolePermission. Additionally, users have a hiddenElements JSON field, allowing administrators to hide specific widgets and sections on pages for each user individually.'
+          ? 'Система доступа построена на пятиуровневой цепочке: User -> UserRole -> Role -> RolePermission -> Permission. Каждый пользователь имеет одну роль через UserRole. Роль содержит набор разрешений через RolePermission. Дополнительно у пользователя есть: pages[] (доступные страницы), hiddenElements[] (скрытые виджеты UI), isActive (можно деактивировать аккаунт).'
+          : 'The access system is built on a five-level chain: User -> UserRole -> Role -> RolePermission -> Permission. Each user has one role via UserRole. A role contains permissions via RolePermission. Additionally, users have: pages[] (accessible pages), hiddenElements[] (hidden UI widgets), isActive (account can be deactivated).'
         }</P>
         <Table
           headers={[isRu ? 'Роль' : 'Role', isRu ? 'Разрешения' : 'Permissions', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['admin', isRu ? 'Все 15 + manage_roles, manage_settings' : 'All 15 + manage_roles, manage_settings', isRu ? 'Полный доступ ко всем функциям' : 'Full access to all features'],
-            ['director', 'view_dashboard, view_analytics, view_zones, view_posts, view_sessions, view_events, view_work_orders, view_recommendations, view_cameras', isRu ? 'Только просмотр, без редактирования' : 'View only, no editing'],
-            ['manager', 'view_dashboard, view_zones, view_posts, view_sessions, view_events, manage_work_orders, view_recommendations', isRu ? 'Управление заказ-нарядами + просмотр' : 'Work order management + viewing'],
-            ['mechanic', 'view_dashboard, view_posts, view_sessions', isRu ? 'Работа на постах, просмотр базовой информации' : 'Post work, basic info viewing'],
-            ['viewer', 'view_dashboard, view_zones, view_posts', isRu ? 'Минимальный доступ только для просмотра' : 'Minimal view-only access'],
+            ['admin', isRu ? 'Все 15 + manage_roles, manage_settings' : 'All 15 + manage_roles, manage_settings', isRu ? 'Полный доступ ко всем функциям и страницам' : 'Full access to all features and pages'],
+            ['director', 'view_dashboard, view_analytics, view_zones, view_posts, view_sessions, view_events, view_work_orders, view_recommendations, view_cameras', isRu ? 'Только просмотр, без редактирования данных' : 'View only, no data editing'],
+            ['manager', 'view_dashboard, view_zones, view_posts, view_sessions, view_events, manage_work_orders, view_recommendations', isRu ? 'Управление заказ-нарядами + полный просмотр' : 'Work order management + full viewing'],
+            ['mechanic', 'view_dashboard, view_posts, view_sessions', isRu ? 'Работа на своём посту, базовая информация' : 'Work at own post, basic info'],
+            ['viewer', 'view_dashboard, view_zones, view_posts', isRu ? 'Минимальный read-only доступ' : 'Minimal read-only access'],
           ]}
         />
 
-        <Sub>{isRu ? 'Основные модели' : 'Core Models'}</Sub>
+        <Sub>{isRu ? 'Все 22 модели' : 'All 22 Models'}</Sub>
+        <Table
+          headers={[isRu ? 'Модель' : 'Model', isRu ? 'Ключевые поля' : 'Key Fields', isRu ? 'Связи' : 'Relations', isRu ? 'Назначение' : 'Purpose']}
+          rows={[
+            ['User', 'email, password (bcrypt), name, isActive, pages (JSON), hiddenElements (JSON)', '\u2192 UserRole, AuditLog[], TelegramLink, Photo[]', isRu ? 'Учётная запись пользователя с настройками доступа' : 'User account with access settings'],
+            ['UserRole', 'userId, roleId', '\u2192 User, Role', isRu ? 'Связь пользователь-роль (1:1)' : 'User-role link (1:1)'],
+            ['Role', 'name (unique), description', '\u2192 UserRole[], RolePermission[]', isRu ? '5 предустановленных ролей' : '5 preset roles'],
+            ['Permission', 'key (unique), description', '\u2192 RolePermission[]', isRu ? '15+ разрешений (view_*, manage_*)' : '15+ permissions (view_*, manage_*)'],
+            ['RolePermission', 'roleId, permissionId', '\u2192 Role, Permission', isRu ? 'Связь роль-разрешение (M:N)' : 'Role-permission link (M:N)'],
+            ['Zone', 'name, type (repair/waiting/entry/parking/free), coordinates (JSON)', '\u2192 Post[], CameraZone[], ZoneStay[]', isRu ? '5 физических зон СТО' : '5 physical STO zones'],
+            ['Post', 'name, number, type (light/heavy/special), status (free/occupied/occupied_no_work/active_work), zoneId', '\u2192 Zone, PostStay[], WorkOrderLink[], ShiftWorker[]', isRu ? '10 рабочих постов механиков' : '10 mechanic work posts'],
+            ['Camera', 'name, rtspUrl, isActive, hlsUrl, order', '\u2192 CameraZone[], Event[]', isRu ? '10 RTSP-камер видеонаблюдения' : '10 RTSP surveillance cameras'],
+            ['CameraZone', 'cameraId, zoneId, priority (0-10)', '\u2192 Camera, Zone', isRu ? 'Маппинг камер на зоны с приоритетами' : 'Camera-zone mapping with priorities'],
+            ['VehicleSession', 'plateNumber, entryTime, exitTime, status (active/completed), trackId', '\u2192 ZoneStay[], PostStay[], Event[]', isRu ? 'Сессия пребывания автомобиля на СТО' : 'Vehicle stay session at STO'],
+            ['ZoneStay', 'entryTime, exitTime, duration (seconds), vehicleSessionId, zoneId', '\u2192 VehicleSession, Zone', isRu ? 'Пребывание авто в конкретной зоне' : 'Vehicle stay in a specific zone'],
+            ['PostStay', 'entryTime, exitTime, hasWorker, isActive, activeTime, idleTime, vehicleSessionId, postId', '\u2192 VehicleSession, Post', isRu ? 'Пребывание авто на конкретном посту (с метриками работы)' : 'Vehicle stay at a specific post (with work metrics)'],
+            ['WorkOrder', 'orderNumber, externalId, description, status (pending/scheduled/in_progress/paused/completed), normHours, startedAt, completedAt, pausedAt, totalPausedMs, version, postId, priority', '\u2192 WorkOrderLink[]', isRu ? 'Заказ-наряд с полным жизненным циклом и оптимистичной блокировкой' : 'Work order with full lifecycle and optimistic locking'],
+            ['WorkOrderLink', 'workOrderId, postId, vehicleSessionId, startTime, endTime', '\u2192 WorkOrder, Post, VehicleSession?', isRu ? 'Привязка ЗН к посту/сессии на определённое время' : 'WO binding to post/session at specific time'],
+            ['Event', 'type (10 types), confidence, cameraSources (JSON), plateNumber, description, zoneId, postId, vehicleSessionId, cameraId', '\u2192 Zone?, Post?, VehicleSession?, Camera?', isRu ? 'CV-событие с привязкой к зоне/посту/камере' : 'CV event linked to zone/post/camera'],
+            ['Shift', 'name, date, startTime, endTime, status (active/completed)', '\u2192 ShiftWorker[]', isRu ? 'Рабочая смена с временным окном' : 'Work shift with time window'],
+            ['ShiftWorker', 'name, role, postId, shiftId', '\u2192 Shift, Post?', isRu ? 'Работник назначенный на смену и пост' : 'Worker assigned to shift and post'],
+            ['Recommendation', 'type (5 types), message, messageEn, status (active/acknowledged), zoneId?, postId?', '\u2192 Zone?, Post?', isRu ? 'AI-рекомендация с двуязычным текстом' : 'AI recommendation with bilingual text'],
+            ['AuditLog', 'action, entity, entityId, oldData (JSON), newData (JSON), ip, userAgent, userId', isRu ? 'Индексы: userId, action, entity, createdAt' : 'Indexes: userId, action, entity, createdAt', isRu ? 'Лог всех мутаций с детализацией' : 'Log of all mutations with details'],
+            ['MapLayout', 'name, width (46540), height (30690), elements (JSON)', '\u2192 MapLayoutVersion[]', isRu ? 'Карта СТО с элементами (здания, посты, зоны, камеры)' : 'STO map with elements (buildings, posts, zones, cameras)'],
+            ['MapLayoutVersion', 'layoutId, elements (JSON), authorId, createdAt', '\u2192 MapLayout', isRu ? 'Версия карты для отката' : 'Map version for rollback'],
+            ['SyncLog', 'type, direction (import/export), status (success/error), fileName, recordCount, error', isRu ? 'Нет связей' : 'No relations', isRu ? 'Журнал операций синхронизации с 1С' : '1C sync operations log'],
+            ['Photo', 'postId, userId, data (base64), mimeType, description', '\u2192 User', isRu ? 'Фото постов (base64 в БД)' : 'Post photos (base64 in DB)'],
+            ['PushSubscription', 'endpoint, keys (JSON: p256dh, auth), userId', '\u2192 User?', isRu ? 'Web Push подписка браузера' : 'Browser Web Push subscription'],
+            ['TelegramLink', 'chatId, userId', '\u2192 User', isRu ? 'Связь Telegram chatId с пользователем' : 'Telegram chatId to user mapping'],
+            ['ReportSchedule', 'name, cron, type, filters (JSON), telegramChatId, isActive', isRu ? 'Нет связей' : 'No relations', isRu ? 'Расписание автоматических XLSX-отчётов' : 'Automatic XLSX report schedule'],
+            ['Location', 'name, address, isActive', '\u2192 Zone[]?', isRu ? 'Локация (мультитенантность для нескольких СТО)' : 'Location (multi-tenancy for multiple STOs)'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'WorkOrder -- жизненный цикл и оптимистичная блокировка' : 'WorkOrder -- Lifecycle & Optimistic Locking'}</Sub>
         <P>{isRu
-          ? 'Зоны (Zone) описывают физические области СТО с 5 типами: repair (ремонтная), waiting (ожидания), entry (въезд), parking (парковка), free (свободная). Каждая зона имеет координаты для отображения на карте и связана с постами и камерами.'
-          : 'Zones describe physical STO areas with 5 types: repair, waiting, entry, parking, free. Each zone has coordinates for map display and is related to posts and cameras.'
+          ? 'Заказ-наряд проходит через состояния: pending (создан/импортирован) -> scheduled (назначен на пост/время через Gantt) -> in_progress (механик начал) -> paused (пауза) -> in_progress (возобновлён) -> completed. Поле version обеспечивает оптимистичную блокировку: при batch-обновлении через POST /api/work-orders/schedule бэкенд проверяет version каждого ЗН в транзакции. При несовпадении -- HTTP 409 с массивом conflicts[]. pausedAt + totalPausedMs обеспечивают точный учёт рабочего времени без пауз.'
+          : 'Work order transitions: pending (created/imported) -> scheduled (assigned via Gantt) -> in_progress (mechanic started) -> paused (break) -> in_progress (resumed) -> completed. The version field provides optimistic locking: during batch updates via POST /api/work-orders/schedule, the backend checks each WO version in a transaction. On mismatch -- HTTP 409 with conflicts[]. pausedAt + totalPausedMs ensure accurate work time tracking excluding pauses.'
         }</P>
+
+        <Sub>{isRu ? '10 типов событий (Event.type)' : '10 Event Types (Event.type)'}</Sub>
+        <Table
+          headers={[isRu ? 'Тип' : 'Type', isRu ? 'Описание' : 'Description', isRu ? 'Действие EventProcessor' : 'EventProcessor Action']}
+          rows={[
+            ['vehicle_enter', isRu ? 'Автомобиль въехал на СТО' : 'Vehicle entered STO', isRu ? 'Создаёт VehicleSession (plateNumber, trackId)' : 'Creates VehicleSession (plateNumber, trackId)'],
+            ['vehicle_exit', isRu ? 'Автомобиль покинул СТО' : 'Vehicle left STO', isRu ? 'Завершает VehicleSession (exitTime, status=completed)' : 'Completes VehicleSession (exitTime, status=completed)'],
+            ['zone_enter', isRu ? 'Авто вошло в зону' : 'Vehicle entered zone', isRu ? 'Создаёт ZoneStay (entryTime, zoneId)' : 'Creates ZoneStay (entryTime, zoneId)'],
+            ['zone_exit', isRu ? 'Авто покинуло зону' : 'Vehicle left zone', isRu ? 'Завершает ZoneStay (exitTime, duration)' : 'Completes ZoneStay (exitTime, duration)'],
+            ['post_enter', isRu ? 'Авто заехало на пост' : 'Vehicle entered post', isRu ? 'Создаёт PostStay, статус поста -> occupied' : 'Creates PostStay, post status -> occupied'],
+            ['post_exit', isRu ? 'Авто съехало с поста' : 'Vehicle left post', isRu ? 'Завершает PostStay, статус поста -> free' : 'Completes PostStay, post status -> free'],
+            ['work_start', isRu ? 'Начало работы на посту' : 'Work started at post', isRu ? 'PostStay.isActive=true, hasWorker=true, статус -> active_work' : 'PostStay.isActive=true, hasWorker=true, status -> active_work'],
+            ['work_end', isRu ? 'Конец работы на посту' : 'Work ended at post', isRu ? 'PostStay.isActive=false, статус -> occupied_no_work' : 'PostStay.isActive=false, status -> occupied_no_work'],
+            ['plate_recognized', isRu ? 'Распознан номерной знак' : 'License plate recognized', isRu ? 'Обновляет plateNumber в сессии' : 'Updates plateNumber in session'],
+            ['anomaly', isRu ? 'Аномальное событие (нетипичное движение)' : 'Anomaly event (atypical movement)', isRu ? 'Логирование, возможная рекомендация' : 'Logging, possible recommendation'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
+        {/* Section 5 — Backend API */}
+        {/* ============================================================ */}
+        <SectionTitle id="api">{isRu ? '5. Backend API (24 модуля, 70+ эндпоинтов)' : '5. Backend API (24 modules, 70+ endpoints)'}</SectionTitle>
         <P>{isRu
-          ? 'Посты (Post) — рабочие места механиков. 3 типа: heavy (грузовые, посты 1-4), light (легковые, посты 5-8), special (специальные, посты 9-10). 4 статуса: free (свободен), occupied (занят автомобилем), occupied_no_work (занят без активной работы), active_work (активная работа). Статусы обновляются автоматически через EventProcessor при поступлении CV-событий.'
-          : 'Posts are mechanic workstations. 3 types: heavy (trucks, posts 1-4), light (cars, posts 5-8), special (specialized, posts 9-10). 4 statuses: free, occupied (vehicle present), occupied_no_work (occupied without active work), active_work (work in progress). Statuses are updated automatically via EventProcessor when CV events arrive.'
+          ? 'Бэкенд реализован на Express 4.21 с 24 модулями маршрутов (3960 строк кода суммарно), организованными по доменным областям. Каждый модуль -- отдельный файл в backend/src/routes/, экспортирующий Express Router. Все маршруты монтируются в index.js с префиксом /api/. Swagger UI доступен на /api-docs (OpenAPI 3.0 спецификация генерируется из JSDoc).'
+          : 'The backend is implemented on Express 4.21 with 24 route modules (3960 lines total), organized by domain areas. Each module is a separate file in backend/src/routes/, exporting an Express Router. All routes are mounted in index.js with /api/ prefix. Swagger UI available at /api-docs (OpenAPI 3.0 spec generated from JSDoc).'
+        }</P>
+
+        <Sub>auth.js -- /api/auth</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['POST', '/api/auth/login', isRu ? 'Нет' : 'No', isRu ? 'Логин: email + password. Rate limit 20/min/IP. Возвращает access token (24ч) + refresh httpOnly cookie (7д) + user object с permissions, pages[], hiddenElements[]' : 'Login: email + password. Rate limit 20/min/IP. Returns access token (24h) + refresh httpOnly cookie (7d) + user object with permissions, pages[], hiddenElements[]'],
+            ['POST', '/api/auth/refresh', isRu ? 'Cookie' : 'Cookie', isRu ? 'Обновление access token по refresh cookie. Возвращает новый access token' : 'Refresh access token via refresh cookie. Returns new access token'],
+            ['POST', '/api/auth/logout', isRu ? 'Да' : 'Yes', isRu ? 'Выход: очистка refresh cookie' : 'Logout: clears refresh cookie'],
+            ['GET', '/api/auth/me', isRu ? 'Да' : 'Yes', isRu ? 'Текущий пользователь с полной информацией о роли, permissions, pages, hiddenElements' : 'Current user with full role info, permissions, pages, hiddenElements'],
+            ['POST', '/api/auth/register', isRu ? 'Да (admin)' : 'Yes (admin)', isRu ? 'Регистрация нового пользователя (только admin)' : 'Register new user (admin only)'],
+          ]}
+        />
+
+        <Sub>dashboard.js -- /api/dashboard</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/dashboard/overview', isRu ? 'Да' : 'Yes', isRu ? 'Общая статистика: количество авто на СТО, занятые/свободные посты, активные ЗН' : 'Overview stats: vehicles at STO, occupied/free posts, active WOs'],
+            ['GET', '/api/dashboard/metrics?period=24h|7d|30d', isRu ? 'Да' : 'Yes', isRu ? 'Метрики за период: среднее время ремонта, загрузка, throughput' : 'Period metrics: avg repair time, utilization, throughput'],
+            ['GET', '/api/dashboard/trends', isRu ? 'Да' : 'Yes', isRu ? 'Тренды: графики загрузки и активности по часам/дням' : 'Trends: utilization and activity charts by hours/days'],
+            ['GET', '/api/dashboard/live', isRu ? 'Да' : 'Yes', isRu ? 'Live-данные: текущее состояние всех постов и зон для Dashboard' : 'Live data: current state of all posts and zones for Dashboard'],
+          ]}
+        />
+
+        <Sub>posts.js -- /api/posts</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/posts', isRu ? 'Да' : 'Yes', isRu ? 'Все посты с текущим статусом, зоной и связями' : 'All posts with current status, zone and relations'],
+            ['GET', '/api/posts/:id', isRu ? 'Да' : 'Yes', isRu ? 'Конкретный пост с детальной информацией' : 'Specific post with detailed info'],
+            ['POST', '/api/posts', isRu ? 'Да (manage_zones)' : 'Yes (manage_zones)', isRu ? 'Создание поста (name, type, zoneId)' : 'Create post (name, type, zoneId)'],
+            ['PUT', '/api/posts/:id', isRu ? 'Да (manage_zones)' : 'Yes (manage_zones)', isRu ? 'Обновление поста (name, type, status, zoneId)' : 'Update post (name, type, status, zoneId)'],
+            ['DELETE', '/api/posts/:id', isRu ? 'Да (manage_zones)' : 'Yes (manage_zones)', isRu ? 'Удаление поста' : 'Delete post'],
+          ]}
+        />
+
+        <Sub>zones.js -- /api/zones</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/zones', isRu ? 'Да' : 'Yes', isRu ? 'Все зоны (5 типов: repair, waiting, entry, parking, free)' : 'All zones (5 types: repair, waiting, entry, parking, free)'],
+            ['GET', '/api/zones/:id', isRu ? 'Да' : 'Yes', isRu ? 'Конкретная зона с постами и камерами' : 'Specific zone with posts and cameras'],
+            ['POST', '/api/zones', isRu ? 'Да (manage_zones)' : 'Yes (manage_zones)', isRu ? 'Создание зоны' : 'Create zone'],
+            ['PUT', '/api/zones/:id', isRu ? 'Да (manage_zones)' : 'Yes (manage_zones)', isRu ? 'Обновление зоны' : 'Update zone'],
+            ['DELETE', '/api/zones/:id', isRu ? 'Да (manage_zones)' : 'Yes (manage_zones)', isRu ? 'Удаление зоны (soft delete)' : 'Delete zone (soft delete)'],
+          ]}
+        />
+
+        <Sub>events.js -- /api/events</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['POST', '/api/events', isRu ? 'НЕТ (для CV)' : 'NO (for CV)', isRu ? 'Приём CV-событий. Без авторизации! Тело: { type, plateNumber?, zoneId?, postId?, confidence, cameraSources }. Передаётся в EventProcessor' : 'Receive CV events. No auth! Body: { type, plateNumber?, zoneId?, postId?, confidence, cameraSources }. Passed to EventProcessor'],
+            ['GET', '/api/events', isRu ? 'Да' : 'Yes', isRu ? 'Журнал событий с фильтрами: ?type=, ?zoneId=, ?postId=, ?from=, ?to=, ?page=, ?limit=' : 'Event log with filters: ?type=, ?zoneId=, ?postId=, ?from=, ?to=, ?page=, ?limit='],
+            ['GET', '/api/events/:id', isRu ? 'Да' : 'Yes', isRu ? 'Конкретное событие с деталями' : 'Specific event with details'],
+          ]}
+        />
+
+        <Sub>sessions.js -- /api/sessions</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/sessions/active', isRu ? 'Да' : 'Yes', isRu ? 'Активные сессии (status=active) с ZoneStay, PostStay, Events' : 'Active sessions (status=active) with ZoneStay, PostStay, Events'],
+            ['GET', '/api/sessions/completed', isRu ? 'Да' : 'Yes', isRu ? 'Завершённые сессии с фильтрами по дате и номеру' : 'Completed sessions with date and plate filters'],
+            ['GET', '/api/sessions/:id', isRu ? 'Да' : 'Yes', isRu ? 'Детали сессии с полной историей перемещений' : 'Session details with full movement history'],
+          ]}
+        />
+
+        <Sub>workOrders.js -- /api/work-orders</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/work-orders', isRu ? 'Да' : 'Yes', isRu ? 'Все ЗН с фильтрами: ?status=, ?postId=, ?from=, ?to=' : 'All WOs with filters: ?status=, ?postId=, ?from=, ?to='],
+            ['GET', '/api/work-orders/:id', isRu ? 'Да' : 'Yes', isRu ? 'Детали ЗН с WorkOrderLink' : 'WO details with WorkOrderLink'],
+            ['POST', '/api/work-orders', isRu ? 'Да (manage_work_orders)' : 'Yes (manage_work_orders)', isRu ? 'Создание ЗН (orderNumber, description, normHours, postId)' : 'Create WO (orderNumber, description, normHours, postId)'],
+            ['POST', '/api/work-orders/import', isRu ? 'Да (manage_work_orders)' : 'Yes (manage_work_orders)', isRu ? 'CSV-импорт массива ЗН' : 'CSV import of WO array'],
+            ['POST', '/api/work-orders/schedule', isRu ? 'Да (manage_work_orders)' : 'Yes (manage_work_orders)', isRu ? 'Batch-обновление расписания с оптимистичной блокировкой (version). HTTP 409 при конфликте' : 'Batch schedule update with optimistic locking (version). HTTP 409 on conflict'],
+            ['PUT', '/api/work-orders/:id', isRu ? 'Да (manage_work_orders)' : 'Yes (manage_work_orders)', isRu ? 'Обновление ЗН' : 'Update WO'],
+            ['POST', '/api/work-orders/:id/start', isRu ? 'Да' : 'Yes', isRu ? 'Начать работу (status -> in_progress, startedAt = now)' : 'Start work (status -> in_progress, startedAt = now)'],
+            ['POST', '/api/work-orders/:id/pause', isRu ? 'Да' : 'Yes', isRu ? 'Пауза (status -> paused, pausedAt = now)' : 'Pause (status -> paused, pausedAt = now)'],
+            ['POST', '/api/work-orders/:id/resume', isRu ? 'Да' : 'Yes', isRu ? 'Возобновить (status -> in_progress, totalPausedMs += diff)' : 'Resume (status -> in_progress, totalPausedMs += diff)'],
+            ['POST', '/api/work-orders/:id/complete', isRu ? 'Да' : 'Yes', isRu ? 'Завершить (status -> completed, completedAt = now)' : 'Complete (status -> completed, completedAt = now)'],
+            ['DELETE', '/api/work-orders/:id', isRu ? 'Да (manage_work_orders)' : 'Yes (manage_work_orders)', isRu ? 'Удаление ЗН' : 'Delete WO'],
+          ]}
+        />
+
+        <Sub>cameras.js -- /api/cameras</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', 'Auth', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/cameras', isRu ? 'Да' : 'Yes', isRu ? 'Все камеры (10) с зонами и статусом здоровья' : 'All cameras (10) with zones and health status'],
+            ['GET', '/api/cameras/:id', isRu ? 'Да' : 'Yes', isRu ? 'Конкретная камера с CameraZone маппингом' : 'Specific camera with CameraZone mapping'],
+            ['POST', '/api/cameras', isRu ? 'Да (manage_cameras)' : 'Yes (manage_cameras)', isRu ? 'Создание камеры (name, rtspUrl)' : 'Create camera (name, rtspUrl)'],
+            ['PUT', '/api/cameras/:id', isRu ? 'Да (manage_cameras)' : 'Yes (manage_cameras)', isRu ? 'Обновление камеры' : 'Update camera'],
+            ['DELETE', '/api/cameras/:id', isRu ? 'Да (manage_cameras)' : 'Yes (manage_cameras)', isRu ? 'Удаление камеры' : 'Delete camera'],
+            ['GET', '/api/cameras/health', isRu ? 'Да' : 'Yes', isRu ? 'Статус здоровья всех камер (online/offline)' : 'Health status of all cameras (online/offline)'],
+            ['PUT', '/api/cameras/:id/zones', isRu ? 'Да (manage_cameras)' : 'Yes (manage_cameras)', isRu ? 'Обновление маппинга зон для камеры с приоритетами (0-10)' : 'Update zone mapping for camera with priorities (0-10)'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Остальные модули' : 'Remaining Modules'}</Sub>
+        <Table
+          headers={[isRu ? 'Модуль' : 'Module', isRu ? 'Путь' : 'Path', isRu ? 'Ключевые эндпоинты' : 'Key Endpoints']}
+          rows={[
+            ['recommendations', '/api/recommendations', 'GET / (active), PUT /:id/acknowledge'],
+            ['users', '/api/users', isRu ? 'GET / (список), GET /:id, POST / (create), PUT /:id (update + pages + hiddenElements), DELETE /:id, PUT /:id/role' : 'GET / (list), GET /:id, POST / (create), PUT /:id (update + pages + hiddenElements), DELETE /:id, PUT /:id/role'],
+            ['shifts', '/api/shifts', isRu ? 'GET /, POST / (create + conflict detection), PUT /:id, DELETE /:id, POST /:id/workers (assign), POST /:id/complete' : 'GET /, POST / (create + conflict detection), PUT /:id, DELETE /:id, POST /:id/workers (assign), POST /:id/complete'],
+            ['data1c', '/api/1c', isRu ? 'POST /import (XLSX upload), GET /planning, GET /workers, GET /stats, GET /sync-history, POST /export (XLSX download)' : 'POST /import (XLSX upload), GET /planning, GET /workers, GET /stats, GET /sync-history, POST /export (XLSX download)'],
+            ['mapLayout', '/api/map-layout', isRu ? 'GET / (current), POST / (save + version), GET /versions, POST /restore/:versionId' : 'GET / (current), POST / (save + version), GET /versions, POST /restore/:versionId'],
+            ['auditLog', '/api/audit-log', isRu ? 'GET / (фильтры: user, action, entity, date, page, limit), GET /export/csv' : 'GET / (filters: user, action, entity, date, page, limit), GET /export/csv'],
+            ['predict', '/api/predict', isRu ? 'GET /load, GET /load/week, GET /duration, GET /free, GET /health (детерминированный seed)' : 'GET /load, GET /load/week, GET /duration, GET /free, GET /health (deterministic seed)'],
+            ['postsData', '/api/posts-analytics, /api/dashboard-posts, /api/analytics-history', isRu ? 'Аналитика постов, агрегации, дневные разбивки, история' : 'Post analytics, aggregations, daily breakdowns, history'],
+            ['workers', '/api/workers', isRu ? 'GET / (список работников), GET /:id/stats (daily breakdown по ЗН)' : 'GET / (worker list), GET /:id/stats (daily breakdown by WOs)'],
+            ['health', '/api/system-health', isRu ? 'GET / (admin only): backend, database, cameras, disk status, uptime, memory' : 'GET / (admin only): backend, database, cameras, disk status, uptime, memory'],
+            ['push', '/api/push', isRu ? 'GET /vapid-key, POST /subscribe (endpoint + keys), POST /send (title + body + target)' : 'GET /vapid-key, POST /subscribe (endpoint + keys), POST /send (title + body + target)'],
+            ['photos', '/api/photos', isRu ? 'POST / (base64 upload), GET /?postId= (gallery), DELETE /:id' : 'POST / (base64 upload), GET /?postId= (gallery), DELETE /:id'],
+            ['locations', '/api/locations', isRu ? 'CRUD: GET /, POST /, PUT /:id, DELETE /:id (мультитенантность)' : 'CRUD: GET /, POST /, PUT /:id, DELETE /:id (multi-tenancy)'],
+            ['reportSchedule', '/api/report-schedules', isRu ? 'CRUD + POST /:id/run (генерация XLSX + отправка в Telegram)' : 'CRUD + POST /:id/run (generate XLSX + send to Telegram)'],
+            ['monitoring', '/api/monitoring', isRu ? 'GET /cameras (данные от внешнего CV), GET /zone/:id/state, GET /settings, PUT /settings (demo/live toggle)' : 'GET /cameras (data from external CV), GET /zone/:id/state, GET /settings, PUT /settings (demo/live toggle)'],
+            ['settings', '/api/settings', isRu ? 'GET / (все настройки), PUT / (обновить настройки системы)' : 'GET / (all settings), PUT / (update system settings)'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
+        {/* Section 6 — Backend Services */}
+        {/* ============================================================ */}
+        <SectionTitle id="services">{isRu ? '6. Backend Services (8 фоновых сервисов)' : '6. Backend Services (8 background services)'}</SectionTitle>
+        <P>{isRu
+          ? 'Восемь фоновых сервисов запускаются при старте бэкенда (index.js) и работают параллельно с Express. Каждый сервис работает автономно со своим интервалом или триггером.'
+          : 'Eight background services start with the backend (index.js) and run in parallel with Express. Each service operates autonomously with its own interval or trigger.'
         }</P>
         <Table
-          headers={[isRu ? 'Модель' : 'Model', isRu ? 'Ключевые поля' : 'Key Fields', isRu ? 'Связи' : 'Relations']}
+          headers={[isRu ? 'Сервис' : 'Service', isRu ? 'Файл' : 'File', 'LOC', isRu ? 'Триггер' : 'Trigger', isRu ? 'Что делает' : 'What it does']}
           rows={[
-            ['Zone', 'name, type (repair/waiting/entry/parking/free), coordinates', '\u2192 Post[], CameraZone[], ZoneStay[]'],
-            ['Post', 'name, type (light/heavy/special), status (free/occupied/occupied_no_work/active_work)', '\u2192 Zone, PostStay[], WorkOrderLink[]'],
-            ['Camera', 'name, rtspUrl, isActive, hlsUrl', '\u2192 CameraZone[], Event[]'],
-            ['VehicleSession', 'plateNumber, entryTime, exitTime, status (active/completed), trackId', '\u2192 ZoneStay[], PostStay[], Event[]'],
-            ['ZoneStay', 'entryTime, exitTime, duration', '\u2192 VehicleSession, Zone'],
-            ['PostStay', 'entryTime, exitTime, hasWorker, isActive, activeTime, idleTime', '\u2192 VehicleSession, Post'],
-            ['WorkOrder', 'orderNumber, externalId, status, normHours, version, pausedAt, totalPausedMs', '\u2192 WorkOrderLink[]'],
-            ['Event', 'type (10 types), confidence, cameraSources, plateNumber', '\u2192 Zone, Post, VehicleSession, Camera'],
-            ['Shift', 'name, date, startTime, endTime, status (active/completed)', '\u2192 ShiftWorker[]'],
-            ['ShiftWorker', 'name, role, postId', '\u2192 Shift, Post'],
-            ['Recommendation', 'type (5 types), message, messageEn, status (active/acknowledged)', '\u2192 Zone?, Post?'],
-            ['AuditLog', 'action, entity, entityId, oldData (JSON), newData (JSON), ip, userAgent', isRu ? 'Индексы: userId, action, entity, createdAt' : 'Indexes: userId, action, entity, createdAt'],
-            ['MapLayout', 'name, width (46540mm), height (30690mm), elements (JSON)', '\u2192 MapLayoutVersion[]'],
+            ['EventProcessor', 'eventProcessor.js', '308', 'POST /api/events', isRu ? 'Обработка 10 типов CV-событий -> сессии, статусы постов, Socket.IO broadcast' : 'Processes 10 CV event types -> sessions, post statuses, Socket.IO broadcast'],
+            ['RecommendationEngine', 'recommendationEngine.js', '~200', isRu ? 'Периодический (30с)' : 'Periodic (30s)', isRu ? '5 проверок: post_free (>30м), overtime (>120%), idle (>15м), capacity, no_show' : '5 checks: post_free (>30m), overtime (>120%), idle (>15m), capacity, no_show'],
+            ['MonitoringProxy', 'monitoringProxy.js', '340', isRu ? 'Polling (10с)' : 'Polling (10s)', isRu ? 'Получает состояние зон/постов от внешнего CV API для live-мониторинга' : 'Fetches zone/post state from external CV API for live monitoring'],
+            ['CameraHealthCheck', 'cameraHealthCheck.js', '~80', isRu ? 'Каждые 30с' : 'Every 30s', isRu ? 'Пинг RTSP-камер, обновление isActive, Socket.IO camera:status' : 'Pings RTSP cameras, updates isActive, Socket.IO camera:status'],
+            ['Sync1C', 'sync1C.js', '~250', isRu ? 'File watcher' : 'File watcher', isRu ? 'Мониторинг /data/1c-import/, парсинг XLSX, дедупликация, JSON-генерация, SyncLog' : 'Monitors /data/1c-import/, XLSX parsing, deduplication, JSON generation, SyncLog'],
+            ['TelegramBot', 'telegramBot.js', '~150', isRu ? 'Команды бота' : 'Bot commands', isRu ? '5 команд: /start, /status, /post, /free, /report. Доставка автоотчётов' : '5 commands: /start, /status, /post, /free, /report. Auto-report delivery'],
+            ['ReportScheduler', 'reportScheduler.js', '~120', isRu ? 'node-cron (каждую минуту)' : 'node-cron (every minute)', isRu ? 'Проверяет ReportSchedule, генерирует XLSX, отправляет в Telegram' : 'Checks ReportSchedule, generates XLSX, sends to Telegram'],
+            ['ServerExport', 'serverExport.js', '~100', isRu ? 'Вызов из routes' : 'Called from routes', isRu ? 'Утилиты серверной генерации XLSX (используется ReportScheduler и routes)' : 'Server-side XLSX generation utilities (used by ReportScheduler and routes)'],
           ]}
         />
-        <Sub>{isRu ? 'WorkOrder — жизненный цикл и оптимистичная блокировка' : 'WorkOrder — Lifecycle & Optimistic Locking'}</Sub>
+
+        <Sub>EventProcessor ({isRu ? 'детально' : 'detailed'})</Sub>
         <P>{isRu
-          ? 'WorkOrder имеет поле version для оптимистичной блокировки. При batch-обновлении через POST /api/work-orders/schedule бэкенд проверяет version каждого заказ-наряда. Если версия не совпадает (другой пользователь уже обновил), возвращается HTTP 409 с массивом conflicts[]. Поля pausedAt и totalPausedMs реализуют корректный учёт времени паузы: при паузе записывается pausedAt, при возобновлении накопленное время паузы добавляется в totalPausedMs.'
-          : 'WorkOrder has a version field for optimistic locking. During batch updates via POST /api/work-orders/schedule, the backend checks each work order\'s version. If versions mismatch (another user already updated), HTTP 409 is returned with a conflicts[] array. Fields pausedAt and totalPausedMs implement correct pause time tracking: on pause, pausedAt is recorded; on resume, accumulated pause time is added to totalPausedMs.'
-        }</P>
-        <Sub>{isRu ? 'Прочие модели' : 'Other Models'}</Sub>
-        <P>{isRu
-          ? 'SyncLog (история синхронизации с 1С), Photo (фото постов с base64 хранением), PushSubscription (Web Push подписки с endpoint/keys), Location (мультитенантность для нескольких СТО), TelegramLink (связь Telegram chatId с пользователем), ReportSchedule (расписание автоматических XLSX-отчётов с cron-выражениями), WorkOrderLink (связь заказ-нарядов с постами/сессиями), CameraZone (маппинг камер на зоны с приоритетами 0-10), UserRole, RolePermission, MapLayoutVersion (версии карты с автором и временной меткой).'
-          : 'SyncLog (1C sync history), Photo (post photos with base64 storage), PushSubscription (Web Push subscriptions with endpoint/keys), Location (multi-tenancy for multiple STOs), TelegramLink (Telegram chatId to user mapping), ReportSchedule (automatic XLSX report schedules with cron expressions), WorkOrderLink (work order to post/session mapping), CameraZone (camera to zone mapping with priorities 0-10), UserRole, RolePermission, MapLayoutVersion (map versions with author and timestamp).'
+          ? 'EventProcessor (308 строк) -- ключевой сервис. При получении события из CV-системы через POST /api/events, он: (1) создаёт запись Event в БД с привязкой к зоне/посту/камере; (2) находит или создаёт VehicleSession по plateNumber/trackId; (3) создаёт/завершает ZoneStay или PostStay в зависимости от типа события; (4) обновляет status поста (free -> occupied -> active_work -> occupied_no_work); (5) эмитит Socket.IO события: post:status_changed, event, zone:update, post:update. Все операции выполняются в одной Prisma-транзакции для атомарности.'
+          : 'EventProcessor (308 LOC) is the key service. On receiving an event from CV via POST /api/events, it: (1) creates an Event record in DB linked to zone/post/camera; (2) finds or creates VehicleSession by plateNumber/trackId; (3) creates/completes ZoneStay or PostStay based on event type; (4) updates post status (free -> occupied -> active_work -> occupied_no_work); (5) emits Socket.IO events: post:status_changed, event, zone:update, post:update. All operations run in a single Prisma transaction for atomicity.'
         }</P>
 
-        {/* Section 5 — API */}
-        <SectionTitle id="api">{isRu ? '5. Backend API (23 модуля, 70+ эндпоинтов)' : '5. Backend API (23 modules, 70+ endpoints)'}</SectionTitle>
+        <Sub>RecommendationEngine ({isRu ? 'детально' : 'detailed'})</Sub>
         <P>{isRu
-          ? 'Бэкенд реализован на Express 4 с 23 модулями маршрутов, организованными по доменным областям. Каждый модуль — отдельный файл в backend/src/routes/, экспортирующий Express Router. Все маршруты монтируются в index.js с префиксом /api/. Большинство эндпоинтов защищены JWT-аутентификацией, за исключением POST /api/events (для CV-системы) и POST /api/auth/login.'
-          : 'The backend is implemented on Express 4 with 23 route modules organized by domain areas. Each module is a separate file in backend/src/routes/, exporting an Express Router. All routes are mounted in index.js with /api/ prefix. Most endpoints are protected by JWT authentication, except POST /api/events (for CV system) and POST /api/auth/login.'
+          ? 'Движок рекомендаций периодически (каждые 30 секунд) сканирует состояние всех постов и генерирует 5 типов алертов:'
+          : 'The recommendation engine periodically (every 30 seconds) scans all post states and generates 5 alert types:'
         }</P>
         <Table
-          headers={[isRu ? 'Модуль' : 'Module', isRu ? 'Путь' : 'Path', isRu ? 'Ключевые операции' : 'Key Operations']}
+          headers={[isRu ? 'Тип' : 'Type', isRu ? 'Условие' : 'Condition', isRu ? 'Действие' : 'Action']}
           rows={[
-            ['auth', '/api/auth', 'login (rate limit 20/min/IP), refresh, logout, me, register'],
-            ['dashboard', '/api/dashboard', 'overview, metrics(?period=24h|7d|30d), trends, live'],
-            ['zones', '/api/zones', isRu ? 'CRUD с soft delete, типы: repair/waiting/entry/parking/free' : 'CRUD with soft delete, types: repair/waiting/entry/parking/free'],
-            ['posts', '/api/posts', isRu ? 'CRUD, статусы: free/occupied/occupied_no_work/active_work' : 'CRUD, statuses: free/occupied/occupied_no_work/active_work'],
-            ['cameras', '/api/cameras', isRu ? 'CRUD, health-проверка, маппинг зон с приоритетами' : 'CRUD, health check, zone mapping with priorities'],
-            ['events', '/api/events', isRu ? 'POST от CV (без auth!), GET с фильтрами по типу/зоне/посту/дате' : 'POST from CV (no auth!), GET with type/zone/post/date filters'],
-            ['sessions', '/api/sessions', isRu ? 'active/completed, включает ZoneStay/PostStay/Events' : 'active/completed, includes ZoneStay/PostStay/Events'],
-            ['workOrders', '/api/work-orders', isRu ? 'CSV-импорт, schedule (optimistic locking), start/pause/resume/complete' : 'CSV import, schedule (optimistic locking), start/pause/resume/complete'],
-            ['recommendations', '/api/recommendations', isRu ? 'GET активные, PUT acknowledge (подтвердить)' : 'GET active, PUT acknowledge'],
-            ['users', '/api/users', isRu ? 'CRUD, role assignment, pages[], hiddenElements[]' : 'CRUD, role assignment, pages[], hiddenElements[]'],
-            ['shifts', '/api/shifts', isRu ? 'CRUD, назначение работников, обнаружение конфликтов (смена + кросс-смена)' : 'CRUD, worker assignment, conflict detection (shift + cross-shift)'],
-            ['data1c', '/api/1c', isRu ? 'import XLSX, export XLSX, sync-history, planning/workers/stats' : 'import XLSX, export XLSX, sync-history, planning/workers/stats'],
-            ['mapLayout', '/api/map-layout', isRu ? 'CRUD с версионированием, restore к предыдущей версии' : 'CRUD with versioning, restore to previous version'],
-            ['auditLog', '/api/audit-log', isRu ? 'GET с фильтрами (user, action, entity, date), CSV export' : 'GET with filters (user, action, entity, date), CSV export'],
-            ['predict', '/api/predict', isRu ? 'load, load/week, duration, free, health (детерминированный seed для демо)' : 'load, load/week, duration, free, health (deterministic seed for demo)'],
-            ['postsData', '/api/posts-analytics, /api/dashboard-posts, /api/analytics-history', isRu ? 'Аналитика постов с агрегациями, дневными разбивками' : 'Post analytics with aggregations, daily breakdowns'],
-            ['workers', '/api/workers', isRu ? 'Список работников, stats с daily breakdown по заказ-нарядам' : 'Worker list, stats with daily breakdown by work orders'],
-            ['health', '/api/system-health', isRu ? 'Статус backend, database, cameras, disk (admin only)' : 'Backend, database, cameras, disk status (admin only)'],
-            ['push', '/api/push', isRu ? 'VAPID public key, subscribe endpoint, send уведомление' : 'VAPID public key, subscribe endpoint, send notification'],
-            ['photos', '/api/photos', isRu ? 'Upload base64, gallery по посту, delete' : 'Upload base64, gallery by post, delete'],
-            ['locations', '/api/locations', isRu ? 'CRUD локаций (мультитенантность)' : 'CRUD locations (multi-tenancy)'],
-            ['reportSchedule', '/api/report-schedules', isRu ? 'CRUD расписаний, run (генерация XLSX + отправка в Telegram)' : 'CRUD schedules, run (generate XLSX + send to Telegram)'],
+            ['post_free', isRu ? 'Пост свободен > 30 минут при наличии авто в очереди' : 'Post free > 30 min while vehicles are queued', isRu ? 'Рекомендация направить авто на свободный пост' : 'Recommend directing vehicle to free post'],
+            ['overtime', isRu ? 'Работа на посту > 120% нормативного времени' : 'Post work > 120% of norm time', isRu ? 'Предупреждение о превышении нормо-часов' : 'Warning about norm hours exceeded'],
+            ['idle', isRu ? 'Работник простаивает > 15 минут (пост occupied, но нет active_work)' : 'Worker idle > 15 min (post occupied, no active_work)', isRu ? 'Рекомендация проверить ситуацию на посту' : 'Recommend checking post situation'],
+            ['capacity', isRu ? 'Зона достигла максимальной загрузки' : 'Zone reached maximum capacity', isRu ? 'Предупреждение о перегрузке зоны' : 'Zone overload warning'],
+            ['no_show', isRu ? 'Запланированный автомобиль не прибыл в назначенное время' : 'Scheduled vehicle did not arrive at appointed time', isRu ? 'Рекомендация перераспределить пост' : 'Recommend reassigning post'],
           ]}
         />
-
-        <Sub>{isRu ? 'Аутентификация и авторизация' : 'Authentication & Authorization'}</Sub>
         <P>{isRu
-          ? 'Авторизация реализована через JWT с двумя токенами. Access token (срок жизни 24 часа) передаётся в заголовке Authorization: Bearer. Refresh token (7 дней) хранится в httpOnly cookie, недоступном из JavaScript, что защищает от XSS-атак. При истечении access token клиент автоматически обновляет его через POST /api/auth/refresh.'
-          : 'Authorization is implemented via JWT with two tokens. The access token (24h lifetime) is sent in the Authorization: Bearer header. The refresh token (7 days) is stored in an httpOnly cookie, inaccessible from JavaScript, protecting against XSS attacks. When the access token expires, the client automatically refreshes it via POST /api/auth/refresh.'
-        }</P>
-        <P>{isRu
-          ? 'Логин (POST /api/auth/login) защищён rate limiting: 20 попыток в минуту на IP. При успешном входе бэкенд возвращает access token, устанавливает refresh cookie, и включает полный объект пользователя с permissions, pages (доступные страницы) и hiddenElements (скрытые элементы UI). GET /api/auth/me возвращает текущего пользователя с полной информацией о роли и разрешениях.'
-          : 'Login (POST /api/auth/login) is protected by rate limiting: 20 attempts per minute per IP. On successful login, the backend returns an access token, sets a refresh cookie, and includes the full user object with permissions, pages (accessible pages) and hiddenElements (hidden UI elements). GET /api/auth/me returns the current user with full role and permission information.'
+          ? 'Каждая рекомендация создаётся с двуязычным текстом (message / messageEn) и статусом active. Рекомендации транслируются через Socket.IO (событие recommendation) и отображаются на Dashboard. Пользователь может подтвердить рекомендацию через PUT /api/recommendations/:id/acknowledge, после чего статус меняется на acknowledged.'
+          : 'Each recommendation is created with bilingual text (message / messageEn) and active status. Recommendations are broadcast via Socket.IO (recommendation event) and displayed on Dashboard. User can acknowledge via PUT /api/recommendations/:id/acknowledge, changing status to acknowledged.'
         }</P>
 
-        <Sub>{isRu ? 'Optimistic Locking (заказ-наряды)' : 'Optimistic Locking (Work Orders)'}</Sub>
+        <Sub>MonitoringProxy ({isRu ? 'детально' : 'detailed'})</Sub>
         <P>{isRu
-          ? 'POST /api/work-orders/schedule реализует batch-обновление расписания заказ-нарядов с оптимистичной блокировкой. Каждый заказ-наряд имеет поле version (целое число). Клиент отправляет массив обновлений, каждое с ожидаемой version. Бэкенд проверяет version каждого заказ-наряда в транзакции. При совпадении — обновляет и инкрементирует version. При несовпадении — добавляет в массив conflicts[] и возвращает HTTP 409. Клиент показывает ConflictModal с деталями конфликта и позволяет пользователю принять решение: перезаписать чужие изменения или обновить свои данные.'
-          : 'POST /api/work-orders/schedule implements batch schedule updates with optimistic locking. Each work order has a version field (integer). The client sends an array of updates, each with an expected version. The backend checks each work order\'s version in a transaction. On match — updates and increments version. On mismatch — adds to conflicts[] array and returns HTTP 409. The client shows ConflictModal with conflict details, allowing the user to decide: overwrite others\' changes or refresh their data.'
+          ? 'MonitoringProxy (340 строк) обеспечивает live-режим мониторинга. Каждые 10 секунд он опрашивает внешний CV API, получая текущее состояние зон и постов (номерные знаки, статусы, время пребывания). Данные маппятся на внутреннюю модель системы и доступны через эндпоинты /api/monitoring/*. В live-режиме Dashboard показывает реальные данные от CV вместо демо-данных. Переключение между demo и live режимами осуществляется через PUT /api/monitoring/settings.'
+          : 'MonitoringProxy (340 LOC) provides live monitoring mode. Every 10 seconds it polls an external CV API, getting current zone and post state (license plates, statuses, stay durations). Data is mapped to the internal system model and available via /api/monitoring/* endpoints. In live mode, Dashboard shows real CV data instead of demo data. Switching between demo and live modes is done via PUT /api/monitoring/settings.'
         }</P>
 
-        <Sub>{isRu ? 'Жизненный цикл заказ-наряда' : 'Work Order Lifecycle'}</Sub>
-        <P>{isRu
-          ? 'Заказ-наряд проходит через состояния: pending (создан/импортирован) -> scheduled (назначен на пост/время) -> in_progress (механик начал работу) -> paused (пауза, например обед) -> in_progress (возобновлён) -> completed (завершён). Каждый переход состояния фиксируется во времени. При паузе записывается pausedAt, при возобновлении totalPausedMs увеличивается на разницу. Это позволяет точно считать реальное рабочее время, исключая паузы.'
-          : 'A work order goes through states: pending (created/imported) -> scheduled (assigned to post/time) -> in_progress (mechanic started work) -> paused (break, e.g., lunch) -> in_progress (resumed) -> completed (finished). Each state transition is timestamped. On pause, pausedAt is recorded; on resume, totalPausedMs increases by the difference. This allows accurate real work time calculation, excluding pauses.'
-        }</P>
 
-        {/* Section 6 — Services */}
-        <SectionTitle id="services">{isRu ? '6. Backend Services (фоновые)' : '6. Backend Services (background)'}</SectionTitle>
-        <P>{isRu
-          ? 'Семь фоновых сервисов запускаются при старте бэкенда и работают параллельно с Express. Каждый сервис отвечает за свою область: обработка CV-событий, генерация рекомендаций, мониторинг камер, синхронизация с 1С, Telegram-бот, планировщик отчётов и утилиты экспорта.'
-          : 'Seven background services start with the backend and run in parallel with Express. Each service handles its domain: CV event processing, recommendation generation, camera monitoring, 1C sync, Telegram bot, report scheduler, and export utilities.'
-        }</P>
-        <Table
-          headers={[isRu ? 'Сервис' : 'Service', isRu ? 'Файл' : 'File', 'LOC', isRu ? 'Что делает' : 'What it does']}
-          rows={[
-            ['EventProcessor', 'eventProcessor.js', '308', isRu ? 'Обработка 8 типов CV-событий -> сессии, статусы постов, Socket.IO emit' : 'Processes 8 CV event types -> sessions, post statuses, Socket.IO emit'],
-            ['RecommendationEngine', 'recommendationEngine.js', '~200', isRu ? '5 проверок: post_free (>30м), overtime (>120%), idle (>15м), capacity, no_show' : '5 checks: post_free (>30m), overtime (>120%), idle (>15m), capacity, no_show'],
-            ['CameraHealthCheck', 'cameraHealthCheck.js', '~80', isRu ? 'Пинг камер каждые 30с, обновление статуса, Socket.IO emit' : 'Camera ping every 30s, status update, Socket.IO emit'],
-            ['Sync1C', 'sync1C.js', '~250', isRu ? 'File watcher /data/1c-import/, парсинг XLSX, дедупликация, JSON-генерация' : 'File watcher /data/1c-import/, XLSX parsing, deduplication, JSON generation'],
-            ['TelegramBot', 'telegramBot.js', '~150', isRu ? '5 команд: /start, /status, /post N, /free, /report' : '5 commands: /start, /status, /post N, /free, /report'],
-            ['ReportScheduler', 'reportScheduler.js', '~120', isRu ? 'node-cron каждую минуту, генерация XLSX, доставка через Telegram' : 'node-cron every minute, XLSX generation, Telegram delivery'],
-            ['ServerExport', 'serverExport.js', '~100', isRu ? 'Утилиты генерации XLSX на стороне сервера' : 'Server-side XLSX generation utilities'],
-          ]}
-        />
-
-        <Sub>EventProcessor</Sub>
-        <P>{isRu
-          ? 'EventProcessor (308 строк) — ключевой сервис, связывающий внешнюю CV-систему с внутренней логикой. Когда камера распознаёт номерной знак или движение автомобиля, CV-система отправляет POST /api/events. EventProcessor обрабатывает 8 типов событий: vehicle_enter (въезд на СТО), vehicle_exit (выезд), zone_enter/zone_exit (вход/выход из зоны), post_enter/post_exit (заезд/съезд с поста), work_start (начало работы), work_end (завершение).'
-          : 'EventProcessor (308 LOC) is the key service connecting the external CV system with internal logic. When a camera recognizes a license plate or vehicle movement, the CV system sends POST /api/events. EventProcessor handles 8 event types: vehicle_enter (STO entry), vehicle_exit (exit), zone_enter/zone_exit (zone entry/exit), post_enter/post_exit (post entry/exit), work_start (work begins), work_end (work complete).'
-        }</P>
-        <P>{isRu
-          ? 'При vehicle_enter создаётся VehicleSession с plateNumber и trackId. При zone_enter/zone_exit создаются/завершаются ZoneStay записи с расчётом duration. При post_enter обновляется статус поста на occupied, создаётся PostStay. При work_start статус меняется на active_work, а PostStay помечается как isActive=true, hasWorker=true. Все изменения статусов транслируются через Socket.IO в реальном времени.'
-          : 'On vehicle_enter, a VehicleSession is created with plateNumber and trackId. On zone_enter/zone_exit, ZoneStay records are created/completed with duration calculation. On post_enter, the post status updates to occupied and PostStay is created. On work_start, status changes to active_work, and PostStay is marked isActive=true, hasWorker=true. All status changes are broadcast via Socket.IO in real-time.'
-        }</P>
-
-        <Sub>RecommendationEngine</Sub>
-        <P>{isRu
-          ? 'Движок рекомендаций периодически сканирует состояние всех постов и генерирует 5 типов алертов: (1) post_free — пост свободен более 30 минут при наличии автомобилей в очереди, (2) overtime — работа на посту превышает 120% нормативного времени, (3) idle — работник простаивает более 15 минут (пост занят, но нет активной работы), (4) capacity — достигнута максимальная загрузка зоны, (5) no_show — запланированный автомобиль не прибыл в назначенное время. Каждая рекомендация содержит тексты на двух языках (message/messageEn) и может быть подтверждена (acknowledged) через API.'
-          : 'The recommendation engine periodically scans all post states and generates 5 alert types: (1) post_free — post free for over 30 minutes while vehicles are queued, (2) overtime — post work exceeds 120% of norm time, (3) idle — worker idle over 15 minutes (post occupied but no active work), (4) capacity — zone maximum capacity reached, (5) no_show — scheduled vehicle did not arrive at the appointed time. Each recommendation contains bilingual texts (message/messageEn) and can be acknowledged via API.'
-        }</P>
-
-        <Sub>Sync1C</Sub>
-        <P>{isRu
-          ? 'Сервис синхронизации с 1С работает в двух режимах: автоматический (file watcher отслеживает /data/1c-import/) и ручной (drag-n-drop XLSX через UI). Поддерживаются два типа данных: Planning (мастера, расписание, плановые работы) и Workers (заказ-наряды, нормо-часы, выработка). При импорте выполняется дедупликация по уникальным идентификаторам. Результат сохраняется в три JSON-файла (/data/1c-planning.json, /data/1c-workers.json, /data/1c-stats.json) и в БД через SyncLog.'
-          : 'The 1C sync service works in two modes: automatic (file watcher monitors /data/1c-import/) and manual (drag-n-drop XLSX via UI). Two data types are supported: Planning (masters, schedules, planned work) and Workers (work orders, norm-hours, production). Import performs deduplication by unique identifiers. Results are saved to three JSON files (/data/1c-planning.json, /data/1c-workers.json, /data/1c-stats.json) and to DB via SyncLog.'
-        }</P>
-
-        <Sub>TelegramBot</Sub>
-        <P>{isRu
-          ? 'Telegram-бот предоставляет 5 команд: /start (привязка Telegram аккаунта к пользователю системы через TelegramLink), /status (текущее состояние СТО — занятые/свободные посты, активные сессии), /post N (детальная информация о конкретном посте), /free (список свободных постов), /report (генерация и отправка XLSX-отчёта за текущий день). Бот также используется ReportScheduler для автоматической доставки отчётов по расписанию.'
-          : 'The Telegram bot provides 5 commands: /start (link Telegram account to system user via TelegramLink), /status (current STO state — occupied/free posts, active sessions), /post N (detailed info about specific post), /free (list of free posts), /report (generate and send XLSX report for current day). The bot is also used by ReportScheduler for automated scheduled report delivery.'
-        }</P>
-
+        {/* ============================================================ */}
         {/* Section 7 — Middleware */}
+        {/* ============================================================ */}
         <SectionTitle id="middleware">{isRu ? '7. Middleware' : '7. Middleware'}</SectionTitle>
         <P>{isRu
-          ? 'Express middleware обеспечивают безопасность, валидацию, аудит и обработку ошибок. Порядок глобальных middleware в Express pipeline критически важен и определяет последовательность обработки запроса.'
-          : 'Express middleware provides security, validation, auditing, and error handling. The order of global middleware in the Express pipeline is critical and determines the request processing sequence.'
+          ? 'Четыре middleware модуля обеспечивают авторизацию, аудит, валидацию и обработку ошибок для всех API-маршрутов.'
+          : 'Four middleware modules provide authorization, auditing, validation, and error handling for all API routes.'
         }</P>
-        <Table
-          headers={[isRu ? 'Файл' : 'File', isRu ? 'Назначение' : 'Purpose', isRu ? 'Детали' : 'Details']}
-          rows={[
-            ['auth.js', isRu ? 'JWT верификация и авторизация' : 'JWT verification and authorization', isRu ? 'Декодирует Bearer token, загружает пользователя из Prisma с ролями/permissions (кэшируется через authCache.js с TTL 15 мин), устанавливает req.user с полями pages, hiddenElements, permissions. requirePermission(...keys) проверяет наличие нужных разрешений.' : 'Decodes Bearer token, loads user from Prisma with roles/permissions (cached via authCache.js with 15min TTL), sets req.user with pages, hiddenElements, permissions fields. requirePermission(...keys) checks for required permissions.'],
-            ['auditLog.js', isRu ? 'Логирование мутаций' : 'Mutation logging', isRu ? 'Перехватывает ответы с кодом 2xx на мутирующие запросы (POST/PUT/PATCH/DELETE). Записывает action, entity, entityId, oldData, newData, userId, ip, userAgent в AuditLog.' : 'Intercepts 2xx responses on mutating requests (POST/PUT/PATCH/DELETE). Records action, entity, entityId, oldData, newData, userId, ip, userAgent to AuditLog.'],
-            ['validate.js', isRu ? 'Zod-валидация' : 'Zod validation', isRu ? 'Принимает Zod-схему, парсит request.body. При ошибке возвращает 400 с детальным описанием невалидных полей.' : 'Takes a Zod schema, parses request.body. On error returns 400 with detailed description of invalid fields.'],
-            ['asyncHandler.js', isRu ? 'Обёртка async + Prisma ошибки' : 'Async wrapper + Prisma errors', isRu ? 'Оборачивает async route handlers для ловли отклонённых промисов. Преобразует Prisma P2025 (Record not found) в HTTP 404.' : 'Wraps async route handlers to catch rejected promises. Converts Prisma P2025 (Record not found) to HTTP 404.'],
-          ]}
-        />
-        <Sub>{isRu ? 'Конфигурация (config/)' : 'Configuration (config/)'}</Sub>
-        <Table
-          headers={[isRu ? 'Файл' : 'File', isRu ? 'Назначение' : 'Purpose', isRu ? 'Детали' : 'Details']}
-          rows={[
-            ['logger.js', isRu ? 'Структурированное логирование (Winston)' : 'Structured logging (Winston)', isRu ? 'JSON-формат в production, colorize в dev. Ротация файлов: error.log (5MB x3), combined.log (10MB x5). Уровень настраивается через LOG_LEVEL.' : 'JSON format in production, colorize in dev. File rotation: error.log (5MB x3), combined.log (10MB x5). Level configurable via LOG_LEVEL.'],
-            ['authCache.js', isRu ? 'In-Memory кэш авторизации' : 'In-memory auth cache', isRu ? 'Map с TTL 15 мин. Кэширует результат 4-уровневого Prisma include (User→Roles→Permissions). Инвалидируется при update/delete пользователя.' : 'Map with 15min TTL. Caches result of 4-level Prisma include (User→Roles→Permissions). Invalidated on user update/delete.'],
-            ['socket.js', isRu ? 'Socket.IO инициализация' : 'Socket.IO initialization', isRu ? 'JWT auth middleware, подписки на каналы zone:/post:/all_events.' : 'JWT auth middleware, subscriptions to zone:/post:/all_events channels.'],
-            ['database.js', isRu ? 'Prisma клиент' : 'Prisma client', isRu ? 'Singleton PrismaClient с настройками логирования.' : 'Singleton PrismaClient with logging settings.'],
-          ]}
-        />
-        <Sub>{isRu ? 'Порядок глобальных Express middleware' : 'Global Express Middleware Order'}</Sub>
-        <P>{isRu
-          ? 'При каждом запросе middleware выполняются в следующем порядке: (1) helmet() — устанавливает заголовки безопасности (CSP, HSTS, X-Frame-Options), (2) cors(origin: true) — разрешает кросс-доменные запросы с любого origin, (3) morgan(\'dev\') — логирует HTTP-запросы в консоль, (4) express.json(limit: \'50mb\') — парсит JSON body с увеличенным лимитом для фото и XLSX, (5) cookieParser() — парсит cookies для refresh token.'
-          : 'On each request, middleware executes in this order: (1) helmet() — sets security headers (CSP, HSTS, X-Frame-Options), (2) cors(origin: true) — allows cross-origin requests from any origin, (3) morgan(\'dev\') — logs HTTP requests to console, (4) express.json(limit: \'50mb\') — parses JSON body with increased limit for photos and XLSX, (5) cookieParser() — parses cookies for refresh token.'
-        }</P>
-        <Code>{`1. helmet()                    // ${isRu ? 'Заголовки безопасности' : 'Security headers'}
-2. cors({ origin: true })      // ${isRu ? 'Кросс-доменные запросы' : 'Cross-origin requests'}
-3. morgan('dev')               // ${isRu ? 'HTTP логирование' : 'HTTP logging'}
-4. express.json({ limit:'50mb' }) // ${isRu ? 'Парсинг JSON (50MB для фото)' : 'JSON parsing (50MB for photos)'}
-5. cookieParser()              // ${isRu ? 'Парсинг cookies (refresh token)' : 'Cookie parsing (refresh token)'}`}</Code>
 
+        <Sub>auth.js -- {isRu ? 'JWT аутентификация' : 'JWT Authentication'}</Sub>
+        <P>{isRu
+          ? 'authenticate() -- основной middleware. Извлекает JWT из заголовка Authorization: Bearer <token>, верифицирует подпись (jwt.verify с JWT_SECRET), загружает пользователя из Prisma с ролью и разрешениями. Результат кешируется на 15 минут (authCache.js) чтобы избежать повторных запросов к БД при каждом API-вызове. При истечении или невалидном токене -- HTTP 401. requirePermission(...keys) -- обёртка вокруг authenticate(), дополнительно проверяет наличие всех указанных разрешений у пользователя. При отсутствии любого -- HTTP 403.'
+          : 'authenticate() -- main middleware. Extracts JWT from Authorization: Bearer <token> header, verifies signature (jwt.verify with JWT_SECRET), loads user from Prisma with role and permissions. Result is cached for 15 minutes (authCache.js) to avoid repeated DB queries on each API call. On expired or invalid token -- HTTP 401. requirePermission(...keys) -- wrapper around authenticate(), additionally checks that user has all specified permissions. If any missing -- HTTP 403.'
+        }</P>
+        <Code>{`// ${isRu ? 'Использование в маршрутах' : 'Usage in routes'}
+router.get('/api/users', authenticate, requirePermission('manage_users'), handler);
+router.post('/api/events', handler);  // ${isRu ? 'БЕЗ auth -- для CV-системы' : 'NO auth -- for CV system'}
+
+// ${isRu ? 'Кеширование: authCache (Map<token, { user, expires }>)' : 'Caching: authCache (Map<token, { user, expires }>)'}
+// TTL: 15 ${isRu ? 'минут. Сброс при logout или изменении пользователя' : 'minutes. Reset on logout or user change'}`}</Code>
+
+        <Sub>auditLog.js -- {isRu ? 'Аудит мутаций' : 'Mutation Audit'}</Sub>
+        <P>{isRu
+          ? 'Middleware перехватывает ответ (res.json) на мутирующих маршрутах (POST, PUT, DELETE). Сравнивает oldData (состояние до операции) с newData (после) и записывает AuditLog в БД: action (create/update/delete), entity (тип сущности: user, post, workOrder...), entityId, oldData (JSON), newData (JSON), userId, ip, userAgent. Индексируется по userId, action, entity, createdAt для быстрого поиска. Доступен через GET /api/audit-log с фильтрами и CSV-экспортом.'
+          : 'Middleware intercepts response (res.json) on mutating routes (POST, PUT, DELETE). Compares oldData (state before operation) with newData (after) and writes AuditLog to DB: action (create/update/delete), entity (entity type: user, post, workOrder...), entityId, oldData (JSON), newData (JSON), userId, ip, userAgent. Indexed by userId, action, entity, createdAt for fast lookups. Available via GET /api/audit-log with filters and CSV export.'
+        }</P>
+
+        <Sub>validate.js -- Zod {isRu ? 'валидация' : 'validation'}</Sub>
+        <P>{isRu
+          ? 'validate(schema) принимает Zod-схему и возвращает middleware, который валидирует req.body. При невалидных данных -- HTTP 400 с подробными ошибками (path, message для каждого поля). Zod 4.3 используется для строгой типизации на бэкенде: строки, числа, enum, optional, default, массивы. Пример: z.object({ email: z.string().email(), password: z.string().min(6) }).'
+          : 'validate(schema) takes a Zod schema and returns middleware that validates req.body. On invalid data -- HTTP 400 with detailed errors (path, message for each field). Zod 4.3 is used for strict backend typing: strings, numbers, enums, optional, defaults, arrays. Example: z.object({ email: z.string().email(), password: z.string().min(6) }).'
+        }</P>
+
+        <Sub>asyncHandler.js -- {isRu ? 'Обработка ошибок' : 'Error Handling'}</Sub>
+        <P>{isRu
+          ? 'asyncHandler(fn) оборачивает async route handlers в try/catch. Ловит все ошибки, включая Prisma-специфичные: P2025 (Record not found) автоматически конвертируется в HTTP 404 с понятным сообщением. Все остальные ошибки -- HTTP 500. Это устраняет необходимость писать try/catch в каждом handler и обеспечивает единообразную обработку ошибок.'
+          : 'asyncHandler(fn) wraps async route handlers in try/catch. Catches all errors, including Prisma-specific: P2025 (Record not found) is automatically converted to HTTP 404 with a clear message. All other errors become HTTP 500. This eliminates the need for try/catch in every handler and ensures uniform error handling.'
+        }</P>
+
+
+        {/* ============================================================ */}
         {/* Section 8 — Socket.IO */}
-        <SectionTitle id="socketio">8. Socket.IO</SectionTitle>
+        {/* ============================================================ */}
+        <SectionTitle id="socketio">{isRu ? '8. Socket.IO' : '8. Socket.IO'}</SectionTitle>
         <P>{isRu
-          ? 'Socket.IO обеспечивает двунаправленную real-time коммуникацию между сервером и клиентами. Подключение защищено JWT-аутентификацией: при connect клиент передаёт token, сервер верифицирует его и ассоциирует сокет с пользователем. Socket.IO интегрирован с обоими Express-серверами (HTTP :3001 и HTTPS :3444).'
-          : 'Socket.IO provides bidirectional real-time communication between server and clients. The connection is protected by JWT authentication: on connect, the client passes a token, the server verifies it and associates the socket with the user. Socket.IO is integrated with both Express servers (HTTP :3001 and HTTPS :3444).'
+          ? 'Socket.IO обеспечивает real-time коммуникацию между бэкендом и фронтендом. Подключение инициализируется на фронтенде через connectSocket(token) из useSocket hook. Токен передаётся как auth параметр для аутентификации подключения. Socket.IO настроен на обоих портах (HTTP :3001 и HTTPS :3444) и проксируется через Nginx (/socket.io/*).'
+          : 'Socket.IO provides real-time communication between backend and frontend. Connection is initialized on the frontend via connectSocket(token) from useSocket hook. Token is passed as auth parameter for connection authentication. Socket.IO is configured on both ports (HTTP :3001 and HTTPS :3444) and proxied via Nginx (/socket.io/*).'
         }</P>
-        <P>{isRu
-          ? 'Система использует room-based подписки для оптимизации трафика. Клиент может подписаться на конкретную зону (zone:{id}), пост (post:{id}), или на все события (all_events). Сервер отправляет события только в релевантные rooms, минимизируя нагрузку на сеть. Фронтенд использует хук useSubscribe для декларативной подписки с автоматической отпиской при unmount.'
-          : 'The system uses room-based subscriptions for traffic optimization. A client can subscribe to a specific zone (zone:{id}), post (post:{id}), or all events (all_events). The server sends events only to relevant rooms, minimizing network load. The frontend uses the useSubscribe hook for declarative subscription with automatic unsubscription on unmount.'
-        }</P>
-        <Sub>{isRu ? 'Подписки (клиент -> сервер)' : 'Subscriptions (client -> server)'}</Sub>
-        <P>{isRu
-          ? 'Клиент отправляет три типа подписок: subscribe:zone (подписка на обновления конкретной зоны), subscribe:post (подписка на конкретный пост), subscribe:all (подписка на все события, используется Dashboard и Events). При подписке сокет добавляется в соответствующий room.'
-          : 'The client sends three subscription types: subscribe:zone (subscribe to specific zone updates), subscribe:post (subscribe to specific post), subscribe:all (subscribe to all events, used by Dashboard and Events). On subscription, the socket is added to the corresponding room.'
-        }</P>
-        <Sub>{isRu ? 'События (сервер -> клиент)' : 'Events (server -> client)'}</Sub>
+
+        <Sub>{isRu ? 'Клиент -> Сервер' : 'Client -> Server'}</Sub>
         <Table
-          headers={[isRu ? 'Событие' : 'Event', isRu ? 'Данные' : 'Data', isRu ? 'Когда генерируется' : 'When emitted']}
+          headers={[isRu ? 'Событие' : 'Event', isRu ? 'Данные' : 'Data', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['post:status_changed', '{ postId, postNumber, status, plateNumber, workerName, timestamp }', isRu ? 'EventProcessor обновил статус поста' : 'EventProcessor updated post status'],
-            ['schedule:updated', '{ count }', isRu ? 'Расписание заказ-нарядов изменено' : 'Work order schedule modified'],
-            ['workOrder:started', '{ workOrderId, postNumber, startTime }', isRu ? 'Механик начал работу' : 'Mechanic started work'],
-            ['workOrder:completed', '{ workOrderId }', isRu ? 'Работа завершена' : 'Work completed'],
-            ['camera:status', '{ camId, online, lastCheck }', isRu ? 'CameraHealthCheck обновил статус камеры' : 'CameraHealthCheck updated camera status'],
-            ['recommendation', 'Recommendation object', isRu ? 'RecommendationEngine создал новую рекомендацию' : 'RecommendationEngine created new recommendation'],
-            ['event', 'Event object', isRu ? 'Новое CV-событие (в room all_events)' : 'New CV event (to room all_events)'],
-            ['zone:update', '{ zoneId, ...data }', isRu ? 'Обновление данных зоны' : 'Zone data update'],
-            ['post:update', '{ postId, ...data }', isRu ? 'Обновление данных поста' : 'Post data update'],
-            ['settings:changed', '{ type, ...data }', isRu ? 'Изменение настроек (тема, смена и т.д.)' : 'Settings change (theme, shift, etc.)'],
+            ['subscribe:zone', '{ zoneId }', isRu ? 'Подписка на обновления конкретной зоны (MapViewer, Dashboard)' : 'Subscribe to specific zone updates (MapViewer, Dashboard)'],
+            ['subscribe:post', '{ postId }', isRu ? 'Подписка на обновления конкретного поста (MyPost, PostsDetail)' : 'Subscribe to specific post updates (MyPost, PostsDetail)'],
+            ['subscribe:all', isRu ? 'Нет данных' : 'No data', isRu ? 'Подписка на все обновления (Dashboard, DashboardPosts)' : 'Subscribe to all updates (Dashboard, DashboardPosts)'],
           ]}
         />
 
-        {/* Section 9 — Pages */}
-        <SectionTitle id="pages">{isRu ? '9. Frontend — Страницы (20)' : '9. Frontend — Pages (20)'}</SectionTitle>
-        <P>{isRu
-          ? 'Все 20 страниц загружаются через React.lazy() с Suspense, что минимизирует размер начального бандла. Маршрутизация реализована на HashRouter (React Router v7) — выбран hash-routing вместо browser history для совместимости с Nginx SPA fallback без дополнительной конфигурации. Каждая страница обёрнута в ProtectedRoute, проверяющий наличие JWT-токена и доступа к странице (user.pages).'
-          : 'All 20 pages are loaded via React.lazy() with Suspense, minimizing initial bundle size. Routing is implemented with HashRouter (React Router v7) — hash routing was chosen over browser history for compatibility with Nginx SPA fallback without additional configuration. Each page is wrapped in ProtectedRoute, which checks for JWT token and page access (user.pages).'
-        }</P>
+        <Sub>{isRu ? 'Сервер -> Клиент' : 'Server -> Client'}</Sub>
         <Table
-          headers={[isRu ? 'Страница' : 'Page', isRu ? 'Маршрут' : 'Route', 'LOC', isRu ? 'Назначение' : 'Purpose']}
+          headers={[isRu ? 'Событие' : 'Event', isRu ? 'Данные' : 'Data', isRu ? 'Источник' : 'Source', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['Dashboard', '/', '~300', isRu ? 'KPI-карточки (загрузка, завершённые, среднее время), LiveSTOWidget, PredictionWidget, рекомендации, события. Polling 5с.' : 'KPI cards (load, completed, avg time), LiveSTOWidget, PredictionWidget, recommendations, events. 5s polling.'],
-            ['DashboardPosts', '/dashboard-posts', '521', isRu ? 'Gantt-таймлайн ЗН с drag-n-drop, индикатор текущей смены, conflict detection, optimistic locking (version), ConflictModal, ShiftSettings.' : 'Gantt timeline with drag-n-drop, current shift indicator, conflict detection, optimistic locking (version), ConflictModal, ShiftSettings.'],
-            ['PostsDetail', '/posts-detail', '226', isRu ? 'Master-detail layout: список постов (карточки/таблица) + детальная панель с 9 секциями (timeline, summary, work orders, workers, alerts, event log, statistics, cameras, calendar). Все секции collapsible.' : 'Master-detail layout: post list (cards/table) + detail panel with 9 collapsible sections (timeline, summary, work orders, workers, alerts, event log, statistics, cameras, calendar).'],
-            ['MapViewer', '/map-view', '~400', isRu ? 'Konva live-карта СТО с реальными позициями автомобилей, статусами постов, камерами. Обновляется через polling/Socket.IO.' : 'Konva live STO map with real vehicle positions, post statuses, cameras. Updated via polling/Socket.IO.'],
-            ['MapEditor', '/map-editor', '1244', isRu ? 'Drag-drop редактор карты. 8 типов элементов: building, post, zone, camera, door, wall, label, infozone. Snap-to-grid 10px. Версионирование в БД с restore.' : 'Drag-drop map editor. 8 element types: building, post, zone, camera, door, wall, label, infozone. Snap-to-grid 10px. DB versioning with restore.'],
-            ['Sessions', '/sessions', '~350', isRu ? 'Активные/завершённые сессии авто. QR-коды для идентификации. Привязка заказ-нарядов. Детали: ZoneStay, PostStay, Events.' : 'Active/completed vehicle sessions. QR codes for identification. Work order linking. Details: ZoneStay, PostStay, Events.'],
-            ['WorkOrders', '/work-orders', '~200', isRu ? 'Список заказ-нарядов с фильтрами по статусу. CSV-импорт. Кнопки start/pause/resume/complete для управления жизненным циклом.' : 'Work order list with status filters. CSV import. Start/pause/resume/complete buttons for lifecycle management.'],
-            ['Events', '/events', '~400', isRu ? '10 типов событий с фильтрами: group, type, zone, post, date range. Auto-refresh, пагинация. Цветовое кодирование по типу.' : '10 event types with filters: group, type, zone, post, date range. Auto-refresh, pagination. Color coding by type.'],
-            ['Analytics', '/analytics', '655', isRu ? '6 типов графиков Recharts + тепловые карты + таблица сравнения + детали по постам. Экспорт: XLSX (4 листа), PDF (A4 landscape), PNG.' : '6 Recharts chart types + heatmaps + comparison table + post detail. Export: XLSX (4 sheets), PDF (A4 landscape), PNG.'],
-            ['Data1C', '/data-1c', '926', isRu ? 'Drag-n-drop импорт XLSX, 3 вкладки (Planning, Workers, Stats), sync log, экспорт XLSX с фильтрами.' : 'Drag-n-drop XLSX import, 3 tabs (Planning, Workers, Stats), sync log, XLSX export with filters.'],
-            ['Cameras', '/cameras', '~250', isRu ? '10 камер: вид по зонам + общий вид. HLS-стримы через CameraStreamModal. Статус online/offline.' : '10 cameras: zone view + all view. HLS streams via CameraStreamModal. Online/offline status.'],
-            ['CameraMapping', '/camera-mapping', '312', isRu ? 'Маппинг камер на зоны с приоритетами (0-10). Drag-n-drop назначение. Сохранение через API.' : 'Camera to zone mapping with priorities (0-10). Drag-n-drop assignment. API persistence.'],
-            ['Users', '/users', '~300', isRu ? 'CRUD пользователей. Назначение ролей. Выбор доступных страниц (pages[]). Настройка видимости элементов (hiddenElements[]).' : 'User CRUD. Role assignment. Page access selection (pages[]). Element visibility settings (hiddenElements[]).'],
-            ['Shifts', '/shifts', '~400', isRu ? 'Недельный календарь смен. Назначение работников на посты. Обнаружение конфликтов (один работник на двух постах, пересечение смен). Акты приёма-передачи.' : 'Weekly shift calendar. Worker assignment to posts. Conflict detection (worker on two posts, shift overlap). Handover acts.'],
-            ['Audit', '/audit', '~300', isRu ? 'Аудит-лог всех мутаций (admin only). Фильтры: user, action, entity, date. CSV-экспорт. Показ old/new data.' : 'Audit log of all mutations (admin only). Filters: user, action, entity, date. CSV export. Old/new data display.'],
-            ['MyPost', '/my-post', '~200', isRu ? 'Личная страница механика. Текущий ЗН, таймер работы, кнопки play/pause/complete. Индикатор warningLevel.' : 'Mechanic personal page. Current WO, work timer, play/pause/complete buttons. WarningLevel indicator.'],
-            ['Health', '/health', '~200', isRu ? 'Системный статус (admin only): backend uptime, database size/status, камеры online/offline, disk usage.' : 'System status (admin only): backend uptime, database size/status, cameras online/offline, disk usage.'],
-            ['WorkerStats', '/worker-stats/:name', '~300', isRu ? 'Аналитика по конкретному работнику: графики выработки, заказ-наряды, среднее время, эффективность.' : 'Per-worker analytics: production charts, work orders, average time, efficiency.'],
-            ['ReportSchedule', '/report-schedule', '~250', isRu ? 'CRUD расписаний автоотчётов. Cron-выражения. Доставка XLSX через Telegram. Кнопка "запустить сейчас".' : 'Auto-report schedule CRUD. Cron expressions. XLSX delivery via Telegram. "Run now" button.'],
-            ['Login', '/login', '~150', isRu ? 'Форма логина (email + пароль). Rate limiting 20/мин. Mock login при недоступности backend.' : 'Login form (email + password). Rate limiting 20/min. Mock login when backend unavailable.'],
+            ['post:status_changed', '{ postId, status, plateNumber?, workOrderId? }', 'EventProcessor', isRu ? 'Изменение статуса поста (free/occupied/occupied_no_work/active_work)' : 'Post status change (free/occupied/occupied_no_work/active_work)'],
+            ['post:update', '{ post }', 'EventProcessor', isRu ? 'Полное обновление данных поста' : 'Full post data update'],
+            ['zone:update', '{ zone }', 'EventProcessor', isRu ? 'Обновление данных зоны (количество авто, статус)' : 'Zone data update (vehicle count, status)'],
+            ['event', '{ event }', 'EventProcessor', isRu ? 'Новое CV-событие (для журнала Events)' : 'New CV event (for Events log)'],
+            ['schedule:updated', '{ workOrders }', 'workOrders route', isRu ? 'Обновление расписания ЗН (DashboardPosts Gantt)' : 'WO schedule update (DashboardPosts Gantt)'],
+            ['workOrder:started', '{ workOrder }', 'workOrders route', isRu ? 'Механик начал работу над ЗН' : 'Mechanic started WO work'],
+            ['workOrder:completed', '{ workOrder }', 'workOrders route', isRu ? 'ЗН завершён' : 'WO completed'],
+            ['camera:status', '{ cameraId, online, lastCheck }', 'CameraHealthCheck', isRu ? 'Изменение статуса камеры (online/offline)' : 'Camera status change (online/offline)'],
+            ['recommendation', '{ recommendation }', 'RecommendationEngine', isRu ? 'Новая AI-рекомендация' : 'New AI recommendation'],
+            ['settings:changed', '{ settings }', 'settings route', isRu ? 'Изменение системных настроек (demo/live mode)' : 'System settings change (demo/live mode)'],
           ]}
         />
 
-        <Sub>{isRu ? 'Dashboard — подробнее' : 'Dashboard — Details'}</Sub>
-        <P>{isRu
-          ? 'Главная страница отображает 5 виджетов (каждый можно скрыть для конкретного пользователя через element visibility): KPI-карточки (загрузка СТО, завершённые ЗН, среднее время обслуживания с DeltaBadge), LiveSTOWidget (мини-карта с текущими статусами постов), PredictionWidget (AI-прогнозы загрузки из /api/predict), список активных рекомендаций, и лента последних событий. Данные обновляются через usePolling с интервалом 5 секунд.'
-          : 'The main page displays 5 widgets (each can be hidden per user via element visibility): KPI cards (STO load, completed WOs, average service time with DeltaBadge), LiveSTOWidget (mini map with current post statuses), PredictionWidget (AI load predictions from /api/predict), active recommendations list, and recent events feed. Data updates via usePolling with 5-second interval.'
-        }</P>
+        <Sub>{isRu ? 'Конфигурация подключения' : 'Connection Configuration'}</Sub>
+        <Code>{`// ${isRu ? 'Фронтенд: подключение' : 'Frontend: connection'}
+import { io } from 'socket.io-client';
+const socket = io(API_BASE_URL, {
+  auth: { token: jwtToken },
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: Infinity,
+});
 
-        <Sub>{isRu ? 'DashboardPosts — Gantt-таймлайн' : 'DashboardPosts — Gantt Timeline'}</Sub>
-        <P>{isRu
-          ? 'Страница планирования отображает заказ-наряды в виде Gantt-таймлайна по постам. Пользователь может перетаскивать заказ-наряды между постами и во времени (drag-n-drop). При сохранении используется optimistic locking: если другой пользователь уже изменил расписание (version mismatch), показывается ConflictModal с деталями конфликта. Индикатор текущей смены отображает активную смену и назначенных работников. Свободные заказ-наряды отображаются в отдельной таблице FreeWorkOrdersTable.'
-          : 'The planning page displays work orders as a Gantt timeline by posts. Users can drag work orders between posts and in time (drag-n-drop). Saving uses optimistic locking: if another user already changed the schedule (version mismatch), ConflictModal shows conflict details. The current shift indicator displays the active shift and assigned workers. Free work orders are shown in a separate FreeWorkOrdersTable.'
-        }</P>
+// ${isRu ? 'Бэкенд: настройка (config/socket.js)' : 'Backend: setup (config/socket.js)'}
+const io = new Server(httpServer, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  path: '/socket.io/',
+});
+// ${isRu ? 'Тот же Socket.IO attach на HTTPS :3444' : 'Same Socket.IO attach on HTTPS :3444'}`}</Code>
 
-        <Sub>{isRu ? 'Analytics — экспорт данных' : 'Analytics — Data Export'}</Sub>
-        <P>{isRu
-          ? 'Страница аналитики предлагает 6 типов графиков: тренды загрузки (LineChart), рейтинг постов (BarChart), план-факт (AreaChart), распределение по зонам (PieChart), тепловая карта по дням/часам (WeeklyHeatmap), и детали по посту. Поддерживается экспорт в три формата: XLSX (4 листа: сводка, посты, дневные данные, детали), PDF (A4 landscape, многостраничный через чанки), PNG (скриншот конкретного графика через html2canvas).'
-          : 'The analytics page offers 6 chart types: load trends (LineChart), post ranking (BarChart), plan vs actual (AreaChart), zone distribution (PieChart), day/hour heatmap (WeeklyHeatmap), and per-post details. Export is supported in three formats: XLSX (4 sheets: summary, posts, daily data, details), PDF (A4 landscape, multi-page via chunks), PNG (screenshot of specific chart via html2canvas).'
-        }</P>
 
-        {/* Section 10 — Components */}
-        <SectionTitle id="components">{isRu ? '10. Frontend — Компоненты (17+)' : '10. Frontend — Components (17+)'}</SectionTitle>
+        {/* ============================================================ */}
+        {/* Section 9 — Frontend Pages */}
+        {/* ============================================================ */}
+        <SectionTitle id="pages">{isRu ? '9. Frontend -- Страницы (22)' : '9. Frontend -- Pages (22)'}</SectionTitle>
         <P>{isRu
-          ? 'Компоненты организованы в трёх уровнях: корневые общие компоненты (Layout, Sidebar, HelpButton и т.д.), доменные подпапки (dashboardPosts/ — 8 файлов для Gantt-таймлайна, postsDetail/ — 4 файла для master-detail), и виджеты (LiveSTOWidget, PredictionWidget, SparkLine и т.д.). Все компоненты используют CSS-переменные для поддержки тёмной/светлой темы и Lucide React для иконок.'
-          : 'Components are organized in three levels: root shared components (Layout, Sidebar, HelpButton, etc.), domain subfolders (dashboardPosts/ — 8 files for Gantt timeline, postsDetail/ — 4 files for master-detail), and widgets (LiveSTOWidget, PredictionWidget, SparkLine, etc.). All components use CSS variables for dark/light theme support and Lucide React for icons.'
+          ? 'Все 22 страницы загружаются лениво через React.lazy() и Suspense. Каждая страница -- отдельный файл в frontend/src/pages/. Маршрутизация через HashRouter (React Router v7). Доступ к страницам определяется массивом user.pages[] и проверяется через ProtectedRoute.'
+          : 'All 22 pages are lazy-loaded via React.lazy() and Suspense. Each page is a separate file in frontend/src/pages/. Routing via HashRouter (React Router v7). Page access is determined by user.pages[] array and checked via ProtectedRoute.'
         }</P>
         <Table
-          headers={[isRu ? 'Компонент' : 'Component', isRu ? 'Назначение' : 'Purpose', isRu ? 'Ключевые возможности' : 'Key Features']}
+          headers={[isRu ? 'Страница' : 'Page', isRu ? 'Файл' : 'File', 'LOC', isRu ? 'Маршрут' : 'Route', isRu ? 'Описание' : 'Description', isRu ? 'Источники данных' : 'Data Sources']}
           rows={[
-            ['Layout', isRu ? 'Каркас приложения' : 'App shell', isRu ? 'Header (язык, тема, уведомления, пользователь) + Sidebar + Outlet для страниц' : 'Header (language, theme, notifications, user) + Sidebar + Outlet for pages'],
-            ['Sidebar', isRu ? 'Боковая навигация' : 'Side navigation', isRu ? 'Фильтрация по user.pages (admin видит всё), иконки Lucide, активный маршрут' : 'Filtered by user.pages (admin sees all), Lucide icons, active route'],
-            ['HelpButton', isRu ? 'Контекстная справка' : 'Context help', isRu ? 'Кнопка "?" с модалкой, текст зависит от текущей страницы (pageKey)' : '"?" button with modal, text depends on current page (pageKey)'],
-            ['DateRangePicker', isRu ? 'Выбор диапазона дат' : 'Date range picker', isRu ? 'Компактный picker с пресетами (24ч, 7д, 30д, произвольный)' : 'Compact picker with presets (24h, 7d, 30d, custom)'],
-            ['DeltaBadge', isRu ? 'Бейдж изменения' : 'Change badge', isRu ? 'Стрелка вверх/вниз + процент изменения, цвет: зелёный (рост), красный (падение)' : 'Up/down arrow + change percentage, color: green (growth), red (decline)'],
-            ['PostTimer', isRu ? 'Таймер заказ-наряда' : 'WO timer', isRu ? 'Реальное время работы, warning levels: none, warning (80%), critical (95%), overtime (100%+)' : 'Real work time, warning levels: none, warning (80%), critical (95%), overtime (100%+)'],
-            ['QRBadge', isRu ? 'QR-код сессии' : 'Session QR code', isRu ? 'Генерация QR-кода с номером сессии для быстрой идентификации автомобиля' : 'QR code generation with session number for quick vehicle identification'],
-            ['LiveSTOWidget', isRu ? 'Виджет живого состояния' : 'Live state widget', isRu ? 'Мини-карта с цветовой индикацией статусов постов в реальном времени' : 'Mini map with color-coded post statuses in real-time'],
-            ['PredictionWidget', isRu ? 'ML-предсказания' : 'ML predictions', isRu ? 'Прогноз загрузки (данные из /api/predict, детерминированный seed для демо)' : 'Load prediction (data from /api/predict, deterministic seed for demo)'],
-            ['SparkLine', isRu ? 'Мини-график тренда' : 'Mini trend chart', isRu ? 'Компактный LineChart (Recharts) для KPI-карточек, без осей' : 'Compact LineChart (Recharts) for KPI cards, no axes'],
-            ['WeeklyHeatmap', isRu ? 'Тепловая карта 7 дней' : '7-day heatmap', isRu ? 'Матрица дни x часы с цветовой интенсивностью по загрузке' : 'Days x hours matrix with color intensity by load'],
-            ['PhotoGallery', isRu ? 'Галерея фото' : 'Photo gallery', isRu ? 'Превью + полноэкранный просмотр с zoom, загрузка через /api/photos' : 'Preview + fullscreen view with zoom, loaded via /api/photos'],
-            ['CameraStreamModal', isRu ? 'Модалка HLS-стрима' : 'HLS stream modal', isRu ? 'Полноэкранный HLS-стрим камеры через HLS.js' : 'Fullscreen camera HLS stream via HLS.js'],
-            ['LocationSwitcher', isRu ? 'Переключатель локаций' : 'Location switcher', isRu ? 'Dropdown для выбора активной локации (мультитенантность)' : 'Dropdown for selecting active location (multi-tenancy)'],
-            ['NotificationCenter', isRu ? 'Центр уведомлений' : 'Notification center', isRu ? 'Bell icon + dropdown с последними уведомлениями и рекомендациями' : 'Bell icon + dropdown with recent notifications and recommendations'],
-            ['Skeleton', isRu ? 'Placeholder загрузки' : 'Loading placeholder', isRu ? 'Анимированные placeholder блоки пока данные загружаются' : 'Animated placeholder blocks while data loads'],
-            ['STOMap', isRu ? 'Карта СТО (Konva)' : 'STO Map (Konva)', isRu ? 'Konva canvas с зонами, постами, камерами для MapViewer' : 'Konva canvas with zones, posts, cameras for MapViewer'],
-            ['ErrorBoundary', isRu ? 'Обработчик ошибок React' : 'React error boundary', isRu ? 'Ловит ошибки рендера в дочерних компонентах, показывает fallback UI с кнопкой «Повторить»' : 'Catches render errors in child components, shows fallback UI with Retry button'],
-            ['Pagination', isRu ? 'Универсальная пагинация' : 'Universal pagination', isRu ? 'Поддерживает compact/full режимы, perPage селектор, ellipsis, клиентскую и серверную пагинацию. Используется в 7 страницах.' : 'Supports compact/full modes, perPage selector, ellipsis, client and server-side pagination. Used in 7 pages.'],
+            ['Dashboard', 'Dashboard.jsx', '~400', '/', isRu ? 'KPI-карточки (загрузка, throughput, среднее время), рекомендации, последние события, live-виджет СТО, предсказания' : 'KPI cards (utilization, throughput, avg time), recommendations, recent events, live STO widget, predictions', '/api/dashboard/*, /api/recommendations, Socket.IO polling 5s'],
+            ['DashboardPosts', 'DashboardPosts.jsx', '521', '/dashboard-posts', isRu ? 'Gantt-таймлайн ЗН на 10 постах, drag-n-drop перемещение блоков, детекция конфликтов, оптимистичная блокировка, свободные ЗН, настройки смен' : 'Gantt timeline for 10 posts, drag-n-drop block movement, conflict detection, optimistic locking, free WOs, shift settings', '/api/dashboard-posts, /api/work-orders/schedule, Socket.IO schedule:updated'],
+            ['PostsDetail', 'PostsDetail.jsx', '226', '/posts-detail', isRu ? 'Master-detail аналитика по постам: список постов (карточки/таблица), детальная панель с 11 виджетами (таймлайн, работники, события, статистика, ЗН, камеры, календарь)' : 'Master-detail post analytics: post list (cards/table), detail panel with 11 widgets (timeline, workers, events, statistics, WOs, cameras, calendar)', '/api/posts-analytics, /api/posts'],
+            ['MapViewer', 'MapViewer.jsx', '~300', '/map-view', isRu ? 'Konva live-карта с постами (цвет по статусу), камерами, зонами. Клик по элементу показывает popup с деталями' : 'Konva live map with posts (color by status), cameras, zones. Click on element shows detail popup', '/api/map-layout, /api/posts, Socket.IO post:status_changed'],
+            ['MapEditor', 'MapEditor.jsx', '1244', '/map-editor', isRu ? 'Полнофункциональный drag-drop редактор: 8 типов элементов, snap-to-grid 10px, resize, rotate, delete, версионирование, undo/redo' : 'Full-featured drag-drop editor: 8 element types, snap-to-grid 10px, resize, rotate, delete, versioning, undo/redo', '/api/map-layout, /api/map-layout/versions'],
+            ['Sessions', 'Sessions.jsx', '~250', '/sessions', isRu ? 'Активные и завершённые сессии, QR-код по номеру авто, фильтры по дате/номеру, привязка к ЗН' : 'Active and completed sessions, QR code by plate number, date/plate filters, WO binding', '/api/sessions/active, /api/sessions/completed'],
+            ['WorkOrders', 'WorkOrders.jsx', '~350', '/work-orders', isRu ? 'Список ЗН с фильтрами, CSV-импорт, создание/редактирование, start/pause/resume/complete, таймеры' : 'WO list with filters, CSV import, create/edit, start/pause/resume/complete, timers', '/api/work-orders'],
+            ['Events', 'Events.jsx', '~300', '/events', isRu ? 'Журнал CV-событий: 10 типов, фильтры (тип, зона, пост, период), автообновление 5с, пагинация' : 'CV event log: 10 types, filters (type, zone, post, period), auto-refresh 5s, pagination', '/api/events'],
+            ['Analytics', 'Analytics.jsx', '655', '/analytics', isRu ? 'Grafики Recharts: тренды, рейтинги, план/факт, heatmaps. Экспорт: XLSX (4 листа), PDF, PNG. Фильтры по периоду и постам' : 'Recharts charts: trends, rankings, plan/fact, heatmaps. Export: XLSX (4 sheets), PDF, PNG. Period and post filters', '/api/analytics-history, /api/posts-analytics'],
+            ['Data1C', 'Data1C.jsx', '926', '/data-1c', isRu ? 'Импорт XLSX из 1С (drag-drop), просмотр планирования/выработки/статистики, экспорт XLSX, история синхронизации' : '1C XLSX import (drag-drop), view planning/production/stats, XLSX export, sync history', '/api/1c/*'],
+            ['Cameras', 'Cameras.jsx', '~250', '/cameras', isRu ? '10 камер, вид по зонам и общий, HLS-стримы через CameraStreamModal, зоны покрытия, статус online/offline' : '10 cameras, zone and all views, HLS streams via CameraStreamModal, coverage zones, online/offline status', '/api/cameras, Socket.IO camera:status'],
+            ['CameraMapping', 'CameraMapping.jsx', '312', '/camera-mapping', isRu ? 'Маппинг камера->зона с приоритетами (0-10), visual matrix, drag-n-drop приоритеты' : 'Camera->zone mapping with priorities (0-10), visual matrix, drag-n-drop priorities', '/api/cameras/*/zones'],
+            ['Users', 'Users.jsx', '~300', '/users', isRu ? 'CRUD пользователей: создание, редактирование, role assignment, настройка pages[], настройка hiddenElements[], активация/деактивация' : 'User CRUD: create, edit, role assignment, pages[] config, hiddenElements[] config, activation/deactivation', '/api/users'],
+            ['Shifts', 'Shifts.jsx', '~250', '/shifts', isRu ? 'Недельное расписание смен: создание, назначение работников на посты, обнаружение конфликтов (перекрытие смен), завершение' : 'Weekly shift schedule: create, assign workers to posts, conflict detection (shift overlap), completion', '/api/shifts'],
+            ['Audit', 'Audit.jsx', '~200', '/audit', isRu ? 'Аудит-лог: все мутации (create/update/delete) с old/new data, фильтры по пользователю/действию/сущности/дате, CSV-экспорт' : 'Audit log: all mutations (create/update/delete) with old/new data, filters by user/action/entity/date, CSV export', '/api/audit-log'],
+            ['MyPost', 'MyPost.jsx', '~200', '/my-post', isRu ? 'Интерфейс механика: текущий ЗН на посту, таймер (play/pause/complete), история работ, информация о посту' : 'Mechanic interface: current WO at post, timer (play/pause/complete), work history, post info', '/api/work-orders, /api/posts'],
+            ['Health', 'Health.jsx', '~150', '/health', isRu ? 'Системный мониторинг (admin only): статус backend, database, cameras, disk usage, uptime, memory' : 'System monitoring (admin only): backend, database, cameras, disk usage, uptime, memory status', '/api/system-health'],
+            ['WorkerStats', 'WorkerStats.jsx', '~200', '/worker-stats', isRu ? 'Аналитика по конкретному работнику: daily breakdown по ЗН, графики производительности, сравнение с нормой' : 'Per-worker analytics: daily WO breakdown, performance charts, comparison with norm', '/api/workers/*/stats'],
+            ['ReportSchedule', 'ReportSchedule.jsx', '~200', '/report-schedule', isRu ? 'Расписание автоотчётов: CRUD, cron-выражения, тип отчёта, фильтры, Telegram-доставка, ручной запуск' : 'Auto-report schedule: CRUD, cron expressions, report type, filters, Telegram delivery, manual run', '/api/report-schedules'],
+            ['Login', 'Login.jsx', '~150', '/login', isRu ? 'Страница авторизации: email + password, ошибки валидации, перенаправление на Dashboard после входа' : 'Auth page: email + password, validation errors, redirect to Dashboard after login', '/api/auth/login'],
+            ['LiveDebug', 'LiveDebug.jsx', '~150', '/live-debug', isRu ? 'Отладка live-режима: состояние MonitoringProxy, ответы от внешнего CV API, маппинг статусов, таймстемпы' : 'Live mode debug: MonitoringProxy state, external CV API responses, status mapping, timestamps', '/api/monitoring/*'],
+            ['TechDocs', 'TechDocs.jsx', '~3000+', '/tech-docs', isRu ? 'Техническая документация: 26 секций, TOC sidebar, поиск, PDF-экспорт, печать, скролл-трекинг' : 'Technical documentation: 26 sections, TOC sidebar, search, PDF export, print, scroll tracking', isRu ? 'Нет API (статический контент)' : 'No API (static content)'],
           ]}
         />
 
-        <Sub>dashboardPosts/</Sub>
+
+        {/* ============================================================ */}
+        {/* Section 10 — Frontend Components */}
+        {/* ============================================================ */}
+        <SectionTitle id="components">{isRu ? '10. Frontend -- Компоненты (32)' : '10. Frontend -- Components (32)'}</SectionTitle>
         <P>{isRu
-          ? '8 компонентов для страницы планирования: GanttTimeline (основной Gantt-таймлайн с постами по вертикали и временем по горизонтали), TimelineRow (строка одного поста с заказ-нарядами), TimelineHeader (шкала времени с часовыми делениями), FreeWorkOrdersTable (таблица нераспределённых ЗН), WorkOrderModal (модалка создания/редактирования ЗН), ShiftSettings (настройки текущей смены), ConflictModal (модалка при конфликте версий), Legend (легенда цветов и статусов).'
-          : '8 components for the planning page: GanttTimeline (main Gantt timeline with posts vertically and time horizontally), TimelineRow (single post row with work orders), TimelineHeader (time scale with hourly divisions), FreeWorkOrdersTable (unassigned WO table), WorkOrderModal (WO create/edit modal), ShiftSettings (current shift settings), ConflictModal (version conflict modal), Legend (color and status legend).'
+          ? '32 компонента разделены на три группы: 19 общих компонентов в components/, 9 файлов в dashboardPosts/ (специфичны для Gantt-таймлайна), и 4 файла в postsDetail/ (специфичны для аналитики постов).'
+          : '32 components are split into three groups: 19 shared components in components/, 9 files in dashboardPosts/ (specific to Gantt timeline), and 4 files in postsDetail/ (specific to post analytics).'
         }</P>
 
-        <Sub>postsDetail/</Sub>
-        <P>{isRu
-          ? '4 компонента для страницы аналитики постов: PostCardsView (карточный вид списка постов с мини-статистикой), PostTableView (табличный вид с сортировкой), PostDetailPanel (правая панель с 9 collapsible-секциями: timeline, summary, work orders, workers, alerts, event log, statistics, cameras, calendar), CollapsibleSection (переиспользуемый компонент сворачиваемой секции с анимацией).'
-          : '4 components for post analytics page: PostCardsView (card view of post list with mini stats), PostTableView (table view with sorting), PostDetailPanel (right panel with 9 collapsible sections: timeline, summary, work orders, workers, alerts, event log, statistics, cameras, calendar), CollapsibleSection (reusable collapsible section component with animation).'
-        }</P>
+        <Sub>{isRu ? 'Общие компоненты (19)' : 'Shared Components (19)'}</Sub>
+        <Table
+          headers={[isRu ? 'Компонент' : 'Component', 'LOC', isRu ? 'Описание' : 'Description', isRu ? 'Используется в' : 'Used In']}
+          rows={[
+            ['Layout.jsx', '~100', isRu ? 'Каркас приложения: Header (тема, язык, уведомления, пользователь) + Sidebar + Outlet (дочерний маршрут)' : 'App shell: Header (theme, lang, notifications, user) + Sidebar + Outlet (child route)', isRu ? 'App.jsx (обёртка всех страниц)' : 'App.jsx (wraps all pages)'],
+            ['Sidebar.jsx', '~200', isRu ? 'Боковая навигация: фильтрация пунктов по user.pages.includes(pageId), иконки Lucide, active state, collapsible' : 'Side navigation: items filtered by user.pages.includes(pageId), Lucide icons, active state, collapsible', 'Layout.jsx'],
+            ['STOMap.jsx', '510', isRu ? 'Konva-карта СТО (read-only): рендерит здания, зоны, посты (цвет по статусу), камеры (FOV), стены, двери, подписи. Слои: buildings, zones, posts, cameras, labels' : 'Konva STO map (read-only): renders buildings, zones, posts (color by status), cameras (FOV), walls, doors, labels. Layers: buildings, zones, posts, cameras, labels', 'MapViewer, LiveSTOWidget'],
+            ['HelpButton.jsx', '~80', isRu ? 'Контекстная справка: показывает tooltip/modal с описанием текущей страницы (key из i18n)' : 'Contextual help: shows tooltip/modal with current page description (key from i18n)', isRu ? 'Все страницы' : 'All pages'],
+            ['LiveSTOWidget.jsx', '~150', isRu ? 'Мини-карта СТО для Dashboard: упрощённый вид STOMap с текущими статусами постов, авто-обновление' : 'Mini STO map for Dashboard: simplified STOMap view with current post statuses, auto-update', 'Dashboard'],
+            ['NotificationCenter.jsx', '~120', isRu ? 'Центр уведомлений в Header: список рекомендаций и алертов, badge с количеством, mark as read' : 'Notification center in Header: recommendations and alerts list, count badge, mark as read', 'Layout (Header)'],
+            ['CameraStreamModal.jsx', '~150', isRu ? 'Модальное окно HLS-стрима: HLS.js плеер, выбор камеры, полноэкранный режим, статус online/offline' : 'HLS stream modal: HLS.js player, camera selection, fullscreen, online/offline status', 'Cameras, MapViewer'],
+            ['DateRangePicker.jsx', '~100', isRu ? 'Выбор диапазона дат: пресеты (24ч, 7д, 30д, произвольный), иконка Lucide Calendar' : 'Date range picker: presets (24h, 7d, 30d, custom), Lucide Calendar icon', 'Analytics, Events, Audit, WorkOrders'],
+            ['DeltaBadge.jsx', '~30', isRu ? 'Бейдж изменения: +12% (зелёный) / -5% (красный) со стрелкой вверх/вниз' : 'Change badge: +12% (green) / -5% (red) with up/down arrow', 'Dashboard, Analytics'],
+            ['ErrorBoundary.jsx', '~50', isRu ? 'React Error Boundary: ловит ошибки рендеринга, показывает fallback UI вместо белого экрана' : 'React Error Boundary: catches render errors, shows fallback UI instead of white screen', 'App.jsx'],
+            ['LocationSwitcher.jsx', '~80', isRu ? 'Переключатель локаций (мультитенантность): dropdown с списком СТО, текущая локация в Header' : 'Location switcher (multi-tenancy): dropdown with STO list, current location in Header', 'Layout (Header)'],
+            ['Pagination.jsx', '~60', isRu ? 'Пагинация: страницы, prev/next, total count, items per page' : 'Pagination: pages, prev/next, total count, items per page', 'Events, Audit, Sessions, WorkOrders'],
+            ['PhotoGallery.jsx', '~100', isRu ? 'Галерея фото постов: grid-вид, lightbox, upload (base64), delete' : 'Post photo gallery: grid view, lightbox, upload (base64), delete', 'PostsDetail'],
+            ['PostTimer.jsx', '~80', isRu ? 'Визуальный таймер ЗН: круговой прогресс, цвет по warningLevel (green/yellow/red/purple), elapsed time' : 'Visual WO timer: circular progress, color by warningLevel (green/yellow/red/purple), elapsed time', 'MyPost, DashboardPosts'],
+            ['PredictionWidget.jsx', '~100', isRu ? 'Виджет предсказаний: загрузка, свободные посты, длительность ремонта (данные из /api/predict)' : 'Prediction widget: load, free posts, repair duration (data from /api/predict)', 'Dashboard'],
+            ['QRBadge.jsx', '~50', isRu ? 'QR-код: генерирует QR по номеру авто для быстрого поиска сессии' : 'QR code: generates QR by plate number for quick session lookup', 'Sessions'],
+            ['Skeleton.jsx', '~30', isRu ? 'Скелетон-лоадер: анимированные плейсхолдеры при загрузке данных' : 'Skeleton loader: animated placeholders during data loading', isRu ? 'Все страницы (Suspense fallback)' : 'All pages (Suspense fallback)'],
+            ['SparkLine.jsx', '~40', isRu ? 'Мини-график (sparkline): маленький line chart без осей для KPI-карточек' : 'Mini chart (sparkline): small line chart without axes for KPI cards', 'Dashboard'],
+            ['WeeklyHeatmap.jsx', '~80', isRu ? 'Недельная тепловая карта: загрузка по часам/дням, цветовая шкала (green -> red)' : 'Weekly heatmap: load by hours/days, color scale (green -> red)', 'Analytics'],
+          ]}
+        />
 
+        <Sub>{isRu ? 'dashboardPosts/ (9 файлов)' : 'dashboardPosts/ (9 files)'}</Sub>
+        <Table
+          headers={[isRu ? 'Файл' : 'File', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GanttTimeline.jsx', isRu ? 'Основной Gantt-таймлайн: горизонтальная временная шкала с блоками ЗН на 10 постах, drag-n-drop для перемещения/ресайза, зум (1ч/2ч/4ч/8ч), скролл' : 'Main Gantt timeline: horizontal time scale with WO blocks on 10 posts, drag-n-drop for move/resize, zoom (1h/2h/4h/8h), scroll'],
+            ['TimelineRow.jsx', isRu ? 'Строка поста в Gantt: отображает блоки ЗН с цветом по статусу, tooltip при наведении, контекстное меню' : 'Post row in Gantt: displays WO blocks with status color, hover tooltip, context menu'],
+            ['TimelineHeader.jsx', isRu ? 'Заголовок Gantt: временные метки (часы), текущее время (красная линия), масштаб' : 'Gantt header: time marks (hours), current time (red line), scale'],
+            ['WorkOrderModal.jsx', isRu ? 'Модалка создания/редактирования ЗН: номер, описание, нормо-часы, пост, время начала/конца, приоритет' : 'WO create/edit modal: number, description, norm hours, post, start/end time, priority'],
+            ['ConflictModal.jsx', isRu ? 'Модалка конфликта: показывает conflicts[] от HTTP 409, позволяет перезаписать или обновить свои данные' : 'Conflict modal: shows conflicts[] from HTTP 409, allows overwrite or refresh own data'],
+            ['FreeWorkOrdersTable.jsx', isRu ? 'Таблица свободных (unscheduled) ЗН: drag source для размещения на Gantt, фильтры' : 'Free (unscheduled) WO table: drag source for placing on Gantt, filters'],
+            ['ShiftSettings.jsx', isRu ? 'Настройки смен в контексте Gantt: временные границы смены, привязанные работники' : 'Shift settings in Gantt context: shift time boundaries, assigned workers'],
+            ['Legend.jsx', isRu ? 'Легенда статусов ЗН: цветовые обозначения (pending, scheduled, in_progress, paused, completed)' : 'WO status legend: color codes (pending, scheduled, in_progress, paused, completed)'],
+            ['constants.js', isRu ? 'Константы: цвета статусов, высота строки, масштабы зума, границы drag-n-drop' : 'Constants: status colors, row height, zoom scales, drag-n-drop boundaries'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'postsDetail/ (4 файла)' : 'postsDetail/ (4 files)'}</Sub>
+        <Table
+          headers={[isRu ? 'Файл' : 'File', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['PostDetailPanel.jsx', isRu ? 'Детальная панель поста: 11 сворачиваемых секций (таймлайн, работники, события, статистика, ЗН, камеры, календарь, алерты, summary)' : 'Post detail panel: 11 collapsible sections (timeline, workers, events, statistics, WOs, cameras, calendar, alerts, summary)'],
+            ['PostCardsView.jsx', isRu ? 'Карточный вид списка постов: цвет рамки по статусу, мини-метрики, клик для выбора' : 'Card view of post list: border color by status, mini metrics, click to select'],
+            ['PostTableView.jsx', isRu ? 'Табличный вид списка постов: колонки (имя, тип, статус, загрузка, текущий ЗН), сортировка' : 'Table view of post list: columns (name, type, status, load, current WO), sorting'],
+            ['CollapsibleSection.jsx', isRu ? 'Сворачиваемая секция: заголовок + ChevronDown/Up, анимация expand/collapse, используется в PostDetailPanel' : 'Collapsible section: title + ChevronDown/Up, expand/collapse animation, used in PostDetailPanel'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
         {/* Section 11 — Contexts */}
-        <SectionTitle id="contexts">{isRu ? '11. Контексты' : '11. Contexts'}</SectionTitle>
+        {/* ============================================================ */}
+        <SectionTitle id="contexts">{isRu ? '11. Контексты (Auth, Theme, Toast)' : '11. Contexts (Auth, Theme, Toast)'}</SectionTitle>
+
+        <Sub>AuthContext (338 LOC)</Sub>
         <P>{isRu
-          ? 'Три React Context обеспечивают глобальное состояние приложения. Они вложены в строгом порядке (Theme -> Toast -> Auth), что позволяет более глубоким контекстам использовать функции внешних.'
-          : 'Three React Contexts provide global application state. They are nested in strict order (Theme -> Toast -> Auth), allowing deeper contexts to use outer context functions.'
+          ? 'Центральный контекст приложения, отвечающий за авторизацию, API-клиент и систему доступа. Хранит состояние: user (объект пользователя с ролью, permissions, pages, hiddenElements), token (JWT access token), loading (статус загрузки). Предоставляет: login(email, password), logout(), api (Axios-подобный клиент с автоматическим refresh token), hasPermission(key), isElementVisible(pageId, elementId).'
+          : 'Central app context responsible for auth, API client, and access system. State: user (user object with role, permissions, pages, hiddenElements), token (JWT access token), loading. Provides: login(email, password), logout(), api (Axios-like client with auto refresh token), hasPermission(key), isElementVisible(pageId, elementId).'
+        }</P>
+        <P>{isRu
+          ? 'api -- обёртка над fetch с автоматическими заголовками (Authorization: Bearer) и перехватом 401 для refresh token. При истечении access token автоматически вызывает POST /api/auth/refresh, получает новый token и повторяет исходный запрос. Методы: api.get(url), api.post(url, data), api.put(url, data), api.delete(url).'
+          : 'api -- fetch wrapper with automatic headers (Authorization: Bearer) and 401 interception for refresh token. On access token expiry, automatically calls POST /api/auth/refresh, gets new token and retries the original request. Methods: api.get(url), api.post(url, data), api.put(url, data), api.delete(url).'
         }</P>
 
-        <Sub>AuthContext</Sub>
+        <Sub>PAGE_ELEMENTS {isRu ? 'реестр' : 'Registry'}</Sub>
         <P>{isRu
-          ? 'Главный контекст приложения, управляющий всем циклом авторизации и предоставляющий API-клиент. Экспортирует: user (текущий пользователь с ролями, permissions, pages, hiddenElements), loading (состояние загрузки), login(email, password) — авторизация через /api/auth/login с fallback на mock при недоступности backend, logout() — очистка токенов и редирект.'
-          : 'The main application context, managing the entire auth lifecycle and providing an API client. Exports: user (current user with roles, permissions, pages, hiddenElements), loading (loading state), login(email, password) — auth via /api/auth/login with mock fallback when backend unavailable, logout() — token cleanup and redirect.'
-        }</P>
-        <P>{isRu
-          ? 'hasPermission(key) проверяет наличие конкретного разрешения у текущего пользователя. isElementVisible(pageId, elementId) проверяет, виден ли конкретный виджет/секция для пользователя — сверяет с массивом hiddenElements, загруженным из БД через /api/auth/me. updateCurrentUser(data) обновляет локальное состояние пользователя без повторного запроса на сервер.'
-          : 'hasPermission(key) checks if the current user has a specific permission. isElementVisible(pageId, elementId) checks if a specific widget/section is visible for the user — cross-references with hiddenElements array loaded from DB via /api/auth/me. updateCurrentUser(data) updates local user state without re-fetching from server.'
-        }</P>
-        <P>{isRu
-          ? 'API-клиент (api) — fetch-обёртка с автоматическим добавлением Authorization: Bearer заголовка и базового URL. Предоставляет методы get, post, put, delete. При получении 401 автоматически пытается обновить access token через refresh endpoint.'
-          : 'The API client (api) is a fetch wrapper with automatic Authorization: Bearer header and base URL injection. Provides get, post, put, delete methods. On 401, automatically attempts to refresh the access token via the refresh endpoint.'
-        }</P>
-
-        <Sub>PAGE_ELEMENTS</Sub>
-        <P>{isRu
-          ? 'Реестр PAGE_ELEMENTS определяет крупные элементы на каждой странице, которые администратор может скрывать для конкретных пользователей. 4 поддерживаемые страницы: Dashboard (5 элементов: kpiCards, liveSto, predictions, recommendations, recentEvents), DashboardPosts (4: shiftStats, currentShift, ganttTimeline, freeWorkOrders), PostsDetail (11: postsList, detailPanel, timeline, summary, workOrders, workers, alerts, eventLog, statistics, cameras, calendar), Analytics (7: summaryStats, trendsCharts, rankingCharts, planFactChart, comparisonTable, heatmaps, postDetail).'
-          : 'The PAGE_ELEMENTS registry defines major elements on each page that administrators can hide for specific users. 4 supported pages: Dashboard (5 elements: kpiCards, liveSto, predictions, recommendations, recentEvents), DashboardPosts (4: shiftStats, currentShift, ganttTimeline, freeWorkOrders), PostsDetail (11: postsList, detailPanel, timeline, summary, workOrders, workers, alerts, eventLog, statistics, cameras, calendar), Analytics (7: summaryStats, trendsCharts, rankingCharts, planFactChart, comparisonTable, heatmaps, postDetail).'
-        }</P>
-
-        <Sub>ThemeContext</Sub>
-        <P>{isRu
-          ? 'Управляет темой оформления (dark/light). При переключении устанавливает CSS-переменные на элемент :root: --bg-primary, --bg-secondary, --text-primary, --text-secondary, --text-muted, --accent, --border-glass и другие. Тема сохраняется в localStorage[\'theme\'] и восстанавливается при загрузке. По умолчанию используется тёмная тема. Glassmorphism-дизайн реализован через CSS-переменные: полупрозрачные фоны, размытие (backdrop-filter: blur), стеклянные границы.'
-          : 'Manages the visual theme (dark/light). On toggle, sets CSS variables on :root element: --bg-primary, --bg-secondary, --text-primary, --text-secondary, --text-muted, --accent, --border-glass and others. Theme is saved to localStorage[\'theme\'] and restored on load. Dark theme is the default. Glassmorphism design is achieved through CSS variables: semi-transparent backgrounds, blur (backdrop-filter: blur), glass borders.'
-        }</P>
-
-        <Sub>ToastContext</Sub>
-        <P>{isRu
-          ? 'Глобальная система уведомлений с 4 типами: success (зелёный), error (красный), warning (жёлтый), info (синий). Максимум 3 тоста одновременно — при добавлении четвёртого самый старый удаляется. Auto-dismiss через настраиваемый таймер. Тосты используются по всему приложению для обратной связи: успешное сохранение, ошибки API, предупреждения о конфликтах, информационные сообщения.'
-          : 'Global notification system with 4 types: success (green), error (red), warning (yellow), info (blue). Maximum 3 toasts simultaneously — when a 4th is added, the oldest is removed. Auto-dismiss via configurable timer. Toasts are used throughout the app for feedback: successful save, API errors, conflict warnings, informational messages.'
-        }</P>
-
-        {/* Section 12 — Hooks */}
-        <SectionTitle id="hooks">{isRu ? '12. Хуки' : '12. Hooks'}</SectionTitle>
-        <P>{isRu
-          ? 'Четыре кастомных хука инкапсулируют сложную логику взаимодействия с Socket.IO, таймеры заказ-нарядов, мониторинг камер и универсальные API-запросы.'
-          : 'Four custom hooks encapsulate complex logic for Socket.IO interaction, work order timers, camera monitoring, and universal API requests.'
-        }</P>
-
-        <Sub>useSocket</Sub>
-        <P>{isRu
-          ? 'Основной хук для real-time коммуникации. Содержит singleton-экземпляр Socket.IO подключения (один на приложение). connectSocket(token) устанавливает подключение с JWT-аутентификацией, disconnectSocket() разрывает. usePolling(callback, interval) — декларативный polling через setInterval с автоматической очисткой. useSubscribe(event, handler) — подписка на Socket.IO события с автоматической отпиской при unmount. useSocketStatus() — текущий статус подключения (connected/disconnected/reconnecting).'
-          : 'Main hook for real-time communication. Contains a singleton Socket.IO connection instance (one per app). connectSocket(token) establishes connection with JWT authentication, disconnectSocket() tears down. usePolling(callback, interval) — declarative polling via setInterval with automatic cleanup. useSubscribe(event, handler) — Socket.IO event subscription with automatic unsubscription on unmount. useSocketStatus() — current connection status (connected/disconnected/reconnecting).'
-        }</P>
-
-        <Sub>useWorkOrderTimer</Sub>
-        <P>{isRu
-          ? 'Хук для управления таймером заказ-наряда на посту. Принимает workOrder (с normHours, startedAt, pausedAt, totalPausedMs) и возвращает: elapsedMs (реальное рабочее время без пауз), percentUsed (процент от нормо-часов), warningLevel (none при <80%, warning при 80-95%, critical при 95-100%, overtime при >100%), и функции start/pause/resume/complete. Таймер использует requestAnimationFrame для плавного обновления каждую секунду. При паузе таймер останавливается, при возобновлении — продолжает с учётом накопленного totalPausedMs.'
-          : 'Hook for managing work order timer at a post. Takes workOrder (with normHours, startedAt, pausedAt, totalPausedMs) and returns: elapsedMs (real work time without pauses), percentUsed (percentage of norm hours), warningLevel (none at <80%, warning at 80-95%, critical at 95-100%, overtime at >100%), and start/pause/resume/complete functions. Timer uses requestAnimationFrame for smooth per-second updates. On pause, timer stops; on resume, continues accounting for accumulated totalPausedMs.'
-        }</P>
-
-        <Sub>useCameraStatus</Sub>
-        <P>{isRu
-          ? 'Хук для отслеживания статуса камер через Socket.IO. Подписывается на событие camera:status и поддерживает Map<camId, { online, lastCheck }>. CameraHealthCheck на бэкенде пингует каждую камеру каждые 30 секунд и эмитит результат. Хук позволяет любому компоненту узнать текущий статус конкретной камеры без дополнительных API-запросов.'
-          : 'Hook for tracking camera status via Socket.IO. Subscribes to camera:status event and maintains Map<camId, { online, lastCheck }>. Backend CameraHealthCheck pings each camera every 30 seconds and emits the result. The hook allows any component to know the current status of a specific camera without additional API requests.'
-        }</P>
-
-        <Sub>useAsync</Sub>
-        <P>{isRu
-          ? 'Универсальный хук для API-запросов. Принимает URL и опции (enabled, deps, transform, initialData). Возвращает { data, loading, error, refetch }. Автоматически выполняет запрос через api.get() при монтировании и при изменении deps. mountedRef предотвращает setState на размонтированных компонентах. transform позволяет преобразовать ответ API перед сохранением в state.'
-          : 'Universal hook for API requests. Takes URL and options (enabled, deps, transform, initialData). Returns { data, loading, error, refetch }. Automatically fetches via api.get() on mount and when deps change. mountedRef prevents setState on unmounted components. transform allows transforming API response before storing in state.'
-        }</P>
-
-        <Table
-          headers={[isRu ? 'Хук' : 'Hook', isRu ? 'Входные данные' : 'Input', isRu ? 'Выходные данные' : 'Output']}
-          rows={[
-            ['useSocket', isRu ? 'JWT token при connect' : 'JWT token on connect', 'connectSocket, disconnectSocket, usePolling, useSubscribe, useSocketStatus'],
-            ['useWorkOrderTimer', isRu ? 'WorkOrder объект' : 'WorkOrder object', 'elapsedMs, percentUsed, warningLevel, start, pause, resume, complete'],
-            ['useCameraStatus', isRu ? 'Нет (авто-подписка)' : 'None (auto-subscribe)', 'Map<camId, { online, lastCheck }>'],
-            ['useAsync', isRu ? 'URL, { enabled, deps, transform, initialData }' : 'URL, { enabled, deps, transform, initialData }', '{ data, loading, error, refetch }'],
-          ]}
-        />
-
-        {/* Section 13 — Utils */}
-        <SectionTitle id="utils">{isRu ? '13. Утилиты' : '13. Utilities'}</SectionTitle>
-        <P>{isRu
-          ? 'Утилиты разделены на два модуля: translate.js для локализации названий зон и постов, и export.js для экспорта данных в различные форматы.'
-          : 'Utilities are split into two modules: translate.js for zone and post name localization, and export.js for data export in various formats.'
-        }</P>
-
-        <Sub>translate.js</Sub>
-        <P>{isRu
-          ? 'translateZone(name, isRu) и translatePost(name, isRu) — функции перевода названий зон и постов между русским и английским языками. Используются повсеместно в таблицах, графиках и на карте. Названия зон: "Зона ремонта" <-> "Repair Zone", "Зона ожидания" <-> "Waiting Zone" и т.д. Названия постов: "Пост 1 (грузовой)" <-> "Post 1 (heavy)" и т.д.'
-          : 'translateZone(name, isRu) and translatePost(name, isRu) — functions for translating zone and post names between Russian and English. Used throughout tables, charts, and on the map. Zone names: "Repair Zone" <-> "Зона ремонта", "Waiting Zone" <-> "Зона ожидания", etc. Post names: "Post 1 (heavy)" <-> "Пост 1 (грузовой)", etc.'
-        }</P>
-
-        <Sub>export.js</Sub>
-        <P>{isRu
-          ? 'exportToXlsx(data, options) — генерация XLSX-файла с 4 листами: Summary (общая статистика за период), Posts (данные по каждому посту), Daily (дневная разбивка), Details (детальные записи). Использует библиотеку xlsx (SheetJS). Файл автоматически скачивается через programmatic click на <a> элемент.'
-          : 'exportToXlsx(data, options) — XLSX file generation with 4 sheets: Summary (overall stats for period), Posts (per-post data), Daily (daily breakdown), Details (detailed records). Uses the xlsx library (SheetJS). File automatically downloads via programmatic click on <a> element.'
-        }</P>
-        <P>{isRu
-          ? 'exportToPdf(element, filename) — экспорт DOM-элемента в PDF формат A4 landscape. Для больших элементов контент разбивается на чанки (2500px каждый) чтобы не превышать лимиты canvas браузера. Каждый чанк рендерится через html2canvas и нарезается на A4-страницы. Фон принудительно устанавливается в #0f172a для корректного рендера тёмной темы.'
-          : 'exportToPdf(element, filename) — exports DOM element to PDF in A4 landscape format. For large elements, content is split into chunks (2500px each) to stay within browser canvas limits. Each chunk is rendered via html2canvas and sliced into A4 pages. Background is forced to #0f172a for correct dark theme rendering.'
-        }</P>
-        <P>{isRu
-          ? 'downloadChartAsPng(chartRef, filename) — скачивание конкретного графика Recharts как PNG-изображение. Использует html2canvas для рендеринга SVG-графика в canvas, затем конвертирует в data URL и инициирует скачивание.'
-          : 'downloadChartAsPng(chartRef, filename) — downloads a specific Recharts chart as a PNG image. Uses html2canvas to render the SVG chart to canvas, then converts to data URL and initiates download.'
-        }</P>
-
-        {/* Section 14 — RBAC */}
-        <SectionTitle id="rbac">{isRu ? '14. RBAC — Система доступа' : '14. RBAC — Access Control'}</SectionTitle>
-        <P>{isRu
-          ? 'Система контроля доступа работает на трёх уровнях: роли (определяют базовый набор разрешений), страницы (определяют доступные маршруты), и видимость элементов (определяют видимые виджеты/секции на страницах). Каждый уровень настраивается независимо через админ-панель.'
-          : 'The access control system operates on three levels: roles (define base permission set), pages (define accessible routes), and element visibility (define visible widgets/sections on pages). Each level is configured independently through the admin panel.'
-        }</P>
-
-        <Sub>{isRu ? 'Роли и разрешения' : 'Roles & Permissions'}</Sub>
-        <P>{isRu
-          ? '5 ролей с 15 разрешениями. На бэкенде ROLE_PAGES маппинг определяет, какие страницы доступны каждой роли по умолчанию. Администратор может расширить или ограничить доступ к страницам для конкретного пользователя через массив pages[]. Sidebar на фронтенде фильтрует навигацию: user.pages.includes(pageId) показывает только доступные пункты меню; admin видит все пункты безусловно.'
-          : '5 roles with 15 permissions. On the backend, ROLE_PAGES mapping defines which pages are accessible to each role by default. An administrator can expand or restrict page access for a specific user via the pages[] array. Sidebar on the frontend filters navigation: user.pages.includes(pageId) shows only accessible menu items; admin sees all items unconditionally.'
+          ? 'AuthContext содержит PAGE_ELEMENTS -- реестр всех настраиваемых элементов по страницам. Этот реестр используется на странице Users для отображения чекбоксов скрытия/показа виджетов. Каждая запись содержит: pageId, elementId, labelRu, labelEn.'
+          : 'AuthContext contains PAGE_ELEMENTS -- a registry of all configurable elements per page. This registry is used on the Users page to display show/hide widget checkboxes. Each entry contains: pageId, elementId, labelRu, labelEn.'
         }</P>
         <Table
-          headers={[isRu ? 'Роль' : 'Role', isRu ? 'Разрешения' : 'Permissions', isRu ? 'Типичные страницы' : 'Typical Pages']}
-          rows={[
-            ['admin', isRu ? 'Все 15 + manage_roles, manage_settings' : 'All 15 + manage_roles, manage_settings', isRu ? 'Все 20 страниц' : 'All 20 pages'],
-            ['director', 'view_dashboard, view_analytics, view_zones, view_posts, view_sessions, view_events, view_work_orders, view_recommendations, view_cameras', isRu ? 'Dashboard, Analytics, Sessions, Events, Cameras' : 'Dashboard, Analytics, Sessions, Events, Cameras'],
-            ['manager', 'view_dashboard, view_zones, view_posts, view_sessions, view_events, manage_work_orders, view_recommendations', isRu ? 'Dashboard, DashboardPosts, WorkOrders, Sessions, Events' : 'Dashboard, DashboardPosts, WorkOrders, Sessions, Events'],
-            ['mechanic', 'view_dashboard, view_posts, view_sessions', isRu ? 'Dashboard, MyPost' : 'Dashboard, MyPost'],
-            ['viewer', 'view_dashboard, view_zones, view_posts', isRu ? 'Dashboard' : 'Dashboard'],
-          ]}
-        />
-        <P>{isRu
-          ? 'Backend-авторизация реализована через middleware requirePermission(...keys). Этот middleware проверяет, что у req.user есть все указанные разрешения. При отсутствии любого из них возвращается HTTP 403. Middleware authenticate() обязателен для всех защищённых маршрутов — он декодирует JWT, загружает пользователя из Prisma и устанавливает req.user.'
-          : 'Backend authorization is implemented via requirePermission(...keys) middleware. This middleware checks that req.user has all specified permissions. If any is missing, HTTP 403 is returned. The authenticate() middleware is required for all protected routes — it decodes JWT, loads user from Prisma, and sets req.user.'
-        }</P>
-
-        <Sub>{isRu ? 'Видимость элементов (Element Visibility)' : 'Element Visibility'}</Sub>
-        <P>{isRu
-          ? 'Помимо доступа к страницам, администратор может скрывать крупные элементы (виджеты, секции, графики) на страницах для каждого пользователя индивидуально. Настройки хранятся в БД в поле user.hiddenElements (JSON-массив строк формата "pageId:elementId"). При логине и через GET /api/auth/me hiddenElements загружаются в AuthContext.'
-          : 'Beyond page access, administrators can hide major elements (widgets, sections, charts) on pages for each user individually. Settings are stored in DB in user.hiddenElements field (JSON array of strings in "pageId:elementId" format). On login and via GET /api/auth/me, hiddenElements are loaded into AuthContext.'
-        }</P>
-        <P>{isRu
-          ? 'На фронтенде isElementVisible(pageId, elementId) из AuthContext проверяет, должен ли элемент быть видимым. Каждая страница оборачивает свои виджеты в проверку: если элемент скрыт — компонент не рендерится. Админ настраивает видимость на странице Users при редактировании пользователя — чекбоксы для каждого элемента по каждой странице.'
-          : 'On the frontend, isElementVisible(pageId, elementId) from AuthContext checks if an element should be visible. Each page wraps its widgets in this check: if the element is hidden, the component is not rendered. Admin configures visibility on the Users page when editing a user — checkboxes for each element on each page.'
-        }</P>
-        <Table
-          headers={[isRu ? 'Страница' : 'Page', isRu ? 'Элементы' : 'Elements', isRu ? 'Кол-во' : 'Count']}
+          headers={[isRu ? 'Страница' : 'Page', isRu ? 'Элементы (elementId)' : 'Elements (elementId)', isRu ? 'Кол-во' : 'Count']}
           rows={[
             ['Dashboard', 'kpiCards, liveSto, predictions, recommendations, recentEvents', '5'],
             ['DashboardPosts', 'shiftStats, currentShift, ganttTimeline, freeWorkOrders', '4'],
@@ -923,275 +1005,685 @@ cd /project && node server.js
             ['Analytics', 'summaryStats, trendsCharts, rankingCharts, planFactChart, comparisonTable, heatmaps, postDetail', '7'],
           ]}
         />
+
+        <Sub>ROLE_DEFAULT_PAGES</Sub>
         <P>{isRu
-          ? 'Backend: PUT /api/users/:id принимает hiddenElements[] в теле запроса и сохраняет в БД. GET /api/auth/me возвращает hiddenElements в объекте пользователя. Всего 27 настраиваемых элементов на 4 страницах.'
-          : 'Backend: PUT /api/users/:id accepts hiddenElements[] in the request body and saves to DB. GET /api/auth/me returns hiddenElements in the user object. Total: 27 configurable elements across 4 pages.'
+          ? 'AuthContext также содержит маппинг ROLE_DEFAULT_PAGES, определяющий какие страницы доступны каждой роли по умолчанию при создании пользователя. Администратор может потом расширить или ограничить набор через pages[] в PUT /api/users/:id. При логине бэкенд мерджит pages из БД с дефолтными страницами роли.'
+          : 'AuthContext also contains ROLE_DEFAULT_PAGES mapping, defining which pages are accessible to each role by default when creating a user. Admin can then expand or restrict the set via pages[] in PUT /api/users/:id. On login, backend merges DB pages with role default pages.'
         }</P>
 
+        <Sub>ThemeContext</Sub>
+        <P>{isRu
+          ? 'Управляет темой (dark/light). Устанавливает CSS-переменные на :root: --bg-primary, --bg-secondary, --bg-tertiary, --text-primary, --text-secondary, --text-muted, --accent, --accent-light, --border-glass, --shadow-glass. Тема хранится в localStorage[\'theme\']. По умолчанию dark. Glassmorphism: background с rgba + backdrop-filter: blur(12px) + border с rgba.'
+          : 'Manages theme (dark/light). Sets CSS variables on :root: --bg-primary, --bg-secondary, --bg-tertiary, --text-primary, --text-secondary, --text-muted, --accent, --accent-light, --border-glass, --shadow-glass. Theme stored in localStorage[\'theme\']. Default: dark. Glassmorphism: background with rgba + backdrop-filter: blur(12px) + border with rgba.'
+        }</P>
+
+        <Sub>ToastContext</Sub>
+        <P>{isRu
+          ? 'Глобальная система уведомлений. 4 типа: success (зелёный), error (красный), warning (жёлтый), info (синий). Максимум 3 тоста одновременно. Auto-dismiss с настраиваемым таймером (по умолчанию 4с для success, 6с для error). API: showToast(message, type, duration?). Тосты анимированы (slide-in/slide-out) и кликабельны для закрытия.'
+          : 'Global notification system. 4 types: success (green), error (red), warning (yellow), info (blue). Max 3 toasts simultaneous. Auto-dismiss with configurable timer (default 4s for success, 6s for error). API: showToast(message, type, duration?). Toasts are animated (slide-in/slide-out) and clickable to dismiss.'
+        }</P>
+
+
+        {/* ============================================================ */}
+        {/* Section 12 — Hooks */}
+        {/* ============================================================ */}
+        <SectionTitle id="hooks">{isRu ? '12. Хуки' : '12. Hooks'}</SectionTitle>
+        <P>{isRu
+          ? 'Четыре кастомных хука инкапсулируют сложную логику: Socket.IO, таймеры ЗН, мониторинг камер, и универсальные API-запросы.'
+          : 'Four custom hooks encapsulate complex logic: Socket.IO, WO timers, camera monitoring, and universal API requests.'
+        }</P>
+
+        <Sub>useSocket.js</Sub>
+        <P>{isRu
+          ? 'Основной модуль real-time коммуникации. Экспортирует: (1) connectSocket(token) -- устанавливает singleton Socket.IO подключение с JWT auth; (2) disconnectSocket() -- разрывает; (3) usePolling(callback, interval) -- декларативный setInterval с автоочисткой при unmount; (4) useSubscribe(event, handler) -- подписка на Socket.IO событие с автоотпиской; (5) useSocketStatus() -- текущий статус (connected/disconnected/reconnecting). Singleton гарантирует одно подключение на приложение.'
+          : 'Main real-time communication module. Exports: (1) connectSocket(token) -- establishes singleton Socket.IO connection with JWT auth; (2) disconnectSocket() -- tears down; (3) usePolling(callback, interval) -- declarative setInterval with auto-cleanup on unmount; (4) useSubscribe(event, handler) -- Socket.IO event subscription with auto-unsubscribe; (5) useSocketStatus() -- current status (connected/disconnected/reconnecting). Singleton ensures one connection per app.'
+        }</P>
+
+        <Sub>useWorkOrderTimer.js</Sub>
+        <P>{isRu
+          ? 'Хук таймера ЗН. Принимает workOrder (normHours, startedAt, pausedAt, totalPausedMs). Возвращает: elapsedMs (реальное рабочее время = now - startedAt - totalPausedMs - currentPauseTime), percentUsed (elapsedMs / normHours * 100), warningLevel (none <80%, warning 80-95%, critical 95-100%, overtime >100%). Обновляется каждую секунду через requestAnimationFrame. При pausedAt !== null таймер стоит.'
+          : 'WO timer hook. Takes workOrder (normHours, startedAt, pausedAt, totalPausedMs). Returns: elapsedMs (real work time = now - startedAt - totalPausedMs - currentPauseTime), percentUsed (elapsedMs / normHours * 100), warningLevel (none <80%, warning 80-95%, critical 95-100%, overtime >100%). Updates every second via requestAnimationFrame. When pausedAt !== null, timer stops.'
+        }</P>
+
+        <Sub>useCameraStatus.js</Sub>
+        <P>{isRu
+          ? 'Подписывается на Socket.IO camera:status и поддерживает Map<cameraId, { online: boolean, lastCheck: Date }>. Обновляется каждые 30 секунд от CameraHealthCheck. Любой компонент может узнать статус камеры без API-запросов.'
+          : 'Subscribes to Socket.IO camera:status and maintains Map<cameraId, { online: boolean, lastCheck: Date }>. Updated every 30 seconds from CameraHealthCheck. Any component can check camera status without API requests.'
+        }</P>
+
+        <Sub>useAsync.js</Sub>
+        <P>{isRu
+          ? 'Универсальный хук API-запросов. Принимает URL и опции { enabled, deps, transform, initialData }. Возвращает { data, loading, error, refetch }. Автоматически вызывает api.get() при mount и при изменении deps. mountedRef предотвращает setState после unmount. transform позволяет преобразовать ответ перед сохранением.'
+          : 'Universal API request hook. Takes URL and options { enabled, deps, transform, initialData }. Returns { data, loading, error, refetch }. Auto-calls api.get() on mount and when deps change. mountedRef prevents setState after unmount. transform allows response transformation before storing.'
+        }</P>
+
+        <Table
+          headers={[isRu ? 'Хук' : 'Hook', isRu ? 'Вход' : 'Input', isRu ? 'Выход' : 'Output']}
+          rows={[
+            ['connectSocket', 'token: string', 'Socket.IO instance (singleton)'],
+            ['usePolling', 'callback: () => void, interval: number', isRu ? 'Нет (side effect)' : 'None (side effect)'],
+            ['useSubscribe', 'event: string, handler: (data) => void', isRu ? 'Нет (side effect)' : 'None (side effect)'],
+            ['useWorkOrderTimer', 'workOrder: { normHours, startedAt, pausedAt, totalPausedMs }', '{ elapsedMs, percentUsed, warningLevel }'],
+            ['useCameraStatus', isRu ? 'Нет' : 'None', 'Map<cameraId, { online, lastCheck }>'],
+            ['useAsync', 'url: string, options: { enabled?, deps?, transform?, initialData? }', '{ data, loading, error, refetch }'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
+        {/* Section 13 — Utilities */}
+        {/* ============================================================ */}
+        <SectionTitle id="utils">{isRu ? '13. Утилиты' : '13. Utilities'}</SectionTitle>
+
+        <Sub>translate.js</Sub>
+        <P>{isRu
+          ? 'Модуль перевода динамических данных (приходят с бэкенда на русском). Три функции:'
+          : 'Module for translating dynamic data (comes from backend in Russian). Three functions:'
+        }</P>
+        <Table
+          headers={[isRu ? 'Функция' : 'Function', isRu ? 'Вход' : 'Input', isRu ? 'Пример' : 'Example']}
+          rows={[
+            ['translateZone(name, isRu)', isRu ? 'Название зоны, язык' : 'Zone name, language', isRu ? '"Зона ремонта" -> "Repair Zone" (en)' : '"Зона ремонта" -> "Repair Zone" (en)'],
+            ['translatePost(name, isRu)', isRu ? 'Название поста, язык' : 'Post name, language', isRu ? '"Пост 1 (грузовой)" -> "Post 1 (heavy)" (en)' : '"Пост 1 (грузовой)" -> "Post 1 (heavy)" (en)'],
+            ['translateWorksDesc(desc, isRu)', isRu ? 'Описание работ, язык' : 'Work description, language', isRu ? 'Перевод типовых описаний работ' : 'Translation of standard work descriptions'],
+          ]}
+        />
+
+        <Sub>export.js</Sub>
+        <P>{isRu
+          ? 'Три функции экспорта данных из фронтенда:'
+          : 'Three data export functions from the frontend:'
+        }</P>
+        <Table
+          headers={[isRu ? 'Функция' : 'Function', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['exportToXlsx(data, options)', isRu ? 'Генерация XLSX с 4 листами: Summary (статистика за период), Posts (данные по постам), Daily (дневная разбивка), Details (записи). Библиотека xlsx (SheetJS). Автоскачивание через programmatic <a> click' : 'Generates XLSX with 4 sheets: Summary (period stats), Posts (per-post data), Daily (daily breakdown), Details (records). Library xlsx (SheetJS). Auto-download via programmatic <a> click'],
+            ['exportToPdf(element, filename)', isRu ? 'Экспорт DOM-элемента в PDF (A4 landscape). Клонирование элемента off-screen, чанки по 2500px (лимит canvas), html2canvas -> jsPDF. Фон #0f172a для тёмной темы' : 'Export DOM element to PDF (A4 landscape). Off-screen element cloning, 2500px chunks (canvas limit), html2canvas -> jsPDF. Background #0f172a for dark theme'],
+            ['downloadChartAsPng(chartRef, filename)', isRu ? 'Скачивание Recharts графика как PNG: html2canvas рендерит SVG в canvas -> data URL -> скачивание' : 'Download Recharts chart as PNG: html2canvas renders SVG to canvas -> data URL -> download'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
+        {/* Section 14 — RBAC */}
+        {/* ============================================================ */}
+        <SectionTitle id="rbac">{isRu ? '14. RBAC -- Система доступа' : '14. RBAC -- Access Control'}</SectionTitle>
+        <P>{isRu
+          ? 'Система контроля доступа работает на трёх независимых уровнях: роли (базовый набор разрешений), страницы (доступные маршруты), видимость элементов (виджеты на страницах). Каждый уровень настраивается через админ-панель (страница Users).'
+          : 'The access control system operates on three independent levels: roles (base permission set), pages (accessible routes), element visibility (page widgets). Each level is configured via admin panel (Users page).'
+        }</P>
+
+        <Sub>{isRu ? '15 разрешений (Permissions)' : '15 Permissions'}</Sub>
+        <Table
+          headers={[isRu ? 'Ключ' : 'Key', isRu ? 'Описание' : 'Description', isRu ? 'Роли' : 'Roles']}
+          rows={[
+            ['view_dashboard', isRu ? 'Просмотр Dashboard' : 'View Dashboard', 'admin, director, manager, mechanic, viewer'],
+            ['view_analytics', isRu ? 'Просмотр аналитики' : 'View analytics', 'admin, director'],
+            ['view_zones', isRu ? 'Просмотр зон' : 'View zones', 'admin, director, manager, viewer'],
+            ['view_posts', isRu ? 'Просмотр постов' : 'View posts', 'admin, director, manager, mechanic, viewer'],
+            ['view_sessions', isRu ? 'Просмотр сессий' : 'View sessions', 'admin, director, manager, mechanic'],
+            ['view_events', isRu ? 'Просмотр событий' : 'View events', 'admin, director, manager'],
+            ['view_work_orders', isRu ? 'Просмотр заказ-нарядов' : 'View work orders', 'admin, director'],
+            ['view_recommendations', isRu ? 'Просмотр рекомендаций' : 'View recommendations', 'admin, director, manager'],
+            ['view_cameras', isRu ? 'Просмотр камер' : 'View cameras', 'admin, director'],
+            ['manage_zones', isRu ? 'Управление зонами и постами (CRUD)' : 'Manage zones and posts (CRUD)', 'admin'],
+            ['manage_work_orders', isRu ? 'Управление заказ-нарядами (CRUD, schedule)' : 'Manage work orders (CRUD, schedule)', 'admin, manager'],
+            ['manage_users', isRu ? 'Управление пользователями (CRUD, roles, pages)' : 'Manage users (CRUD, roles, pages)', 'admin'],
+            ['manage_cameras', isRu ? 'Управление камерами (CRUD, zone mapping)' : 'Manage cameras (CRUD, zone mapping)', 'admin'],
+            ['manage_roles', isRu ? 'Управление ролями и разрешениями' : 'Manage roles and permissions', 'admin'],
+            ['manage_settings', isRu ? 'Управление системными настройками' : 'Manage system settings', 'admin'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Доступ к страницам' : 'Page Access'}</Sub>
+        <P>{isRu
+          ? 'Массив user.pages[] хранит список pageId страниц, доступных пользователю. При создании пользователя pages заполняется из ROLE_DEFAULT_PAGES для его роли. Администратор может расширить или ограничить набор. На фронтенде Sidebar фильтрует навигацию: показывает только те пункты, для которых user.pages.includes(pageId) === true. Исключение: admin видит все пункты безусловно. ProtectedRoute проверяет доступ к странице и редиректит на Dashboard при отсутствии доступа.'
+          : 'The user.pages[] array stores the list of pageId pages accessible to the user. When creating a user, pages is populated from ROLE_DEFAULT_PAGES for their role. Admin can expand or restrict the set. On the frontend, Sidebar filters navigation: shows only items where user.pages.includes(pageId) === true. Exception: admin sees all items unconditionally. ProtectedRoute checks page access and redirects to Dashboard if access denied.'
+        }</P>
+
+        <Sub>{isRu ? 'Видимость элементов (hiddenElements)' : 'Element Visibility (hiddenElements)'}</Sub>
+        <P>{isRu
+          ? 'JSON-массив строк формата "pageId:elementId" в поле user.hiddenElements. Пример: ["dashboard:liveSto", "analytics:heatmaps"]. isElementVisible(pageId, elementId) из AuthContext проверяет наличие в массиве. Если элемент скрыт -- компонент не рендерится. Всего 27 настраиваемых элементов на 4 страницах (Dashboard: 5, DashboardPosts: 4, PostsDetail: 11, Analytics: 7).'
+          : 'JSON array of strings in "pageId:elementId" format in user.hiddenElements field. Example: ["dashboard:liveSto", "analytics:heatmaps"]. isElementVisible(pageId, elementId) from AuthContext checks array membership. If hidden -- component is not rendered. Total: 27 configurable elements across 4 pages (Dashboard: 5, DashboardPosts: 4, PostsDetail: 11, Analytics: 7).'
+        }</P>
+
+        <Sub>{isRu ? 'Backend middleware' : 'Backend Middleware'}</Sub>
+        <Code>{`// ${isRu ? 'Цепочка middleware для защищённого маршрута' : 'Middleware chain for protected route'}
+router.put('/api/users/:id',
+  authenticate,                    // JWT -> req.user (${isRu ? 'кеш 15мин' : 'cache 15min'})
+  requirePermission('manage_users'), // ${isRu ? 'проверка разрешения, 403 при отсутствии' : 'permission check, 403 if missing'}
+  auditLog('user'),                // ${isRu ? 'перехват res.json для аудита' : 'intercept res.json for audit'}
+  validate(updateUserSchema),      // Zod ${isRu ? 'валидация body' : 'body validation'}
+  asyncHandler(handler)            // ${isRu ? 'обработка ошибок (P2025 -> 404)' : 'error handling (P2025 -> 404)'}
+);`}</Code>
+
+
+        {/* ============================================================ */}
         {/* Section 15 — i18n */}
+        {/* ============================================================ */}
         <SectionTitle id="i18n">{isRu ? '15. Интернационализация' : '15. Internationalization'}</SectionTitle>
         <P>{isRu
-          ? 'Интернационализация реализована через react-i18next с двумя языками: русский (RU, по умолчанию) и английский (EN). Файлы переводов расположены в frontend/src/i18n/ru.json и frontend/src/i18n/en.json, каждый содержит ~512 ключей, организованных в 37 секций.'
-          : 'Internationalization is implemented via react-i18next with two languages: Russian (RU, default) and English (EN). Translation files are located at frontend/src/i18n/ru.json and frontend/src/i18n/en.json, each containing ~512 keys organized in 37 sections.'
+          ? 'react-i18next с двумя языками: русский (RU, по умолчанию) и английский (EN). Файлы: frontend/src/i18n/ru.json и en.json -- по 613 строк, ~512 ключей каждый. 100% паритет: каждый ключ существует в обоих файлах. Язык хранится в localStorage[\'language\'].'
+          : 'react-i18next with two languages: Russian (RU, default) and English (EN). Files: frontend/src/i18n/ru.json and en.json -- 613 lines, ~512 keys each. 100% parity: every key exists in both files. Language stored in localStorage[\'language\'].'
         }</P>
+
+        <Sub>{isRu ? 'Структура ключей' : 'Key Structure'}</Sub>
+        <Table
+          headers={[isRu ? 'Секция' : 'Section', isRu ? 'Примеры ключей' : 'Example Keys', isRu ? 'Кол-во' : 'Count']}
+          rows={[
+            ['nav.*', 'nav.dashboard, nav.analytics, nav.workOrders, nav.cameras, nav.users, nav.shifts', '~20'],
+            ['dashboard.*', 'dashboard.title, dashboard.totalVehicles, dashboard.avgRepairTime, dashboard.utilization', '~30'],
+            ['posts.*', 'posts.title, posts.status.free, posts.status.occupied, posts.type.heavy', '~25'],
+            ['workOrders.*', 'workOrders.title, workOrders.status.pending, workOrders.normHours, workOrders.import', '~35'],
+            ['analytics.*', 'analytics.title, analytics.export.xlsx, analytics.trends, analytics.ranking', '~40'],
+            ['events.*', 'events.title, events.type.vehicle_enter, events.filter.zone, events.filter.period', '~25'],
+            ['cameras.*', 'cameras.title, cameras.stream, cameras.offline, cameras.zone_coverage', '~15'],
+            ['users.*', 'users.title, users.role, users.pages, users.hiddenElements, users.active', '~20'],
+            ['shifts.*', 'shifts.title, shifts.workers, shifts.conflict, shifts.complete', '~15'],
+            ['audit.*', 'audit.title, audit.action.create, audit.entity.user, audit.export', '~15'],
+            ['common.*', 'common.save, common.cancel, common.delete, common.loading, common.error', '~50'],
+            [isRu ? 'Прочие (data1c, map, health, predict, help, ...)' : 'Other (data1c, map, health, predict, help, ...)', '...', '~220'],
+          ]}
+        />
+
         <P>{isRu
-          ? 'Все тексты интерфейса используют t(\'key\') для перевода. Например: t(\'nav.dashboard\'), t(\'workOrders.status.completed\'), t(\'analytics.export.xlsx\'). Языки поддерживают 100% паритет — каждый ключ существует в обоих файлах. Текущий язык сохраняется в localStorage[\'language\'] и восстанавливается при загрузке.'
-          : 'All UI texts use t(\'key\') for translation. For example: t(\'nav.dashboard\'), t(\'workOrders.status.completed\'), t(\'analytics.export.xlsx\'). Languages maintain 100% parity — every key exists in both files. Current language is saved to localStorage[\'language\'] and restored on load.'
+          ? 'Использование: все статические тексты через t(\'key\'). Динамические данные (названия зон/постов от бэкенда) через translate.js. Переключение: i18n.changeLanguage(\'en\') / i18n.changeLanguage(\'ru\') -- мгновенное обновление всего UI без перезагрузки.'
+          : 'Usage: all static texts via t(\'key\'). Dynamic data (zone/post names from backend) via translate.js. Switching: i18n.changeLanguage(\'en\') / i18n.changeLanguage(\'ru\') -- instant full UI update without reload.'
         }</P>
-        <P>{isRu
-          ? 'Переключение языка выполняется через i18n.changeLanguage(\'en\') или i18n.changeLanguage(\'ru\') и мгновенно обновляет весь интерфейс без перезагрузки страницы. Некоторые динамические данные (названия зон, постов) переводятся через утилиту translate.js, а не через i18n — так как эти данные приходят с бэкенда на русском языке.'
-          : 'Language switching is done via i18n.changeLanguage(\'en\') or i18n.changeLanguage(\'ru\') and instantly updates the entire UI without page reload. Some dynamic data (zone names, post names) is translated via the translate.js utility rather than i18n — since this data comes from the backend in Russian.'
-        }</P>
-        <Code>{`// ${isRu ? 'Использование в компонентах' : 'Usage in components'}
-const { t, i18n } = useTranslation();
-const isRu = i18n.language === 'ru';
 
-// ${isRu ? 'Статические тексты через t()' : 'Static texts via t()'}
-<h1>{t('nav.dashboard')}</h1>
-<span>{t('workOrders.status.completed')}</span>
 
-// ${isRu ? 'Динамические данные через translate.js' : 'Dynamic data via translate.js'}
-translateZone(zone.name, isRu)
-translatePost(post.name, isRu)
-
-// ${isRu ? 'Переключение языка' : 'Language switching'}
-i18n.changeLanguage('en')`}</Code>
-
+        {/* ============================================================ */}
         {/* Section 16 — PWA */}
+        {/* ============================================================ */}
         <SectionTitle id="pwa">{isRu ? '16. PWA и Service Worker' : '16. PWA & Service Worker'}</SectionTitle>
         <P>{isRu
-          ? 'Приложение реализовано как Progressive Web App (PWA) с Service Worker и Web Push уведомлениями. Service Worker (sw.js) использует стратегию Network-first: сначала пытается получить ресурс из сети, при неудаче — из кеша. Это обеспечивает актуальность данных при наличии сети и работоспособность при временной потере связи.'
-          : 'The application is implemented as a Progressive Web App (PWA) with Service Worker and Web Push notifications. Service Worker (sw.js) uses a Network-first strategy: first attempts to fetch the resource from the network, on failure — from cache. This ensures data freshness when online and functionality during temporary connection loss.'
+          ? 'Progressive Web App с Service Worker и Web Push уведомлениями. Service Worker (sw.js, текущая версия: metricsaiup-v20) использует стратегию Network-first для всех запросов.'
+          : 'Progressive Web App with Service Worker and Web Push notifications. Service Worker (sw.js, current version: metricsaiup-v20) uses Network-first strategy for all requests.'
         }</P>
+
+        <Sub>{isRu ? 'Стратегия кеширования' : 'Caching Strategy'}</Sub>
         <P>{isRu
-          ? 'Service Worker исключает из кеширования динамические ресурсы: /api/* (запросы к бэкенду), /socket.io/* (WebSocket). CACHE_NAME (текущий: metricsaiup-v11) должен обновляться при каждом билде фронтенда — это единственный способ гарантировать, что пользователи получат новую версию приложения, а не закешированную старую.'
-          : 'Service Worker excludes dynamic resources from caching: /api/* (backend requests), /socket.io/* (WebSocket). CACHE_NAME (current: metricsaiup-v11) must be updated on every frontend build — this is the only way to guarantee users receive the new app version rather than a cached old one.'
+          ? 'Network-first: (1) fetch из сети; (2) при успехе -- сохранить в кеш + вернуть; (3) при ошибке -- cache.match (вернуть из кеша). Исключения (не кешируются): /api/* (бэкенд API), /socket.io/* (WebSocket), chrome-extension://*. Статические ассеты (JS, CSS, изображения, шрифты) кешируются при первом запросе.'
+          : 'Network-first: (1) fetch from network; (2) on success -- save to cache + return; (3) on error -- cache.match (return from cache). Exclusions (not cached): /api/* (backend API), /socket.io/* (WebSocket), chrome-extension://*. Static assets (JS, CSS, images, fonts) cached on first request.'
         }</P>
+
+        <Sub>CACHE_NAME</Sub>
         <P>{isRu
-          ? 'Push-уведомления реализованы через протокол Web Push с VAPID-ключами. Фронтенд подписывается через POST /api/push/subscribe (отправляет endpoint и ключи), бэкенд сохраняет подписку в PushSubscription модели. При отправке уведомления (POST /api/push/send) используется библиотека web-push. manifest.json описывает PWA: имя, иконки, цвета, start_url.'
-          : 'Push notifications are implemented via the Web Push protocol with VAPID keys. The frontend subscribes via POST /api/push/subscribe (sends endpoint and keys), the backend saves the subscription in the PushSubscription model. When sending a notification (POST /api/push/send), the web-push library is used. manifest.json describes the PWA: name, icons, colors, start_url.'
+          ? 'CACHE_NAME = \'metricsaiup-v20\'. ОБЯЗАТЕЛЬНО бампить при каждом билде фронтенда. При активации нового Service Worker он удаляет все кеши кроме текущего CACHE_NAME. Это единственный способ гарантировать обновление у всех клиентов.'
+          : 'CACHE_NAME = \'metricsaiup-v20\'. MUST bump on every frontend build. On new Service Worker activation, it deletes all caches except the current CACHE_NAME. This is the only way to guarantee updates for all clients.'
         }</P>
-        <Code>{`// ${isRu ? 'Жизненный цикл Service Worker' : 'Service Worker lifecycle'}
-// sw.js - CACHE_NAME ${isRu ? 'нужно бампить при каждом билде' : 'must be bumped on each build'}
-const CACHE_NAME = 'metricsaiup-v11';
 
-// ${isRu ? 'Стратегия: Network-first' : 'Strategy: Network-first'}
-// 1. fetch(request) ${isRu ? 'из сети' : 'from network'}
-// 2. ${isRu ? 'При ошибке — cache.match(request)' : 'On error — cache.match(request)'}
-// 3. ${isRu ? 'Исключения: /api/*, /socket.io/*' : 'Exclusions: /api/*, /socket.io/*'}
+        <Sub>Web Push</Sub>
+        <P>{isRu
+          ? 'Протокол Web Push с VAPID-ключами. Фронтенд: navigator.serviceWorker.ready -> registration.pushManager.subscribe({ applicationServerKey: VAPID_PUBLIC_KEY }) -> POST /api/push/subscribe (endpoint, keys.p256dh, keys.auth). Бэкенд сохраняет в PushSubscription. Отправка: POST /api/push/send с title, body, target (userId или broadcast). Библиотека: web-push 3.6.'
+          : 'Web Push protocol with VAPID keys. Frontend: navigator.serviceWorker.ready -> registration.pushManager.subscribe({ applicationServerKey: VAPID_PUBLIC_KEY }) -> POST /api/push/subscribe (endpoint, keys.p256dh, keys.auth). Backend saves to PushSubscription. Sending: POST /api/push/send with title, body, target (userId or broadcast). Library: web-push 3.6.'
+        }</P>
 
-// Push ${isRu ? 'уведомления' : 'notifications'}
-// POST /api/push/subscribe — ${isRu ? 'подписка' : 'subscribe'}
-// POST /api/push/send — ${isRu ? 'отправка' : 'send'}`}</Code>
+        <Sub>manifest.json</Sub>
+        <P>{isRu
+          ? 'PWA манифест: name = "MetricsAiUp", short_name = "MetricsAiUp", start_url = "/", display = "standalone", theme_color и background_color. Иконки: favicon.svg (SVG для всех размеров). При установке PWA на мобильном устройстве появляется иконка на домашнем экране.'
+          : 'PWA manifest: name = "MetricsAiUp", short_name = "MetricsAiUp", start_url = "/", display = "standalone", theme_color and background_color. Icons: favicon.svg (SVG for all sizes). When installing PWA on mobile, an icon appears on the home screen.'
+        }</P>
 
+
+        {/* ============================================================ */}
         {/* Section 17 — HLS */}
+        {/* ============================================================ */}
         <SectionTitle id="hls">{isRu ? '17. HLS Видеостриминг' : '17. HLS Video Streaming'}</SectionTitle>
         <P>{isRu
-          ? 'Система видеонаблюдения обеспечивает просмотр 10 RTSP-камер через веб-интерфейс. Камеры передают RTSP-потоки, которые конвертируются в HLS (HTTP Live Streaming) через FFmpeg на стороне сервера. HLS-сервер (server.js) работает на порту 8181 с HTTPS.'
-          : 'The video surveillance system provides viewing of 10 RTSP cameras through the web interface. Cameras transmit RTSP streams, which are converted to HLS (HTTP Live Streaming) via FFmpeg on the server side. The HLS server (server.js) runs on port 8181 with HTTPS.'
+          ? 'HLS-сервер (server.js) работает на порту 8181 с HTTPS (сертификат из .ssl/). Конвертирует 10 RTSP-потоков камер в HLS через FFmpeg. Каждая камера -- отдельный FFmpeg-процесс.'
+          : 'HLS server (server.js) runs on port 8181 with HTTPS (certificate from .ssl/). Converts 10 RTSP camera streams to HLS via FFmpeg. Each camera is a separate FFmpeg process.'
         }</P>
-        <P>{isRu
-          ? 'FFmpeg запускается для каждой камеры как отдельный процесс. Параметры конвертации: сегменты по 2 секунды, 6 сегментов в плейлисте (итого ~12 секунд задержки). При падении FFmpeg-процесса он автоматически перезапускается через 3 секунды. Выходные файлы (.m3u8 плейлист + .ts сегменты) сохраняются в /project/hls/ и раздаются как через HLS-сервер (:8181), так и через Nginx (/hls/*).'
-          : 'FFmpeg runs for each camera as a separate process. Conversion parameters: 2-second segments, 6 segments in playlist (total ~12 seconds delay). If an FFmpeg process crashes, it automatically restarts after 3 seconds. Output files (.m3u8 playlist + .ts segments) are saved to /project/hls/ and served both via HLS server (:8181) and Nginx (/hls/*).'
-        }</P>
-        <P>{isRu
-          ? 'На фронтенде HLS-потоки воспроизводятся через библиотеку HLS.js в компоненте CameraStreamModal. HLS.js автоматически адаптирует качество к пропускной способности сети. Камеры отображаются на двух страницах: Cameras (вид по зонам и общий вид) и MapViewer (позиции на карте СТО). Статус камер (online/offline) мониторится через CameraHealthCheck каждые 30 секунд.'
-          : 'On the frontend, HLS streams are played via the HLS.js library in the CameraStreamModal component. HLS.js automatically adapts quality to network bandwidth. Cameras are displayed on two pages: Cameras (zone view and all view) and MapViewer (positions on STO map). Camera status (online/offline) is monitored via CameraHealthCheck every 30 seconds.'
-        }</P>
-        <Code>{`RTSP Camera (10x)
-  \u2502  rtsp://86.57.249.76:1732/stream1
-  \u2502  rtsp://86.57.249.76:1832/stream2
-  \u2502  ...
-  \u25bc
-FFmpeg (${isRu ? 'отдельный процесс на камеру' : 'separate process per camera'})
-  -i rtsp://... -c:v copy -f hls
-  -hls_time 2              # ${isRu ? '2-секундные сегменты' : '2-second segments'}
-  -hls_list_size 6         # ${isRu ? '6 сегментов в плейлисте' : '6 segments in playlist'}
-  -hls_flags delete_segments
-  \u25bc
-/project/hls/
-  cam1.m3u8 + cam1-000001.ts, cam1-000002.ts, ...
-  \u25bc
-HLS Server (:8181 HTTPS) + Nginx (/hls/*)
-  \u25bc
-HLS.js (${isRu ? 'браузер' : 'browser'}) \u2192 CameraStreamModal`}</Code>
 
-        {/* Section 18 — 1C */}
+        <Sub>{isRu ? '10 камер' : '10 Cameras'}</Sub>
+        <Table
+          headers={['ID', isRu ? 'Имя' : 'Name', isRu ? 'RTSP URL' : 'RTSP URL', isRu ? 'HLS файл' : 'HLS File']}
+          rows={[
+            ['cam01', isRu ? 'Камера 1' : 'Camera 1', 'rtsp://86.57.249.76:1732/stream1', '/project/hls/cam01.m3u8'],
+            ['cam02', isRu ? 'Камера 2' : 'Camera 2', 'rtsp://86.57.249.76:1832/stream2', '/project/hls/cam02.m3u8'],
+            ['cam03', isRu ? 'Камера 3' : 'Camera 3', 'rtsp://86.57.249.76:1932/stream3', '/project/hls/cam03.m3u8'],
+            ['cam04', isRu ? 'Камера 4' : 'Camera 4', 'rtsp://86.57.249.76:2032/stream4', '/project/hls/cam04.m3u8'],
+            ['cam05', isRu ? 'Камера 5' : 'Camera 5', 'rtsp://86.57.249.76:2132/stream5', '/project/hls/cam05.m3u8'],
+            ['cam06-cam10', isRu ? 'Камеры 6-10' : 'Cameras 6-10', 'rtsp://86.57.249.76:2232-2632/stream6-10', '/project/hls/cam06-10.m3u8'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'FFmpeg конвейер' : 'FFmpeg Pipeline'}</Sub>
+        <Code>{`ffmpeg -rtsp_transport tcp -i rtsp://86.57.249.76:1732/stream1 \\
+  -c:v copy                    # ${isRu ? 'без перекодирования видео (passthrough)' : 'no video transcoding (passthrough)'}
+  -f hls                       # ${isRu ? 'выходной формат HLS' : 'output format HLS'}
+  -hls_time 2                  # ${isRu ? '2-секундные сегменты' : '2-second segments'}
+  -hls_list_size 6             # ${isRu ? '6 сегментов в плейлисте (~12с окно)' : '6 segments in playlist (~12s window)'}
+  -hls_flags delete_segments   # ${isRu ? 'удаление старых сегментов' : 'delete old segments'}
+  -hls_segment_filename /project/hls/cam01-%06d.ts
+  /project/hls/cam01.m3u8
+
+# ${isRu ? 'Автоперезапуск: при падении FFmpeg -- рестарт через 3 секунды' : 'Auto-restart: on FFmpeg crash -- restart after 3 seconds'}
+# ${isRu ? 'Выход: .m3u8 (плейлист) + .ts (сегменты) в /project/hls/' : 'Output: .m3u8 (playlist) + .ts (segments) in /project/hls/'}`}</Code>
+
+        <Sub>{isRu ? 'API HLS-сервера' : 'HLS Server API'}</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/cameras', isRu ? 'Список камер с HLS URL и статусом' : 'Camera list with HLS URLs and status'],
+            ['GET', '/api/cameras/:id/stream', isRu ? 'HLS stream URL для конкретной камеры' : 'HLS stream URL for specific camera'],
+            ['GET', '/hls/*.m3u8', isRu ? 'HLS плейлист (через Nginx с CORS)' : 'HLS playlist (via Nginx with CORS)'],
+            ['GET', '/hls/*.ts', isRu ? 'HLS видеосегмент (через Nginx с CORS)' : 'HLS video segment (via Nginx with CORS)'],
+          ]}
+        />
+
+        <P>{isRu
+          ? 'На фронтенде HLS-потоки воспроизводятся через HLS.js 1.6 в CameraStreamModal. HLS.js автоматически адаптирует качество к пропускной способности. Камеры доступны на страницах Cameras (по зонам), MapViewer (позиции на карте), PostsDetail (камеры поста). Статус мониторится CameraHealthCheck (30с) + Socket.IO camera:status.'
+          : 'On frontend, HLS streams play via HLS.js 1.6 in CameraStreamModal. HLS.js auto-adapts quality to bandwidth. Cameras available on Cameras (by zones), MapViewer (map positions), PostsDetail (post cameras). Status monitored by CameraHealthCheck (30s) + Socket.IO camera:status.'
+        }</P>
+
+
+        {/* ============================================================ */}
+        {/* Section 18 — 1C Integration */}
+        {/* ============================================================ */}
         <SectionTitle id="integration1c">{isRu ? '18. Интеграция с 1С' : '18. 1C Integration'}</SectionTitle>
         <P>{isRu
-          ? 'Интеграция с ERP-системой 1С реализована через обмен XLSX-файлами. Поддерживаются два режима импорта: ручной (drag-n-drop XLSX через веб-интерфейс на странице Data1C) и автоматический (file watcher отслеживает директорию /data/1c-import/ и автоматически обрабатывает появляющиеся файлы).'
-          : '1C ERP integration is implemented via XLSX file exchange. Two import modes are supported: manual (drag-n-drop XLSX via web interface on Data1C page) and automatic (file watcher monitors /data/1c-import/ directory and automatically processes appearing files).'
-        }</P>
-        <P>{isRu
-          ? 'Поддерживаются два типа данных: Planning (планирование — мастера, расписание работ, плановые заказ-наряды с датами и нормо-часами) и Workers (выработка — выполненные заказ-наряды, фактические нормо-часы, привязка к работникам). При импорте выполняется дедупликация по уникальным идентификаторам (номер заказ-наряда, дата, работник), чтобы повторный импорт того же файла не создавал дублей.'
-          : 'Two data types are supported: Planning (planning — masters, work schedules, planned work orders with dates and norm hours) and Workers (production — completed work orders, actual norm hours, worker assignments). Import performs deduplication by unique identifiers (work order number, date, worker), so re-importing the same file does not create duplicates.'
-        }</P>
-        <P>{isRu
-          ? 'Результат импорта сохраняется в три JSON-файла: /data/1c-planning.json (данные планирования), /data/1c-workers.json (данные выработки), /data/1c-stats.json (агрегированная статистика). Эти файлы используются страницей Data1C для отображения данных. Каждая операция импорта/экспорта записывается в SyncLog в БД с полями: type, direction (import/export), status (success/error), fileName, recordCount, error.'
-          : 'Import results are saved to three JSON files: /data/1c-planning.json (planning data), /data/1c-workers.json (production data), /data/1c-stats.json (aggregated statistics). These files are used by the Data1C page for display. Each import/export operation is recorded in SyncLog in DB with fields: type, direction (import/export), status (success/error), fileName, recordCount, error.'
-        }</P>
-        <P>{isRu
-          ? 'Экспорт из системы также доступен в формате XLSX: страница Data1C позволяет выбрать фильтры (период, тип данных, работники) и скачать отформатированный XLSX-файл для импорта обратно в 1С или для анализа в Excel.'
-          : 'Export from the system is also available in XLSX format: the Data1C page allows selecting filters (period, data type, workers) and downloading a formatted XLSX file for importing back to 1C or for analysis in Excel.'
+          ? 'Интеграция с ERP 1С через XLSX-файлы. Два режима импорта: ручной (drag-n-drop на странице Data1C) и автоматический (file watcher /data/1c-import/). Два типа данных: Planning (планирование) и Workers (выработка).'
+          : '1C ERP integration via XLSX files. Two import modes: manual (drag-n-drop on Data1C page) and automatic (file watcher /data/1c-import/). Two data types: Planning and Workers (production).'
         }</P>
 
+        <Sub>{isRu ? 'Формат Planning XLSX (16 колонок)' : 'Planning XLSX Format (16 columns)'}</Sub>
+        <Table
+          headers={[isRu ? 'Колонка' : 'Column', isRu ? 'Описание' : 'Description']}
+          rows={[
+            [isRu ? 'Номер ЗН' : 'WO Number', isRu ? 'Уникальный номер заказ-наряда из 1С' : 'Unique work order number from 1C'],
+            [isRu ? 'Дата' : 'Date', isRu ? 'Дата планируемого ремонта' : 'Planned repair date'],
+            [isRu ? 'Клиент' : 'Client', isRu ? 'Имя клиента или организация' : 'Client name or organization'],
+            [isRu ? 'Авто (марка, модель)' : 'Vehicle (make, model)', isRu ? 'Марка и модель автомобиля' : 'Vehicle make and model'],
+            [isRu ? 'Гос. номер' : 'Plate Number', isRu ? 'Государственный регистрационный знак' : 'License plate number'],
+            [isRu ? 'Вид работ' : 'Work Type', isRu ? 'Описание планируемых работ' : 'Planned work description'],
+            [isRu ? 'Нормо-часы' : 'Norm Hours', isRu ? 'Плановые нормо-часы на работу' : 'Planned norm hours for work'],
+            [isRu ? 'Мастер' : 'Master', isRu ? 'Ответственный мастер/менеджер' : 'Responsible master/manager'],
+            [isRu ? 'Пост' : 'Post', isRu ? 'Назначенный пост (1-10)' : 'Assigned post (1-10)'],
+            [isRu ? 'Время начала' : 'Start Time', isRu ? 'Планируемое время начала' : 'Planned start time'],
+            [isRu ? 'Время окончания' : 'End Time', isRu ? 'Планируемое время окончания' : 'Planned end time'],
+            [isRu ? 'Приоритет' : 'Priority', isRu ? 'Приоритет: low/normal/high/urgent' : 'Priority: low/normal/high/urgent'],
+            [isRu ? '+ 4 доп. колонки' : '+ 4 extra columns', isRu ? 'Статус, комментарии, запчасти, стоимость' : 'Status, comments, parts, cost'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Формат Workers XLSX (15 колонок)' : 'Workers XLSX Format (15 columns)'}</Sub>
+        <P>{isRu
+          ? 'Данные выработки: ФИО работника, дата, номера выполненных ЗН, фактические нормо-часы, тип работ, качество (оценка), и другие метрики производительности.'
+          : 'Production data: worker name, date, completed WO numbers, actual norm hours, work type, quality (rating), and other performance metrics.'
+        }</P>
+
+        <Sub>{isRu ? 'File watcher и дедупликация' : 'File Watcher & Deduplication'}</Sub>
+        <P>{isRu
+          ? 'Sync1C мониторит директорию /data/1c-import/ через fs.watch. При появлении .xlsx файла: (1) парсинг через xlsx (SheetJS); (2) определение типа (Planning/Workers) по структуре колонок; (3) дедупликация по уникальным ключам (номер ЗН + дата + работник); (4) сохранение в JSON: /data/1c-planning.json, /data/1c-workers.json, /data/1c-stats.json; (5) запись SyncLog в БД (type, direction=import, status, fileName, recordCount, error). Повторный импорт того же файла не создаёт дублей.'
+          : 'Sync1C monitors /data/1c-import/ via fs.watch. On .xlsx file appearance: (1) parse via xlsx (SheetJS); (2) determine type (Planning/Workers) by column structure; (3) deduplicate by unique keys (WO number + date + worker); (4) save to JSON: /data/1c-planning.json, /data/1c-workers.json, /data/1c-stats.json; (5) write SyncLog to DB (type, direction=import, status, fileName, recordCount, error). Re-importing same file does not create duplicates.'
+        }</P>
+
+        <Sub>{isRu ? 'Экспорт' : 'Export'}</Sub>
+        <P>{isRu
+          ? 'POST /api/1c/export генерирует XLSX с фильтрами (период, тип данных, работники). Файл скачивается через Content-Disposition: attachment. Используется serverExport.js для серверной генерации XLSX.'
+          : 'POST /api/1c/export generates XLSX with filters (period, data type, workers). File downloads via Content-Disposition: attachment. Uses serverExport.js for server-side XLSX generation.'
+        }</P>
+
+
+        {/* ============================================================ */}
         {/* Section 19 — Testing */}
+        {/* ============================================================ */}
         <SectionTitle id="testing">{isRu ? '19. Тестирование' : '19. Testing'}</SectionTitle>
         <P>{isRu
-          ? 'Тестирование фронтенда реализовано через Vitest (быстрый test runner, совместимый с Vite) + React Testing Library (тестирование компонентов с точки зрения пользователя) + jsdom (эмуляция DOM в Node.js). Конфигурация тестов находится в vite.config.js (секция test).'
-          : 'Frontend testing is implemented via Vitest (fast test runner compatible with Vite) + React Testing Library (component testing from user perspective) + jsdom (DOM emulation in Node.js). Test configuration is in vite.config.js (test section).'
+          ? 'Тестирование фронтенда через Vitest + React Testing Library + jsdom. Конфигурация в vite.config.js (секция test). Тесты: frontend/src/components/__tests__/.'
+          : 'Frontend testing via Vitest + React Testing Library + jsdom. Configuration in vite.config.js (test section). Tests: frontend/src/components/__tests__/.'
         }</P>
-        <P>{isRu
-          ? 'Тесты расположены рядом с тестируемыми файлами (*.test.jsx). Запуск: npm test (из frontend/). Vitest поддерживает watch mode для разработки, coverage reports, и параллельное выполнение. React Testing Library используется для рендеринга компонентов и проверки поведения: render(), screen.getByText(), fireEvent.click(), waitFor().'
-          : 'Tests are co-located with tested files (*.test.jsx). Run: npm test (from frontend/). Vitest supports watch mode for development, coverage reports, and parallel execution. React Testing Library is used for rendering components and verifying behavior: render(), screen.getByText(), fireEvent.click(), waitFor().'
-        }</P>
+        <Table
+          headers={[isRu ? 'Инструмент' : 'Tool', isRu ? 'Версия' : 'Version', isRu ? 'Назначение' : 'Purpose']}
+          rows={[
+            ['Vitest', '~3.x', isRu ? 'Test runner, совместимый с Vite. Watch mode, coverage, параллельное выполнение' : 'Test runner compatible with Vite. Watch mode, coverage, parallel execution'],
+            ['React Testing Library', '~16.x', isRu ? 'Тестирование компонентов с точки зрения пользователя: render(), screen.getByText(), fireEvent' : 'Component testing from user perspective: render(), screen.getByText(), fireEvent'],
+            ['jsdom', '~25.x', isRu ? 'DOM-эмуляция в Node.js для тестов' : 'DOM emulation in Node.js for tests'],
+            ['@testing-library/jest-dom', '~6.x', isRu ? 'Дополнительные матчеры: toBeInTheDocument(), toHaveClass(), toBeVisible()' : 'Additional matchers: toBeInTheDocument(), toHaveClass(), toBeVisible()'],
+          ]}
+        />
         <Code>{`# ${isRu ? 'Запуск тестов' : 'Run tests'}
-cd /project/frontend && npm test
+cd /project/frontend && npm test        # ${isRu ? 'watch mode' : 'watch mode'}
+cd /project/frontend && npm test -- --run  # ${isRu ? 'однократный запуск' : 'single run'}
 
-# ${isRu ? 'Стек тестирования' : 'Testing stack'}
-# Vitest — ${isRu ? 'test runner (совместим с Vite)' : 'test runner (Vite-compatible)'}
-# React Testing Library — ${isRu ? 'рендеринг и проверка компонентов' : 'component rendering and assertions'}
-# jsdom — ${isRu ? 'эмуляция DOM для Node.js' : 'DOM emulation for Node.js'}`}</Code>
+# ${isRu ? 'Расположение тестов' : 'Test location'}
+frontend/src/components/__tests__/*.test.jsx
 
-        {/* Section 20 — Map */}
+# ${isRu ? 'Конфигурация в vite.config.js' : 'Configuration in vite.config.js'}
+test: {
+  environment: 'jsdom',
+  globals: true,
+  setupFiles: ['./src/test/setup.js']
+}`}</Code>
+
+
+        {/* ============================================================ */}
+        {/* Section 20 — Physical STO Map */}
+        {/* ============================================================ */}
         <SectionTitle id="map">{isRu ? '20. Физическая карта СТО' : '20. Physical STO Map'}</SectionTitle>
         <P>{isRu
-          ? 'Интерактивная карта СТО реализована на Konva (2D canvas framework для React через react-konva). Карта отображает реальный план здания автосервиса размером 46540x30690 мм с точным расположением всех объектов: 5 зон, 10 постов, 10 камер, стены, двери, информационные зоны.'
-          : 'The interactive STO map is built on Konva (2D canvas framework for React via react-konva). The map displays the real auto service building plan measuring 46540x30690mm with precise placement of all objects: 5 zones, 10 posts, 10 cameras, walls, doors, information zones.'
+          ? 'Интерактивная карта на Konva (2D canvas через react-konva). Реальный план здания: 46540x30690 мм. Две страницы: MapViewer (live просмотр) и MapEditor (редактирование, 1244 строк).'
+          : 'Interactive map on Konva (2D canvas via react-konva). Real building plan: 46540x30690mm. Two pages: MapViewer (live viewing) and MapEditor (editing, 1244 LOC).'
         }</P>
-        <P>{isRu
-          ? 'MapViewer — страница просмотра карты в реальном времени. Посты окрашиваются по текущему статусу (зелёный — свободен, жёлтый — занят без работы, красный — активная работа). Данные обновляются через polling и Socket.IO. Клик по посту показывает детальную информацию: номер авто, текущий ЗН, работник, время.'
-          : 'MapViewer — real-time map viewing page. Posts are colored by current status (green — free, yellow — occupied without work, red — active work). Data updates via polling and Socket.IO. Clicking a post shows detailed info: plate number, current WO, worker, time.'
-        }</P>
-        <P>{isRu
-          ? 'MapEditor (1244 строк) — полнофункциональный drag-drop редактор карты. Поддерживает 8 типов элементов: building (здание/стены), post (рабочий пост), zone (зона), camera (камера с углом обзора), door (дверь/ворота), wall (отдельная стена), label (текстовая подпись), infozone (информационная зона). Snap-to-grid 10px обеспечивает аккуратное выравнивание. Элементы можно перемещать, изменять размер, поворачивать и удалять.'
-          : 'MapEditor (1244 LOC) — full-featured drag-drop map editor. Supports 8 element types: building (building/walls), post (work post), zone (zone), camera (camera with viewing angle), door (door/gate), wall (separate wall), label (text label), infozone (information zone). Snap-to-grid 10px ensures neat alignment. Elements can be moved, resized, rotated, and deleted.'
-        }</P>
-        <P>{isRu
-          ? 'Карта сохраняется в БД через модель MapLayout с версионированием. Каждое сохранение создаёт новую MapLayoutVersion с автором и временной меткой. Предыдущие версии можно восстановить через API (restore). Данные элементов хранятся в JSON-поле elements массивом объектов с type, x, y, width, height, rotation и специфичными для типа свойствами.'
-          : 'The map is saved to DB via the MapLayout model with versioning. Each save creates a new MapLayoutVersion with author and timestamp. Previous versions can be restored via API (restore). Element data is stored in the elements JSON field as an array of objects with type, x, y, width, height, rotation, and type-specific properties.'
-        }</P>
+
+        <Sub>{isRu ? '8 типов элементов' : '8 Element Types'}</Sub>
         <Table
-          headers={[isRu ? 'Тип элемента' : 'Element Type', isRu ? 'Описание' : 'Description', isRu ? 'Свойства' : 'Properties']}
+          headers={[isRu ? 'Тип' : 'Type', isRu ? 'Konva' : 'Konva', isRu ? 'Свойства' : 'Properties', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['building', isRu ? 'Здание, стены корпуса' : 'Building, walls', 'x, y, width, height, fill, stroke'],
-            ['post', isRu ? 'Рабочий пост механика' : 'Mechanic work post', 'x, y, width, height, postNumber, postType'],
-            ['zone', isRu ? 'Зона (ремонт, ожидание и т.д.)' : 'Zone (repair, waiting, etc.)', 'x, y, width, height, zoneType, zoneName'],
-            ['camera', isRu ? 'Камера с углом обзора' : 'Camera with viewing angle', 'x, y, rotation, fov, cameraId'],
-            ['door', isRu ? 'Дверь или ворота' : 'Door or gate', 'x, y, width, doorType'],
-            ['wall', isRu ? 'Отдельная стена' : 'Separate wall', 'x1, y1, x2, y2, thickness'],
-            ['label', isRu ? 'Текстовая подпись' : 'Text label', 'x, y, text, fontSize, color'],
-            ['infozone', isRu ? 'Информационная зона' : 'Information zone', 'x, y, width, height, text, color'],
+            ['building', 'Rect + Line', 'x, y, width, height, fill, stroke', isRu ? 'Стены здания, контур корпуса' : 'Building walls, body outline'],
+            ['post', 'Rect + Text', 'x, y, width, height, postNumber (1-10), postType (light/heavy/special)', isRu ? 'Рабочий пост. Цвет зависит от статуса в live-режиме' : 'Work post. Color depends on status in live mode'],
+            ['zone', 'Rect (полупрозрачный)', 'x, y, width, height, zoneType, zoneName, fill (alpha)', isRu ? 'Зона с полупрозрачной заливкой по типу' : 'Zone with semi-transparent fill by type'],
+            ['camera', 'Circle + Wedge', 'x, y, rotation, fov (угол обзора), cameraId', isRu ? 'Камера с конусом обзора (FOV)' : 'Camera with field of view cone (FOV)'],
+            ['door', 'Rect', 'x, y, width, doorType (door/gate)', isRu ? 'Дверь или ворота' : 'Door or gate'],
+            ['wall', 'Line', 'x1, y1, x2, y2, thickness, color', isRu ? 'Отдельная стена/перегородка' : 'Separate wall/partition'],
+            ['label', 'Text', 'x, y, text, fontSize, color, fontStyle', isRu ? 'Текстовая подпись на карте' : 'Text label on map'],
+            ['infozone', 'Rect + Text', 'x, y, width, height, text, color, opacity', isRu ? 'Информационная зона (подписи областей)' : 'Information zone (area labels)'],
           ]}
         />
 
+        <Sub>{isRu ? 'Konva Layer System' : 'Konva Layer System'}</Sub>
+        <P>{isRu
+          ? 'Карта использует многослойную систему Konva: Layer 1 (buildings) -> Layer 2 (zones) -> Layer 3 (posts) -> Layer 4 (cameras) -> Layer 5 (walls, doors) -> Layer 6 (labels, infozones). Слои рендерятся в указанном порядке (buildings на заднем плане, labels на переднем). Zoom реализован через Stage.scale(), pan -- через Stage.position() с drag.'
+          : 'The map uses Konva multi-layer system: Layer 1 (buildings) -> Layer 2 (zones) -> Layer 3 (posts) -> Layer 4 (cameras) -> Layer 5 (walls, doors) -> Layer 6 (labels, infozones). Layers render in order (buildings in back, labels in front). Zoom via Stage.scale(), pan via Stage.position() with drag.'
+        }</P>
+
+        <Sub>{isRu ? 'Версионирование' : 'Versioning'}</Sub>
+        <P>{isRu
+          ? 'Каждое сохранение карты через POST /api/map-layout создаёт MapLayoutVersion с автором и timestamp. GET /api/map-layout/versions возвращает историю. POST /api/map-layout/restore/:versionId восстанавливает предыдущую версию. Данные элементов хранятся в JSON-поле elements как массив объектов.'
+          : 'Each map save via POST /api/map-layout creates a MapLayoutVersion with author and timestamp. GET /api/map-layout/versions returns history. POST /api/map-layout/restore/:versionId restores a previous version. Element data stored in JSON field elements as object array.'
+        }</P>
+
+        <Sub>MapEditor ({isRu ? 'возможности' : 'capabilities'})</Sub>
+        <P>{isRu
+          ? 'MapEditor.jsx (1244 строк) -- полнофункциональный редактор: toolbar с 8 типами элементов, drag-n-drop размещение, выделение (click), перемещение (drag), resize (corner handles), rotation (для камер), delete (клавиша Delete), snap-to-grid (10px), zoom (ctrl+scroll), pan (middle click drag), undo/redo stack, properties panel (редактирование свойств выбранного элемента), save button (-> API).'
+          : 'MapEditor.jsx (1244 LOC) -- full-featured editor: toolbar with 8 element types, drag-n-drop placement, selection (click), movement (drag), resize (corner handles), rotation (for cameras), delete (Delete key), snap-to-grid (10px), zoom (ctrl+scroll), pan (middle click drag), undo/redo stack, properties panel (editing selected element properties), save button (-> API).'
+        }</P>
+
+
+        {/* ============================================================ */}
         {/* Section 21 — Dependencies */}
+        {/* ============================================================ */}
         <SectionTitle id="deps">{isRu ? '21. Зависимости' : '21. Dependencies'}</SectionTitle>
-        <P>{isRu
-          ? 'Проект использует современные стабильные версии всех зависимостей. Фронтенд-зависимости устанавливаются через npm в frontend/, бэкенд-зависимости — в backend/.'
-          : 'The project uses modern stable versions of all dependencies. Frontend dependencies are installed via npm in frontend/, backend dependencies in backend/.'
-        }</P>
 
-        <Sub>{isRu ? 'Frontend зависимости' : 'Frontend Dependencies'}</Sub>
+        <Sub>{isRu ? 'Frontend (33 зависимости)' : 'Frontend (33 dependencies)'}</Sub>
         <Table
           headers={[isRu ? 'Пакет' : 'Package', isRu ? 'Версия' : 'Version', isRu ? 'Назначение' : 'Purpose']}
           rows={[
-            ['react', '19.2.4', isRu ? 'UI framework' : 'UI framework'],
-            ['react-router-dom', '7.13.1', isRu ? 'Маршрутизация (HashRouter)' : 'Routing (HashRouter)'],
-            ['tailwindcss', '4.2.2', isRu ? 'Utility-first CSS framework' : 'Utility-first CSS framework'],
-            ['vite', '8.0.1', isRu ? 'Сборщик и dev-сервер' : 'Bundler and dev server'],
-            ['recharts', '3.8.0', isRu ? 'Графики и визуализация' : 'Charts and visualization'],
-            ['konva + react-konva', '10.2.3 / 19.x', isRu ? 'Konva canvas для карты СТО' : 'Konva canvas for STO map'],
-            ['i18next + react-i18next', '25.9.0', isRu ? 'Интернационализация (RU/EN)' : 'Internationalization (RU/EN)'],
-            ['socket.io-client', '4.8.3', isRu ? 'Real-time коммуникация' : 'Real-time communication'],
-            ['hls.js', '1.6.15', isRu ? 'HLS-видеоплеер в браузере' : 'HLS video player in browser'],
-            ['jspdf + html2canvas', '4.2.1', isRu ? 'Экспорт в PDF' : 'PDF export'],
-            ['xlsx', '0.18.5', isRu ? 'Экспорт/импорт XLSX (SheetJS)' : 'XLSX export/import (SheetJS)'],
-            ['lucide-react', '0.577.0', isRu ? 'SVG-иконки (единственный источник иконок)' : 'SVG icons (sole icon source)'],
+            ['react', '19.2.4', isRu ? 'UI-фреймворк (hooks, Suspense, lazy)' : 'UI framework (hooks, Suspense, lazy)'],
+            ['react-dom', '19.2.4', isRu ? 'DOM-рендеринг React' : 'React DOM rendering'],
+            ['react-router-dom', '7.13.1', isRu ? 'Маршрутизация: HashRouter, Outlet, Navigate, useParams, useLocation' : 'Routing: HashRouter, Outlet, Navigate, useParams, useLocation'],
+            ['tailwindcss', '4.2.2', isRu ? 'Utility-first CSS (glassmorphism через custom CSS variables)' : 'Utility-first CSS (glassmorphism via custom CSS variables)'],
+            ['vite', '8.0.1', isRu ? 'Сборщик, dev-сервер, HMR, prebuild script' : 'Bundler, dev server, HMR, prebuild script'],
+            ['@vitejs/plugin-react', '4.x', isRu ? 'React Fast Refresh для Vite' : 'React Fast Refresh for Vite'],
+            ['recharts', '3.8.0', isRu ? 'Графики: LineChart, BarChart, PieChart, AreaChart, RadarChart, Tooltip, Legend' : 'Charts: LineChart, BarChart, PieChart, AreaChart, RadarChart, Tooltip, Legend'],
+            ['konva', '10.2.3', isRu ? '2D Canvas фреймворк (карта СТО)' : '2D Canvas framework (STO map)'],
+            ['react-konva', '19.x', isRu ? 'React-обёртка для Konva (Stage, Layer, Rect, Circle, Line, Text, Wedge)' : 'React wrapper for Konva (Stage, Layer, Rect, Circle, Line, Text, Wedge)'],
+            ['i18next', '25.9.0', isRu ? 'Ядро i18n' : 'i18n core'],
+            ['react-i18next', '15.x', isRu ? 'React-интеграция i18n (useTranslation hook, Trans component)' : 'React i18n integration (useTranslation hook, Trans component)'],
+            ['socket.io-client', '4.8.3', isRu ? 'Socket.IO клиент (WebSocket + polling fallback)' : 'Socket.IO client (WebSocket + polling fallback)'],
+            ['hls.js', '1.6.15', isRu ? 'HLS-плеер в браузере (MSE API)' : 'HLS player in browser (MSE API)'],
+            ['jspdf', '4.2.1', isRu ? 'Генерация PDF из JavaScript' : 'PDF generation from JavaScript'],
+            ['html2canvas', '1.4.x', isRu ? 'DOM -> Canvas рендеринг (для PDF/PNG экспорта)' : 'DOM -> Canvas rendering (for PDF/PNG export)'],
+            ['xlsx', '0.18.5', isRu ? 'XLSX генерация/парсинг (SheetJS)' : 'XLSX generation/parsing (SheetJS)'],
+            ['lucide-react', '0.577.0', isRu ? 'SVG-иконки (единственный источник иконок в проекте, без emoji)' : 'SVG icons (sole icon source in project, no emoji)'],
+            ['qrcode.react', '~4.x', isRu ? 'Генерация QR-кодов (для сессий авто)' : 'QR code generation (for vehicle sessions)'],
+            ['date-fns', '~4.x', isRu ? 'Утилиты работы с датами' : 'Date utilities'],
           ]}
         />
 
-        <Sub>{isRu ? 'Backend зависимости' : 'Backend Dependencies'}</Sub>
+        <Sub>{isRu ? 'Backend (19 зависимостей)' : 'Backend (19 dependencies)'}</Sub>
         <Table
           headers={[isRu ? 'Пакет' : 'Package', isRu ? 'Версия' : 'Version', isRu ? 'Назначение' : 'Purpose']}
           rows={[
-            ['express', '4.21.0', isRu ? 'HTTP-сервер и API framework' : 'HTTP server and API framework'],
-            ['@prisma/client', '5.20.0', isRu ? 'ORM для SQLite' : 'ORM for SQLite'],
-            ['jsonwebtoken', '9.0.2', isRu ? 'Генерация и проверка JWT' : 'JWT generation and verification'],
-            ['bcryptjs', '2.4.3', isRu ? 'Хеширование паролей' : 'Password hashing'],
-            ['socket.io', '4.8.0', isRu ? 'WebSocket-сервер' : 'WebSocket server'],
-            ['helmet', '7.1.0', isRu ? 'Заголовки безопасности' : 'Security headers'],
-            ['zod', '4.3.6', isRu ? 'Валидация данных на бэкенде' : 'Backend data validation'],
-            ['node-cron', '4.2.1', isRu ? 'Планировщик задач (cron)' : 'Task scheduler (cron)'],
-            ['xlsx', '0.18.5', isRu ? 'Генерация/парсинг XLSX файлов' : 'XLSX file generation/parsing'],
-            ['web-push', '3.6.7', isRu ? 'Web Push уведомления (VAPID)' : 'Web Push notifications (VAPID)'],
-            ['node-telegram-bot-api', '0.67.0', isRu ? 'Telegram Bot API клиент' : 'Telegram Bot API client'],
-            ['winston', '3.x', isRu ? 'Структурированное логирование с ротацией файлов' : 'Structured logging with file rotation'],
-            ['swagger-jsdoc', '6.x', isRu ? 'Генерация OpenAPI спецификации из JSDoc' : 'OpenAPI spec generation from JSDoc'],
-            ['swagger-ui-express', '5.x', isRu ? 'Swagger UI на /api-docs' : 'Swagger UI at /api-docs'],
+            ['express', '4.21.0', isRu ? 'HTTP-сервер, маршрутизация, middleware chain' : 'HTTP server, routing, middleware chain'],
+            ['@prisma/client', '5.20.0', isRu ? 'ORM: запросы к SQLite, транзакции, миграции' : 'ORM: SQLite queries, transactions, migrations'],
+            ['prisma', '5.20.0', isRu ? 'CLI для миграций, генерации клиента, seed' : 'CLI for migrations, client generation, seed'],
+            ['jsonwebtoken', '9.0.2', isRu ? 'JWT: jwt.sign() (access 24h, refresh 7d), jwt.verify()' : 'JWT: jwt.sign() (access 24h, refresh 7d), jwt.verify()'],
+            ['bcryptjs', '2.4.3', isRu ? 'Хеширование паролей (bcrypt.hash, bcrypt.compare), salt rounds: 10' : 'Password hashing (bcrypt.hash, bcrypt.compare), salt rounds: 10'],
+            ['socket.io', '4.8.0', isRu ? 'WebSocket-сервер с rooms, namespace, broadcast' : 'WebSocket server with rooms, namespace, broadcast'],
+            ['helmet', '7.1.0', isRu ? 'Заголовки безопасности (CSP, XSS, HSTS)' : 'Security headers (CSP, XSS, HSTS)'],
+            ['cors', '2.8.5', isRu ? 'CORS middleware (origin: *)' : 'CORS middleware (origin: *)'],
+            ['morgan', '1.10.0', isRu ? 'HTTP request logging (dev format)' : 'HTTP request logging (dev format)'],
+            ['zod', '4.3.6', isRu ? 'Валидация данных: строки, числа, enum, nested objects, arrays' : 'Data validation: strings, numbers, enums, nested objects, arrays'],
+            ['node-cron', '4.2.1', isRu ? 'Планировщик: cron выражения, минутная гранулярность' : 'Scheduler: cron expressions, minute granularity'],
+            ['xlsx', '0.18.5', isRu ? 'Серверная генерация/парсинг XLSX' : 'Server-side XLSX generation/parsing'],
+            ['web-push', '3.6.7', isRu ? 'Web Push: VAPID, sendNotification()' : 'Web Push: VAPID, sendNotification()'],
+            ['node-telegram-bot-api', '0.67.0', isRu ? 'Telegram Bot API: onText, sendMessage, sendDocument' : 'Telegram Bot API: onText, sendMessage, sendDocument'],
+            ['winston', '3.x', isRu ? 'Структурированное логирование: Console + File (logs/), ротация, уровни' : 'Structured logging: Console + File (logs/), rotation, levels'],
+            ['swagger-jsdoc', '6.x', isRu ? 'Генерация OpenAPI 3.0 спецификации из JSDoc комментариев' : 'OpenAPI 3.0 spec generation from JSDoc comments'],
+            ['swagger-ui-express', '5.x', isRu ? 'Swagger UI на /api-docs (интерактивная документация API)' : 'Swagger UI at /api-docs (interactive API docs)'],
+            ['express-rate-limit', '7.x', isRu ? 'Rate limiting: 20 req/min для /api/auth/login' : 'Rate limiting: 20 req/min for /api/auth/login'],
+            ['cookie-parser', '1.4.x', isRu ? 'Парсинг cookies (refresh token в httpOnly cookie)' : 'Cookie parsing (refresh token in httpOnly cookie)'],
           ]}
         />
 
-        {/* Section 22 — Env */}
+
+        {/* ============================================================ */}
+        {/* Section 22 — Environment Variables */}
+        {/* ============================================================ */}
         <SectionTitle id="env">{isRu ? '22. Переменные окружения' : '22. Environment Variables'}</SectionTitle>
         <P>{isRu
-          ? 'Переменные окружения настраиваются в файле backend/.env. Они определяют подключение к БД, секреты JWT, порты серверов и опциональные интеграции (Telegram, Web Push). При отсутствии .env файла используются значения по умолчанию.'
-          : 'Environment variables are configured in the backend/.env file. They define DB connection, JWT secrets, server ports, and optional integrations (Telegram, Web Push). When the .env file is missing, default values are used.'
+          ? 'Переменные окружения в файле backend/.env. При отсутствии файла используются значения по умолчанию.'
+          : 'Environment variables in backend/.env file. When file is missing, default values are used.'
         }</P>
         <Table
-          headers={[isRu ? 'Переменная' : 'Variable', isRu ? 'Значение по умолчанию' : 'Default Value', isRu ? 'Описание' : 'Description']}
+          headers={[isRu ? 'Переменная' : 'Variable', isRu ? 'По умолчанию' : 'Default', isRu ? 'Обязательно' : 'Required', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['DATABASE_URL', 'file:./dev.db', isRu ? 'Путь к файлу SQLite базы данных (относительно prisma/)' : 'Path to SQLite database file (relative to prisma/)'],
-            ['JWT_SECRET', 'change-me-in-production', isRu ? 'Секретный ключ для подписи JWT токенов. ОБЯЗАТЕЛЬНО сменить в продакшене!' : 'Secret key for signing JWT tokens. MUST be changed in production!'],
-            ['PORT', '3001', isRu ? 'HTTP-порт Express сервера' : 'Express server HTTP port'],
-            ['NODE_ENV', 'development', isRu ? 'Окружение: development/production. Влияет на morgan, helmet, CORS' : 'Environment: development/production. Affects morgan, helmet, CORS'],
-            ['TELEGRAM_BOT_TOKEN', isRu ? '(опционально)' : '(optional)', isRu ? 'Токен Telegram-бота для команд и доставки отчётов. Если не задан — бот не запускается' : 'Telegram bot token for commands and report delivery. If not set — bot does not start'],
-            ['VAPID_PUBLIC_KEY', isRu ? '(опционально)' : '(optional)', isRu ? 'Публичный VAPID-ключ для Web Push уведомлений' : 'Public VAPID key for Web Push notifications'],
-            ['VAPID_PRIVATE_KEY', isRu ? '(опционально)' : '(optional)', isRu ? 'Приватный VAPID-ключ для подписи push-запросов' : 'Private VAPID key for signing push requests'],
-          ]}
-        />
-        <Sub>localStorage</Sub>
-        <P>{isRu
-          ? 'Фронтенд использует localStorage только для клиентских настроек, НЕ для данных. Все данные приходят из бэкенда через API.'
-          : 'The frontend uses localStorage only for client-side settings, NOT for data. All data comes from the backend via API.'
-        }</P>
-        <Table
-          headers={[isRu ? 'Ключ' : 'Key', isRu ? 'Описание' : 'Description', isRu ? 'Используется в' : 'Used in']}
-          rows={[
-            ['token', isRu ? 'JWT access token (24ч)' : 'JWT access token (24h)', 'AuthContext'],
-            ['currentUser', isRu ? 'Объект текущего пользователя (кеш для быстрого старта)' : 'Current user object (cache for fast start)', 'AuthContext'],
-            ['language', 'ru / en', 'i18n'],
-            ['theme', 'dark / light', 'ThemeContext'],
-            ['dashboardPostsSettings', isRu ? 'Настройки Gantt-таймлайна (масштаб, фильтры)' : 'Gantt timeline settings (scale, filters)', 'DashboardPosts'],
-            ['dashboardPostsSchedule', isRu ? 'Локальный кеш расписания ЗН' : 'Local WO schedule cache', 'DashboardPosts'],
-            ['cameraMappingData', isRu ? 'Маппинг камер по зонам (кеш)' : 'Camera zone mapping (cache)', 'CameraMapping'],
+            ['DATABASE_URL', 'file:./dev.db', isRu ? 'Да' : 'Yes', isRu ? 'Путь к SQLite файлу (относительно prisma/). Prisma генерирует клиент по этому пути' : 'SQLite file path (relative to prisma/). Prisma generates client by this path'],
+            ['JWT_SECRET', 'change-me-in-production', isRu ? 'Да' : 'Yes', isRu ? 'Секретный ключ для jwt.sign() и jwt.verify(). ОБЯЗАТЕЛЬНО сменить в продакшене! Используется для access token (24h) и refresh token (7d)' : 'Secret for jwt.sign() and jwt.verify(). MUST change in production! Used for access token (24h) and refresh token (7d)'],
+            ['PORT', '3001', isRu ? 'Нет' : 'No', isRu ? 'HTTP-порт Express. HTTPS всегда PORT+443 (3001+443=3444)' : 'Express HTTP port. HTTPS is always PORT+443 (3001+443=3444)'],
+            ['NODE_ENV', 'development', isRu ? 'Нет' : 'No', isRu ? 'development: morgan dev, verbose errors. production: helmet strict, minimal errors' : 'development: morgan dev, verbose errors. production: helmet strict, minimal errors'],
+            ['TELEGRAM_BOT_TOKEN', isRu ? '(пусто)' : '(empty)', isRu ? 'Нет' : 'No', isRu ? 'Токен от @BotFather. Если пусто -- TelegramBot не запускается, ReportScheduler не отправляет отчёты' : 'Token from @BotFather. If empty -- TelegramBot does not start, ReportScheduler does not send reports'],
+            ['VAPID_PUBLIC_KEY', isRu ? '(пусто)' : '(empty)', isRu ? 'Нет' : 'No', isRu ? 'Публичный VAPID-ключ (Base64 URL-safe). Отдаётся фронтенду через GET /api/push/vapid-key' : 'Public VAPID key (Base64 URL-safe). Served to frontend via GET /api/push/vapid-key'],
+            ['VAPID_PRIVATE_KEY', isRu ? '(пусто)' : '(empty)', isRu ? 'Нет' : 'No', isRu ? 'Приватный VAPID-ключ для подписи push-запросов (web-push library)' : 'Private VAPID key for signing push requests (web-push library)'],
+            ['MONITORING_API_URL', isRu ? '(пусто)' : '(empty)', isRu ? 'Нет' : 'No', isRu ? 'URL внешнего CV API для MonitoringProxy. Если пусто -- live-режим использует демо-данные' : 'External CV API URL for MonitoringProxy. If empty -- live mode uses demo data'],
           ]}
         />
 
-        {/* Section 23 — Seed */}
+        <Sub>localStorage ({isRu ? 'фронтенд' : 'frontend'})</Sub>
+        <Table
+          headers={[isRu ? 'Ключ' : 'Key', isRu ? 'Тип' : 'Type', isRu ? 'Описание' : 'Description', isRu ? 'Используется' : 'Used by']}
+          rows={[
+            ['token', 'string', isRu ? 'JWT access token (24ч). Устанавливается при login, очищается при logout' : 'JWT access token (24h). Set on login, cleared on logout', 'AuthContext'],
+            ['currentUser', 'JSON object', isRu ? 'Кеш пользователя для быстрого старта (не используется как источник правды)' : 'User cache for fast start (not used as source of truth)', 'AuthContext'],
+            ['language', '"ru" | "en"', isRu ? 'Текущий язык интерфейса' : 'Current UI language', 'i18n'],
+            ['theme', '"dark" | "light"', isRu ? 'Текущая тема оформления' : 'Current visual theme', 'ThemeContext'],
+            ['dashboardPostsSettings', 'JSON', isRu ? 'Настройки Gantt: масштаб зума, выбранные фильтры, видимость колонок' : 'Gantt settings: zoom scale, selected filters, column visibility', 'DashboardPosts'],
+            ['dashboardPostsSchedule', 'JSON', isRu ? 'Локальный кеш расписания ЗН (для быстрого рендеринга до загрузки API)' : 'Local WO schedule cache (for fast rendering before API loads)', 'DashboardPosts'],
+            ['cameraMappingData', 'JSON', isRu ? 'Кеш маппинга камер по зонам' : 'Camera zone mapping cache', 'CameraMapping'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
+        {/* Section 23 — Seed Data */}
+        {/* ============================================================ */}
         <SectionTitle id="seed">{isRu ? '23. Seed-данные' : '23. Seed Data'}</SectionTitle>
         <P>{isRu
-          ? 'Seed-данные загружаются при первой инициализации базы через prisma db seed (файл backend/prisma/seed.js). Они создают начальных пользователей с ролями, зоны, посты, камеры и базовые настройки. Seed можно перезапустить для восстановления начального состояния.'
-          : 'Seed data is loaded on first database initialization via prisma db seed (file backend/prisma/seed.js). It creates initial users with roles, zones, posts, cameras, and base settings. Seed can be re-run to restore initial state.'
+          ? 'Seed загружается при инициализации БД: npx prisma db seed (файл backend/prisma/seed.js). Создаёт полный набор начальных данных для работы системы. Можно перезапустить для сброса к начальному состоянию.'
+          : 'Seed loads on DB initialization: npx prisma db seed (file backend/prisma/seed.js). Creates a complete set of initial data for system operation. Can be re-run to reset to initial state.'
         }</P>
-        <P>{isRu
-          ? 'Seed создаёт 5 ролей (admin, director, manager, mechanic, viewer) с соответствующими разрешениями, 15 permissions, 5 зон, 10 постов, 10 камер, и 4 пользователей. Каждому пользователю назначается роль через UserRole, и определяется набор доступных страниц (pages[]).'
-          : 'Seed creates 5 roles (admin, director, manager, mechanic, viewer) with corresponding permissions, 15 permissions, 5 zones, 10 posts, 10 cameras, and 4 users. Each user is assigned a role via UserRole, and a set of accessible pages (pages[]) is defined.'
-        }</P>
+
+        <Sub>{isRu ? 'Пользователи' : 'Users'}</Sub>
         <Table
           headers={['Email', isRu ? 'Пароль' : 'Password', isRu ? 'Роль' : 'Role', isRu ? 'Имя' : 'Name', isRu ? 'Активен' : 'Active', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['admin@metricsai.up', 'admin123', 'admin', 'Admin MetricsAI', isRu ? 'Да' : 'Yes', isRu ? 'Полный доступ ко всем функциям системы' : 'Full access to all system features'],
-            ['demo@metricsai.up', 'demo12345', 'manager', isRu ? 'Генри Форд' : 'Henry Ford', isRu ? 'Да' : 'Yes', isRu ? 'Демо-аккаунт менеджера для презентаций' : 'Demo manager account for presentations'],
-            ['manager@metricsai.up', 'demo123', 'manager', isRu ? 'Сергей Петров' : 'Sergey Petrov', isRu ? 'Да' : 'Yes', isRu ? 'Рабочий аккаунт менеджера' : 'Working manager account'],
-            ['mechanic@metricsai.up', 'demo123', 'mechanic', isRu ? 'Иван Козлов' : 'Ivan Kozlov', isRu ? 'Нет' : 'No', isRu ? 'Неактивный аккаунт механика (для тестов)' : 'Inactive mechanic account (for testing)'],
+            ['admin@metricsai.up', 'admin123', 'admin', 'Admin MetricsAI', isRu ? 'Да' : 'Yes', isRu ? 'Полный доступ, все 22 страницы, все разрешения' : 'Full access, all 22 pages, all permissions'],
+            ['demo@metricsai.up', 'demo12345', 'manager', isRu ? 'Генри Форд' : 'Henry Ford', isRu ? 'Да' : 'Yes', isRu ? 'Демо-аккаунт для презентаций, расширенный набор страниц' : 'Demo account for presentations, expanded page set'],
+            ['manager@metricsai.up', 'demo123', 'manager', isRu ? 'Сергей Петров' : 'Sergey Petrov', isRu ? 'Да' : 'Yes', isRu ? 'Рабочий аккаунт менеджера, стандартный набор страниц' : 'Working manager account, standard page set'],
+            ['mechanic@metricsai.up', 'demo123', 'mechanic', isRu ? 'Иван Козлов' : 'Ivan Kozlov', isRu ? 'Нет' : 'No', isRu ? 'Неактивный аккаунт механика (для тестов деактивации)' : 'Inactive mechanic account (for deactivation testing)'],
           ]}
         />
+
+        <Sub>{isRu ? '5 ролей и 15 разрешений' : '5 Roles and 15 Permissions'}</Sub>
+        <P>{isRu
+          ? 'Seed создаёт 5 ролей (admin, director, manager, mechanic, viewer) и 15 базовых разрешений (view_dashboard, view_analytics, view_zones, view_posts, view_sessions, view_events, view_work_orders, view_recommendations, view_cameras, manage_zones, manage_work_orders, manage_users, manage_cameras, manage_roles, manage_settings). Каждая роль получает свой набор разрешений через RolePermission.'
+          : 'Seed creates 5 roles (admin, director, manager, mechanic, viewer) and 15 base permissions (view_dashboard, view_analytics, view_zones, view_posts, view_sessions, view_events, view_work_orders, view_recommendations, view_cameras, manage_zones, manage_work_orders, manage_users, manage_cameras, manage_roles, manage_settings). Each role gets its permission set via RolePermission.'
+        }</P>
+
+        <Sub>{isRu ? '5 зон' : '5 Zones'}</Sub>
+        <Table
+          headers={[isRu ? 'Название' : 'Name', isRu ? 'Тип' : 'Type', isRu ? 'Описание' : 'Description']}
+          rows={[
+            [isRu ? 'Зона ремонта' : 'Repair Zone', 'repair', isRu ? 'Основная зона с 10 постами, автомобили на ремонте' : 'Main zone with 10 posts, vehicles being repaired'],
+            [isRu ? 'Зона ожидания' : 'Waiting Zone', 'waiting', isRu ? 'Очередь автомобилей, ожидающих ремонта' : 'Queue of vehicles awaiting repair'],
+            [isRu ? 'Зона въезда' : 'Entry Zone', 'entry', isRu ? 'Въездные ворота, приёмка автомобилей' : 'Entry gates, vehicle reception'],
+            [isRu ? 'Парковка' : 'Parking', 'parking', isRu ? 'Парковка для завершённых и ожидающих авто' : 'Parking for completed and waiting vehicles'],
+            [isRu ? 'Свободная зона' : 'Free Zone', 'free', isRu ? 'Территория без назначения' : 'Unassigned area'],
+          ]}
+        />
+
+        <Sub>{isRu ? '10 постов' : '10 Posts'}</Sub>
+        <Table
+          headers={[isRu ? 'Пост' : 'Post', isRu ? 'Тип' : 'Type', isRu ? 'Назначение' : 'Purpose']}
+          rows={[
+            [isRu ? 'Пост 1-4 (грузовые)' : 'Posts 1-4 (heavy)', 'heavy', isRu ? 'Для грузовых автомобилей, расширенное оборудование' : 'For trucks, extended equipment'],
+            [isRu ? 'Пост 5-8 (легковые)' : 'Posts 5-8 (light)', 'light', isRu ? 'Для легковых автомобилей, стандартное оборудование' : 'For cars, standard equipment'],
+            [isRu ? 'Пост 9-10 (специальные)' : 'Posts 9-10 (special)', 'special', isRu ? 'Специализированные работы (диагностика, развал-схождение)' : 'Specialized work (diagnostics, alignment)'],
+          ]}
+        />
+
+        <Sub>{isRu ? '10 камер' : '10 Cameras'}</Sub>
+        <P>{isRu
+          ? 'Seed создаёт 10 камер (cam01-cam10) с RTSP URL, каждая привязана к зоне через CameraZone с приоритетом. Камеры покрывают все 5 зон СТО.'
+          : 'Seed creates 10 cameras (cam01-cam10) with RTSP URLs, each linked to a zone via CameraZone with priority. Cameras cover all 5 STO zones.'
+        }</P>
+
+
+        {/* ============================================================ */}
+        {/* Section 24 — Monitoring & Live Mode */}
+        {/* ============================================================ */}
+        <SectionTitle id="monitoring">{isRu ? '24. Мониторинг и Live-режим' : '24. Monitoring & Live Mode'}</SectionTitle>
+        <P>{isRu
+          ? 'Система поддерживает два режима работы: demo (демонстрационный, данные из БД и предсказаний) и live (реальные данные от внешнего CV API). Переключение через настройки: PUT /api/monitoring/settings { mode: "demo" | "live" }.'
+          : 'The system supports two operating modes: demo (demonstration, data from DB and predictions) and live (real data from external CV API). Switching via settings: PUT /api/monitoring/settings { mode: "demo" | "live" }.'
+        }</P>
+
+        <Sub>MonitoringProxy (340 LOC)</Sub>
+        <P>{isRu
+          ? 'MonitoringProxy (backend/src/services/monitoringProxy.js, 340 строк) -- ключевой сервис live-режима. Каждые 10 секунд опрашивает внешний CV API (MONITORING_API_URL из .env), получая JSON с текущим состоянием: номерные знаки автомобилей на каждом посту, статусы постов, время пребывания. Данные маппятся на внутреннюю модель:'
+          : 'MonitoringProxy (backend/src/services/monitoringProxy.js, 340 LOC) -- key live mode service. Every 10 seconds polls external CV API (MONITORING_API_URL from .env), getting JSON with current state: license plates at each post, post statuses, stay durations. Data is mapped to the internal model:'
+        }</P>
+        <Table
+          headers={[isRu ? 'CV API поле' : 'CV API Field', isRu ? 'Внутренний маппинг' : 'Internal Mapping', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['post.status', 'Post.status (free/occupied/active_work/occupied_no_work)', isRu ? 'Маппинг статусов от CV к внутренним' : 'Status mapping from CV to internal'],
+            ['post.plate', 'PostStay.plateNumber, VehicleSession.plateNumber', isRu ? 'Номерной знак автомобиля на посту' : 'License plate at post'],
+            ['post.duration', 'PostStay.activeTime', isRu ? 'Время пребывания на посту (секунды)' : 'Stay duration at post (seconds)'],
+            ['zone.vehicles[]', 'ZoneStay records', isRu ? 'Список авто в зоне' : 'List of vehicles in zone'],
+          ]}
+        />
+        <P>{isRu
+          ? 'В live-режиме Dashboard и MapViewer показывают реальные данные. Страница LiveDebug (доступна admin) показывает сырые ответы от CV API, результат маппинга, таймстемпы опроса и ошибки. При переключении режима эмитится Socket.IO событие settings:changed и все клиенты обновляют данные. Если MONITORING_API_URL не задан -- live-режим использует демо-данные.'
+          : 'In live mode, Dashboard and MapViewer show real data. LiveDebug page (admin only) shows raw CV API responses, mapping results, polling timestamps and errors. On mode switch, Socket.IO settings:changed event is emitted and all clients refresh. If MONITORING_API_URL is not set -- live mode uses demo data.'
+        }</P>
+
+        <Sub>{isRu ? 'Эндпоинты мониторинга' : 'Monitoring Endpoints'}</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/monitoring/cameras', isRu ? 'Данные от внешнего CV по камерам (последний ответ MonitoringProxy)' : 'External CV camera data (last MonitoringProxy response)'],
+            ['GET', '/api/monitoring/zone/:id/state', isRu ? 'Состояние конкретной зоны от CV (авто, постоянство)' : 'Specific zone state from CV (vehicles, stays)'],
+            ['GET', '/api/monitoring/settings', isRu ? 'Текущие настройки: { mode: "demo"|"live", pollingInterval, lastPollAt }' : 'Current settings: { mode: "demo"|"live", pollingInterval, lastPollAt }'],
+            ['PUT', '/api/monitoring/settings', isRu ? 'Изменить настройки (mode, pollingInterval). Эмитит settings:changed' : 'Update settings (mode, pollingInterval). Emits settings:changed'],
+          ]}
+        />
+
+
+        {/* ============================================================ */}
+        {/* Section 25 — Telegram Bot */}
+        {/* ============================================================ */}
+        <SectionTitle id="telegram">{isRu ? '25. Telegram-бот' : '25. Telegram Bot'}</SectionTitle>
+        <P>{isRu
+          ? 'Telegram-бот (backend/src/services/telegramBot.js) обеспечивает оперативный доступ к данным СТО через мессенджер. Запускается при наличии TELEGRAM_BOT_TOKEN в .env. Использует библиотеку node-telegram-bot-api в режиме polling.'
+          : 'Telegram bot (backend/src/services/telegramBot.js) provides quick STO data access via messenger. Starts when TELEGRAM_BOT_TOKEN is set in .env. Uses node-telegram-bot-api library in polling mode.'
+        }</P>
+
+        <Sub>{isRu ? '5 команд' : '5 Commands'}</Sub>
+        <Table
+          headers={[isRu ? 'Команда' : 'Command', isRu ? 'Описание' : 'Description', isRu ? 'Пример ответа' : 'Example Response']}
+          rows={[
+            ['/start', isRu ? 'Привязка Telegram-аккаунта к пользователю системы. Запрашивает email, создаёт TelegramLink (chatId + userId). После привязки доступны остальные команды' : 'Bind Telegram account to system user. Asks for email, creates TelegramLink (chatId + userId). After binding, other commands available', isRu ? '"Введите ваш email для привязки аккаунта"' : '"Enter your email to bind account"'],
+            ['/status', isRu ? 'Текущий статус СТО: количество авто, занятые/свободные посты, активные ЗН, рекомендации' : 'Current STO status: vehicle count, occupied/free posts, active WOs, recommendations', isRu ? '"СТО: 7 авто, 6/10 постов заняты, 4 активных ЗН"' : '"STO: 7 vehicles, 6/10 posts occupied, 4 active WOs"'],
+            ['/post N', isRu ? 'Статус конкретного поста (N = 1-10): статус, авто, ЗН, работник, время' : 'Specific post status (N = 1-10): status, vehicle, WO, worker, time', isRu ? '"/post 3" -> "Пост 3: active_work, А123БВ, ЗН-0042, 1ч 15мин"' : '"/post 3" -> "Post 3: active_work, A123BV, WO-0042, 1h 15min"'],
+            ['/free', isRu ? 'Список свободных постов с временем простоя' : 'List of free posts with idle time', isRu ? '"Свободные посты: 2 (45мин), 7 (12мин), 9 (2ч)"' : '"Free posts: 2 (45min), 7 (12min), 9 (2h)"'],
+            ['/report', isRu ? 'Генерация и отправка сводного отчёта за текущий день в формате XLSX (как Telegram-документ)' : 'Generate and send daily summary report in XLSX format (as Telegram document)', isRu ? 'Отправляет .xlsx файл как документ Telegram' : 'Sends .xlsx file as Telegram document'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Уведомления и доставка отчётов' : 'Notifications & Report Delivery'}</Sub>
+        <P>{isRu
+          ? 'Telegram-бот также используется ReportScheduler для автоматической доставки XLSX-отчётов. Когда cron-задание срабатывает, ReportScheduler генерирует XLSX через serverExport.js и отправляет его как документ через Telegram Bot API (bot.sendDocument). Получатель определяется полем telegramChatId в ReportSchedule. Если у пользователя нет TelegramLink -- отчёт не отправляется, но логируется ошибка.'
+          : 'The Telegram bot is also used by ReportScheduler for automatic XLSX report delivery. When a cron job triggers, ReportScheduler generates XLSX via serverExport.js and sends it as a document via Telegram Bot API (bot.sendDocument). Recipient is determined by telegramChatId in ReportSchedule. If user has no TelegramLink -- report is not sent but error is logged.'
+        }</P>
+
+        <Sub>{isRu ? 'Модель TelegramLink' : 'TelegramLink Model'}</Sub>
+        <P>{isRu
+          ? 'Таблица TelegramLink связывает Telegram chatId (уникальный идентификатор чата) с userId пользователя системы. Создаётся при выполнении /start с корректным email. Одному пользователю может соответствовать один chatId. Бот проверяет наличие TelegramLink перед выполнением всех команд кроме /start.'
+          : 'TelegramLink table links Telegram chatId (unique chat identifier) with system userId. Created when executing /start with a valid email. One user can have one chatId. Bot checks TelegramLink existence before all commands except /start.'
+        }</P>
+
+
+        {/* ============================================================ */}
+        {/* Section 26 — Audit System */}
+        {/* ============================================================ */}
+        <SectionTitle id="audit">{isRu ? '26. Система аудита' : '26. Audit System'}</SectionTitle>
+        <P>{isRu
+          ? 'Система аудита отслеживает все мутирующие операции (create, update, delete) через middleware auditLog.js. Каждая запись содержит полную информацию о том, кто, что и когда изменил.'
+          : 'The audit system tracks all mutating operations (create, update, delete) via auditLog.js middleware. Each record contains complete information about who changed what and when.'
+        }</P>
+
+        <Sub>{isRu ? 'Что логируется' : 'What Gets Logged'}</Sub>
+        <Table
+          headers={[isRu ? 'Поле' : 'Field', isRu ? 'Тип' : 'Type', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['action', 'String', isRu ? 'Тип операции: create, update, delete' : 'Operation type: create, update, delete'],
+            ['entity', 'String', isRu ? 'Тип сущности: user, post, zone, workOrder, shift, camera, mapLayout, location, reportSchedule, и др.' : 'Entity type: user, post, zone, workOrder, shift, camera, mapLayout, location, reportSchedule, etc.'],
+            ['entityId', 'String', isRu ? 'ID изменённой записи' : 'ID of changed record'],
+            ['oldData', 'JSON', isRu ? 'Состояние ДО операции (null для create). Сериализуется из Prisma-объекта' : 'State BEFORE operation (null for create). Serialized from Prisma object'],
+            ['newData', 'JSON', isRu ? 'Состояние ПОСЛЕ операции (null для delete). Сериализуется из res.json() ответа' : 'State AFTER operation (null for delete). Serialized from res.json() response'],
+            ['userId', 'Int', isRu ? 'ID пользователя, выполнившего операцию (из req.user)' : 'ID of user who performed the operation (from req.user)'],
+            ['ip', 'String', isRu ? 'IP-адрес клиента (req.ip)' : 'Client IP address (req.ip)'],
+            ['userAgent', 'String', isRu ? 'User-Agent браузера (req.headers[\'user-agent\'])' : 'Browser User-Agent (req.headers[\'user-agent\'])'],
+            ['createdAt', 'DateTime', isRu ? 'Временная метка операции (автоматически Prisma)' : 'Operation timestamp (automatic by Prisma)'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Как работает middleware' : 'How Middleware Works'}</Sub>
+        <P>{isRu
+          ? 'auditLog(entityType) -- middleware-фабрика. Принимает строку-идентификатор типа сущности (например, "user", "post"). Перехватывает оригинальный res.json(): (1) для PUT/DELETE -- загружает текущее состояние записи (oldData) через Prisma findUnique перед выполнением handler; (2) оборачивает res.json() -- при вызове handler, middleware перехватывает ответ, извлекает newData, и создаёт AuditLog запись. Для POST (create) oldData = null. Для DELETE newData = null.'
+          : 'auditLog(entityType) -- middleware factory. Takes entity type string (e.g., "user", "post"). Intercepts original res.json(): (1) for PUT/DELETE -- loads current record state (oldData) via Prisma findUnique before handler execution; (2) wraps res.json() -- when handler executes, middleware intercepts response, extracts newData, and creates AuditLog record. For POST (create) oldData = null. For DELETE newData = null.'
+        }</P>
+
+        <Sub>{isRu ? 'API аудит-лога' : 'Audit Log API'}</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/audit-log', isRu ? 'Список записей с фильтрами: ?userId=, ?action=, ?entity=, ?from=, ?to=, ?page=, ?limit=. Требует authenticate. Сортировка по createdAt DESC' : 'Record list with filters: ?userId=, ?action=, ?entity=, ?from=, ?to=, ?page=, ?limit=. Requires authenticate. Sorted by createdAt DESC'],
+            ['GET', '/api/audit-log/export/csv', isRu ? 'CSV-экспорт аудит-лога с теми же фильтрами. Content-Disposition: attachment. Содержит все поля AuditLog' : 'CSV export of audit log with same filters. Content-Disposition: attachment. Contains all AuditLog fields'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Индексы БД' : 'DB Indexes'}</Sub>
+        <P>{isRu
+          ? 'Для быстрого поиска AuditLog индексируется по: userId (поиск по пользователю), action (фильтр по типу операции), entity (фильтр по типу сущности), createdAt (фильтр по дате, сортировка). Составной индекс [entity, entityId] для поиска истории конкретной записи.'
+          : 'For fast lookups, AuditLog is indexed by: userId (user search), action (operation type filter), entity (entity type filter), createdAt (date filter, sorting). Composite index [entity, entityId] for searching specific record history.'
+        }</P>
+
+        <Sub>{isRu ? 'Страница Audit' : 'Audit Page'}</Sub>
+        <P>{isRu
+          ? 'Страница Audit.jsx на фронтенде отображает аудит-лог в виде таблицы с фильтрами (dropdown: пользователь, действие, сущность; date range: период). Каждая строка раскрывается для показа diff (oldData vs newData в JSON). Кнопка CSV Export скачивает отфильтрованные данные. Доступна только пользователям с правами (обычно admin).'
+          : 'The Audit.jsx page on the frontend displays the audit log as a table with filters (dropdowns: user, action, entity; date range: period). Each row expands to show diff (oldData vs newData in JSON). CSV Export button downloads filtered data. Available only to users with permissions (usually admin).'
+        }</P>
+
 
         {/* Footer */}
         <div className="mt-10 pt-4 border-t text-center" style={{ borderColor: 'var(--border-glass)' }}>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            MetricsAiUp — {isRu ? 'Техническая документация v1.0 | ' : 'Technical Documentation v1.0 | '}{generatedDate}
+            MetricsAiUp — {isRu ? 'Техническая документация v2.0 | ' : 'Technical Documentation v2.0 | '}{generatedDate}
+            {' | '}{isRu ? '26 секций' : '26 sections'}
           </p>
         </div>
       </div>
