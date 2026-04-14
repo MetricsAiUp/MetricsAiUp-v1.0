@@ -131,6 +131,17 @@ async function fetchMonitoringHealth() {
   }
 }
 
+async function fetchMonitoringCameras() {
+  try {
+    const res = await fetch(`${MONITORING_API_BASE}/monitoring/cameras`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    logger.error('Monitoring cameras fetch failed', { error: err.message });
+    return [];
+  }
+}
+
 function processState(rawState) {
   if (!rawState || !Array.isArray(rawState)) return;
 
@@ -325,4 +336,5 @@ module.exports = {
   fetchStateForPeriod,
   fetchMonitoringHistory,
   fetchMonitoringHealth,
+  fetchMonitoringCameras,
 };

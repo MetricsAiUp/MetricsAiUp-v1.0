@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin } from 'lucide-react';
+import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin, Camera, Video } from 'lucide-react';
 import { translateWorksDesc } from '../utils/translate';
 
 const AUTO_REFRESH_INTERVAL = 10000;
@@ -13,12 +13,12 @@ const COLOR_RU = {
   black: 'чёрный', white: 'белый', red: 'красный', blue: 'синий', green: 'зелёный',
   silver: 'серебристый', gray: 'серый', grey: 'серый', yellow: 'жёлтый', orange: 'оранжевый',
   brown: 'коричневый', beige: 'бежевый', gold: 'золотистый', purple: 'фиолетовый',
-  pink: 'розовый', dark: 'тёмный', light: 'светлый',
+  pink: 'розовый', dark: 'тёмный', light: 'светлый', or: 'или',
 };
 const BODY_RU = {
   sedan: 'седан', suv: 'внедорожник', hatchback: 'хэтчбек', wagon: 'универсал',
   van: 'фургон', truck: 'грузовик', pickup: 'пикап', coupe: 'купе', minivan: 'минивэн',
-  crossover: 'кроссовер', convertible: 'кабриолет', bus: 'автобус',
+  crossover: 'кроссовер', convertible: 'кабриолет', bus: 'автобус', or: 'или',
 };
 const PARTS_RU = {
   hood: 'капот', trunk: 'багажник', doors: 'двери', door: 'дверь',
@@ -29,7 +29,10 @@ const PARTS_RU = {
 
 function tr(dict, val) {
   if (!val) return val;
-  return dict[val.toLowerCase()] || val;
+  const lower = val.toLowerCase();
+  if (dict[lower]) return dict[lower];
+  // Handle compound values like "dark (black or dark gray)" or "sedan or hatchback"
+  return val.replace(/[a-zA-Z]+/g, w => dict[w.toLowerCase()] || w);
 }
 
 
@@ -101,7 +104,7 @@ function HistoryTable({ history, t, isRu }) {
         <tbody>
           {history.map((h, i) => (
             <tr key={i} style={{ borderBottom: '1px solid var(--border-glass)' }}>
-              <td className="px-2 py-1 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(h.lastUpdate)}</td>
+              <td className="px-2 py-1 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(h.timestamp || h.lastUpdate)}</td>
               <td className="px-2 py-1"><StatusBadge status={h.status} isRu={isRu} /></td>
               <td className="px-2 py-1 font-mono" style={{ color: h.car?.plate ? 'var(--text-primary)' : 'var(--text-muted)' }}>{h.car?.plate || '—'}</td>
               <td className="px-2 py-1" style={{ color: 'var(--text-secondary)' }}>
@@ -190,7 +193,8 @@ export default function LiveDebug() {
 
   const [rawData, setRawData] = useState([]);
   const [fullHistory, setFullHistory] = useState(null);
-  const [viewMode, setViewMode] = useState('current'); // current | history
+  const [cameras, setCameras] = useState([]);
+  const [viewMode, setViewMode] = useState('current'); // current | history | cameras
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -220,12 +224,19 @@ export default function LiveDebug() {
     setLoading(false);
   }, [api]);
 
+  const fetchCameras = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/monitoring/cameras');
+      if (res.data) setCameras(Array.isArray(res.data) ? res.data : []);
+    } catch {}
+    setLoading(false);
+  }, [api]);
+
   useEffect(() => {
-    if (viewMode === 'current') {
-      fetchCurrent();
-    } else {
-      fetchHistory();
-    }
+    if (viewMode === 'current') fetchCurrent();
+    else if (viewMode === 'history') fetchHistory();
+    else if (viewMode === 'cameras') fetchCameras();
   }, [viewMode]);
 
   // Auto-refresh for current mode
@@ -247,7 +258,7 @@ export default function LiveDebug() {
     );
   }
 
-  const displayData = viewMode === 'current' ? rawData : (fullHistory || []);
+  const displayData = viewMode === 'cameras' ? [] : (viewMode === 'current' ? rawData : (fullHistory || []));
 
   // Separate posts and zones
   const posts = displayData.filter(d => /^Пост\s+\d/.test(d.zone));
@@ -288,6 +299,16 @@ export default function LiveDebug() {
               }}
             >
               <History size={12} /> {t('liveDebug.fullHistory')}
+            </button>
+            <button
+              onClick={() => setViewMode('cameras')}
+              className="px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors"
+              style={{
+                background: viewMode === 'cameras' ? 'var(--accent)' : 'transparent',
+                color: viewMode === 'cameras' ? '#fff' : 'var(--text-secondary)',
+              }}
+            >
+              <Camera size={12} /> {isRu ? 'Камеры' : 'Cameras'}
             </button>
           </div>
           {/* Auto-refresh toggle */}
@@ -478,7 +499,63 @@ export default function LiveDebug() {
             </div>
           )}
 
-          {displayData.length === 0 && !loading && (
+          {/* Cameras section */}
+          {viewMode === 'cameras' && cameras.length > 0 && (
+            <div className="glass rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                <Camera size={14} style={{ color: 'var(--accent)' }} />
+                <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {isRu ? 'Камеры' : 'Cameras'} ({cameras.length})
+                </h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-glass)' }}>
+                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>ID</th>
+                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Название' : 'Name'}</th>
+                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Зоны' : 'Zones'}</th>
+                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Стрим' : 'Stream'}</th>
+                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Снапшот' : 'Snapshot'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cameras.map(cam => (
+                      <tr key={cam.id} style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                        <td className="px-3 py-2 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{cam.id}</td>
+                        <td className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>{cam.name}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap gap-1">
+                            {(cam.zones || []).map((z, i) => (
+                              <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+                                {z.zone} <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>({z.type})</span>
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          {cam.stream?.hls ? (
+                            <a href={cam.stream.hls} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                              <Video size={10} /> HLS
+                            </a>
+                          ) : '—'}
+                        </td>
+                        <td className="px-3 py-2">
+                          {cam.stream?.snapshot ? (
+                            <a href={cam.stream.snapshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                              <Eye size={10} /> {isRu ? 'Кадр' : 'Frame'}
+                            </a>
+                          ) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {((viewMode !== 'cameras' && displayData.length === 0) || (viewMode === 'cameras' && cameras.length === 0)) && !loading && (
             <div className="glass rounded-xl p-8 text-center">
               <p style={{ color: 'var(--text-muted)' }}>{t('liveDebug.noData')}</p>
             </div>

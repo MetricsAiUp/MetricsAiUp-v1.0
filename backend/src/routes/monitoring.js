@@ -17,6 +17,26 @@ router.get('/state', authenticate, asyncHandler(async (req, res) => {
   });
 }));
 
+// GET /api/monitoring/cameras — cameras with zone bindings and stream links
+router.get('/cameras', authenticate, asyncHandler(async (req, res) => {
+  const proxy = req.app.get('monitoringProxy');
+  if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
+  const cameras = await proxy.fetchMonitoringCameras();
+  res.json(cameras);
+}));
+
+// GET /api/monitoring/state/:zoneName — single zone/post state
+router.get('/state/:zoneName', authenticate, asyncHandler(async (req, res) => {
+  const proxy = req.app.get('monitoringProxy');
+  if (!proxy || !proxy.isRunning()) {
+    return res.status(503).json({ error: 'Monitoring proxy not running' });
+  }
+  const raw = proxy.getRawState() || [];
+  const zone = raw.find(z => z.zone === decodeURIComponent(req.params.zoneName));
+  if (!zone) return res.status(404).json({ error: 'Zone not found' });
+  res.json(zone);
+}));
+
 // GET /api/monitoring/raw — raw external API response
 router.get('/raw', authenticate, asyncHandler(async (req, res) => {
   const proxy = req.app.get('monitoringProxy');
