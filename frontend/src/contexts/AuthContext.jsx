@@ -196,9 +196,11 @@ export function AuthProvider({ children }) {
         if (meRes.ok) {
           const me = await meRes.json();
           role = me.role || me.roles?.[0] || 'viewer';
-          permissions = me.permissions || [];
+          const backendPerms = me.permissions || [];
           pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
           hiddenElements = me.hiddenElements || [];
+          // Merge backend permissions with page-derived permissions
+          permissions = [...new Set([...backendPerms, ...buildPermissions(pages, role)])];
         }
         const userData = {
           id: data.user.id, email: data.user.email,
@@ -308,7 +310,9 @@ export function AuthProvider({ children }) {
   };
 
   const updateCurrentUser = (updatedUser) => {
-    const permissions = buildPermissions(updatedUser.pages, updatedUser.role);
+    const pagePerms = buildPermissions(updatedUser.pages, updatedUser.role);
+    const backendPerms = updatedUser.permissions || user?.permissions || [];
+    const permissions = [...new Set([...backendPerms, ...pagePerms])];
     const userData = {
       ...user,
       pages: updatedUser.pages,
