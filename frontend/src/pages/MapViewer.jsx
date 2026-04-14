@@ -842,10 +842,9 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
 function ZoneEl({ el, isDark, zonesData, monitoringData }) {
   const stroke = el.color || '#22c55e';
   let vehicleCount = 0;
-  let zoneInfo = null; // monitoring zone info (plate, model, etc.)
+  let zoneInfo = null;
 
   if (monitoringData?.freeZones) {
-    // Live mode — match by zone number from element name (e.g. "Зона 01" → zoneNumber 1)
     const numMatch = el.name?.match(/(\d+)/);
     if (numMatch) {
       const zn = parseInt(numMatch[1], 10);
@@ -859,7 +858,6 @@ function ZoneEl({ el, isDark, zonesData, monitoringData }) {
       }
     }
   } else {
-    // Demo mode — use DB data
     for (const z of (zonesData || [])) {
       if (z.name === el.name) vehicleCount = z._count?.stays || 0;
     }
@@ -868,27 +866,70 @@ function ZoneEl({ el, isDark, zonesData, monitoringData }) {
   const isOccupied = vehicleCount > 0;
   const occupiedStroke = isOccupied ? '#ef4444' : stroke;
   const textColor = isDark ? '#94a3b8' : '#64748b';
+  const textPrimary = isDark ? '#e2e8f0' : '#1e293b';
   const w = el.width || 160, h = el.height || 100;
+  const pad = 5;
+  const headerH = 16;
+  const innerW = w - pad * 2;
+
+  // Build info items when occupied
+  const items = [];
+  if (zoneInfo && isOccupied) {
+    if (zoneInfo.plateNumber) items.push({ text: zoneInfo.plateNumber, bold: true, mono: true, size: 8, color: textPrimary });
+    const carText = [zoneInfo.carColor, zoneInfo.carModel].filter(Boolean).join(' ');
+    if (carText && carText !== 'Unknown Unknown') items.push({ text: carText, size: 7, color: textColor });
+    if (zoneInfo.worksDescription) items.push({ text: zoneInfo.worksDescription, size: 7, color: isDark ? '#a5b4fc' : '#6366f1' });
+    if (zoneInfo.peopleCount > 0) items.push({ text: `${zoneInfo.peopleCount} чел.`, size: 7, color: textColor });
+  }
+
+  let curY = headerH + 3;
+  const positioned = items.map(item => {
+    const y = curY;
+    const ih = estimateTextH(item.text, item.size, innerW);
+    curY += ih + 1;
+    return { ...item, y, h: ih };
+  });
+
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
       <Rect width={w} height={h} fill={occupiedStroke}
-        opacity={isDark ? 0.06 : 0.05}
+        opacity={isDark ? 0.08 : 0.06}
         stroke={occupiedStroke} strokeWidth={isOccupied ? 1.5 : 1} cornerRadius={3}
-        dash={[6, 3]} />
-      <Text x={5} y={3} text={el.name} fontSize={9} fill={textColor}
-        opacity={0.7} fontStyle="bold" fontFamily="system-ui, sans-serif" />
+        dash={isOccupied ? undefined : [6, 3]}
+        shadowBlur={isOccupied ? 6 : 0} shadowColor={occupiedStroke} shadowOpacity={0.3} />
+
+      {/* Header */}
+      <Rect x={0} y={0} width={w} height={headerH} fill={occupiedStroke}
+        cornerRadius={[3, 3, 0, 0]} opacity={isOccupied ? 0.7 : 0.4} />
+      <Text x={pad} y={1} text={el.name} fontSize={8} fill="#fff"
+        fontStyle="bold" fontFamily="system-ui, sans-serif"
+        width={isOccupied ? innerW - 18 : innerW} height={headerH - 1}
+        verticalAlign="middle" wrap="none" ellipsis={true} />
       {isOccupied && (
         <>
-          <Circle x={w - 10} y={10} radius={7} fill={occupiedStroke} opacity={0.6} />
-          <Text x={w - 17} y={4.5} text={String(vehicleCount)} fontSize={8}
-            fontStyle="bold" fill="#fff" width={14} align="center"
+          <Circle x={w - 10} y={headerH / 2} radius={6} fill="#fff" opacity={0.25} />
+          <Text x={w - 16} y={headerH / 2 - 5} text={String(vehicleCount)} fontSize={7}
+            fontStyle="bold" fill="#fff" width={12} align="center"
             fontFamily="system-ui, sans-serif" />
         </>
       )}
-      {zoneInfo && zoneInfo.status === 'occupied' && (
-        <Text x={5} y={h - 14} text={zoneInfo.plateNumber || zoneInfo.carModel || ''}
-          fontSize={7} fill={textColor} opacity={0.6}
-          fontFamily="system-ui, sans-serif" width={w - 10} ellipsis={true} />
+
+      {/* Content */}
+      {!isOccupied ? (
+        <Text x={pad} y={headerH} width={innerW} height={h - headerH}
+          text="—" fontSize={14}
+          fill={isDark ? '#334155' : '#cbd5e1'}
+          align="center" verticalAlign="middle" />
+      ) : (
+        positioned.map((item, i) => (
+          <Text key={i} x={pad} y={item.y} width={innerW} height={item.h}
+            text={item.text}
+            fontSize={item.size}
+            fontStyle={item.bold ? 'bold' : 'normal'}
+            fontFamily={item.mono ? 'monospace' : 'system-ui, sans-serif'}
+            fill={item.color || textColor}
+            wrap="word" ellipsis={true} />
+        ))
       )}
     </Group>
   );
