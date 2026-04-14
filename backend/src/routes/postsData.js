@@ -96,16 +96,16 @@ router.get('/posts-analytics', async (req, res) => {
       let occupiedMs = 0;  // total time occupied (status !== 'free')
       let workingMs = 0;   // total time with worksInProgress === true
 
-      // Sort history by time
-      const sorted = [...(history || [])].filter(h => h.lastUpdate).sort((a, b) =>
-        new Date(a.lastUpdate) - new Date(b.lastUpdate)
-      );
+      // Sort history by time (field is 'timestamp' or 'lastUpdate')
+      const sorted = [...(history || [])]
+        .filter(h => h.timestamp || h.lastUpdate)
+        .sort((a, b) => new Date(a.timestamp || a.lastUpdate) - new Date(b.timestamp || b.lastUpdate));
 
       for (let i = 0; i < sorted.length; i++) {
         const cur = sorted[i];
         const next = sorted[i + 1];
-        const start = new Date(cur.lastUpdate).getTime();
-        const end = next ? new Date(next.lastUpdate).getTime() : Date.now();
+        const start = new Date(cur.timestamp || cur.lastUpdate).getTime();
+        const end = next ? new Date(next.timestamp || next.lastUpdate).getTime() : Date.now();
         const dur = Math.max(0, end - start);
 
         if (cur.status !== 'free') occupiedMs += dur;
