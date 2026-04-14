@@ -146,6 +146,61 @@ router.get('/posts-analytics', async (req, res) => {
     const proxy = req.app.get('monitoringProxy');
     const { period, from, to } = req.query;
     const { dateFrom, dateTo } = getPeriodRange(period, from, to);
+    // Compute daily breakdown from monitoring history
+    function computeDailyFromHistory(history, settings) {
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const sb = getShiftBoundsForDate(settings, d);
+        const dayHistory = (history || []).filter(h => {
+          const ts = new Date(h.timestamp || h.lastUpdate).getTime();
+          return ts >= sb.shiftStart && ts <= sb.shiftEnd;
+        });
+        const m = calcMetricsForBounds(dayHistory, sb);
+        days.push({
+          date: d.toISOString().slice(0, 10),
+          occupancy: m.loadPercent,
+          efficiency: m.efficiency,
+          vehicles: dayHistory.filter(h => h.status !== 'free').length,
+          workerPresence: dayHistory.some(h => h.peopleCount > 0) ? 100 : 0,
+          activeHours: m.workHours,
+          idleHours: Math.round(Math.max(0, sb.maxH - m.factHours) * 10) / 10,
+        });
+      }
+      return days;
+    }
+
+    // calcMetrics with explicit bounds (for daily breakdown)
+    function calcMetricsForBounds(history, bounds) {
+      const { shiftStart, shiftEnd, maxMs, maxH } = bounds;
+      const now = Math.min(Date.now(), shiftEnd);
+      let occupiedMs = 0, workingMs = 0;
+      const sorted = [...(history || [])]
+        .filter(h => h.timestamp || h.lastUpdate)
+        .sort((a, b) => new Date(a.timestamp || a.lastUpdate) - new Date(b.timestamp || b.lastUpdate));
+      for (let i = 0; i < sorted.length; i++) {
+        const cur = sorted[i];
+        const next = sorted[i + 1];
+        const start = new Date(cur.timestamp || cur.lastUpdate).getTime();
+        const end = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
+        const cs = Math.max(start, shiftStart);
+        const ce = Math.min(end, now);
+        const dur = Math.max(0, ce - cs);
+        if (dur > 0 && cur.status !== 'free') {
+          occupiedMs += dur;
+          if (cur.worksInProgress) workingMs += dur;
+        }
+      }
+      occupiedMs = Math.min(occupiedMs, maxMs);
+      workingMs = Math.min(workingMs, occupiedMs);
+      const factHours = Math.round((occupiedMs / 3600000) * 10) / 10;
+      const workHours = Math.round((workingMs / 3600000) * 10) / 10;
+      const loadPercent = maxH > 0 ? Math.min(100, Math.round((factHours / maxH) * 100)) : 0;
+      const efficiency = occupiedMs > 0 ? Math.min(100, Math.round((workingMs / occupiedMs) * 100)) : 0;
+      return { factHours, workHours, loadPercent, efficiency };
+    }
+
     const shiftBounds = getShiftBoundsForDate(curSettings, dateFrom);
     // For multi-day periods, use average shift duration
     if (dateFrom !== dateTo) {
@@ -276,7 +331,7 @@ router.get('/posts-analytics', async (req, res) => {
             openParts: mp.openParts,
             confidence: mp.confidence,
           },
-          daily: [],
+          daily: computeDailyFromHistory(history, curSettings),
           calendar: [],
           workOrders: [],
         };
@@ -341,7 +396,7 @@ router.get('/posts-analytics', async (req, res) => {
             openParts: mz.openParts,
             confidence: mz.confidence,
           },
-          daily: [],
+          daily: computeDailyFromHistory(history, curSettings),
           calendar: [],
           workOrders: [],
         };

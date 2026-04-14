@@ -279,7 +279,16 @@ function CalendarSection({ calendar, post, t }) {
   if (!calendar || !calendar.length) return null;
 
   const calMap = {};
-  calendar.forEach(d => { calMap[d.date] = d; });
+  calendar.forEach(d => {
+    calMap[d.date] = {
+      ...d,
+      loadPercent: d.loadPercent ?? d.occupancy ?? 0,
+      efficiency: d.efficiency ?? 0,
+      normHours: d.normHours ?? d.totalHours ?? d.activeHours ?? 0,
+      woCount: d.woCount ?? d.completedOrders ?? d.vehicles ?? 0,
+      idleHours: d.idleHours ?? 0,
+    };
+  });
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const weekDays = isRu ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -717,7 +726,7 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
 
       {elVis('pd.calendar') && (
         <CollapsibleSection icon={Calendar} title={t('postsDetail.calendarLoad')}>
-          <CalendarSection calendar={selectedPost.calendar} post={selectedPost} t={t} />
+          <CalendarSection calendar={selectedPost.calendar?.length ? selectedPost.calendar : selectedPost.daily} post={selectedPost} t={t} />
         </CollapsibleSection>
       )}
     </>
