@@ -26,7 +26,8 @@
     "health": "System Health",
     "myPost": "My Post",
     "reportSchedule": "Report Schedule",
-    "techDocs": "Documentation"
+    "techDocs": "Documentation",
+    "liveDebug": "Live Debug"
   },
   "shifts": {
     "title": "Shift Management",
@@ -219,7 +220,15 @@
     "legendOccupied": "Occupied",
     "legendActiveWork": "Active work",
     "legendIdle": "Idle",
-    "layerInfoZone": "Info Zone"
+    "layerInfoZone": "Info Zone",
+    "worksInProgress": "Works in Progress",
+    "people": "People",
+    "confidence": "Confidence",
+    "lastUpdate": "Updated",
+    "openParts": "Open Parts",
+    "firstSeen": "First Seen",
+    "viewHistory": "History",
+    "noLiveData": "No monitoring data"
   },
   "dashboardPosts": {
     "title": "Posts Dashboard",
@@ -559,5 +568,46 @@
     "brands": "Car Brands",
     "noData": "No data",
     "back": "Back"
+  },
+  "liveDebug": {
+    "title": "Live Monitoring Debug",
+    "liveOnly": "Live Mode Only",
+    "switchToLive": "Switch the app to Live mode to access monitoring data.",
+    "currentState": "Current",
+    "fullHistory": "Full History",
+    "autoOn": "Auto",
+    "autoOff": "Stop",
+    "refresh": "Refresh",
+    "posts": "Posts",
+    "zones": "Free Zones",
+    "other": "Other",
+    "zoneName": "Name",
+    "status": "Status",
+    "plate": "Plate",
+    "carModel": "Make/Model",
+    "color": "Color",
+    "body": "Body",
+    "firstSeen": "First Seen",
+    "works": "Works",
+    "worksDesc": "Works Description",
+    "people": "People",
+    "openParts": "Open Parts",
+    "confidence": "Confidence",
+    "lastUpdate": "Updated",
+    "historyCount": "History",
+    "time": "Time",
+    "car": "Car",
+    "yes": "yes",
+    "noHistory": "No history records",
+    "noData": "No monitoring data",
+    "postsTotal": "Posts",
+    "zonesTotal": "Free Zones",
+    "vehiclesOnSite": "Vehicles on Site",
+    "free": "free",
+    "working": "working",
+    "idle": "idle",
+    "occupied": "occupied",
+    "rawEntries": "API Entries",
+    "historyRecords": "history records"
   }
 }

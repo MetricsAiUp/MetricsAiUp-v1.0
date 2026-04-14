@@ -30,6 +30,7 @@ const Health = lazy(() => import('./pages/Health'));
 const WorkerStats = lazy(() => import('./pages/WorkerStats'));
 const ReportSchedule = lazy(() => import('./pages/ReportSchedule'));
 const TechDocs = lazy(() => import('./pages/TechDocs'));
+const LiveDebug = lazy(() => import('./pages/LiveDebug'));
 
 function PageLoader() {
   return (
@@ -66,6 +67,7 @@ function AppRoutes() {
             </ErrorBoundary>
           </ProtectedRoute>
         }>
+          <Route path="live-debug" element={<LiveDebug />} />
           <Route index element={<Dashboard />} />
           <Route path="dashboard-posts" element={<DashboardPosts />} />
           <Route path="posts-detail" element={<PostsDetail />} />

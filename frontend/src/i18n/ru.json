@@ -26,7 +26,8 @@
     "health": "Здоровье системы",
     "myPost": "Мой пост",
     "reportSchedule": "Расписание отчётов",
-    "techDocs": "Документация"
+    "techDocs": "Документация",
+    "liveDebug": "Live-отладка"
   },
   "shifts": {
     "title": "Управление сменами",
@@ -219,7 +220,15 @@
     "legendOccupied": "Занят",
     "legendActiveWork": "В работе",
     "legendIdle": "Простой",
-    "layerInfoZone": "Инфо-зона"
+    "layerInfoZone": "Инфо-зона",
+    "worksInProgress": "Идут работы",
+    "people": "Люди",
+    "confidence": "Уверенность",
+    "lastUpdate": "Обновлено",
+    "openParts": "Открытые части",
+    "firstSeen": "Обнаружен",
+    "viewHistory": "История",
+    "noLiveData": "Нет данных мониторинга"
   },
   "dashboardPosts": {
     "title": "Дашборд постов",
@@ -559,5 +568,46 @@
     "brands": "Марки авто",
     "noData": "Нет данных",
     "back": "Назад"
+  },
+  "liveDebug": {
+    "title": "Live-отладка мониторинга",
+    "liveOnly": "Только в Live-режиме",
+    "switchToLive": "Переключите приложение в Live-режим для доступа к данным мониторинга.",
+    "currentState": "Текущее",
+    "fullHistory": "Вся история",
+    "autoOn": "Авто",
+    "autoOff": "Стоп",
+    "refresh": "Обновить",
+    "posts": "Посты",
+    "zones": "Свободные зоны",
+    "other": "Прочее",
+    "zoneName": "Название",
+    "status": "Статус",
+    "plate": "Номер",
+    "carModel": "Марка/модель",
+    "color": "Цвет",
+    "body": "Кузов",
+    "firstSeen": "Первое обнаружение",
+    "works": "Работы",
+    "worksDesc": "Описание работ",
+    "people": "Люди",
+    "openParts": "Открытые части",
+    "confidence": "Уверенность",
+    "lastUpdate": "Обновлено",
+    "historyCount": "История",
+    "time": "Время",
+    "car": "Авто",
+    "yes": "да",
+    "noHistory": "Нет записей истории",
+    "noData": "Нет данных от мониторинга",
+    "postsTotal": "Посты",
+    "zonesTotal": "Свободные зоны",
+    "vehiclesOnSite": "Авто на территории",
+    "free": "свободно",
+    "working": "работают",
+    "idle": "простой",
+    "occupied": "занято",
+    "rawEntries": "Записей API",
+    "historyRecords": "записей истории"
   }
 }

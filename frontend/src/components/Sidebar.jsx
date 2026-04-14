@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
   BarChart3, Camera, Focus, Database, CalendarClock, Columns,
   ChevronDown, Users, PenTool, MapPin, Clock, Shield, Wrench, Activity,
-  FileSpreadsheet, BookOpen,
+  FileSpreadsheet, BookOpen, Bug,
 } from 'lucide-react';
 
 
@@ -104,6 +104,29 @@ export default function Sidebar() {
           {t('app.subtitle')}
         </p>
       </div>
+
+      {/* Live Debug — only in live mode */}
+      {isLive && (
+        <div className="mb-2">
+          <NavLink
+            to="/live-debug"
+            className={({ isActive }) =>
+              `flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                isActive ? 'font-medium' : 'hover:opacity-80'
+              }`
+            }
+            style={({ isActive }) => ({
+              color: isActive ? '#ef4444' : '#ef4444',
+              background: isActive ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.05)',
+              fontSize: '11px',
+              border: '1px solid rgba(239,68,68,0.2)',
+            })}
+          >
+            <Bug size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
+            <span className="truncate">{t('nav.liveDebug')}</span>
+          </NavLink>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5">

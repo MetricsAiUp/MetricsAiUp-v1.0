@@ -11,7 +11,7 @@ import HelpButton from '../components/HelpButton';
 import {
   X, Car, Clock, Timer, User, FileText, AlertTriangle,
   ArrowRight, MapPin, Layers, Download, ChevronDown, ChevronUp, Image, FileDown,
-  ZoomIn, ZoomOut, Maximize, Minimize,
+  ZoomIn, ZoomOut, Maximize, Minimize, Wrench, Users, Shield, Eye, History, Bug,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
@@ -37,19 +37,137 @@ function fmtTime(t) {
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
-function PostModal({ postNum, dashboardData, onClose, onGoToPost, t }) {
-  const post = dashboardData?.posts?.find(p => p.number === postNum);
-  if (!post) return null;
-  const statusColor = post.status === 'free' ? POST_STATUS_COLORS.free
-    : post.currentVehicle ? POST_STATUS_COLORS.occupied : '#94a3b8';
-  const currentWO = post.timeline?.find(i => i.status === 'in_progress');
-  const statusKey = post.status === 'free' ? 'posts.free'
-    : currentWO ? 'posts.active_work' : 'posts.occupied';
+function ConfidenceBadge({ level }) {
+  const colors = { HIGH: 'var(--success)', MEDIUM: '#f59e0b', LOW: '#ef4444' };
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+      style={{ background: `${colors[level] || colors.LOW}20`, color: colors[level] || colors.LOW }}>
+      <Shield size={10} /> {level || 'N/A'}
+    </span>
+  );
+}
+
+function OpenPartsBadges({ parts }) {
+  if (!parts || parts.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {parts.map((p, i) => (
+        <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>{p}</span>
+      ))}
+    </div>
+  );
+}
+
+function LiveInfoBlock({ liveItem, t }) {
+  if (!liveItem) return null;
+  const car = liveItem.car || {};
+  return (
+    <div className="space-y-2">
+      {/* Vehicle */}
+      <div className="p-3 rounded-xl" style={{ background: 'var(--accent-light)' }}>
+        <div className="flex items-center gap-2 mb-1">
+          <Car size={14} style={{ color: 'var(--accent)' }} />
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentVehicle')}</span>
+        </div>
+        {car.plate ? (
+          <div>
+            <span className="text-sm font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{car.plate}</span>
+            <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
+              {[car.make, car.model].filter(Boolean).join(' ')}
+            </span>
+            {car.color && <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>({car.color})</span>}
+            {car.body && <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>{car.body}</span>}
+          </div>
+        ) : (
+          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('posts.free')}</span>
+        )}
+        {car.firstSeen && (
+          <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            {t('mapView.firstSeen')}: {new Date(car.firstSeen).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+          </div>
+        )}
+      </div>
+
+      {/* Works */}
+      {liveItem.worksInProgress && (
+        <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Wrench size={14} style={{ color: 'var(--accent)' }} />
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.worksInProgress')}</span>
+          </div>
+          {liveItem.worksDescription && (
+            <div className="text-xs" style={{ color: 'var(--text-primary)' }}>{liveItem.worksDescription}</div>
+          )}
+        </div>
+      )}
+
+      {/* People + Open Parts + Confidence */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <Users size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.people')}</div>
+          <div className="text-sm font-bold" style={{ color: liveItem.peopleCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{liveItem.peopleCount ?? 0}</div>
+        </div>
+        <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <Eye size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.confidence')}</div>
+          <div className="mt-0.5"><ConfidenceBadge level={liveItem.confidence} /></div>
+        </div>
+        <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <Clock size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.lastUpdate')}</div>
+          <div className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>
+            {liveItem.lastUpdate ? new Date(liveItem.lastUpdate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+          </div>
+        </div>
+      </div>
+
+      {/* Open parts */}
+      {liveItem.openParts?.length > 0 && (
+        <div className="p-2 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{t('mapView.openParts')}</div>
+          <OpenPartsBadges parts={liveItem.openParts} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, onGoToPost, onGoToHistory, t }) {
+  // In live mode, find raw monitoring item for this post
+  const rawItems = monitoringData?.rawState || [];
+  const liveItem = rawItems.find(item => {
+    const m = item.zone?.match(/^Пост\s+(\d{2})/);
+    return m && parseInt(m[1], 10) === postNum;
+  });
+
+  // In demo mode, find from dashboardData
+  const demoPost = dashboardData?.posts?.find(p => p.number === postNum);
+
+  // Determine status
+  let statusColor, statusKey;
+  if (isLive && liveItem) {
+    const s = liveItem.status === 'free' ? 'free' : liveItem.worksInProgress ? 'active_work' : 'occupied';
+    statusColor = POST_STATUS_COLORS[s] || '#94a3b8';
+    statusKey = `posts.${s}`;
+  } else if (demoPost) {
+    const currentWO = demoPost.timeline?.find(i => i.status === 'in_progress');
+    statusColor = demoPost.status === 'free' ? POST_STATUS_COLORS.free
+      : demoPost.currentVehicle ? POST_STATUS_COLORS.occupied : '#94a3b8';
+    statusKey = demoPost.status === 'free' ? 'posts.free'
+      : currentWO ? 'posts.active_work' : 'posts.occupied';
+  } else {
+    // Fallback — still show modal with minimal info
+    statusColor = '#94a3b8';
+    statusKey = 'posts.free';
+  }
+
+  const currentWO = demoPost?.timeline?.find(i => i.status === 'in_progress');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div className="glass rounded-2xl p-5 max-w-md w-full mx-4 shadow-2xl"
+      <div className="glass rounded-2xl p-5 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
         style={{ border: '1px solid var(--border-glass)' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -65,91 +183,162 @@ function PostModal({ postNum, dashboardData, onClose, onGoToPost, t }) {
           <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70"
             style={{ color: 'var(--text-muted)' }}><X size={20} /></button>
         </div>
+
         <div className="space-y-3">
-          <div className="p-3 rounded-xl" style={{ background: 'var(--accent-light)' }}>
-            <div className="flex items-center gap-2 mb-1">
-              <Car size={14} style={{ color: 'var(--accent)' }} />
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentVehicle')}</span>
-            </div>
-            {post.currentVehicle ? (
-              <div>
-                <span className="text-sm font-bold font-mono" style={{ color: 'var(--text-primary)' }}>
-                  {post.currentVehicle.plateNumber}
-                </span>
-                <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                  {post.currentVehicle.brand} {post.currentVehicle.model}
-                </span>
+          {/* Live mode data */}
+          {isLive && liveItem ? (
+            <LiveInfoBlock liveItem={liveItem} t={t} />
+          ) : (
+            /* Demo mode data */
+            <>
+              <div className="p-3 rounded-xl" style={{ background: 'var(--accent-light)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Car size={14} style={{ color: 'var(--accent)' }} />
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentVehicle')}</span>
+                </div>
+                {demoPost?.currentVehicle ? (
+                  <div>
+                    <span className="text-sm font-bold font-mono" style={{ color: 'var(--text-primary)' }}>
+                      {demoPost.currentVehicle.plateNumber}
+                    </span>
+                    <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
+                      {demoPost.currentVehicle.brand} {demoPost.currentVehicle.model}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('posts.free')}</span>
+                )}
               </div>
-            ) : (
-              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('posts.free')}</span>
-            )}
-          </div>
-          {currentWO && (
-            <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <FileText size={14} style={{ color: 'var(--accent)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentWO')}</span>
+              {currentWO && (
+                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText size={14} style={{ color: 'var(--accent)' }} />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentWO')}</span>
+                  </div>
+                  <div className="text-sm font-mono font-medium" style={{ color: 'var(--accent)' }}>
+                    {currentWO.workOrderNumber}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{currentWO.workType}</div>
+                </div>
+              )}
+              {currentWO?.worker && (
+                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <User size={14} style={{ color: 'var(--text-muted)' }} />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.worker')}</span>
+                  </div>
+                  <div className="text-sm" style={{ color: 'var(--text-primary)' }}>{currentWO.worker}</div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                  <div className="flex items-center gap-1 mb-1">
+                    <Clock size={12} style={{ color: 'var(--text-muted)' }} />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.placedAt')}</span>
+                  </div>
+                  <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {currentWO?.startTime
+                      ? new Date(currentWO.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                      : '---'}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                  <div className="flex items-center gap-1 mb-1">
+                    <Timer size={12} style={{ color: 'var(--text-muted)' }} />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.estimatedEnd')}</span>
+                  </div>
+                  <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {currentWO?.endTime
+                      ? new Date(currentWO.endTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                      : '---'}
+                  </div>
+                </div>
               </div>
-              <div className="text-sm font-mono font-medium" style={{ color: 'var(--accent)' }}>
-                {currentWO.workOrderNumber}
-              </div>
-              <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{currentWO.workType}</div>
-            </div>
-          )}
-          {currentWO?.worker && (
-            <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <User size={14} style={{ color: 'var(--text-muted)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.worker')}</span>
-              </div>
-              <div className="text-sm" style={{ color: 'var(--text-primary)' }}>{currentWO.worker}</div>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-              <div className="flex items-center gap-1 mb-1">
-                <Clock size={12} style={{ color: 'var(--text-muted)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.placedAt')}</span>
-              </div>
-              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                {currentWO?.startTime
-                  ? new Date(currentWO.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-                  : '---'}
-              </div>
-            </div>
-            <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-              <div className="flex items-center gap-1 mb-1">
-                <Timer size={12} style={{ color: 'var(--text-muted)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.estimatedEnd')}</span>
-              </div>
-              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                {currentWO?.endTime
-                  ? new Date(currentWO.endTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-                  : '---'}
-              </div>
-            </div>
-          </div>
-          {/* Live timer */}
-          {currentWO && (currentWO.endTime || currentWO.estimatedEnd) && (
-            <div className="flex justify-center">
-              <PostTimer estimatedEnd={currentWO.endTime || currentWO.estimatedEnd} startTime={currentWO.startTime} size="lg" />
-            </div>
-          )}
-          {currentWO?.note && (
-            <div className="p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid var(--warning)' }}>
-              <div className="flex items-center gap-1 mb-1">
-                <AlertTriangle size={12} style={{ color: 'var(--warning)' }} />
-                <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>{t('mapView.note')}</span>
-              </div>
-              <div className="text-xs" style={{ color: 'var(--text-primary)' }}>{currentWO.note}</div>
-            </div>
+              {currentWO && (currentWO.endTime || currentWO.estimatedEnd) && (
+                <div className="flex justify-center">
+                  <PostTimer estimatedEnd={currentWO.endTime || currentWO.estimatedEnd} startTime={currentWO.startTime} size="lg" />
+                </div>
+              )}
+              {currentWO?.note && (
+                <div className="p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid var(--warning)' }}>
+                  <div className="flex items-center gap-1 mb-1">
+                    <AlertTriangle size={12} style={{ color: 'var(--warning)' }} />
+                    <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>{t('mapView.note')}</span>
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--text-primary)' }}>{currentWO.note}</div>
+                </div>
+              )}
+            </>
           )}
         </div>
-        <button onClick={() => onGoToPost(postNum)}
-          className="w-full mt-4 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-          style={{ background: 'var(--accent)', color: '#fff' }}>
-          {t('mapView.goToPost')} <ArrowRight size={16} />
-        </button>
+
+        {/* Action buttons */}
+        <div className="flex gap-2 mt-4">
+          <button onClick={() => onGoToPost(postNum)}
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            style={{ background: 'var(--accent)', color: '#fff' }}>
+            {t('mapView.goToPost')} <ArrowRight size={16} />
+          </button>
+          {isLive && liveItem?.history?.length > 0 && (
+            <button onClick={() => onGoToHistory()}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+              <History size={16} /> {liveItem.history.length}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t }) {
+  const rawItems = monitoringData?.rawState || [];
+  const liveItem = rawItems.find(item => item.zone === zoneName);
+
+  if (!liveItem && isLive) return null;
+
+  const isOccupied = liveItem?.status === 'occupied';
+  const statusColor = isOccupied ? '#ef4444' : 'var(--success)';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div className="glass rounded-2xl p-5 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        style={{ border: '1px solid var(--border-glass)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ background: statusColor }} />
+            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+              {zoneName}
+            </h3>
+            <span className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: statusColor + '22', color: statusColor }}>
+              {isOccupied ? t('mapView.legendOccupied') : t('mapView.legendFree')}
+            </span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70"
+            style={{ color: 'var(--text-muted)' }}><X size={20} /></button>
+        </div>
+
+        {liveItem ? (
+          <div className="space-y-3">
+            <LiveInfoBlock liveItem={liveItem} t={t} />
+          </div>
+        ) : (
+          <div className="p-4 text-center" style={{ color: 'var(--text-muted)' }}>
+            {t('mapView.noLiveData')}
+          </div>
+        )}
+
+        {/* History button */}
+        {isLive && liveItem?.history?.length > 0 && (
+          <button onClick={() => onGoToHistory()}
+            className="w-full mt-4 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            <History size={16} /> {t('mapView.viewHistory')} ({liveItem.history.length})
+          </button>
+        )}
       </div>
     </div>
   );
@@ -210,7 +399,9 @@ export default function MapViewer() {
   const [dashboardData, setDashboardData] = useState(null);
   const [monitoringData, setMonitoringData] = useState(null); // live mode data from external API
   const [selectedPost, setSelectedPost] = useState(null);
+  const [selectedZone, setSelectedZone] = useState(null); // zone name string
   const [selectedCam, setSelectedCam] = useState(null);
+  const [rawState, setRawState] = useState([]); // raw external API data for modals
   const cameraStatuses = useCameraStatus();
   const [stageSize, setStageSize] = useState({ width: 900, height: 500 });
   const [scale, setScale] = useState(1);
@@ -253,8 +444,12 @@ export default function MapViewer() {
     try {
       if (isLive) {
         // Live mode — fetch from monitoring proxy (real CV data)
-        const res = await api.get('/api/dashboard/live');
-        if (res.data) setMonitoringData(res.data);
+        const [liveRes, rawRes] = await Promise.all([
+          api.get('/api/dashboard/live'),
+          api.get('/api/monitoring/raw'),
+        ]);
+        if (liveRes.data) setMonitoringData(liveRes.data);
+        if (rawRes.data && Array.isArray(rawRes.data)) setRawState(rawRes.data);
       } else {
         // Demo mode — fetch from DB
         const [zRes, dRes] = await Promise.all([
@@ -605,7 +800,7 @@ export default function MapViewer() {
                   stroke={isDark ? '#94a3b8' : '#9ca3af'} strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
               );
               if (el.type === 'wall') return <WallEl key={el.id} el={el} />;
-              if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} monitoringData={isLive ? monitoringData : null} />;
+              if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} monitoringData={isLive ? monitoringData : null} rawState={isLive ? rawState : []} onClick={(zoneName) => isLive && setSelectedZone(zoneName)} />;
               if (el.type === 'door') return <DoorEl key={el.id} el={el} isDark={isDark} />;
               if (el.type === 'label') return <LabelEl key={el.id} el={el} fill={mutedFill} />;
               if (el.type === 'post') {
@@ -618,9 +813,24 @@ export default function MapViewer() {
                     const num = parseInt(p.name?.match(/\d+/)?.[0], 10);
                     return num === pn;
                   });
+                  // Also get raw data for full info
+                  const rawItem = rawState.find(r => {
+                    const m = r.zone?.match(/^Пост\s+(\d{2})/);
+                    return m && parseInt(m[1], 10) === pn;
+                  });
                   status = mp?.status || 'free';
-                  plate = mp?.plateNumber || mp?.carModel || null;
-                  dashPost = mp ? { status: mp.status, currentVehicle: mp.plateNumber || mp.carModel ? { plateNumber: mp.plateNumber, model: mp.carModel, color: mp.carColor } : null, worksDescription: mp.worksDescription, peopleCount: mp.peopleCount } : null;
+                  plate = mp?.plateNumber || rawItem?.car?.plate || null;
+                  const carMake = rawItem?.car?.make;
+                  const carModel = rawItem?.car?.model;
+                  dashPost = mp ? {
+                    status: mp.status,
+                    currentVehicle: plate ? { plateNumber: plate, brand: carMake, model: carModel, color: rawItem?.car?.color, body: rawItem?.car?.body } : null,
+                    worksInProgress: rawItem?.worksInProgress ?? mp.worksInProgress,
+                    worksDescription: rawItem?.worksDescription || mp.worksDescription,
+                    peopleCount: rawItem?.peopleCount ?? mp.peopleCount,
+                    confidence: rawItem?.confidence,
+                    openParts: rawItem?.openParts,
+                  } : null;
                 } else {
                   status = postStatusFromData(pn, dashboardData, zonesData);
                   plate = vehiclePlateFromData(pn, dashboardData, zonesData);
@@ -689,7 +899,19 @@ export default function MapViewer() {
       {/* Post Modal */}
       {selectedPost && (
         <PostModal postNum={selectedPost} dashboardData={dashboardData}
-          onClose={() => setSelectedPost(null)} onGoToPost={handleGoToPost} t={t} />
+          monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
+          onClose={() => setSelectedPost(null)} onGoToPost={handleGoToPost}
+          onGoToHistory={() => { setSelectedPost(null); navigate('/live-debug'); }}
+          t={t} />
+      )}
+
+      {/* Zone Modal */}
+      {selectedZone && (
+        <ZoneModal zoneName={selectedZone}
+          monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
+          onClose={() => setSelectedZone(null)}
+          onGoToHistory={() => { setSelectedZone(null); navigate('/live-debug'); }}
+          t={t} />
       )}
 
       {/* Camera Modal */}
@@ -741,13 +963,49 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   const fontSize = Math.max(7, Math.min(10, Math.round(w / 13)));
   const smallFont = Math.max(7, fontSize - 1);
 
+  // Live monitoring extra fields
+  const peopleCount = dashPost?.peopleCount;
+  const confidence = dashPost?.confidence;
+  const openParts = dashPost?.openParts;
+  const worksInProgress = dashPost?.worksInProgress ?? (currentWO != null);
+
+  const infoFont = Math.max(7, fontSize - 1);
+  const accentColor = isDark ? '#a5b4fc' : '#6366f1';
+
   // Build content items with estimated heights
   const items = [];
+  // Plate number
   if (plate) items.push({ type: 'plate', text: plate, size: fontSize });
-  if (currentVehicle) items.push({ type: 'text', text: `${currentVehicle.brand} ${currentVehicle.model}`, size: smallFont, color: mutedFill });
-  if (workType) items.push({ type: 'text', text: workType, size: smallFont, bold: true, color: isDark ? '#a5b4fc' : '#6366f1' });
-  if (shortWorker) items.push({ type: 'text', text: shortWorker, size: smallFont, color: mutedFill });
-  if (currentWO) items.push({ type: 'text', text: `${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`, size: smallFont, color: mutedFill });
+  // Make + Model
+  if (currentVehicle) {
+    const carLabel = `${currentVehicle.brand || ''} ${currentVehicle.model || ''}`.trim();
+    if (carLabel) items.push({ type: 'text', text: carLabel, size: infoFont, color: textFill, align: 'center' });
+  }
+  // Color + Body (compact line)
+  if (currentVehicle?.color || currentVehicle?.body) {
+    const detail = [currentVehicle.color, currentVehicle.body].filter(Boolean).join(' · ');
+    items.push({ type: 'text', text: detail, size: infoFont, color: mutedFill, align: 'center' });
+  }
+  // Work type (demo) or work indicator (live)
+  if (workType) {
+    items.push({ type: 'text', text: workType, size: infoFont, bold: true, color: accentColor, align: 'center' });
+  } else if (worksInProgress && status !== 'free') {
+    items.push({ type: 'text', text: isRu ? 'Работы ведутся' : 'Work in progress', size: infoFont, bold: true, color: accentColor, align: 'center' });
+  }
+  // Worker (demo mode)
+  if (shortWorker) items.push({ type: 'text', text: shortWorker, size: infoFont, color: mutedFill, align: 'center' });
+  // Time range (demo mode)
+  if (currentWO) items.push({ type: 'text', text: `${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`, size: infoFont, color: mutedFill, align: 'center' });
+  // People · Confidence (compact bottom line)
+  {
+    const parts = [];
+    if (peopleCount != null) parts.push(`${peopleCount} ${isRu ? 'чел' : 'ppl'}`);
+    if (confidence) parts.push(confidence);
+    if (parts.length > 0) {
+      const confColor = confidence === 'HIGH' ? '#22c55e' : confidence === 'MEDIUM' ? '#f59e0b' : '#ef4444';
+      items.push({ type: 'text', text: parts.join(' · '), size: infoFont, color: confColor, align: 'center' });
+    }
+  }
 
   // Calculate y positions so each item starts after the previous one (including wraps)
   let curY = headerH + 4;
@@ -820,7 +1078,9 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
             fontSize={item.size}
             fontStyle={item.bold ? 'bold' : 'normal'}
             fill={item.color || textFill}
-            wrap="word" />
+            fontFamily="system-ui, sans-serif"
+            align={item.align || 'left'}
+            wrap="word" ellipsis={true} />
         ))}
 
         {isIdle && (
@@ -839,10 +1099,13 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   );
 }
 
-function ZoneEl({ el, isDark, zonesData, monitoringData }) {
+function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
   const stroke = el.color || '#22c55e';
   let vehicleCount = 0;
   let zoneInfo = null;
+
+  // Find raw zone name for onClick
+  let rawZoneName = null;
 
   if (monitoringData?.freeZones) {
     const numMatch = el.name?.match(/(\d+)/);
@@ -855,6 +1118,14 @@ function ZoneEl({ el, isDark, zonesData, monitoringData }) {
       if (mz) {
         vehicleCount = mz.status === 'occupied' ? 1 : 0;
         zoneInfo = mz;
+      }
+      // Find raw name from rawState
+      if (rawState) {
+        const rawItem = rawState.find(r => {
+          const m = r.zone?.match(/^Свободная зона\s+(\d{2})/);
+          return m && parseInt(m[1], 10) === zn;
+        });
+        if (rawItem) rawZoneName = rawItem.zone;
       }
     }
   } else {
@@ -872,14 +1143,28 @@ function ZoneEl({ el, isDark, zonesData, monitoringData }) {
   const headerH = 16;
   const innerW = w - pad * 2;
 
-  // Build info items when occupied
+  const accentColor = isDark ? '#a5b4fc' : '#6366f1';
+  const isRuLang = /[а-яА-ЯёЁ]/.test(el.name || '');
+
+  // Build info items when occupied (worksDescription only in modal)
   const items = [];
   if (zoneInfo && isOccupied) {
-    if (zoneInfo.plateNumber) items.push({ text: zoneInfo.plateNumber, bold: true, mono: true, size: 8, color: textPrimary });
-    const carText = [zoneInfo.carColor, zoneInfo.carModel].filter(Boolean).join(' ');
-    if (carText && carText !== 'Unknown Unknown') items.push({ text: carText, size: 7, color: textColor });
-    if (zoneInfo.worksDescription) items.push({ text: zoneInfo.worksDescription, size: 7, color: isDark ? '#a5b4fc' : '#6366f1' });
-    if (zoneInfo.peopleCount > 0) items.push({ text: `${zoneInfo.peopleCount} чел.`, size: 7, color: textColor });
+    if (zoneInfo.plateNumber) items.push({ text: zoneInfo.plateNumber, bold: true, mono: true, size: 8, color: textPrimary, align: 'center' });
+    const carText = [zoneInfo.carMake, zoneInfo.carModel].filter(Boolean).join(' ');
+    if (carText) items.push({ text: carText, size: 7, color: textPrimary, align: 'center' });
+    const detail = [zoneInfo.carColor, zoneInfo.carBody].filter(Boolean).join(' · ');
+    if (detail) items.push({ text: detail, size: 7, color: textColor, align: 'center' });
+    if (zoneInfo.worksInProgress) {
+      items.push({ text: isRuLang ? 'Работы' : 'Works', size: 7, bold: true, color: accentColor, align: 'center' });
+    }
+    // People · Confidence
+    const parts = [];
+    if (zoneInfo.peopleCount != null) parts.push(`${zoneInfo.peopleCount} ${isRuLang ? 'чел' : 'ppl'}`);
+    if (zoneInfo.confidence) parts.push(zoneInfo.confidence);
+    if (parts.length > 0) {
+      const confColor = zoneInfo.confidence === 'HIGH' ? '#22c55e' : zoneInfo.confidence === 'MEDIUM' ? '#f59e0b' : '#ef4444';
+      items.push({ text: parts.join(' · '), size: 7, color: confColor, align: 'center' });
+    }
   }
 
   let curY = headerH + 3;
@@ -891,7 +1176,9 @@ function ZoneEl({ el, isDark, zonesData, monitoringData }) {
   });
 
   return (
-    <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
+    <Group x={el.x} y={el.y} rotation={el.rotation || 0}
+      onClick={() => rawZoneName && onClick?.(rawZoneName)}
+      onTap={() => rawZoneName && onClick?.(rawZoneName)}>
       <Rect width={w} height={h} fill={occupiedStroke}
         opacity={isDark ? 0.08 : 0.06}
         stroke={occupiedStroke} strokeWidth={isOccupied ? 1.5 : 1} cornerRadius={3}
@@ -928,6 +1215,7 @@ function ZoneEl({ el, isDark, zonesData, monitoringData }) {
             fontStyle={item.bold ? 'bold' : 'normal'}
             fontFamily={item.mono ? 'monospace' : 'system-ui, sans-serif'}
             fill={item.color || textColor}
+            align={item.align || 'left'}
             wrap="word" ellipsis={true} />
         ))
       )}

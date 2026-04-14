@@ -38,6 +38,18 @@ router.get('/history', authenticate, asyncHandler(async (req, res) => {
   res.json(history);
 }));
 
+// GET /api/monitoring/full-history — full cached history (all zones with history arrays)
+router.get('/full-history', authenticate, asyncHandler(async (req, res) => {
+  const proxy = req.app.get('monitoringProxy');
+  if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
+
+  const fullHistory = proxy.getFullHistory();
+  if (!fullHistory) {
+    return res.json([]);
+  }
+  res.json(fullHistory);
+}));
+
 // GET /api/monitoring/health — external monitoring service health
 router.get('/health', authenticate, asyncHandler(async (req, res) => {
   const proxy = req.app.get('monitoringProxy');

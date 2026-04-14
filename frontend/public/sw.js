@@ -1,4 +1,4 @@
-const CACHE_NAME = 'metricsaiup-v1';
+const CACHE_NAME = 'metricsaiup-v13';
 const STATIC_ASSETS = [
   './',
   './index.html',
