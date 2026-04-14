@@ -4,11 +4,16 @@ const authCache = require('../config/authCache');
 
 // Derive pages from role (matches frontend PAGE_PERMISSIONS)
 const ROLE_PAGES = {
-  admin: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'map-view', 'map-editor', 'sessions', 'work-orders', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c', 'users'],
-  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
-  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'events', 'analytics', 'data-1c'],
-  mechanic: ['dashboard', 'dashboard-posts', 'map'],
-  viewer: ['dashboard', 'posts-detail', 'map'],
+  admin: [
+    'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
+    'shifts', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c',
+    'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
+    'report-schedule', 'tech-docs', 'live-debug',
+  ],
+  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
+  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c'],
+  mechanic: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post'],
+  viewer: ['dashboard', 'dashboard-posts', 'map-view'],
 };
 
 function buildReqUser(user) {

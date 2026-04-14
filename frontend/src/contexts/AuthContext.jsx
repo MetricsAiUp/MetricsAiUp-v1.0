@@ -58,20 +58,23 @@ const PAGE_PERMISSIONS = {
   'dashboard': ['view_dashboard'],
   'dashboard-posts': ['view_dashboard'],
   'posts-detail': ['view_dashboard', 'view_posts'],
-  'map': ['view_zones'],
   'sessions': ['view_sessions'],
   'work-orders': ['view_work_orders'],
+  'shifts': ['view_shifts', 'manage_shifts'],
   'events': ['view_events'],
   'analytics': ['view_analytics'],
   'cameras': ['view_cameras'],
   'camera-mapping': ['manage_cameras'],
-  'shifts': ['view_shifts', 'manage_shifts'],
   'data-1c': ['view_work_orders'],
   'users': ['manage_users'],
   'map-view': ['view_zones'],
   'map-editor': ['manage_zones'],
   'audit': ['manage_users'],
+  'health': ['manage_users'],
+  'my-post': ['view_dashboard'],
+  'report-schedule': ['view_dashboard'],
   'tech-docs': ['view_dashboard'],
+  'live-debug': ['manage_users'],
 };
 
 function buildPermissions(pages, role) {
@@ -141,10 +144,10 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
 // Default pages per role (used when backend doesn't return pages)
 const ROLE_DEFAULT_PAGES = {
   admin: Object.keys(PAGE_PERMISSIONS),
-  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'data-1c'],
-  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'cameras'],
-  mechanic: ['dashboard', 'dashboard-posts', 'map'],
-  viewer: ['dashboard', 'posts-detail', 'map'],
+  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'data-1c'],
+  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'cameras'],
+  mechanic: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post'],
+  viewer: ['dashboard', 'dashboard-posts', 'map-view'],
 };
 
 export function AuthProvider({ children }) {

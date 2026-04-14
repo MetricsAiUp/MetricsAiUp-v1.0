@@ -9,19 +9,20 @@ const authCache = require('../config/authCache');
 // Role-to-pages mapping (mirrors frontend PAGE_PERMISSIONS keys)
 const ROLE_DEFAULT_PAGES = {
   admin: [
-    'dashboard', 'dashboard-posts', 'posts-detail', 'map',
-    'sessions', 'work-orders', 'analytics', 'events',
-    'data-1c', 'cameras', 'camera-mapping', 'users',
+    'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
+    'shifts', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c',
+    'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
+    'report-schedule', 'tech-docs', 'live-debug',
   ],
   manager: [
-    'dashboard', 'dashboard-posts', 'posts-detail', 'map',
-    'sessions', 'work-orders', 'analytics', 'events', 'data-1c',
+    'dashboard', 'dashboard-posts', 'posts-detail', 'map-view',
+    'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c',
   ],
   mechanic: [
-    'dashboard', 'dashboard-posts', 'posts-detail', 'map', 'sessions',
+    'dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post',
   ],
   viewer: [
-    'dashboard', 'dashboard-posts', 'map',
+    'dashboard', 'dashboard-posts', 'map-view',
   ],
 };
 
@@ -109,16 +110,24 @@ router.get('/', requirePermission('manage_users'), async (req, res) => {
     const AVAILABLE_PAGES = [
       { id: 'dashboard', label: { ru: 'Дашборд', en: 'Dashboard' } },
       { id: 'dashboard-posts', label: { ru: 'Дашборд постов', en: 'Posts Dashboard' } },
-      { id: 'posts-detail', label: { ru: 'Посты (детали)', en: 'Posts Detail' } },
-      { id: 'map', label: { ru: 'Карта СТО', en: 'STO Map' } },
-      { id: 'sessions', label: { ru: 'Сессии', en: 'Sessions' } },
+      { id: 'posts-detail', label: { ru: 'Посты и зоны', en: 'Posts & Zones' } },
+      { id: 'sessions', label: { ru: 'Сессии авто', en: 'Sessions' } },
       { id: 'work-orders', label: { ru: 'Заказ-наряды', en: 'Work Orders' } },
+      { id: 'shifts', label: { ru: 'Смены', en: 'Shifts' } },
+      { id: 'events', label: { ru: 'Журнал событий', en: 'Events' } },
       { id: 'analytics', label: { ru: 'Аналитика', en: 'Analytics' } },
-      { id: 'events', label: { ru: 'События', en: 'Events' } },
-      { id: 'data-1c', label: { ru: 'Данные 1С', en: '1C Data' } },
       { id: 'cameras', label: { ru: 'Камеры', en: 'Cameras' } },
-      { id: 'camera-mapping', label: { ru: 'Маппинг камер', en: 'Camera Mapping' } },
+      { id: 'camera-mapping', label: { ru: 'Разметка камер', en: 'Camera Mapping' } },
+      { id: 'data-1c', label: { ru: 'Данные 1С', en: '1C Data' } },
       { id: 'users', label: { ru: 'Пользователи', en: 'Users' } },
+      { id: 'map-view', label: { ru: 'Карта СТО', en: 'STO Map' } },
+      { id: 'map-editor', label: { ru: 'Редактор карты', en: 'Map Editor' } },
+      { id: 'audit', label: { ru: 'Аудит-лог', en: 'Audit Log' } },
+      { id: 'health', label: { ru: 'Здоровье системы', en: 'System Health' } },
+      { id: 'my-post', label: { ru: 'Мой пост', en: 'My Post' } },
+      { id: 'report-schedule', label: { ru: 'Расписание отчётов', en: 'Report Schedule' } },
+      { id: 'tech-docs', label: { ru: 'Документация', en: 'Documentation' } },
+      { id: 'live-debug', label: { ru: 'Live-отладка', en: 'Live Debug' } },
     ];
     res.json({ users: users.map(formatUser), roles: ROLES, availablePages: AVAILABLE_PAGES });
   } catch (err) {
