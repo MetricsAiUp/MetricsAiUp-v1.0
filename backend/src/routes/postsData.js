@@ -522,7 +522,7 @@ router.get('/dashboard-posts', async (req, res) => {
   try {
     // In live mode — return data from monitoring proxy
     const settings = settingsReader.readSettings();
-    const shiftBounds = getTodayShiftBounds(settings);
+    const shiftBounds = getShiftBoundsForDate(settings);
     const proxy = req.app.get('monitoringProxy');
     if (settings.mode === 'live' && proxy && proxy.isRunning()) {
       const monPosts = proxy.getPosts();
@@ -572,7 +572,7 @@ router.get('/dashboard-posts', async (req, res) => {
       });
 
       return res.json({
-        settings: { shiftStart: curSettings.shiftStart || '08:00', shiftEnd: curSettings.shiftEnd || '22:00', postsCount: curSettings.postsCount || 10, weekSchedule: curSettings.weekSchedule, mode: 'live' },
+        settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || 10, weekSchedule: settings.weekSchedule, mode: 'live' },
         posts,
         freeWorkOrders: [],
       });
@@ -667,7 +667,7 @@ router.get('/dashboard-posts', async (req, res) => {
     }
 
     res.json({
-      settings: { shiftStart: curSettings.shiftStart || '08:00', shiftEnd: curSettings.shiftEnd || '22:00', postsCount: curSettings.postsCount || 10, weekSchedule: curSettings.weekSchedule, mode: 'db' },
+      settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || 10, weekSchedule: settings.weekSchedule, mode: 'db' },
       posts,
       freeWorkOrders: freeWOs.map(w => ({
         id: w.id,
