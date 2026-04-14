@@ -105,7 +105,7 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
       {/* Timeline */}
       <div
         ref={timelineRef}
-        className="flex-1 relative"
+        className="flex-1 relative overflow-hidden"
         style={{
           minHeight: 28,
           outline: isDropTarget ? '2px dashed var(--accent)' : 'none',

@@ -50,9 +50,10 @@ export function getBlockStyle(item, shiftStart, shiftEnd) {
   const { start, duration } = getShiftBounds(shiftStart, shiftEnd);
   const itemStart = parseTime(item.startTime);
   const itemEnd = parseTime(item.endTime || item.estimatedEnd || item.startTime);
-  const left = Math.max(0, ((itemStart - start) / duration) * 100);
-  const width = Math.max(2, ((itemEnd - itemStart) / duration) * 100);
-  return { left: `${left}%`, width: `${Math.min(width, 100 - left)}%` };
+  const left = Math.max(0, Math.min(100, ((itemStart - start) / duration) * 100));
+  const rawWidth = ((itemEnd - itemStart) / duration) * 100;
+  const width = Math.max(0.5, Math.min(rawWidth, 100 - left));
+  return { left: `${left}%`, width: `${width}%` };
 }
 
 export function getItemStatus(item) {
