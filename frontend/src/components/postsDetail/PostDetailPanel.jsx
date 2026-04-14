@@ -556,7 +556,7 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
           );
         })}
       </div>
-      <div className="relative rounded" style={{ height: 32, background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+      <div className="relative rounded overflow-hidden" style={{ height: 32, background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
         {ticks.map(({ h, m, isHour }) => {
           const pos = ((h - startH + m / 60) / total) * 100;
           return (
@@ -569,7 +569,7 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
         {dashPost.timeline.map(item => {
           const left = getPos(item.startTime);
           const end = item.endTime || item.estimatedEnd || item.startTime;
-          const width = Math.max(3, getPos(end) - left);
+          const width = Math.max(0.5, Math.min(getPos(end) - left, 100 - left));
           const isOverdue = item.status === 'in_progress' && item.estimatedEnd && new Date() > new Date(item.estimatedEnd);
           const status = isOverdue ? 'overdue' : item.status;
           const colors = TL_COLORS[status] || TL_COLORS.scheduled;
