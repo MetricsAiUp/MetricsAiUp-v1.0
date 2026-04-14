@@ -90,13 +90,49 @@ router.get('/posts-analytics', async (req, res) => {
     // In live mode — return monitoring data
     const curSettings = settingsReader.readSettings();
     const proxy = req.app.get('monitoringProxy');
+    // Calculate occupancy metrics from history timeline
+    function calcMetrics(history, currentStatus, worksInProgress) {
+      const maxH = 12;
+      let occupiedMs = 0;  // total time occupied (status !== 'free')
+      let workingMs = 0;   // total time with worksInProgress === true
+
+      // Sort history by time
+      const sorted = [...(history || [])].filter(h => h.lastUpdate).sort((a, b) =>
+        new Date(a.lastUpdate) - new Date(b.lastUpdate)
+      );
+
+      for (let i = 0; i < sorted.length; i++) {
+        const cur = sorted[i];
+        const next = sorted[i + 1];
+        const start = new Date(cur.lastUpdate).getTime();
+        const end = next ? new Date(next.lastUpdate).getTime() : Date.now();
+        const dur = Math.max(0, end - start);
+
+        if (cur.status !== 'free') occupiedMs += dur;
+        if (cur.worksInProgress) workingMs += dur;
+      }
+
+      // If currently occupied but no history, use firstSeen or estimate
+      if (sorted.length === 0 && currentStatus !== 'free') {
+        occupiedMs = 30 * 60 * 1000; // assume 30 min
+        if (worksInProgress) workingMs = occupiedMs;
+      }
+
+      const factHours = Math.round((occupiedMs / 3600000) * 10) / 10;
+      const workHours = Math.round((workingMs / 3600000) * 10) / 10;
+      const loadPercent = Math.min(100, Math.round((factHours / maxH) * 100));
+      const efficiency = occupiedMs > 0 ? Math.min(100, Math.round((workingMs / occupiedMs) * 100)) : 0;
+
+      return { factHours, workHours, loadPercent, efficiency };
+    }
+
     if (curSettings.mode === 'live' && proxy && proxy.isRunning()) {
       const monPosts = proxy.getPosts();
       const result = monPosts.map(mp => {
         const history = mp.history || [];
-        // Build daily stats from history
-        const occupiedEntries = history.filter(h => h.status === 'occupied');
+        const occupiedEntries = history.filter(h => h.status === 'occupied' || h.status !== 'free');
         const freeEntries = history.filter(h => h.status === 'free');
+        const m = calcMetrics(history, mp.status, mp.worksInProgress);
 
         return {
           id: `post-${mp.postNumber}`,
@@ -106,21 +142,22 @@ router.get('/posts-analytics', async (req, res) => {
           zone: mp.externalZoneName,
           status: mp.status,
           maxCapacityHours: 12,
-          occupancy: mp.status !== 'free' ? Math.round(50 + Math.random() * 40) : 0,
-          efficiency: 0,
+          occupancy: m.loadPercent,
+          efficiency: m.efficiency,
           vehiclesToday: occupiedEntries.length,
-          avgServiceTime: 0,
-          totalNormHours: 0,
-          totalActualHours: 0,
+          avgServiceTime: occupiedEntries.length > 0 ? Math.round((m.factHours / occupiedEntries.length) * 10) / 10 : 0,
+          totalNormHours: m.factHours,
+          totalActualHours: m.workHours,
           completedWOs: freeEntries.length,
           scheduledWOs: 0,
           workerPresence: mp.peopleCount > 0 ? 100 : 0,
           worker: null,
           master: null,
           today: {
-            factHours: 0,
-            planHours: 0,
-            loadPercent: mp.status !== 'free' ? 50 : 0,
+            factHours: m.factHours,
+            planHours: m.factHours,
+            loadPercent: m.loadPercent,
+            efficiency: m.efficiency,
             workers: [],
             workOrders: [],
             alerts: [],
@@ -160,6 +197,10 @@ router.get('/posts-analytics', async (req, res) => {
       const monZones = proxy.getFreeZones();
       const zones = monZones.map(mz => {
         const history = mz.history || [];
+        const occupiedEntries = history.filter(h => h.status === 'occupied' || h.status !== 'free');
+        const freeEntries = history.filter(h => h.status === 'free');
+        const m = calcMetrics(history, mz.status, mz.worksInProgress);
+
         return {
           id: `zone-${mz.zoneNumber}`,
           number: mz.zoneNumber,
@@ -168,21 +209,22 @@ router.get('/posts-analytics', async (req, res) => {
           zone: mz.externalZoneName,
           status: mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : 'free',
           maxCapacityHours: 12,
-          occupancy: mz.status === 'occupied' ? 50 : 0,
-          efficiency: 0,
-          vehiclesToday: history.filter(h => h.status === 'occupied').length,
-          avgServiceTime: 0,
-          totalNormHours: 0,
-          totalActualHours: 0,
-          completedWOs: history.filter(h => h.status === 'free').length,
+          occupancy: m.loadPercent,
+          efficiency: m.efficiency,
+          vehiclesToday: occupiedEntries.length,
+          avgServiceTime: occupiedEntries.length > 0 ? Math.round((m.factHours / occupiedEntries.length) * 10) / 10 : 0,
+          totalNormHours: m.factHours,
+          totalActualHours: m.workHours,
+          completedWOs: freeEntries.length,
           scheduledWOs: 0,
           workerPresence: mz.peopleCount > 0 ? 100 : 0,
           worker: null,
           master: null,
           today: {
-            factHours: 0,
-            planHours: 0,
-            loadPercent: mz.status === 'occupied' ? 50 : 0,
+            factHours: m.factHours,
+            planHours: m.factHours,
+            loadPercent: m.loadPercent,
+            efficiency: m.efficiency,
             workers: [],
             workOrders: [],
             alerts: [],
