@@ -201,7 +201,8 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
 
 export default function Sessions() {
   const { t, i18n } = useTranslation();
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const [sessions, setSessions] = useState([]);
   const [status, setStatus] = useState('active');
   const [selectedSession, setSelectedSession] = useState(null);
@@ -268,6 +269,17 @@ export default function Sessions() {
   };
 
   const sortIcon = (col) => sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+
+  if (isLive) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('sessions.title')}</h2>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

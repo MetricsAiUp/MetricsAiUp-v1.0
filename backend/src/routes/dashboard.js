@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate } = require('../middleware/auth');
+const settingsReader = require('./settings');
 
 /**
  * @openapi
@@ -153,6 +154,80 @@ router.get('/trends', authenticate, async (req, res) => {
  */
 router.get('/live', authenticate, async (req, res) => {
   try {
+    // In live mode — return data from monitoring proxy (external CV API)
+    const settings = settingsReader.readSettings();
+    const proxy = req.app.get('monitoringProxy');
+    if (settings.mode === 'live' && proxy && proxy.isRunning()) {
+      const monPosts = proxy.getPosts();
+      const monZones = proxy.getFreeZones();
+      const summary = proxy.getSummary();
+
+      // Map monitoring posts to our format, enriched with DB post IDs
+      const dbPosts = await prisma.post.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      });
+
+      const posts = monPosts.map(mp => {
+        const dbPost = dbPosts.find(p => {
+          const num = parseInt(p.name.match(/\d+/)?.[0], 10);
+          return num === mp.postNumber;
+        });
+        return {
+          id: dbPost?.id || `post-${mp.postNumber}`,
+          name: `Пост ${String(mp.postNumber).padStart(2, '0')}`,
+          zone: mp.externalZoneName,
+          status: mp.status,
+          plateNumber: mp.plateNumber,
+          startTime: mp.carFirstSeen || null,
+          carModel: mp.carModel,
+          carColor: mp.carColor,
+          worksInProgress: mp.worksInProgress,
+          worksDescription: mp.worksDescription,
+          peopleCount: mp.peopleCount,
+          openParts: mp.openParts,
+          confidence: mp.confidence,
+          lastUpdate: mp.lastUpdate,
+        };
+      });
+
+      const freeZones = monZones.map(mz => ({
+        id: `zone-${mz.zoneNumber}`,
+        name: `Зона ${String(mz.zoneNumber).padStart(2, '0')}`,
+        externalName: mz.externalZoneName,
+        status: mz.status,
+        plateNumber: mz.plateNumber,
+        carModel: mz.carModel,
+        carColor: mz.carColor,
+        worksInProgress: mz.worksInProgress,
+        worksDescription: mz.worksDescription,
+        peopleCount: mz.peopleCount,
+        openParts: mz.openParts,
+        confidence: mz.confidence,
+        lastUpdate: mz.lastUpdate,
+        carFirstSeen: mz.carFirstSeen,
+      }));
+
+      return res.json({
+        mode: 'live',
+        vehiclesOnSite: summary.vehiclesOnSite,
+        totalPosts: summary.posts.total,
+        posts,
+        freeZones,
+        summary: {
+          working: summary.posts.working,
+          occupied: summary.posts.occupied,
+          free: summary.posts.free,
+          idle: summary.posts.idle,
+          zonesOccupied: summary.zones.occupied,
+          zonesFree: summary.zones.free,
+        },
+        lastUpdate: summary.lastUpdate,
+      });
+    }
+
+    // Demo mode — return data from DB as before
     const activeSessions = await prisma.vehicleSession.count({ where: { status: 'active' } });
     const posts = await prisma.post.findMany({
       where: { isActive: true },
@@ -172,6 +247,7 @@ router.get('/live', authenticate, async (req, res) => {
     const free = posts.filter(p => p.status === 'free').length;
     const idle = posts.filter(p => p.status === 'occupied_no_work').length;
     res.json({
+      mode: 'demo',
       vehiclesOnSite: activeSessions,
       totalPosts,
       posts: posts.map(p => ({

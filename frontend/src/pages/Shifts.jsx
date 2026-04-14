@@ -478,7 +478,8 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
 export default function Shifts() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
 
   const [allShifts, setAllShifts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -631,10 +632,21 @@ export default function Shifts() {
     );
   }, [weekDays, isRu]);
 
-  if (loading) {
+  if (loading && !isLive) {
     return (
       <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-muted)' }}>
         {t('common.loading')}
+      </div>
+    );
+  }
+
+  if (isLive) {
+    return (
+      <div className="p-4 space-y-4">
+        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.shifts')}</h2>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
+        </div>
       </div>
     );
   }

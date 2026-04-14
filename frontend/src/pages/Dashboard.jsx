@@ -71,7 +71,8 @@ function RecommendationCard({ rec, onAcknowledge, t, isRu }) {
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api, isElementVisible } = useAuth();
+  const { api, isElementVisible, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const elVis = (id) => isElementVisible('dashboard', id);
   const [overview, setOverview] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
@@ -84,6 +85,10 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
+      if (isLive) {
+        // In live mode, only fetch live monitoring data (overview comes from /dashboard/live via LiveSTOWidget)
+        return;
+      }
       const [ovRes, recRes, evRes] = await Promise.all([
         api.get('/api/dashboard/overview'),
         api.get('/api/recommendations'),
@@ -98,8 +103,8 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
-  usePolling(fetchData, 5000);
+  useEffect(() => { fetchData(); }, [isLive]);
+  usePolling(fetchData, isLive ? null : 5000);
 
   const acknowledgeRec = async (id) => {
     await api.put(`/api/recommendations/${id}/acknowledge`);
@@ -133,8 +138,8 @@ export default function Dashboard() {
         <HelpButton pageKey="dashboard" />
       </div>
 
-      {/* Stats */}
-      {elVis('statCards') && (
+      {/* Stats — only in demo mode */}
+      {!isLive && elVis('statCards') && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           <StatCard icon={Car} label={t('dashboard.activeSessions')} value={overview?.activeSessions || 0} color="var(--accent)" />
           <StatCard icon={CircleCheck} label={t('dashboard.freePosts')} value={freePostsCount} color="var(--success)" />
@@ -143,15 +148,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Live STO Widget */}
+      {/* Live STO Widget — always visible, shows live data in live mode */}
       {elVis('liveWidget') && <LiveSTOWidget />}
 
-      {/* ML Predictions */}
-      {elVis('predictionWidget') && <PredictionWidget />}
+      {/* ML Predictions — only in demo mode */}
+      {!isLive && elVis('predictionWidget') && <PredictionWidget />}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recommendations */}
-        {elVis('recommendations') && <div>
+        {/* Recommendations — only in demo mode */}
+        {!isLive && elVis('recommendations') && <div>
           <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('recommendations.title')}
           </h3>
@@ -176,8 +181,8 @@ export default function Dashboard() {
             perPage={perPage} onPageChange={setRecPage} showPerPage={false} />
         </div>}
 
-        {/* Recent Events */}
-        {elVis('recentEvents') && <div>
+        {/* Recent Events — only in demo mode */}
+        {!isLive && elVis('recentEvents') && <div>
           <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('dashboard.recentEvents')}
           </h3>

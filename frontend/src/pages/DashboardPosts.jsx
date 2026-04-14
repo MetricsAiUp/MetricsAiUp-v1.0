@@ -23,6 +23,7 @@ export default function DashboardPosts() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
   const { api, appMode, isElementVisible } = useAuth();
+  const isLive = appMode === 'live';
   const elVis = (id) => isElementVisible('dashboard-posts', id);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

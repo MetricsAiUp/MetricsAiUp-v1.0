@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { usePolling } from '../hooks/useSocket';
-import { Activity, Car } from 'lucide-react';
+import { Activity, Car, MapPin } from 'lucide-react';
 import { POST_STATUS_COLORS } from '../constants';
 
 const STATUS_DOT_COLORS = {
@@ -10,6 +10,11 @@ const STATUS_DOT_COLORS = {
   occupied: POST_STATUS_COLORS.occupied || '#ef4444',
   occupied_no_work: POST_STATUS_COLORS.occupied_no_work || '#f59e0b',
   active_work: POST_STATUS_COLORS.active_work || '#6366f1',
+};
+
+const ZONE_DOT_COLORS = {
+  free: '#22c55e',
+  occupied: '#ef4444',
 };
 
 function timeSince(startTime) {
@@ -42,7 +47,8 @@ export default function LiveSTOWidget() {
 
   if (!data) return null;
 
-  const { summary, posts, vehiclesOnSite } = data;
+  const { summary, posts, freeZones, vehiclesOnSite, mode } = data;
+  const isLive = mode === 'live';
 
   return (
     <div className="glass-static p-4">
@@ -52,6 +58,12 @@ export default function LiveSTOWidget() {
           <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             {t('liveWidget.title')}
           </h3>
+          {isLive && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+              style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444' }}>
+              LIVE
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
@@ -77,9 +89,15 @@ export default function LiveSTOWidget() {
           style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
           {summary.free} {t('liveWidget.free').toLowerCase()}
         </span>
+        {isLive && summary.zonesOccupied != null && (
+          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
+            style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
+            {summary.zonesOccupied} {isRu ? 'зон занято' : 'zones occupied'}
+          </span>
+        )}
       </div>
 
-      {/* Posts table */}
+      {/* Posts grid */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
         {posts.map(post => {
           const num = post.name?.match(/\d+/)?.[0];
@@ -96,18 +114,52 @@ export default function LiveSTOWidget() {
                   {num ? (isRu ? `П${num}` : `P${num}`) : post.name}
                 </span>
                 <span className="text-[10px] block truncate" style={{ color: 'var(--text-muted)' }}>
-                  {post.plateNumber || t('liveWidget.noVehicle')}
+                  {post.plateNumber || (isLive && post.carModel ? post.carModel : t('liveWidget.noVehicle'))}
                 </span>
               </div>
-              {post.startTime && (
+              {(post.startTime || post.carFirstSeen) && (
                 <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
-                  {timeSince(post.startTime)}
+                  {timeSince(post.startTime || post.carFirstSeen)}
                 </span>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Free zones grid (live mode only) */}
+      {isLive && freeZones && freeZones.length > 0 && (
+        <>
+          <div className="flex items-center gap-2 mt-3 mb-2">
+            <MapPin size={14} style={{ color: '#a855f7' }} />
+            <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {isRu ? 'Свободные зоны' : 'Free Zones'}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {freeZones.map(zone => {
+              const dotColor = ZONE_DOT_COLORS[zone.status] || '#94a3b8';
+              return (
+                <div
+                  key={zone.id}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+                >
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-medium block" style={{ color: 'var(--text-primary)' }}>
+                      {zone.name}
+                    </span>
+                    <span className="text-[10px] block truncate" style={{ color: 'var(--text-muted)' }}>
+                      {zone.plateNumber || zone.carModel || (zone.status === 'free' ? (isRu ? 'Свободна' : 'Free') : (isRu ? 'Занята' : 'Occupied'))}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

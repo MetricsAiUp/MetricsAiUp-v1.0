@@ -49,7 +49,8 @@ const customTooltipStyle = {
 
 export default function Analytics() {
   const { t, i18n } = useTranslation();
-  const { api, isElementVisible } = useAuth();
+  const { api, isElementVisible, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const elVis = (id) => isElementVisible('analytics', id);
   const [history, setHistory] = useState(null);
   const [period, setPeriod] = useState('30d');
@@ -299,7 +300,18 @@ export default function Analytics() {
     }
   };
 
-  if (!history) return <div className="p-8 text-center" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Загрузка...' : 'Loading...'}</div>;
+  if (!history && !isLive) return <div className="p-8 text-center" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Загрузка...' : 'Loading...'}</div>;
+
+  if (isLive) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.analytics')}</h2>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" ref={containerRef}>

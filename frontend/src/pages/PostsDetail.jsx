@@ -47,7 +47,8 @@ function ListModal({ title, children, onClose }) {
 export default function PostsDetail() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api, isElementVisible } = useAuth();
+  const { api, isElementVisible, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const elVis = (id) => isElementVisible('posts-detail', id);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ export default function PostsDetail() {
   const [viewMode, setViewMode] = useState('cards');
 
   const selectedPostId = searchParams.get('post') || null;
+  const selectedZoneId = searchParams.get('zone') || null;
 
   useEffect(() => {
     setLoading(true);
@@ -75,9 +77,11 @@ export default function PostsDetail() {
   }, []);
 
   const selectedPost = useMemo(() => {
-    if (!data?.posts || !selectedPostId) return null;
-    return data.posts.find(p => p.id === selectedPostId);
-  }, [data, selectedPostId]);
+    if (!data?.posts) return null;
+    if (selectedPostId) return data.posts.find(p => p.id === selectedPostId);
+    if (selectedZoneId) return (data.zones || []).find(z => z.id === selectedZoneId);
+    return null;
+  }, [data, selectedPostId, selectedZoneId]);
 
   if (loading) {
     return (
@@ -88,6 +92,8 @@ export default function PostsDetail() {
   }
 
   const posts = data?.posts || [];
+  const zones = data?.zones || [];
+  const allItems = [...posts, ...zones];
 
   return (
     <div className="p-4">
@@ -106,6 +112,7 @@ export default function PostsDetail() {
             setCustomTo={setCustomTo}
             navigate={navigate}
             setModal={setModal}
+            isZone={selectedPost?.type === 'zone'}
           />
         ) : (
           elVis('postsList') && <div>
@@ -154,8 +161,8 @@ export default function PostsDetail() {
               </div>
             </div>
 
-            {viewMode === 'cards' && <PostCardsView posts={posts} navigate={navigate} />}
-            {viewMode === 'table' && <PostTableView posts={posts} navigate={navigate} />}
+            {viewMode === 'cards' && <PostCardsView posts={allItems} navigate={navigate} />}
+            {viewMode === 'table' && <PostTableView posts={allItems} navigate={navigate} />}
           </div>
         )}
       </div>

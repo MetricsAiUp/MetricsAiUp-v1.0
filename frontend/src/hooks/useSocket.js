@@ -98,6 +98,7 @@ export function usePolling(callback, intervalMs = 5000) {
   savedCallback.current = callback;
 
   useEffect(() => {
+    if (!intervalMs) return; // null/0 disables polling
     const tick = () => savedCallback.current();
     const id = setInterval(tick, intervalMs);
     return () => clearInterval(id);

@@ -37,7 +37,8 @@ const PER_PAGE_OPTIONS = [25, 50, 100];
 export default function Events() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const [events, setEvents] = useState([]);
   const [total, setTotal] = useState(0);
   const [groupFilter, setGroupFilter] = useState('all');
@@ -125,6 +126,17 @@ export default function Events() {
     if (d.toDateString() === yesterday.toDateString()) return isRu ? 'Вчера' : 'Yesterday';
     return d.toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { day: '2-digit', month: '2-digit' });
   };
+
+  if (isLive) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.events')}</h2>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

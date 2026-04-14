@@ -12,7 +12,8 @@ export default function WorkerStats() {
   const { workerName } = useParams();
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const navigate = useNavigate();
 
   const [data, setData] = useState(null);
@@ -37,6 +38,17 @@ export default function WorkerStats() {
   }, [api, workerName, dateFrom, dateTo]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  if (isLive) {
+    return (
+      <div className="p-4 space-y-4">
+        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.workerStats') || 'Worker Stats'}</h2>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {isRu ? 'В режиме LIVE данные этой страницы не отображаются.' : 'This page has no data in LIVE mode.'}
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

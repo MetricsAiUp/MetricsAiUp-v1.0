@@ -13,7 +13,7 @@ import {
 const navItems = [
   { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', pageId: 'dashboard' },
   { path: '/dashboard-posts', icon: CalendarClock, labelKey: 'nav.dashboardPosts', pageId: 'dashboard-posts' },
-  { path: '/posts-detail', icon: Columns, labelKey: 'nav.postsDetail', pageId: 'posts-detail', hasSub: true },
+  { path: '/posts-detail', icon: Columns, labelKey: 'nav.postsAndZones', pageId: 'posts-detail', hasSub: true },
   { path: '/sessions', icon: Car, labelKey: 'nav.sessions', pageId: 'sessions' },
   { path: '/work-orders', icon: ClipboardList, labelKey: 'nav.workOrders', pageId: 'work-orders' },
   { path: '/shifts', icon: Clock, labelKey: 'nav.shifts', pageId: 'shifts' },
@@ -32,19 +32,61 @@ const navItems = [
   { path: '/tech-docs', icon: BookOpen, labelKey: 'nav.techDocs', pageId: 'tech-docs' },
 ];
 
+const ZONE_ITEMS = [
+  { id: 'zone-1', number: 1 },
+  { id: 'zone-2', number: 2 },
+  { id: 'zone-3', number: 3 },
+  { id: 'zone-4', number: 4 },
+  { id: 'zone-5', number: 5 },
+  { id: 'zone-6', number: 6 },
+  { id: 'zone-7', number: 7 },
+];
+
 export default function Sidebar() {
-  const { t } = useTranslation();
-  const { user, hasPermission, api } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
+  const { user, hasPermission, api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const navigate = useNavigate();
   const location = useLocation();
   const [postsOpen, setPostsOpen] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [liveData, setLiveData] = useState(null);
 
   useEffect(() => {
     api.get('/api/posts-analytics')
       .then(({ data: d }) => setPosts(d.posts || []))
       .catch(() => {});
-  }, []);
+  }, [appMode]);
+
+  // Fetch zone statuses — live mode from monitoring, demo from DB
+  useEffect(() => {
+    const fetchZones = () => {
+      if (isLive) {
+        api.get('/api/dashboard/live').then(r => setLiveData(r.data)).catch(() => {});
+      } else {
+        api.get('/api/zones').then(r => {
+          // Transform DB zones to liveData-like format for unified rendering
+          const zones = (r.data || []);
+          const freeZones = ZONE_ITEMS.map(zi => {
+            const dbZone = zones.find(z => {
+              const n = parseInt(z.name?.match(/\d+/)?.[0], 10);
+              return n === zi.number;
+            });
+            return {
+              id: zi.id,
+              name: isRu ? `Зона ${String(zi.number).padStart(2, '0')}` : `Zone ${String(zi.number).padStart(2, '0')}`,
+              status: dbZone && (dbZone._count?.stays > 0) ? 'occupied' : 'free',
+            };
+          });
+          setLiveData(prev => ({ ...prev, freeZones }));
+        }).catch(() => {});
+      }
+    };
+    fetchZones();
+    const id = setInterval(fetchZones, 10000);
+    return () => clearInterval(id);
+  }, [isLive]);
 
   const isPostsActive = location.pathname === '/posts-detail';
 
@@ -102,8 +144,16 @@ export default function Sidebar() {
                 </div>
                 {postsOpen && (
                   <div className="ml-3 mt-0.5 space-y-0 border-l" style={{ borderColor: 'var(--border-glass)' }}>
+                    {/* Posts */}
                     {posts.map(post => {
                       const isSelected = location.search.includes(post.id);
+                      // In live mode, get status from monitoring data
+                      const postNum = parseInt(post.name?.match(/\d+/)?.[0], 10);
+                      const livePost = isLive && liveData?.posts?.find(p => {
+                        const n = parseInt(p.name?.match(/\d+/)?.[0], 10);
+                        return n === postNum;
+                      });
+                      const isActive = livePost ? livePost.status !== 'free' : post.today?.loadPercent > 0;
                       return (
                         <button
                           key={post.id}
@@ -118,9 +168,39 @@ export default function Sidebar() {
                         >
                           <div
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: post.today?.loadPercent > 0 ? 'var(--success)' : 'var(--text-muted)' }}
+                            style={{ background: isActive ? 'var(--success)' : 'var(--text-muted)' }}
                           />
                           <span className="truncate">{(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}</span>
+                        </button>
+                      );
+                    })}
+                    {/* Separator */}
+                    <div className="my-1 mx-2 border-t" style={{ borderColor: 'var(--border-glass)' }} />
+                    {/* Zones */}
+                    {ZONE_ITEMS.map(zone => {
+                      const isSelected = location.search.includes(zone.id);
+                      const liveZone = liveData?.freeZones?.find(z => {
+                        const n = parseInt(z.name?.match(/\d+/)?.[0], 10);
+                        return n === zone.number;
+                      });
+                      const isOccupied = liveZone ? liveZone.status === 'occupied' : false;
+                      return (
+                        <button
+                          key={zone.id}
+                          onClick={() => navigate(`/posts-detail?zone=${zone.id}`)}
+                          className="w-full text-left pl-3 py-1 rounded-r-lg transition-all flex items-center gap-1.5"
+                          style={{
+                            color: isSelected ? '#a855f7' : 'var(--text-muted)',
+                            background: isSelected ? 'rgba(168,85,247,0.1)' : 'transparent',
+                            fontSize: '10px',
+                            fontWeight: isSelected ? 600 : 400,
+                          }}
+                        >
+                          <div
+                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ background: isOccupied ? '#a855f7' : 'var(--text-muted)' }}
+                          />
+                          <span className="truncate">{isRu ? `Зона ${String(zone.number).padStart(2, '0')}` : `Zone ${String(zone.number).padStart(2, '0')}`}</span>
                         </button>
                       );
                     })}

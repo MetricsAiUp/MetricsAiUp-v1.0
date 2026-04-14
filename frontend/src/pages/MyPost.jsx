@@ -14,7 +14,8 @@ const BASE = import.meta.env.BASE_URL || './';
 export default function MyPost() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { user, api } = useAuth();
+  const { user, api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const [data, setData] = useState(null);
   const [myPost, setMyPost] = useState(null);
   const [activeWO, setActiveWO] = useState(null);
@@ -98,6 +99,17 @@ export default function MyPost() {
     const sec = s % 60;
     return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
+
+  if (isLive) {
+    return (
+      <div className="max-w-lg mx-auto space-y-4 p-2">
+        <h1 className="text-2xl font-bold text-center" style={{ color: 'var(--text-primary)' }}>{t('myPost.title')}</h1>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {i18n.language === 'ru' ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto space-y-4 p-2">

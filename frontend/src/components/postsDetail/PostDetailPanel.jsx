@@ -33,7 +33,8 @@ function effColor(v) {
   return 'var(--danger)';
 }
 
-function translatePostName(name, t) {
+function translatePostName(name, t, type) {
+  if (type === 'zone') return name;
   const num = name?.match(/\d+/)?.[0];
   if (num) return t(`posts.post${num}`);
   return name;
@@ -578,7 +579,7 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
           </button>
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-              {translatePostName(selectedPost.name, t)}
+              {translatePostName(selectedPost.name, t, selectedPost.type)}
               <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
                 {t(`posts.${selectedPost.type}`)}
               </span>

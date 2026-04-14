@@ -197,7 +197,8 @@ function vehiclePlateFromData(n, dd, zd) {
 export default function MapViewer() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const { theme } = useTheme();
   const navigate = useNavigate();
   const pageRef = useRef(null);
@@ -207,6 +208,7 @@ export default function MapViewer() {
   const [layout, setLayout] = useState(null);
   const [zonesData, setZonesData] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
+  const [monitoringData, setMonitoringData] = useState(null); // live mode data from external API
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedCam, setSelectedCam] = useState(null);
   const cameraStatuses = useCameraStatus();
@@ -249,17 +251,25 @@ export default function MapViewer() {
   // Fetch real-time data
   const fetchRealtime = useCallback(async () => {
     try {
-      const [zRes, dRes] = await Promise.all([
-        api.get('/api/zones'),
-        api.get('/api/dashboard-posts'),
-      ]);
-      if (zRes.data) setZonesData(zRes.data);
-      if (dRes.data) setDashboardData(dRes.data);
+      if (isLive) {
+        // Live mode — fetch from monitoring proxy (real CV data)
+        const res = await api.get('/api/dashboard/live');
+        if (res.data) setMonitoringData(res.data);
+      } else {
+        // Demo mode — fetch from DB
+        const [zRes, dRes] = await Promise.all([
+          api.get('/api/zones'),
+          api.get('/api/dashboard-posts'),
+        ]);
+        if (zRes.data) setZonesData(zRes.data);
+        if (dRes.data) setDashboardData(dRes.data);
+        setMonitoringData(null);
+      }
     } catch { /* ignore */ }
-  }, [api]);
+  }, [api, isLive]);
 
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
-  usePolling(fetchRealtime, 5000);
+  usePolling(fetchRealtime, isLive ? 10000 : 5000);
 
   // Real-time post status updates via Socket.IO
   useSocket('post:status_changed', (data) => {
@@ -408,14 +418,25 @@ export default function MapViewer() {
     navigate(`/posts-detail?post=post-${postNum}`);
   };
 
-  // Compute stats
-  const allPosts = (zonesData || []).flatMap(z => z.posts || []);
-  const totalPosts = allPosts.length || 10;
-  const freePosts = allPosts.filter(p => p.status === 'free').length;
-  const occupiedPosts = totalPosts - freePosts;
-  const activeWork = allPosts.filter(p => p.status === 'active_work').length;
-  const idle = allPosts.filter(p => p.status === 'occupied_no_work').length;
-  const totalVehicles = (zonesData || []).reduce((s, z) => s + (z._count?.stays || 0), 0);
+  // Compute stats — use monitoring data in live mode, DB data in demo mode
+  let totalPosts, freePosts, occupiedPosts, activeWork, idle, totalVehicles;
+  if (isLive && monitoringData) {
+    const s = monitoringData.summary || {};
+    totalPosts = s.working + s.occupied + s.free + s.idle || 10;
+    freePosts = s.free || 0;
+    occupiedPosts = (s.occupied || 0);
+    activeWork = s.working || 0;
+    idle = s.idle || 0;
+    totalVehicles = monitoringData.vehiclesOnSite || 0;
+  } else {
+    const allPosts = (zonesData || []).flatMap(z => z.posts || []);
+    totalPosts = allPosts.length || 10;
+    freePosts = allPosts.filter(p => p.status === 'free').length;
+    occupiedPosts = totalPosts - freePosts;
+    activeWork = allPosts.filter(p => p.status === 'active_work').length;
+    idle = allPosts.filter(p => p.status === 'occupied_no_work').length;
+    totalVehicles = (zonesData || []).reduce((s, z) => s + (z._count?.stays || 0), 0);
+  }
   const loadPct = totalPosts > 0 ? Math.round((occupiedPosts / totalPosts) * 100) : 0;
 
   const stats = [
@@ -584,19 +605,34 @@ export default function MapViewer() {
                   stroke={isDark ? '#94a3b8' : '#9ca3af'} strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
               );
               if (el.type === 'wall') return <WallEl key={el.id} el={el} />;
-              if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} />;
+              if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} monitoringData={isLive ? monitoringData : null} />;
               if (el.type === 'door') return <DoorEl key={el.id} el={el} isDark={isDark} />;
               if (el.type === 'label') return <LabelEl key={el.id} el={el} fill={mutedFill} />;
               if (el.type === 'post') {
                 const pn = getPostNum(el);
                 if (!pn) return null;
+                // In live mode, use monitoring data; in demo, use DB data
+                let status, plate, dashPost;
+                if (isLive && monitoringData) {
+                  const mp = monitoringData.posts?.find(p => {
+                    const num = parseInt(p.name?.match(/\d+/)?.[0], 10);
+                    return num === pn;
+                  });
+                  status = mp?.status || 'free';
+                  plate = mp?.plateNumber || mp?.carModel || null;
+                  dashPost = mp ? { status: mp.status, currentVehicle: mp.plateNumber || mp.carModel ? { plateNumber: mp.plateNumber, model: mp.carModel, color: mp.carColor } : null, worksDescription: mp.worksDescription, peopleCount: mp.peopleCount } : null;
+                } else {
+                  status = postStatusFromData(pn, dashboardData, zonesData);
+                  plate = vehiclePlateFromData(pn, dashboardData, zonesData);
+                  dashPost = dashPostFromData(pn, dashboardData);
+                }
                 return (
                   <PostEl key={el.id} el={el} isDark={isDark} textFill={textFill} mutedFill={mutedFill}
-                    status={postStatusFromData(pn, dashboardData, zonesData)}
-                    plate={vehiclePlateFromData(pn, dashboardData, zonesData)}
-                    statusLabel={t(`posts.${postStatusFromData(pn, dashboardData, zonesData)}`)}
+                    status={status}
+                    plate={plate}
+                    statusLabel={t(`posts.${status}`)}
                     postLabel={t(`posts.post${pn}`)}
-                    dashPost={dashPostFromData(pn, dashboardData)}
+                    dashPost={dashPost}
                     isRu={isRu}
                     onClick={() => setSelectedPost(pn)} />
                 );
@@ -803,29 +839,56 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   );
 }
 
-function ZoneEl({ el, isDark, zonesData }) {
+function ZoneEl({ el, isDark, zonesData, monitoringData }) {
   const stroke = el.color || '#22c55e';
   let vehicleCount = 0;
-  for (const z of (zonesData || [])) {
-    if (z.name === el.name) vehicleCount = z._count?.stays || 0;
+  let zoneInfo = null; // monitoring zone info (plate, model, etc.)
+
+  if (monitoringData?.freeZones) {
+    // Live mode — match by zone number from element name (e.g. "Зона 01" → zoneNumber 1)
+    const numMatch = el.name?.match(/(\d+)/);
+    if (numMatch) {
+      const zn = parseInt(numMatch[1], 10);
+      const mz = monitoringData.freeZones.find(z => {
+        const n = parseInt(z.name?.match(/\d+/)?.[0], 10);
+        return n === zn;
+      });
+      if (mz) {
+        vehicleCount = mz.status === 'occupied' ? 1 : 0;
+        zoneInfo = mz;
+      }
+    }
+  } else {
+    // Demo mode — use DB data
+    for (const z of (zonesData || [])) {
+      if (z.name === el.name) vehicleCount = z._count?.stays || 0;
+    }
   }
+
+  const isOccupied = vehicleCount > 0;
+  const occupiedStroke = isOccupied ? '#ef4444' : stroke;
   const textColor = isDark ? '#94a3b8' : '#64748b';
   const w = el.width || 160, h = el.height || 100;
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}>
-      <Rect width={w} height={h} fill={stroke}
+      <Rect width={w} height={h} fill={occupiedStroke}
         opacity={isDark ? 0.06 : 0.05}
-        stroke={stroke} strokeWidth={1} cornerRadius={3}
+        stroke={occupiedStroke} strokeWidth={isOccupied ? 1.5 : 1} cornerRadius={3}
         dash={[6, 3]} />
       <Text x={5} y={3} text={el.name} fontSize={9} fill={textColor}
         opacity={0.7} fontStyle="bold" fontFamily="system-ui, sans-serif" />
-      {vehicleCount > 0 && (
+      {isOccupied && (
         <>
-          <Circle x={w - 10} y={10} radius={7} fill={stroke} opacity={0.6} />
+          <Circle x={w - 10} y={10} radius={7} fill={occupiedStroke} opacity={0.6} />
           <Text x={w - 17} y={4.5} text={String(vehicleCount)} fontSize={8}
             fontStyle="bold" fill="#fff" width={14} align="center"
             fontFamily="system-ui, sans-serif" />
         </>
+      )}
+      {zoneInfo && zoneInfo.status === 'occupied' && (
+        <Text x={5} y={h - 14} text={zoneInfo.plateNumber || zoneInfo.carModel || ''}
+          fontSize={7} fill={textColor} opacity={0.6}
+          fontFamily="system-ui, sans-serif" width={w - 10} ellipsis={true} />
       )}
     </Group>
   );

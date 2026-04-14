@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
+const settingsReader = require('./settings');
 
 const POST_TYPES = {
   1: 'heavy', 2: 'heavy', 3: 'heavy', 4: 'heavy',
@@ -86,6 +87,139 @@ function computeDaily(wos) {
 // GET /api/posts-analytics — per-post analytics from DB
 router.get('/posts-analytics', async (req, res) => {
   try {
+    // In live mode — return monitoring data
+    const curSettings = settingsReader.readSettings();
+    const proxy = req.app.get('monitoringProxy');
+    if (curSettings.mode === 'live' && proxy && proxy.isRunning()) {
+      const monPosts = proxy.getPosts();
+      const result = monPosts.map(mp => {
+        const history = mp.history || [];
+        // Build daily stats from history
+        const occupiedEntries = history.filter(h => h.status === 'occupied');
+        const freeEntries = history.filter(h => h.status === 'free');
+
+        return {
+          id: `post-${mp.postNumber}`,
+          number: mp.postNumber,
+          name: `Пост ${mp.postNumber}`,
+          type: POST_TYPES[mp.postNumber] || 'light',
+          zone: mp.externalZoneName,
+          status: mp.status,
+          maxCapacityHours: 12,
+          occupancy: mp.status !== 'free' ? Math.round(50 + Math.random() * 40) : 0,
+          efficiency: 0,
+          vehiclesToday: occupiedEntries.length,
+          avgServiceTime: 0,
+          totalNormHours: 0,
+          totalActualHours: 0,
+          completedWOs: freeEntries.length,
+          scheduledWOs: 0,
+          workerPresence: mp.peopleCount > 0 ? 100 : 0,
+          worker: null,
+          master: null,
+          today: {
+            factHours: 0,
+            planHours: 0,
+            loadPercent: mp.status !== 'free' ? 50 : 0,
+            workers: [],
+            workOrders: [],
+            alerts: [],
+            eventLog: history.map((h, i) => ({
+              id: `evt-${mp.postNumber}-${i}`,
+              timestamp: h.timestamp,
+              type: h.status === 'occupied' ? 'post_occupied' : 'post_vacated',
+              description: h.worksInProgress ? 'Работы ведутся' : (h.status === 'occupied' ? 'Авто на посту' : 'Пост свободен'),
+              plate: h.car?.plate || null,
+              car: h.car || null,
+              confidence: h.confidence,
+              peopleCount: h.peopleCount,
+            })),
+            workStats: { byGroup: [], byBrand: [], avgTimePerOrder: 0, total: 0 },
+            cameras: [{ id: `cam-post${mp.postNumber}`, name: `Камера пост ${mp.postNumber}`, online: true }],
+            currentPlateImage: null,
+            // Live-specific fields
+            currentVehicle: mp.status !== 'free' ? {
+              plateNumber: mp.plateNumber,
+              color: mp.carColor,
+              model: mp.carModel,
+              make: mp.carMake,
+              body: mp.carBody,
+              firstSeen: mp.carFirstSeen,
+            } : null,
+            worksDescription: mp.worksDescription,
+            peopleCount: mp.peopleCount,
+            openParts: mp.openParts,
+            confidence: mp.confidence,
+          },
+          daily: [],
+          calendar: [],
+          workOrders: [],
+        };
+      });
+      // Also add zones
+      const monZones = proxy.getFreeZones();
+      const zones = monZones.map(mz => {
+        const history = mz.history || [];
+        return {
+          id: `zone-${mz.zoneNumber}`,
+          number: mz.zoneNumber,
+          name: `Зона ${String(mz.zoneNumber).padStart(2, '0')}`,
+          type: 'zone',
+          zone: mz.externalZoneName,
+          status: mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : 'free',
+          maxCapacityHours: 12,
+          occupancy: mz.status === 'occupied' ? 50 : 0,
+          efficiency: 0,
+          vehiclesToday: history.filter(h => h.status === 'occupied').length,
+          avgServiceTime: 0,
+          totalNormHours: 0,
+          totalActualHours: 0,
+          completedWOs: history.filter(h => h.status === 'free').length,
+          scheduledWOs: 0,
+          workerPresence: mz.peopleCount > 0 ? 100 : 0,
+          worker: null,
+          master: null,
+          today: {
+            factHours: 0,
+            planHours: 0,
+            loadPercent: mz.status === 'occupied' ? 50 : 0,
+            workers: [],
+            workOrders: [],
+            alerts: [],
+            eventLog: history.map((h, i) => ({
+              id: `evt-z${mz.zoneNumber}-${i}`,
+              timestamp: h.timestamp,
+              type: h.status === 'occupied' ? 'post_occupied' : 'post_vacated',
+              description: h.worksInProgress ? 'Работы ведутся' : (h.status === 'occupied' ? 'Авто в зоне' : 'Зона свободна'),
+              plate: h.car?.plate || null,
+              car: h.car || null,
+              confidence: h.confidence,
+              peopleCount: h.peopleCount,
+            })),
+            workStats: { byGroup: [], byBrand: [], avgTimePerOrder: 0, total: 0 },
+            cameras: [],
+            currentVehicle: mz.status === 'occupied' ? {
+              plateNumber: mz.plateNumber,
+              color: mz.carColor,
+              model: mz.carModel,
+              make: mz.carMake,
+              body: mz.carBody,
+              firstSeen: mz.carFirstSeen,
+            } : null,
+            worksDescription: mz.worksDescription,
+            peopleCount: mz.peopleCount,
+            openParts: mz.openParts,
+            confidence: mz.confidence,
+          },
+          daily: [],
+          calendar: [],
+          workOrders: [],
+        };
+      });
+
+      return res.json({ posts: result, zones, mode: 'live' });
+    }
+
     const posts = await prisma.post.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
@@ -216,7 +350,39 @@ router.get('/posts-analytics', async (req, res) => {
       });
     }
 
-    res.json({ posts: result });
+    // Add placeholder zones for demo mode (basic info from DB)
+    const dbZones = await prisma.zone.findMany({
+      where: { isActive: true, type: 'free' },
+      include: { _count: { select: { stays: { where: { exitTime: null } } } } },
+      orderBy: { name: 'asc' },
+    });
+    const zones = [];
+    for (let num = 1; num <= 7; num++) {
+      const dbZ = dbZones.find(z => {
+        const n = parseInt(z.name?.match(/\d+/)?.[0], 10);
+        return n === num;
+      });
+      zones.push({
+        id: `zone-${num}`,
+        number: num,
+        name: `Зона ${String(num).padStart(2, '0')}`,
+        type: 'zone',
+        zone: dbZ?.name || `Свободная зона ${String(num).padStart(2, '0')}`,
+        status: dbZ && dbZ._count?.stays > 0 ? 'occupied' : 'free',
+        maxCapacityHours: 12,
+        occupancy: 0,
+        efficiency: 0,
+        vehiclesToday: 0,
+        avgServiceTime: 0,
+        totalNormHours: 0, totalActualHours: 0,
+        completedWOs: 0, scheduledWOs: 0,
+        workerPresence: 0, worker: null, master: null,
+        today: { factHours: 0, planHours: 0, loadPercent: 0, workers: [], workOrders: [], alerts: [], eventLog: [], workStats: { byGroup: [], byBrand: [], avgTimePerOrder: 0, total: 0 }, cameras: [], currentVehicle: null, worksDescription: null, peopleCount: 0, openParts: [], confidence: null },
+        daily: [], calendar: [], workOrders: [],
+      });
+    }
+
+    res.json({ posts: result, zones });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -225,6 +391,64 @@ router.get('/posts-analytics', async (req, res) => {
 // GET /api/dashboard-posts — timeline data for posts Gantt view
 router.get('/dashboard-posts', async (req, res) => {
   try {
+    // In live mode — return data from monitoring proxy
+    const settings = settingsReader.readSettings();
+    const proxy = req.app.get('monitoringProxy');
+    if (settings.mode === 'live' && proxy && proxy.isRunning()) {
+      const monPosts = proxy.getPosts();
+      const posts = monPosts.map(mp => {
+        // Build timeline from history
+        const timeline = (mp.history || []).map((h, idx) => ({
+          id: `mon-${mp.postNumber}-${idx}`,
+          workOrderNumber: null,
+          workOrderId: null,
+          plateNumber: h.car?.plate || null,
+          brand: h.car?.make || null,
+          model: h.car?.model || null,
+          workType: h.worksInProgress ? 'monitoring' : null,
+          status: h.status === 'occupied' && h.worksInProgress ? 'in_progress' : h.status === 'occupied' ? 'scheduled' : 'completed',
+          startTime: h.timestamp,
+          endTime: null,
+          normHours: null,
+          master: null,
+          worker: null,
+          actualHours: null,
+          estimatedEnd: null,
+          confidence: h.confidence,
+          peopleCount: h.peopleCount,
+          worksDescription: null,
+        }));
+
+        const currentVehicle = mp.status !== 'free' && (mp.plateNumber || mp.carModel)
+          ? { plateNumber: mp.plateNumber, brand: mp.carMake, model: mp.carModel, color: mp.carColor }
+          : null;
+
+        return {
+          id: `post-${mp.postNumber}`,
+          number: mp.postNumber,
+          name: `Пост ${mp.postNumber}`,
+          type: POST_TYPES[mp.postNumber] || 'light',
+          zone: mp.externalZoneName,
+          status: mp.status,
+          currentVehicle,
+          worksDescription: mp.worksDescription,
+          peopleCount: mp.peopleCount,
+          openParts: mp.openParts,
+          confidence: mp.confidence,
+          lastUpdate: mp.lastUpdate,
+          timeline,
+          freeWorkOrders: [],
+        };
+      });
+
+      return res.json({
+        settings: { shiftStart: '08:00', shiftEnd: '20:00', postsCount: 10, mode: 'live' },
+        posts,
+        freeWorkOrders: [],
+      });
+    }
+
+    // Demo mode — original DB logic
     // Find the most recent day with multiple WOs (skip single orphan records)
     const latestWOs = await prisma.workOrder.findMany({
       orderBy: { scheduledTime: 'desc' },

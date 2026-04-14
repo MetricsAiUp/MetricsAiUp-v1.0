@@ -51,11 +51,15 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   const io = req.app.get('io');
   if (io) io.emit('settings:changed', current);
 
-  // Start/stop demo generator
+  // Start/stop demo generator and monitoring proxy
   const demoControl = req.app.get('demoControl');
-  if (demoControl) {
-    if (current.mode === 'demo') demoControl.start();
-    else demoControl.stop();
+  const monitoringControl = req.app.get('monitoringControl');
+  if (current.mode === 'demo') {
+    if (monitoringControl) monitoringControl.stop();
+    if (demoControl) demoControl.start();
+  } else {
+    if (demoControl) demoControl.stop();
+    if (monitoringControl) monitoringControl.start();
   }
 
   res.json(current);

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Car, Truck, Wrench, ChevronRight } from 'lucide-react';
 
-const POST_TYPE_ICONS = { light: Car, heavy: Truck, diagnostics: Wrench };
+const POST_TYPE_ICONS = { light: Car, heavy: Truck, diagnostics: Wrench, zone: Wrench, special: Wrench };
 
 function loadColor(v) {
   if (v >= 70) return 'var(--success)';
@@ -15,7 +15,8 @@ function effColor(v) {
   return 'var(--danger)';
 }
 
-function translatePostName(name, t) {
+function translatePostName(name, t, type) {
+  if (type === 'zone') return name; // zones keep their name as-is
   const num = name?.match(/\d+/)?.[0];
   if (num) return t(`posts.post${num}`);
   return name;
@@ -37,13 +38,13 @@ export default function PostCardsView({ posts, navigate }) {
         return (
           <div key={post.id} className="glass rounded-xl p-4 hover:shadow-lg transition-all"
             style={{ border: '1px solid var(--border-glass)' }}
-            onClick={() => navigate(`/posts-detail?post=${post.id}`)}>
+            onClick={() => navigate(`/posts-detail?${post.type === 'zone' ? 'zone' : 'post'}=${post.id}`)}>
             {/* Card header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.loadPercent > 50 ? 'var(--success)' : d.loadPercent > 0 ? 'var(--warning)' : 'var(--text-muted)' }} />
                 <Icon size={14} style={{ color: 'var(--text-secondary)' }} />
-                <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{translatePostName(post.name, t)}</span>
+                <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{translatePostName(post.name, t, post.type)}</span>
                 <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '9px' }}>{t(`posts.${post.type}`)}</span>
               </div>
               {alertCount > 0 && (

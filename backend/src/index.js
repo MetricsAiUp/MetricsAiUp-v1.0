@@ -40,6 +40,7 @@ const { initTelegramBot } = require('./services/telegramBot');
 const { generate: generateDemoData } = require('./generateDemoData');
 const { startCameraHealthCheck } = require('./services/cameraHealthCheck');
 const { startReportScheduler } = require('./services/reportScheduler');
+const monitoringProxy = require('./services/monitoringProxy');
 const settingsRoutes = require('./routes/settings');
 
 const app = express();
@@ -115,6 +116,7 @@ app.use('/api/system-health', healthRoutes);
 app.use('/api/workers', workersRoutes);
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
+app.use('/api/monitoring', require('./routes/monitoring'));
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check
@@ -161,12 +163,21 @@ server.listen(PORT, '0.0.0.0', () => {
   };
   app.set('demoControl', demoControl);
 
-  // Start demo generator only if mode is 'demo'
+  // Monitoring proxy control (for live mode)
+  const monitoringControl = {
+    start() { monitoringProxy.start(io); },
+    stop() { monitoringProxy.stop(); },
+  };
+  app.set('monitoringControl', monitoringControl);
+  app.set('monitoringProxy', monitoringProxy);
+
+  // Start demo generator only if mode is 'demo', monitoring proxy if 'live'
   const appSettings = settingsRoutes.readSettings();
   if (appSettings.mode === 'demo') {
     demoControl.start();
   } else {
-    logger.info('Mode is "live" — demo generator disabled');
+    logger.info('Mode is "live" — demo generator disabled, starting monitoring proxy');
+    monitoringControl.start();
   }
 });
 

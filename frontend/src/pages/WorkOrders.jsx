@@ -8,7 +8,8 @@ import DateRangePicker from '../components/DateRangePicker';
 export default function WorkOrders() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
   const [orders, setOrders] = useState([]);
   const [showImport, setShowImport] = useState(false);
   const [csvText, setCsvText] = useState('');
@@ -111,6 +112,17 @@ export default function WorkOrders() {
     { key: 'normHours', label: t('workOrders.normHours') },
     { key: 'status', label: t('workOrders.status') },
   ];
+
+  if (isLive) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('workOrders.title')}</h2>
+        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
