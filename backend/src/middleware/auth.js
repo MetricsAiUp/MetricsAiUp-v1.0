@@ -25,6 +25,11 @@ function buildReqUser(user) {
   let hiddenElements = [];
   try { hiddenElements = JSON.parse(user.hiddenElements || '[]'); } catch {}
 
+  // Use saved pages if present, otherwise derive from primary role
+  let pages;
+  try { pages = JSON.parse(user.pages || '[]'); } catch { pages = []; }
+  if (!pages.length) pages = ROLE_PAGES[primaryRole] || ['dashboard'];
+
   return {
     id: user.id,
     email: user.email,
@@ -32,7 +37,7 @@ function buildReqUser(user) {
     lastName: user.lastName,
     roles: roleNames,
     role: primaryRole,
-    pages: ROLE_PAGES[primaryRole] || ['dashboard'],
+    pages,
     hiddenElements,
     permissions: [...permissions],
   };

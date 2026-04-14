@@ -43,6 +43,7 @@ export default function Users() {
           email: userForm.email,
           isActive: userForm.isActive,
           hiddenElements: userForm.hiddenElements || [],
+          pages: userForm.pages || [],
           roleName: userForm.role,
         };
         if (userForm.password && userForm.password.trim() !== '') body.password = userForm.password;
@@ -56,7 +57,9 @@ export default function Users() {
           lastName: userForm.lastName,
           email: userForm.email,
           password: userForm.password || 'demo123',
-          roleIds: userForm.roleId ? [userForm.roleId] : [],
+          roleName: userForm.role,
+          pages: userForm.pages || [],
+          hiddenElements: userForm.hiddenElements || [],
         };
         const { data: created } = await api.post('/api/users', body);
         savedUser = created;

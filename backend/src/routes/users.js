@@ -56,8 +56,10 @@ function formatUser(user) {
     }
   }
 
-  // Derive pages from primary role
-  const pages = ROLE_DEFAULT_PAGES[primaryRole] || ROLE_DEFAULT_PAGES.viewer;
+  // Use saved pages if present, otherwise derive from primary role
+  let pages;
+  try { pages = JSON.parse(user.pages || '[]'); } catch { pages = []; }
+  if (!pages.length) pages = ROLE_DEFAULT_PAGES[primaryRole] || ROLE_DEFAULT_PAGES.viewer;
 
   let hiddenElements = [];
   try { hiddenElements = JSON.parse(user.hiddenElements || '[]'); } catch {}
@@ -149,7 +151,7 @@ router.get('/:id', requirePermission('manage_users'), async (req, res) => {
 // -------------------------------------------------------
 router.post('/', requirePermission('manage_users'), validate(createUserSchema), async (req, res) => {
   try {
-    const { email, password, firstName, lastName, roleIds } = req.body;
+    const { email, password, firstName, lastName, roleIds, roleName, pages, hiddenElements } = req.body;
 
     // Validation
     if (!email || !password || !firstName || !lastName) {
@@ -164,14 +166,23 @@ router.post('/', requirePermission('manage_users'), validate(createUserSchema), 
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Resolve role IDs
+    let resolvedRoleIds = roleIds;
+    if (!resolvedRoleIds && roleName) {
+      const role = await prisma.role.findUnique({ where: { name: roleName } });
+      if (role) resolvedRoleIds = [role.id];
+    }
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstName,
         lastName,
+        pages: pages ? JSON.stringify(pages) : '[]',
+        hiddenElements: hiddenElements ? JSON.stringify(hiddenElements) : '[]',
         roles: {
-          create: (roleIds || []).map((roleId) => ({ roleId })),
+          create: (resolvedRoleIds || []).map((roleId) => ({ roleId })),
         },
       },
       include: USER_INCLUDE,
@@ -189,7 +200,7 @@ router.post('/', requirePermission('manage_users'), validate(createUserSchema), 
 router.put('/:id', requirePermission('manage_users'), validate(updateUserSchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, firstName, lastName, roleIds, isActive, hiddenElements, roleName } = req.body;
+    const { email, password, firstName, lastName, roleIds, isActive, hiddenElements, roleName, pages } = req.body;
 
     // Check user exists
     const existing = await prisma.user.findUnique({ where: { id } });
@@ -212,6 +223,7 @@ router.put('/:id', requirePermission('manage_users'), validate(updateUserSchema)
     if (lastName !== undefined) data.lastName = lastName;
     if (isActive !== undefined) data.isActive = isActive;
     if (hiddenElements !== undefined) data.hiddenElements = JSON.stringify(hiddenElements);
+    if (pages !== undefined) data.pages = JSON.stringify(pages);
     if (password) {
       data.password = await bcrypt.hash(password, 10);
     }
