@@ -37,34 +37,79 @@ const ALL_CAMERAS = [
   { num: '15', loc: { ru: 'Зона 01', en: 'Zone 01' }, covers: { ru: 'Зона 01', en: 'Zone 01' } },
 ];
 
+// Translation dictionaries for live data
+const COLOR_RU = {
+  black: 'чёрный', white: 'белый', red: 'красный', blue: 'синий', green: 'зелёный',
+  silver: 'серебристый', gray: 'серый', grey: 'серый', yellow: 'жёлтый', orange: 'оранжевый',
+  brown: 'коричневый', beige: 'бежевый', gold: 'золотистый', purple: 'фиолетовый',
+};
+const BODY_RU = {
+  sedan: 'седан', suv: 'внедорожник', hatchback: 'хэтчбек', wagon: 'универсал',
+  van: 'фургон', truck: 'грузовик', pickup: 'пикап', coupe: 'купе', minivan: 'минивэн',
+  crossover: 'кроссовер',
+};
+const CONFIDENCE_RU = { HIGH: 'высокая', MEDIUM: 'средняя', LOW: 'низкая' };
+const PARTS_RU = {
+  hood: 'капот', trunk: 'багажник', doors: 'двери', door: 'дверь',
+  tailgate: 'задняя дверь', bonnet: 'капот',
+};
+function trMap(dict, val) { return val ? (dict[val.toLowerCase()] || val) : val; }
+
+function translateWorksDesc(text, isRu) {
+  if (!text || !isRu) return text;
+  if (/^[А-Яа-яЁё]/.test(text)) return text;
+  let s = text;
+  const phrases = [
+    [/vehicle\s+(is\s+)?elevated\s+on\s+(a\s+)?lift\s+with\s+hood\s+open/i, 'Автомобиль поднят на подъёмнике с открытым капотом'],
+    [/engine\s+bay\s+exposed\s+for\s+maintenance\s+or\s+inspection\s+work/i, 'моторный отсек открыт для ТО или осмотра'],
+    [/engine\/transmission\s+components\s+are\s+dismantled\s+and\s+scattered\s+on\s+the\s+floor/i, 'Компоненты двигателя/трансмиссии разобраны'],
+    [/indicating\s+major\s+engine\s+or\s+transmission\s+work\s+in\s+progress/i, 'ведётся капитальный ремонт двигателя или трансмиссии'],
+    [/vehicle\s+positioned\s+in\s+service\s+bay/i, 'Автомобиль установлен на посту'],
+    [/diagnostic\s+or\s+maintenance\s+work\s+appears\s+to\s+be\s+in\s+preparation\s+or\s+in\s+progress/i, 'диагностика или ТО в подготовке или в процессе'],
+    [/vehicle\s+(is\s+)?elevated\s+on\s+the\s+lift\s+with\s+hood\s+and\s+rear\s+hatch\s+open/i, 'Автомобиль на подъёмнике с открытыми капотом и задней дверью'],
+    [/appears\s+to\s+be\s+undergoing\s+inspection\s+or\s+maintenance\s+work/i, 'проходит осмотр или ТО'],
+    [/vehicle\s+positioned\s+in\s+the\s+work\s+zone/i, 'Автомобиль в рабочей зоне'],
+    [/likely\s+undergoing\s+glass\/window\s+treatment\s+or\s+film\s+application/i, 'вероятно оклейка/обработка стёкол'],
+    [/maintenance\s+or\s+inspection/i, 'ТО или осмотр'],
+    [/maintenance\s+work/i, 'техническое обслуживание'],
+    [/in\s+progress/i, 'в процессе'],
+    [/hood\s+open/i, 'капот открыт'],
+  ];
+  for (const [re, ru] of phrases) s = s.replace(re, ru);
+  return s;
+}
+
 function fmtTime(t) {
   if (!t) return '—';
   const d = new Date(t);
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
-function ConfidenceBadge({ level }) {
+function ConfidenceBadge({ level, isRu }) {
   const colors = { HIGH: 'var(--success)', MEDIUM: '#f59e0b', LOW: '#ef4444' };
+  const label = isRu ? (CONFIDENCE_RU[level] || level || 'Н/Д') : (level || 'N/A');
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
       style={{ background: `${colors[level] || colors.LOW}20`, color: colors[level] || colors.LOW }}>
-      <Shield size={10} /> {level || 'N/A'}
+      <Shield size={10} /> {label}
     </span>
   );
 }
 
-function OpenPartsBadges({ parts }) {
+function OpenPartsBadges({ parts, isRu }) {
   if (!parts || parts.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1">
       {parts.map((p, i) => (
-        <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>{p}</span>
+        <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
+          {isRu ? (PARTS_RU[p.toLowerCase()] || p) : p}
+        </span>
       ))}
     </div>
   );
 }
 
-function LiveInfoBlock({ liveItem, t }) {
+function LiveInfoBlock({ liveItem, t, isRu }) {
   if (!liveItem) return null;
   const car = liveItem.car || {};
   return (
@@ -81,8 +126,8 @@ function LiveInfoBlock({ liveItem, t }) {
             <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
               {[car.make, car.model].filter(Boolean).join(' ')}
             </span>
-            {car.color && <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>({car.color})</span>}
-            {car.body && <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>{car.body}</span>}
+            {car.color && <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>({isRu ? trMap(COLOR_RU, car.color) : car.color})</span>}
+            {car.body && <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>{isRu ? trMap(BODY_RU, car.body) : car.body}</span>}
           </div>
         ) : (
           <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('posts.free')}</span>
@@ -102,7 +147,7 @@ function LiveInfoBlock({ liveItem, t }) {
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.worksInProgress')}</span>
           </div>
           {liveItem.worksDescription && (
-            <div className="text-xs" style={{ color: 'var(--text-primary)' }}>{liveItem.worksDescription}</div>
+            <div className="text-xs" style={{ color: 'var(--text-primary)' }}>{translateWorksDesc(liveItem.worksDescription, isRu)}</div>
           )}
         </div>
       )}
@@ -117,7 +162,7 @@ function LiveInfoBlock({ liveItem, t }) {
         <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
           <Eye size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.confidence')}</div>
-          <div className="mt-0.5"><ConfidenceBadge level={liveItem.confidence} /></div>
+          <div className="mt-0.5"><ConfidenceBadge level={liveItem.confidence} isRu={isRu} /></div>
         </div>
         <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
           <Clock size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
@@ -132,14 +177,14 @@ function LiveInfoBlock({ liveItem, t }) {
       {liveItem.openParts?.length > 0 && (
         <div className="p-2 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
           <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{t('mapView.openParts')}</div>
-          <OpenPartsBadges parts={liveItem.openParts} />
+          <OpenPartsBadges parts={liveItem.openParts} isRu={isRu} />
         </div>
       )}
     </div>
   );
 }
 
-function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, onGoToPost, onGoToHistory, t }) {
+function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, onGoToPost, onGoToHistory, t, isRu }) {
   // In live mode, find raw monitoring item for this post
   const rawItems = monitoringData?.rawState || [];
   const liveItem = rawItems.find(item => {
@@ -193,7 +238,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
         <div className="space-y-3">
           {/* Live mode data */}
           {isLive && liveItem ? (
-            <LiveInfoBlock liveItem={liveItem} t={t} />
+            <LiveInfoBlock liveItem={liveItem} t={t} isRu={isRu} />
           ) : (
             /* Demo mode data */
             <>
@@ -298,7 +343,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
   );
 }
 
-function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t }) {
+function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t, isRu }) {
   const rawItems = monitoringData?.rawState || [];
   const liveItem = rawItems.find(item => item.zone === zoneName);
 
@@ -329,7 +374,7 @@ function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t
 
         {liveItem ? (
           <div className="space-y-3">
-            <LiveInfoBlock liveItem={liveItem} t={t} />
+            <LiveInfoBlock liveItem={liveItem} t={t} isRu={isRu} />
           </div>
         ) : (
           <div className="p-4 text-center" style={{ color: 'var(--text-muted)' }}>
@@ -908,7 +953,7 @@ export default function MapViewer() {
           monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
           onClose={() => setSelectedPost(null)} onGoToPost={handleGoToPost}
           onGoToHistory={() => { setSelectedPost(null); navigate('/live-debug'); }}
-          t={t} />
+          t={t} isRu={isRu} />
       )}
 
       {/* Zone Modal */}
@@ -917,7 +962,7 @@ export default function MapViewer() {
           monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
           onClose={() => setSelectedZone(null)}
           onGoToHistory={() => { setSelectedZone(null); navigate('/live-debug'); }}
-          t={t} />
+          t={t} isRu={isRu} />
       )}
 
       {/* Camera Modal */}
@@ -989,7 +1034,10 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   }
   // Color + Body (compact line)
   if (currentVehicle?.color || currentVehicle?.body) {
-    const detail = [currentVehicle.color, currentVehicle.body].filter(Boolean).join(' · ');
+    const detail = [
+      isRu ? trMap(COLOR_RU, currentVehicle.color) : currentVehicle.color,
+      isRu ? trMap(BODY_RU, currentVehicle.body) : currentVehicle.body,
+    ].filter(Boolean).join(' · ');
     items.push({ type: 'text', text: detail, size: infoFont, color: mutedFill, align: 'center' });
   }
   // Work type (demo) or work indicator (live)
@@ -1006,7 +1054,7 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   {
     const parts = [];
     if (peopleCount != null) parts.push(`${peopleCount} ${isRu ? 'чел' : 'ppl'}`);
-    if (confidence) parts.push(confidence);
+    if (confidence) parts.push(isRu ? (CONFIDENCE_RU[confidence] || confidence) : confidence);
     if (parts.length > 0) {
       const confColor = confidence === 'HIGH' ? '#22c55e' : confidence === 'MEDIUM' ? '#f59e0b' : '#ef4444';
       items.push({ type: 'text', text: parts.join(' · '), size: infoFont, color: confColor, align: 'center' });
@@ -1158,7 +1206,10 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
     if (zoneInfo.plateNumber) items.push({ text: zoneInfo.plateNumber, bold: true, mono: true, size: 8, color: textPrimary, align: 'center' });
     const carText = [zoneInfo.carMake, zoneInfo.carModel].filter(Boolean).join(' ');
     if (carText) items.push({ text: carText, size: 7, color: textPrimary, align: 'center' });
-    const detail = [zoneInfo.carColor, zoneInfo.carBody].filter(Boolean).join(' · ');
+    const detail = [
+      isRuLang ? trMap(COLOR_RU, zoneInfo.carColor) : zoneInfo.carColor,
+      isRuLang ? trMap(BODY_RU, zoneInfo.carBody) : zoneInfo.carBody,
+    ].filter(Boolean).join(' · ');
     if (detail) items.push({ text: detail, size: 7, color: textColor, align: 'center' });
     if (zoneInfo.worksInProgress) {
       items.push({ text: isRuLang ? 'Работы' : 'Works', size: 7, bold: true, color: accentColor, align: 'center' });
@@ -1166,7 +1217,7 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
     // People · Confidence
     const parts = [];
     if (zoneInfo.peopleCount != null) parts.push(`${zoneInfo.peopleCount} ${isRuLang ? 'чел' : 'ppl'}`);
-    if (zoneInfo.confidence) parts.push(zoneInfo.confidence);
+    if (zoneInfo.confidence) parts.push(isRuLang ? (CONFIDENCE_RU[zoneInfo.confidence] || zoneInfo.confidence) : zoneInfo.confidence);
     if (parts.length > 0) {
       const confColor = zoneInfo.confidence === 'HIGH' ? '#22c55e' : zoneInfo.confidence === 'MEDIUM' ? '#f59e0b' : '#ef4444';
       items.push({ text: parts.join(' · '), size: 7, color: confColor, align: 'center' });

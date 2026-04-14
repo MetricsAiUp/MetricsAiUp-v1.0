@@ -5,6 +5,61 @@ import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, 
 
 const AUTO_REFRESH_INTERVAL = 10000;
 
+// Translation dictionaries for live monitoring data
+const STATUS_RU = { free: 'свободен', occupied: 'занят', active_work: 'в работе' };
+const CONFIDENCE_RU = { HIGH: 'высокая', MEDIUM: 'средняя', LOW: 'низкая' };
+const COLOR_RU = {
+  black: 'чёрный', white: 'белый', red: 'красный', blue: 'синий', green: 'зелёный',
+  silver: 'серебристый', gray: 'серый', grey: 'серый', yellow: 'жёлтый', orange: 'оранжевый',
+  brown: 'коричневый', beige: 'бежевый', gold: 'золотистый', purple: 'фиолетовый',
+  pink: 'розовый', dark: 'тёмный', light: 'светлый',
+};
+const BODY_RU = {
+  sedan: 'седан', suv: 'внедорожник', hatchback: 'хэтчбек', wagon: 'универсал',
+  van: 'фургон', truck: 'грузовик', pickup: 'пикап', coupe: 'купе', minivan: 'минивэн',
+  crossover: 'кроссовер', convertible: 'кабриолет', bus: 'автобус',
+};
+const PARTS_RU = {
+  hood: 'капот', trunk: 'багажник', doors: 'двери', door: 'дверь',
+  'left_door': 'левая дверь', 'right_door': 'правая дверь',
+  'front_door': 'передняя дверь', 'rear_door': 'задняя дверь',
+  tailgate: 'задняя дверь', bonnet: 'капот', roof: 'крыша', window: 'окно',
+};
+
+function tr(dict, val) {
+  if (!val) return val;
+  return dict[val.toLowerCase()] || val;
+}
+
+// Translate worksDescription — if text is English (starts with Latin), translate key phrases
+function translateWorksDesc(text, isRu) {
+  if (!text || !isRu) return text;
+  if (/^[А-Яа-яЁё]/.test(text)) return text; // already Russian
+  let s = text;
+  // Full phrase replacements (most common CV descriptions)
+  const phrases = [
+    [/vehicle\s+(is\s+)?elevated\s+on\s+(a\s+)?lift\s+with\s+hood\s+open/i, 'Автомобиль поднят на подъёмнике с открытым капотом'],
+    [/engine\s+bay\s+exposed\s+for\s+maintenance\s+or\s+inspection\s+work/i, 'моторный отсек открыт для ТО или осмотра'],
+    [/engine\/transmission\s+components\s+are\s+dismantled\s+and\s+scattered\s+on\s+the\s+floor/i, 'Компоненты двигателя/трансмиссии разобраны и разложены на полу'],
+    [/indicating\s+major\s+engine\s+or\s+transmission\s+work\s+in\s+progress/i, 'ведётся капитальный ремонт двигателя или трансмиссии'],
+    [/vehicle\s+positioned\s+in\s+service\s+bay/i, 'Автомобиль установлен на посту'],
+    [/diagnostic\s+or\s+maintenance\s+work\s+appears\s+to\s+be\s+in\s+preparation\s+or\s+in\s+progress/i, 'диагностика или ТО в подготовке или в процессе'],
+    [/vehicle\s+(is\s+)?elevated\s+on\s+the\s+lift\s+with\s+hood\s+and\s+rear\s+hatch\s+open/i, 'Автомобиль на подъёмнике с открытыми капотом и задней дверью'],
+    [/appears\s+to\s+be\s+undergoing\s+inspection\s+or\s+maintenance\s+work/i, 'проходит осмотр или ТО'],
+    [/vehicle\s+positioned\s+in\s+the\s+work\s+zone/i, 'Автомобиль в рабочей зоне'],
+    [/likely\s+undergoing\s+glass\/window\s+treatment\s+or\s+film\s+application/i, 'вероятно оклейка/обработка стёкол'],
+    [/maintenance\s+or\s+inspection/i, 'ТО или осмотр'],
+    [/maintenance\s+work/i, 'техническое обслуживание'],
+    [/inspection\s+work/i, 'осмотр'],
+    [/in\s+progress/i, 'в процессе'],
+    [/hood\s+open/i, 'капот открыт'],
+  ];
+  for (const [re, ru] of phrases) {
+    s = s.replace(re, ru);
+  }
+  return s;
+}
+
 function formatDate(iso) {
   if (!iso) return '—';
   try {
@@ -12,42 +67,46 @@ function formatDate(iso) {
   } catch { return iso; }
 }
 
-function ConfidenceBadge({ level }) {
+function ConfidenceBadge({ level, isRu }) {
   const colors = { HIGH: 'var(--success)', MEDIUM: '#f59e0b', LOW: '#ef4444' };
+  const label = isRu ? (CONFIDENCE_RU[level] || level || 'Н/Д') : (level || 'N/A');
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: `${colors[level] || colors.LOW}20`, color: colors[level] || colors.LOW }}>
-      <Shield size={10} /> {level || 'N/A'}
+      <Shield size={10} /> {label}
     </span>
   );
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, isRu }) {
   const map = {
-    free: { color: 'var(--success)', label: 'free' },
-    occupied: { color: '#f59e0b', label: 'occupied' },
-    active_work: { color: 'var(--accent)', label: 'active_work' },
+    free: { color: 'var(--success)' },
+    occupied: { color: '#f59e0b' },
+    active_work: { color: 'var(--accent)' },
   };
-  const s = map[status] || { color: 'var(--text-muted)', label: status || '?' };
+  const s = map[status] || { color: 'var(--text-muted)' };
+  const label = isRu ? (STATUS_RU[status] || status || '?') : (status || '?');
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: `${s.color}20`, color: s.color }}>
       <div className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
-      {s.label}
+      {label}
     </span>
   );
 }
 
-function OpenPartsBadge({ parts }) {
+function OpenPartsBadge({ parts, isRu }) {
   if (!parts || parts.length === 0) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
   return (
     <div className="flex flex-wrap gap-1">
       {parts.map((p, i) => (
-        <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>{p}</span>
+        <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
+          {isRu ? tr(PARTS_RU, p) : p}
+        </span>
       ))}
     </div>
   );
 }
 
-function HistoryTable({ history, t }) {
+function HistoryTable({ history, t, isRu }) {
   if (!history || history.length === 0) {
     return <p className="text-xs py-2" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.noHistory')}</p>;
   }
@@ -70,22 +129,22 @@ function HistoryTable({ history, t }) {
           {history.map((h, i) => (
             <tr key={i} style={{ borderBottom: '1px solid var(--border-glass)' }}>
               <td className="px-2 py-1 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(h.lastUpdate)}</td>
-              <td className="px-2 py-1"><StatusBadge status={h.status} /></td>
+              <td className="px-2 py-1"><StatusBadge status={h.status} isRu={isRu} /></td>
               <td className="px-2 py-1 font-mono" style={{ color: h.car?.plate ? 'var(--text-primary)' : 'var(--text-muted)' }}>{h.car?.plate || '—'}</td>
               <td className="px-2 py-1" style={{ color: 'var(--text-secondary)' }}>
                 {h.car?.make && h.car?.model ? `${h.car.make} ${h.car.model}` : '—'}
-                {h.car?.color ? ` (${h.car.color})` : ''}
+                {h.car?.color ? ` (${isRu ? tr(COLOR_RU, h.car.color) : h.car.color})` : ''}
               </td>
               <td className="px-2 py-1">
                 {h.worksInProgress ? (
-                  <span className="text-xs" style={{ color: 'var(--accent)' }}>{h.worksDescription || 'yes'}</span>
+                  <span className="text-xs" style={{ color: 'var(--accent)' }}>{translateWorksDesc(h.worksDescription, isRu) || (isRu ? 'да' : 'yes')}</span>
                 ) : (
                   <span style={{ color: 'var(--text-muted)' }}>—</span>
                 )}
               </td>
               <td className="px-2 py-1 text-center" style={{ color: 'var(--text-secondary)' }}>{h.peopleCount ?? 0}</td>
-              <td className="px-2 py-1"><OpenPartsBadge parts={h.openParts} /></td>
-              <td className="px-2 py-1"><ConfidenceBadge level={h.confidence} /></td>
+              <td className="px-2 py-1"><OpenPartsBadge parts={h.openParts} isRu={isRu} /></td>
+              <td className="px-2 py-1"><ConfidenceBadge level={h.confidence} isRu={isRu} /></td>
             </tr>
           ))}
         </tbody>
@@ -94,7 +153,7 @@ function HistoryTable({ history, t }) {
   );
 }
 
-function RawDataRow({ item, t, viewMode }) {
+function RawDataRow({ item, t, isRu }) {
   const [expanded, setExpanded] = useState(false);
   const car = item.car || {};
   const history = item.history || [];
@@ -109,31 +168,31 @@ function RawDataRow({ item, t, viewMode }) {
             <span className="font-medium text-xs" style={{ color: 'var(--text-primary)' }}>{item.zone}</span>
           </button>
         </td>
-        <td className="px-3 py-2"><StatusBadge status={item.status} /></td>
+        <td className="px-3 py-2"><StatusBadge status={item.status} isRu={isRu} /></td>
         <td className="px-3 py-2 font-mono text-xs" style={{ color: car.plate ? 'var(--text-primary)' : 'var(--text-muted)' }}>{car.plate || '—'}</td>
         <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
           {car.make && car.model ? `${car.make} ${car.model}` : '—'}
         </td>
-        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{car.color || '—'}</td>
-        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{car.body || '—'}</td>
+        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{isRu ? tr(COLOR_RU, car.color) || '—' : car.color || '—'}</td>
+        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{isRu ? tr(BODY_RU, car.body) || '—' : car.body || '—'}</td>
         <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(car.firstSeen)}</td>
         <td className="px-3 py-2 text-center">
           {item.worksInProgress ? (
-            <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--accent)' }}><Wrench size={10} /> {t('liveDebug.yes')}</span>
+            <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--accent)' }}><Wrench size={10} /> {isRu ? 'да' : 'yes'}</span>
           ) : (
             <span style={{ color: 'var(--text-muted)' }}>—</span>
           )}
         </td>
         <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-          {item.worksDescription || '—'}
+          {translateWorksDesc(item.worksDescription, isRu) || '—'}
         </td>
         <td className="px-3 py-2 text-center text-xs">
           <span className="inline-flex items-center gap-1" style={{ color: item.peopleCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
             <Users size={10} /> {item.peopleCount ?? 0}
           </span>
         </td>
-        <td className="px-3 py-2"><OpenPartsBadge parts={item.openParts} /></td>
-        <td className="px-3 py-2"><ConfidenceBadge level={item.confidence} /></td>
+        <td className="px-3 py-2"><OpenPartsBadge parts={item.openParts} isRu={isRu} /></td>
+        <td className="px-3 py-2"><ConfidenceBadge level={item.confidence} isRu={isRu} /></td>
         <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(item.lastUpdate)}</td>
         <td className="px-3 py-2 text-center text-xs" style={{ color: hasHistory ? 'var(--accent)' : 'var(--text-muted)' }}>
           {history.length}
@@ -142,7 +201,7 @@ function RawDataRow({ item, t, viewMode }) {
       {expanded && (
         <tr>
           <td colSpan={14} style={{ background: 'var(--bg-glass)', padding: '4px 12px 8px' }}>
-            <HistoryTable history={history} t={t} />
+            <HistoryTable history={history} t={t} isRu={isRu} />
           </td>
         </tr>
       )}
@@ -151,9 +210,10 @@ function RawDataRow({ item, t, viewMode }) {
 }
 
 export default function LiveDebug() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { api, appMode } = useAuth();
   const isLive = appMode === 'live';
+  const isRu = i18n.language === 'ru';
 
   const [rawData, setRawData] = useState([]);
   const [fullHistory, setFullHistory] = useState(null);
@@ -364,7 +424,7 @@ export default function LiveDebug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {posts.map((item, i) => <RawDataRow key={i} item={item} t={t} viewMode={viewMode} />)}
+                    {posts.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} />)}
                   </tbody>
                 </table>
               </div>
@@ -401,7 +461,7 @@ export default function LiveDebug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {zones.map((item, i) => <RawDataRow key={i} item={item} t={t} viewMode={viewMode} />)}
+                    {zones.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} />)}
                   </tbody>
                 </table>
               </div>
@@ -438,7 +498,7 @@ export default function LiveDebug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {other.map((item, i) => <RawDataRow key={i} item={item} t={t} viewMode={viewMode} />)}
+                    {other.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} />)}
                   </tbody>
                 </table>
               </div>
