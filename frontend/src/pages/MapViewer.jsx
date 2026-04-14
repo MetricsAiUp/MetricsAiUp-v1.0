@@ -16,6 +16,7 @@ import {
 import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
 import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constants/mapTheme';
+import { translateWorksDesc } from '../utils/translate';
 import { useCameraStatus } from '../hooks/useCameraStatus';
 
 const ALL_CAMERAS = [
@@ -54,30 +55,6 @@ const PARTS_RU = {
   tailgate: 'задняя дверь', bonnet: 'капот',
 };
 function trMap(dict, val) { return val ? (dict[val.toLowerCase()] || val) : val; }
-
-function translateWorksDesc(text, isRu) {
-  if (!text || !isRu) return text;
-  if (/^[А-Яа-яЁё]/.test(text)) return text;
-  let s = text;
-  const phrases = [
-    [/vehicle\s+(is\s+)?elevated\s+on\s+(a\s+)?lift\s+with\s+hood\s+open/i, 'Автомобиль поднят на подъёмнике с открытым капотом'],
-    [/engine\s+bay\s+exposed\s+for\s+maintenance\s+or\s+inspection\s+work/i, 'моторный отсек открыт для ТО или осмотра'],
-    [/engine\/transmission\s+components\s+are\s+dismantled\s+and\s+scattered\s+on\s+the\s+floor/i, 'Компоненты двигателя/трансмиссии разобраны'],
-    [/indicating\s+major\s+engine\s+or\s+transmission\s+work\s+in\s+progress/i, 'ведётся капитальный ремонт двигателя или трансмиссии'],
-    [/vehicle\s+positioned\s+in\s+service\s+bay/i, 'Автомобиль установлен на посту'],
-    [/diagnostic\s+or\s+maintenance\s+work\s+appears\s+to\s+be\s+in\s+preparation\s+or\s+in\s+progress/i, 'диагностика или ТО в подготовке или в процессе'],
-    [/vehicle\s+(is\s+)?elevated\s+on\s+the\s+lift\s+with\s+hood\s+and\s+rear\s+hatch\s+open/i, 'Автомобиль на подъёмнике с открытыми капотом и задней дверью'],
-    [/appears\s+to\s+be\s+undergoing\s+inspection\s+or\s+maintenance\s+work/i, 'проходит осмотр или ТО'],
-    [/vehicle\s+positioned\s+in\s+the\s+work\s+zone/i, 'Автомобиль в рабочей зоне'],
-    [/likely\s+undergoing\s+glass\/window\s+treatment\s+or\s+film\s+application/i, 'вероятно оклейка/обработка стёкол'],
-    [/maintenance\s+or\s+inspection/i, 'ТО или осмотр'],
-    [/maintenance\s+work/i, 'техническое обслуживание'],
-    [/in\s+progress/i, 'в процессе'],
-    [/hood\s+open/i, 'капот открыт'],
-  ];
-  for (const [re, ru] of phrases) s = s.replace(re, ru);
-  return s;
-}
 
 function fmtTime(t) {
   if (!t) return '—';

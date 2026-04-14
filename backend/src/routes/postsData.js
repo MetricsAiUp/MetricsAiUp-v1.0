@@ -90,13 +90,16 @@ router.get('/posts-analytics', async (req, res) => {
     // In live mode — return monitoring data
     const curSettings = settingsReader.readSettings();
     const proxy = req.app.get('monitoringProxy');
-    // Calculate occupancy metrics from history timeline
+    // Calculate occupancy metrics from history timeline (last 12h shift only)
     function calcMetrics(history, currentStatus, worksInProgress) {
       const maxH = 12;
-      let occupiedMs = 0;  // total time occupied (status !== 'free')
-      let workingMs = 0;   // total time with worksInProgress === true
+      const maxMs = maxH * 3600000;
+      const now = Date.now();
+      const shiftStart = now - maxMs; // 12 hours ago
 
-      // Sort history by time (field is 'timestamp' or 'lastUpdate')
+      let occupiedMs = 0;
+      let workingMs = 0;
+
       const sorted = [...(history || [])]
         .filter(h => h.timestamp || h.lastUpdate)
         .sort((a, b) => new Date(a.timestamp || a.lastUpdate) - new Date(b.timestamp || b.lastUpdate));
@@ -105,18 +108,28 @@ router.get('/posts-analytics', async (req, res) => {
         const cur = sorted[i];
         const next = sorted[i + 1];
         const start = new Date(cur.timestamp || cur.lastUpdate).getTime();
-        const end = next ? new Date(next.timestamp || next.lastUpdate).getTime() : Date.now();
-        const dur = Math.max(0, end - start);
+        const end = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
 
-        if (cur.status !== 'free') occupiedMs += dur;
-        if (cur.worksInProgress) workingMs += dur;
+        // Clamp to shift window [shiftStart, now]
+        const clampedStart = Math.max(start, shiftStart);
+        const clampedEnd = Math.min(end, now);
+        const dur = Math.max(0, clampedEnd - clampedStart);
+
+        if (dur > 0) {
+          if (cur.status !== 'free') occupiedMs += dur;
+          if (cur.worksInProgress) workingMs += dur;
+        }
       }
 
-      // If currently occupied but no history, use firstSeen or estimate
+      // If currently occupied but no history in window
       if (sorted.length === 0 && currentStatus !== 'free') {
-        occupiedMs = 30 * 60 * 1000; // assume 30 min
+        occupiedMs = 30 * 60 * 1000;
         if (worksInProgress) workingMs = occupiedMs;
       }
+
+      // Cap at max shift duration
+      occupiedMs = Math.min(occupiedMs, maxMs);
+      workingMs = Math.min(workingMs, occupiedMs);
 
       const factHours = Math.round((occupiedMs / 3600000) * 10) / 10;
       const workHours = Math.round((workingMs / 3600000) * 10) / 10;
