@@ -1,12 +1,43 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
   Car, Truck, Wrench, Clock, User, AlertTriangle, ScrollText,
   Camera, Image, ChevronRight, ChevronDown, ArrowLeft, BarChart3, Calendar, FileText,
-  CircleDot, Timer, X, Users, Activity, Eye,
+  CircleDot, Timer, X, Users, Activity, Eye, Video,
 } from 'lucide-react';
 import CollapsibleSection from './CollapsibleSection';
+import CameraStreamModal from '../CameraStreamModal';
+
+// Real camera mapping per post/zone (cam number → location/covers)
+const POST_CAMERAS = {
+  1: ['12', '11'], 2: ['12', '11'], 3: ['14'], 4: ['14', '13'],
+  5: ['13', '08', '09'], 6: ['08'], 7: ['02', '03', '04'],
+  8: ['02', '03', '04'], 9: ['04', '05'], 10: ['05'],
+};
+const ZONE_CAMERAS = {
+  1: ['15'], 3: ['14'], 4: ['11', '10'], 5: ['10', '08'],
+  6: ['09', '08', '10'], 7: ['05'],
+};
+const CAM_INFO = {
+  '00': { ru: 'Шлагбаум', en: 'Barrier' },
+  '01': { ru: 'Стоянка', en: 'Parking' },
+  '02': { ru: 'Ворота', en: 'Gates' },
+  '03': { ru: 'Посты 7, 8', en: 'Posts 7, 8' },
+  '04': { ru: 'Посты 9, 8, 7', en: 'Posts 9, 8, 7' },
+  '05': { ru: 'Пост 10, Зона 07', en: 'Post 10, Zone 07' },
+  '06': { ru: 'Склад приёмки', en: 'Intake warehouse' },
+  '07': { ru: 'Склад деталей', en: 'Parts warehouse' },
+  '08': { ru: 'Посты 6, 5', en: 'Posts 6, 5' },
+  '09': { ru: 'Зона 06, Пост 5', en: 'Zone 06, Post 5' },
+  '10': { ru: 'Зоны 5, 4, 6', en: 'Zones 5, 4, 6' },
+  '11': { ru: 'Пост 2, Зоны 4, 5', en: 'Post 2, Zones 4, 5' },
+  '12': { ru: 'Посты 1, 2', en: 'Posts 1, 2' },
+  '13': { ru: 'Посты 5, 4', en: 'Posts 5, 4' },
+  '14': { ru: 'Посты 3, 4', en: 'Posts 3, 4' },
+  '15': { ru: 'Зона 01', en: 'Zone 01' },
+};
 
 const CHART_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
 const STATUS_COLORS = {
@@ -215,31 +246,23 @@ function StatsSection({ stats, t }) {
   );
 }
 
-function CamerasSection({ cameras, plateImage, t }) {
+function CamerasSection({ postNumber, isZone, onOpenStream, isRu }) {
+  const camNums = isZone ? (ZONE_CAMERAS[postNumber] || []) : (POST_CAMERAS[postNumber] || []);
+  if (!camNums.length) return <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>—</span>;
   return (
-    <div>
-      <div className="grid grid-cols-2 gap-2">
-        {cameras.map(cam => (
-          <div key={cam.id} className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-            <div className="aspect-video flex items-center justify-center" style={{ background: '#1a1a2e' }}>
-              <Camera size={24} style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
-            </div>
-            <div className="px-2 py-1.5 flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{cam.name}</span>
-              <Eye size={12} style={{ color: 'var(--accent)' }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 rounded-xl p-3 flex items-center gap-3" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-        <Image size={14} style={{ color: 'var(--text-muted)' }} />
-        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.plateImage')}</span>
-        {plateImage ? (
-          <img src={plateImage} alt="plate" className="h-8 rounded" />
-        ) : (
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
-        )}
-      </div>
+    <div className="flex flex-wrap gap-1.5">
+      {camNums.map(num => {
+        const info = CAM_INFO[num] || {};
+        return (
+          <button key={num} onClick={() => onOpenStream(num)}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] transition-all hover:opacity-80"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+            <Video size={11} style={{ color: 'var(--accent)' }} />
+            <span className="font-medium">{isRu ? 'КАМ' : 'CAM'}{num}</span>
+            <span style={{ color: 'var(--text-muted)' }}>{info[isRu ? 'ru' : 'en'] || ''}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -562,8 +585,10 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
 export default function PostDetailPanel({ selectedPost, dashData, period, setPeriod, showCustom, setShowCustom, customFrom, setCustomFrom, customTo, setCustomTo, navigate, setModal }) {
   const { t, i18n } = useTranslation();
   const { isElementVisible } = useAuth();
+  const { theme } = useTheme();
   const elVis = (id) => isElementVisible('posts-detail', id);
   const isRu = i18n.language === 'ru';
+  const [streamCam, setStreamCam] = useState(null);
 
   return (
     <>
@@ -669,8 +694,25 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
 
       {elVis('pd.cameras') && (
         <CollapsibleSection icon={Camera} title={t('postsDetail.cameras')}>
-          <CamerasSection cameras={selectedPost.today.cameras} plateImage={selectedPost.today.currentPlateImage} t={t} />
+          <CamerasSection
+            postNumber={selectedPost.number}
+            isZone={selectedPost.type === 'zone'}
+            onOpenStream={setStreamCam}
+            isRu={isRu}
+          />
         </CollapsibleSection>
+      )}
+
+      {streamCam && (
+        <CameraStreamModal
+          camId={`cam${streamCam}`}
+          camName={`${isRu ? 'КАМ' : 'CAM'}${streamCam}`}
+          camLocation={CAM_INFO[streamCam]?.[isRu ? 'ru' : 'en'] || ''}
+          camCovers={CAM_INFO[streamCam]?.[isRu ? 'ru' : 'en'] || ''}
+          isRu={isRu}
+          isDark={theme === 'dark'}
+          onClose={() => setStreamCam(null)}
+        />
       )}
 
       {elVis('pd.calendar') && (
