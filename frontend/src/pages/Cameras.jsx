@@ -25,6 +25,7 @@ const ZONE_CAMERA_MAP = [
   { zone: { ru: 'Пост 9', en: 'Post 9' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['04', '05'], priority: { '04': 10, '05': 8 } },
   { zone: { ru: 'Пост 10', en: 'Post 10' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['05'], priority: { '05': 10 } },
   { zone: { ru: 'Зона 01', en: 'Zone 01' }, type: 'parking', desc: { ru: 'Свободная зона 01', en: 'Free zone 01' }, cameras: ['15'], priority: { '15': 10 } },
+  { zone: { ru: 'Зона 02', en: 'Zone 02' }, type: 'parking', desc: { ru: 'Свободная зона 02', en: 'Free zone 02' }, cameras: ['12'], priority: { '12': 10 } },
   { zone: { ru: 'Зона 03', en: 'Zone 03' }, type: 'parking', desc: { ru: 'Свободная зона 03', en: 'Free zone 03' }, cameras: ['14'], priority: { '14': 5 } },
   { zone: { ru: 'Зона 04', en: 'Zone 04' }, type: 'parking', desc: { ru: 'Свободная зона 04', en: 'Free zone 04' }, cameras: ['11', '10'], priority: { '11': 8, '10': 10 } },
   { zone: { ru: 'Зона 05', en: 'Zone 05' }, type: 'parking', desc: { ru: 'Свободная зона 05', en: 'Free zone 05' }, cameras: ['10', '08'], priority: { '10': 10, '08': 5 } },
