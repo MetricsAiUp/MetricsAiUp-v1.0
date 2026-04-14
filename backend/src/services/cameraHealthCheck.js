@@ -1,25 +1,27 @@
 const { getIO } = require('../config/socket');
+const logger = require('../config/logger');
 
+const EXTERNAL_STREAM_API = 'https://dev.metricsavto.com/p/test1/8181';
+const CAM_IDS = Array.from({ length: 16 }, (_, i) => `cam${String(i).padStart(2, '0')}`);
 const statusMap = new Map();
 
+// Check camera by trying snapshot (200 = online, anything else = offline)
 async function checkCamera(camId) {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(`http://localhost:8181/api/stream/status`, { signal: controller.signal });
+    const res = await fetch(`${EXTERNAL_STREAM_API}/api/stream/snapshot/${camId}`, {
+      method: 'HEAD',
+      signal: controller.signal,
+    });
     clearTimeout(timeout);
-    if (res.ok) {
-      const data = await res.json();
-      return data[camId]?.streaming || false;
-    }
-    return false;
+    return res.ok;
   } catch {
     return false;
   }
 }
 
 function startCameraHealthCheck() {
-  const CAM_IDS = Array.from({ length: 10 }, (_, i) => `cam${String(i + 1).padStart(2, '0')}`);
   const check = async () => {
     for (const camId of CAM_IDS) {
       const online = await checkCamera(camId);

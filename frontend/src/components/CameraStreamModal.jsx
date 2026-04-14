@@ -2,14 +2,45 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, X, Maximize2, Play, Square, RefreshCw } from 'lucide-react';
 import Hls from 'hls.js';
 
-const STREAM_PORT = 8181;
+const STREAM_BASE = 'https://dev.metricsavto.com/p/test1/8181';
 
 function getStreamUrl(camId) {
-  return `https://artisom.dev.metricsavto.com:${STREAM_PORT}/hls/${camId}/stream.m3u8`;
+  return `${STREAM_BASE}/hls/${camId}/stream.m3u8`;
 }
 
 function getApiUrl(path) {
-  return `https://artisom.dev.metricsavto.com:${STREAM_PORT}${path}`;
+  return `${STREAM_BASE}${path}`;
+}
+
+function attachHls(videoEl, url, onPlaying, onError) {
+  if (Hls.isSupported()) {
+    const hls = new Hls({
+      liveSyncDurationCount: 2,
+      liveMaxLatencyDurationCount: 5,
+      enableWorker: true,
+      lowLatencyMode: true,
+      manifestLoadingTimeOut: 10000,
+      manifestLoadingMaxRetry: 3,
+      levelLoadingTimeOut: 10000,
+    });
+    hls.loadSource(url);
+    hls.attachMedia(videoEl);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      videoEl.play().catch(() => {});
+      onPlaying();
+    });
+    hls.on(Hls.Events.ERROR, (_, data) => {
+      if (data.fatal) onError(data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'offline' : 'error');
+    });
+    return hls;
+  } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+    videoEl.src = url;
+    videoEl.addEventListener('loadedmetadata', () => { videoEl.play().catch(() => {}); onPlaying(); });
+    videoEl.addEventListener('error', () => onError('error'));
+    return null;
+  }
+  onError('error');
+  return null;
 }
 
 export default function CameraStreamModal({ camId, camName, camLocation, camCovers, isRu, isDark, onClose }) {
@@ -18,13 +49,12 @@ export default function CameraStreamModal({ camId, camName, camLocation, camCove
   const [status, setStatus] = useState('connecting'); // connecting, playing, error, offline
   const [time, setTime] = useState(new Date().toLocaleTimeString());
 
-  // Update clock
   useEffect(() => {
     const id = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Start stream and connect HLS
+  // Connect to stream
   useEffect(() => {
     if (!camId) return;
     let cancelled = false;
@@ -32,98 +62,73 @@ export default function CameraStreamModal({ camId, camName, camLocation, camCove
     const connect = async () => {
       setStatus('connecting');
 
-      // Try to start stream on server
+      // 1. Check if already streaming
+      let alreadyStreaming = false;
       try {
-        await fetch(getApiUrl(`/api/stream/start/${camId}`), { method: 'POST' });
-      } catch {
-        // Stream server might be down
-        setStatus('offline');
-        return;
+        const statusRes = await fetch(getApiUrl('/api/stream/status'));
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          alreadyStreaming = statusData[camId]?.streaming === true;
+        }
+      } catch {}
+
+      // 2. If not streaming, start it
+      if (!alreadyStreaming) {
+        try {
+          const startRes = await fetch(getApiUrl(`/api/stream/start/${camId}`), { method: 'POST' });
+          if (!startRes.ok) { setStatus('offline'); return; }
+        } catch {
+          setStatus('offline');
+          return;
+        }
+        // Wait for FFmpeg to generate segments
+        await new Promise(r => setTimeout(r, 4000));
+        if (cancelled) return;
       }
 
-      // Wait for m3u8 to appear (FFmpeg needs a few seconds)
-      await new Promise(r => setTimeout(r, 3000));
-      if (cancelled) return;
-
-      const url = getStreamUrl(camId);
+      // 3. Attach HLS player
       const video = videoRef.current;
-      if (!video) return;
+      if (!video || cancelled) return;
 
-      if (Hls.isSupported()) {
-        const hls = new Hls({
-          liveSyncDurationCount: 2,
-          liveMaxLatencyDurationCount: 5,
-          enableWorker: true,
-          lowLatencyMode: true,
-        });
-        hlsRef.current = hls;
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (!cancelled) {
-            video.play().catch(() => {});
-            setStatus('playing');
-          }
-        });
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              setStatus('offline');
-            } else {
-              setStatus('error');
-            }
-          }
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari native HLS
-        video.src = url;
-        video.addEventListener('loadedmetadata', () => {
-          video.play().catch(() => {});
-          setStatus('playing');
-        });
-      } else {
-        setStatus('error');
-      }
+      const hls = attachHls(
+        video,
+        getStreamUrl(camId),
+        () => { if (!cancelled) setStatus('playing'); },
+        (err) => { if (!cancelled) setStatus(err); },
+      );
+      hlsRef.current = hls;
     };
 
     connect();
 
     return () => {
       cancelled = true;
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     };
   }, [camId]);
 
   const handleStop = async () => {
-    if (hlsRef.current) hlsRef.current.destroy();
+    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     try { await fetch(getApiUrl(`/api/stream/stop/${camId}`), { method: 'POST' }); } catch {}
     setStatus('offline');
   };
 
   const handleRestart = () => {
-    if (hlsRef.current) hlsRef.current.destroy();
+    if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     setStatus('connecting');
-    // Re-trigger effect
-    setTimeout(() => {
+    setTimeout(async () => {
+      try {
+        await fetch(getApiUrl(`/api/stream/start/${camId}`), { method: 'POST' });
+      } catch { setStatus('offline'); return; }
+      await new Promise(r => setTimeout(r, 4000));
       const video = videoRef.current;
       if (!video) return;
-      fetch(getApiUrl(`/api/stream/start/${camId}`), { method: 'POST' })
-        .then(() => new Promise(r => setTimeout(r, 3000)))
-        .then(() => {
-          const hls = new Hls({ liveSyncDurationCount: 2, enableWorker: true });
-          hlsRef.current = hls;
-          hls.loadSource(getStreamUrl(camId));
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
-            setStatus('playing');
-          });
-          hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) setStatus('error'); });
-        })
-        .catch(() => setStatus('offline'));
+      const hls = attachHls(
+        video, getStreamUrl(camId),
+        () => setStatus('playing'),
+        (err) => setStatus(err),
+      );
+      hlsRef.current = hls;
     }, 100);
   };
 
@@ -140,12 +145,10 @@ export default function CameraStreamModal({ camId, camName, camLocation, camCove
         <div className="relative rounded-t-xl overflow-hidden"
           style={{ aspectRatio: '16/9', background: '#000' }}>
 
-          {/* Actual video element */}
           <video ref={videoRef} className="absolute inset-0 w-full h-full object-contain"
             muted autoPlay playsInline
             style={{ display: status === 'playing' ? 'block' : 'none' }} />
 
-          {/* Placeholder when not playing */}
           {status !== 'playing' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
               {status === 'connecting' && (

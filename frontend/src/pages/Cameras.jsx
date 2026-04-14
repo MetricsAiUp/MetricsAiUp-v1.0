@@ -2,40 +2,55 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Camera, DoorOpen, Wrench, Search, ParkingCircle } from 'lucide-react';
+import { Camera, DoorOpen, Wrench, Search, ParkingCircle, Warehouse } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import CameraStreamModal from '../components/CameraStreamModal';
+import { useCameraStatus } from '../hooks/useCameraStatus';
 
 // Камеры хранятся по номерам, prefix (КАМ/CAM) добавляется по языку
 const camName = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
 
 const ZONE_CAMERA_MAP = [
-  { zone: { ru: 'Въезд', en: 'Entry' }, type: 'entry', desc: { ru: 'Ворота въезда на территорию СТО', en: 'Entry gate' }, cameras: ['09'], priority: { '09': 10 } },
-  { zone: { ru: 'Выезд', en: 'Exit' }, type: 'exit', desc: { ru: 'Ворота выезда с территории СТО', en: 'Exit gate' }, cameras: ['09'], priority: { '09': 10 } },
-  { zone: { ru: 'Пост 1', en: 'Post 1' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['01', '03'], priority: { '01': 10, '03': 5 } },
-  { zone: { ru: 'Пост 2', en: 'Post 2' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['01', '03'], priority: { '01': 8, '03': 10 } },
-  { zone: { ru: 'Пост 3', en: 'Post 3' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['03', '04'], priority: { '03': 5, '04': 10 } },
-  { zone: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник >2.5т (грузовой)', en: '2-post lift >2.5t (heavy)' }, cameras: ['04', '06'], priority: { '04': 8, '06': 5 } },
-  { zone: { ru: 'Пост 5', en: 'Post 5' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['02', '05'], priority: { '02': 10, '05': 5 } },
-  { zone: { ru: 'Пост 6', en: 'Post 6' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['02', '05'], priority: { '02': 8, '05': 10 } },
-  { zone: { ru: 'Пост 7', en: 'Post 7' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['05', '06'], priority: { '05': 5, '06': 10 } },
-  { zone: { ru: 'Пост 8', en: 'Post 8' }, type: 'lift', desc: { ru: '2-х стоечный подъёмник <2.5т', en: '2-post lift <2.5t' }, cameras: ['06', '07'], priority: { '06': 8, '07': 5 } },
-  { zone: { ru: 'Пост 9', en: 'Post 9' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' }, cameras: ['07', '08'], priority: { '07': 10, '08': 5 } },
-  { zone: { ru: 'Пост 10', en: 'Post 10' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' }, cameras: ['08', '10'], priority: { '08': 10, '10': 5 } },
-  { zone: { ru: 'Парковка / Ожидание', en: 'Parking / Waiting' }, type: 'parking', desc: { ru: 'Зона ожидания и парковка готовых авто', en: 'Waiting area and ready cars parking' }, cameras: ['09', '01'], priority: { '09': 5, '01': 3 } },
+  { zone: { ru: 'Шлагбаум', en: 'Barrier' }, type: 'entry', desc: { ru: 'Шлагбаум на въезде', en: 'Entry barrier' }, cameras: ['00'], priority: { '00': 10 } },
+  { zone: { ru: 'Стоянка', en: 'Parking' }, type: 'parking', desc: { ru: 'Стоянка автомобилей', en: 'Vehicle parking' }, cameras: ['01'], priority: { '01': 10 } },
+  { zone: { ru: 'Ворота + Пост 7, 8', en: 'Gates + Post 7, 8' }, type: 'entry', desc: { ru: 'Ворота и обзор постов 7, 8', en: 'Gates and posts 7, 8 overview' }, cameras: ['02'], priority: { '02': 10 } },
+  { zone: { ru: 'Пост 1', en: 'Post 1' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['12', '11'], priority: { '12': 10, '11': 5 } },
+  { zone: { ru: 'Пост 2', en: 'Post 2' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['12', '11'], priority: { '12': 8, '11': 10 } },
+  { zone: { ru: 'Пост 3', en: 'Post 3' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['14'], priority: { '14': 10 } },
+  { zone: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['14', '13'], priority: { '14': 8, '13': 10 } },
+  { zone: { ru: 'Пост 5', en: 'Post 5' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['13', '08', '09'], priority: { '13': 10, '08': 8, '09': 5 } },
+  { zone: { ru: 'Пост 6', en: 'Post 6' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['08'], priority: { '08': 10 } },
+  { zone: { ru: 'Пост 7', en: 'Post 7' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['02', '03', '04'], priority: { '02': 5, '03': 10, '04': 8 } },
+  { zone: { ru: 'Пост 8', en: 'Post 8' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['02', '03', '04'], priority: { '02': 5, '03': 8, '04': 10 } },
+  { zone: { ru: 'Пост 9', en: 'Post 9' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['04', '05'], priority: { '04': 10, '05': 8 } },
+  { zone: { ru: 'Пост 10', en: 'Post 10' }, type: 'lift', desc: { ru: 'Подъёмник', en: 'Lift' }, cameras: ['05'], priority: { '05': 10 } },
+  { zone: { ru: 'Зона 01', en: 'Zone 01' }, type: 'parking', desc: { ru: 'Свободная зона 01', en: 'Free zone 01' }, cameras: ['15'], priority: { '15': 10 } },
+  { zone: { ru: 'Зона 03', en: 'Zone 03' }, type: 'parking', desc: { ru: 'Свободная зона 03', en: 'Free zone 03' }, cameras: ['14'], priority: { '14': 5 } },
+  { zone: { ru: 'Зона 04', en: 'Zone 04' }, type: 'parking', desc: { ru: 'Свободная зона 04', en: 'Free zone 04' }, cameras: ['11', '10'], priority: { '11': 8, '10': 10 } },
+  { zone: { ru: 'Зона 05', en: 'Zone 05' }, type: 'parking', desc: { ru: 'Свободная зона 05', en: 'Free zone 05' }, cameras: ['10', '08'], priority: { '10': 10, '08': 5 } },
+  { zone: { ru: 'Зона 06', en: 'Zone 06' }, type: 'parking', desc: { ru: 'Свободная зона 06', en: 'Free zone 06' }, cameras: ['09', '08', '10'], priority: { '09': 10, '08': 8, '10': 5 } },
+  { zone: { ru: 'Зона 07', en: 'Zone 07' }, type: 'parking', desc: { ru: 'Свободная зона 07', en: 'Free zone 07' }, cameras: ['05'], priority: { '05': 5 } },
+  { zone: { ru: 'Склад приёмки', en: 'Intake warehouse' }, type: 'warehouse', desc: { ru: 'Склад приёмки автомобилей', en: 'Vehicle intake warehouse' }, cameras: ['06'], priority: { '06': 10 } },
+  { zone: { ru: 'Склад деталей', en: 'Parts warehouse' }, type: 'warehouse', desc: { ru: 'Склад запасных частей', en: 'Spare parts warehouse' }, cameras: ['07'], priority: { '07': 10 } },
 ];
 
 const ALL_CAMERAS = [
-  { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
-  { num: '02', loc: { ru: 'Верхний ряд, левый угол', en: 'Upper row, left corner' }, covers: { ru: 'Пост 5, Пост 6', en: 'Post 5, Post 6' } },
-  { num: '03', loc: { ru: 'Между рядами, левая часть', en: 'Between rows, left' }, covers: { ru: 'Пост 1, Пост 2, Пост 3', en: 'Post 1, Post 2, Post 3' } },
-  { num: '04', loc: { ru: 'Между рядами, правая часть', en: 'Between rows, right' }, covers: { ru: 'Пост 3, Пост 4', en: 'Post 3, Post 4' } },
-  { num: '05', loc: { ru: 'Верхний ряд, центр', en: 'Upper row, center' }, covers: { ru: 'Пост 5, Пост 6, Пост 7', en: 'Post 5, Post 6, Post 7' } },
-  { num: '06', loc: { ru: 'Верхний ряд, правая часть', en: 'Upper row, right' }, covers: { ru: 'Пост 4, Пост 7, Пост 8', en: 'Post 4, Post 7, Post 8' } },
-  { num: '07', loc: { ru: 'Граница ремзоны и диагностики', en: 'Repair/diagnostics border' }, covers: { ru: 'Пост 8, Пост 9', en: 'Post 8, Post 9' } },
-  { num: '08', loc: { ru: 'Диагностика, центр', en: 'Diagnostics, center' }, covers: { ru: 'Пост 9, Пост 10', en: 'Post 9, Post 10' } },
-  { num: '09', loc: { ru: 'Въезд/Выезд', en: 'Entry/Exit' }, covers: { ru: 'Въезд, Выезд, Парковка', en: 'Entry, Exit, Parking' } },
-  { num: '10', loc: { ru: 'Диагностика, правая стена', en: 'Diagnostics, right wall' }, covers: { ru: 'Пост 10', en: 'Post 10' } },
+  { num: '00', loc: { ru: 'Шлагбаум', en: 'Barrier' }, covers: { ru: 'Шлагбаум', en: 'Barrier' } },
+  { num: '01', loc: { ru: 'Стоянка', en: 'Parking' }, covers: { ru: 'Стоянка', en: 'Parking' } },
+  { num: '02', loc: { ru: 'Ворота', en: 'Gates' }, covers: { ru: 'Ворота, Пост 7, Пост 8', en: 'Gates, Post 7, Post 8' } },
+  { num: '03', loc: { ru: 'Посты 7, 8', en: 'Posts 7, 8' }, covers: { ru: 'Пост 7, Пост 8', en: 'Post 7, Post 8' } },
+  { num: '04', loc: { ru: 'Посты 9, 8, 7', en: 'Posts 9, 8, 7' }, covers: { ru: 'Пост 9, Пост 8, Пост 7', en: 'Post 9, Post 8, Post 7' } },
+  { num: '05', loc: { ru: 'Пост 10, Зона 07', en: 'Post 10, Zone 07' }, covers: { ru: 'Пост 10, Зона 07', en: 'Post 10, Zone 07' } },
+  { num: '06', loc: { ru: 'Склад приёмки', en: 'Intake warehouse' }, covers: { ru: 'Склад приёмки', en: 'Intake warehouse' } },
+  { num: '07', loc: { ru: 'Склад деталей', en: 'Parts warehouse' }, covers: { ru: 'Склад деталей', en: 'Parts warehouse' } },
+  { num: '08', loc: { ru: 'Посты 6, 5, Зоны 6, 5', en: 'Posts 6, 5, Zones 6, 5' }, covers: { ru: 'Пост 6, Пост 5, Зона 6, Зона 5', en: 'Post 6, Post 5, Zone 6, Zone 5' } },
+  { num: '09', loc: { ru: 'Зона 06, Пост 5', en: 'Zone 06, Post 5' }, covers: { ru: 'Зона 06, Пост 5', en: 'Zone 06, Post 5' } },
+  { num: '10', loc: { ru: 'Зоны 5, 4, 6', en: 'Zones 5, 4, 6' }, covers: { ru: 'Зона 05, Зона 04, Зона 06', en: 'Zone 05, Zone 04, Zone 06' } },
+  { num: '11', loc: { ru: 'Пост 2, Зоны 4, 5', en: 'Post 2, Zones 4, 5' }, covers: { ru: 'Пост 2, Зона 04, Зона 05', en: 'Post 2, Zone 04, Zone 05' } },
+  { num: '12', loc: { ru: 'Посты 1, 2', en: 'Posts 1, 2' }, covers: { ru: 'Пост 1, Пост 2', en: 'Post 1, Post 2' } },
+  { num: '13', loc: { ru: 'Посты 5, 4', en: 'Posts 5, 4' }, covers: { ru: 'Пост 5, Пост 4', en: 'Post 5, Post 4' } },
+  { num: '14', loc: { ru: 'Посты 3, 4, Зона 03', en: 'Posts 3, 4, Zone 03' }, covers: { ru: 'Пост 3, Пост 4, Зона 03', en: 'Post 3, Post 4, Zone 03' } },
+  { num: '15', loc: { ru: 'Зона 01', en: 'Zone 01' }, covers: { ru: 'Зона 01', en: 'Zone 01' } },
 ];
 
 const TYPE_COLORS = {
@@ -44,6 +59,7 @@ const TYPE_COLORS = {
   lift: '#6366f1',
   diag: '#a855f7',
   parking: '#f59e0b',
+  warehouse: '#64748b',
 };
 
 const TYPE_ICONS = {
@@ -52,17 +68,19 @@ const TYPE_ICONS = {
   lift: Wrench,
   diag: Search,
   parking: ParkingCircle,
+  warehouse: Warehouse,
 };
 
-const TYPE_LABELS_RU = {
-  entry: 'Въезд',
-  exit: 'Выезд',
-  lift: 'Подъёмник',
-  diag: 'Диагностика',
-  parking: 'Парковка',
+const TYPE_LABELS = {
+  entry: { ru: 'Въезд', en: 'Entry' },
+  exit: { ru: 'Выезд', en: 'Exit' },
+  lift: { ru: 'Подъёмник', en: 'Lift' },
+  diag: { ru: 'Диагностика', en: 'Diagnostics' },
+  parking: { ru: 'Парковка/Зона', en: 'Parking/Zone' },
+  warehouse: { ru: 'Склад', en: 'Warehouse' },
 };
 
-function ZoneCameraCard({ zone, isDark, isRu, onCameraClick }) {
+function ZoneCameraCard({ zone, isDark, isRu, onCameraClick, cameraStatuses }) {
   const color = TYPE_COLORS[zone.type] || '#94a3b8';
   const Icon = TYPE_ICONS[zone.type] || Wrench;
 
@@ -76,7 +94,7 @@ function ZoneCameraCard({ zone, isDark, isRu, onCameraClick }) {
           </span>
         </div>
         <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: color + '15', color }}>
-          {TYPE_LABELS_RU[zone.type]}
+          {TYPE_LABELS[zone.type]?.[isRu ? 'ru' : 'en'] || zone.type}
         </span>
       </div>
 
@@ -88,6 +106,8 @@ function ZoneCameraCard({ zone, isDark, isRu, onCameraClick }) {
         {zone.cameras.map(num => {
           const prio = zone.priority[num] || 0;
           const isMain = prio >= 8;
+          const camId = `cam${num}`;
+          const isOnline = cameraStatuses?.[camId]?.online === true;
           return (
             <div
               key={num}
@@ -99,6 +119,7 @@ function ZoneCameraCard({ zone, isDark, isRu, onCameraClick }) {
               onClick={() => onCameraClick?.(num)}
             >
               <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: isOnline ? '#10b981' : '#94a3b8' }} />
                 <Camera size={12} style={{ color: 'var(--text-muted)' }} />
                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{camName(num, isRu)}</span>
               </div>
@@ -120,7 +141,7 @@ function ZoneCameraCard({ zone, isDark, isRu, onCameraClick }) {
 
 function AllCamerasCard({ cam, isDark, isRu, onCameraClick }) {
   const name = camName(cam.num, isRu);
-  const isOnline = cam.online !== false; // default true for mock
+  const isOnline = cam.online === true;
 
   return (
     <div className="glass overflow-hidden cursor-pointer" onClick={() => onCameraClick?.(cam.num)}>
@@ -180,6 +201,7 @@ function AllCamerasCard({ cam, isDark, isRu, onCameraClick }) {
 export default function Cameras() {
   const { i18n } = useTranslation();
   const { theme } = useTheme();
+  const cameraStatuses = useCameraStatus();
   const [tab, setTab] = useState('zones');
   const [filter, setFilter] = useState('all');
   const [streamCam, setStreamCam] = useState(null);
@@ -200,8 +222,8 @@ export default function Cameras() {
     { key: 'all', label: isRu ? 'Все' : 'All' },
     { key: 'entry', label: isRu ? 'Въезд/Выезд' : 'Entry/Exit' },
     { key: 'lift', label: isRu ? 'Подъёмники' : 'Lifts' },
-    { key: 'diag', label: isRu ? 'Диагностика' : 'Diagnostics' },
-    { key: 'parking', label: isRu ? 'Парковка' : 'Parking' },
+    { key: 'parking', label: isRu ? 'Парковка/Зоны' : 'Parking/Zones' },
+    { key: 'warehouse', label: isRu ? 'Склады' : 'Warehouses' },
   ];
 
   return (
@@ -264,7 +286,7 @@ export default function Cameras() {
           {/* Zones grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredZones.map((zone, i) => (
-              <ZoneCameraCard key={i} zone={zone} isDark={isDark} isRu={isRu} onCameraClick={setStreamCam} />
+              <ZoneCameraCard key={i} zone={zone} isDark={isDark} isRu={isRu} onCameraClick={setStreamCam} cameraStatuses={cameraStatuses} />
             ))}
           </div>
         </div>
@@ -273,9 +295,11 @@ export default function Cameras() {
       {/* Tab: All Cameras */}
       {tab === 'all' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {ALL_CAMERAS.map((cam, i) => (
-            <AllCamerasCard key={i} cam={cam} isDark={isDark} isRu={isRu} onCameraClick={setStreamCam} />
-          ))}
+          {ALL_CAMERAS.map((cam, i) => {
+            const camId = `cam${cam.num}`;
+            const isOnline = cameraStatuses[camId]?.online;
+            return <AllCamerasCard key={i} cam={{ ...cam, online: isOnline }} isDark={isDark} isRu={isRu} onCameraClick={setStreamCam} />;
+          })}
         </div>
       )}
 

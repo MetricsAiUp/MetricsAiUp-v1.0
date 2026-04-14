@@ -1,49 +1,65 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft } from 'lucide-react';
+import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft, Warehouse } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
 const DEFAULT_ZONES = [
-  { id: 'entry', name: { ru: 'Въезд', en: 'Entry' }, type: 'entry' },
-  { id: 'exit', name: { ru: 'Выезд', en: 'Exit' }, type: 'exit' },
-  { id: 'post-1', name: { ru: 'Пост 1', en: 'Post 1' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-2', name: { ru: 'Пост 2', en: 'Post 2' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-3', name: { ru: 'Пост 3', en: 'Post 3' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-4', name: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift', desc: { ru: '2-х ст. >2.5т', en: '2-post >2.5t' } },
-  { id: 'post-5', name: { ru: 'Пост 5', en: 'Post 5' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-6', name: { ru: 'Пост 6', en: 'Post 6' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-7', name: { ru: 'Пост 7', en: 'Post 7' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-8', name: { ru: 'Пост 8', en: 'Post 8' }, type: 'lift', desc: { ru: '2-х ст. <2.5т', en: '2-post <2.5t' } },
-  { id: 'post-9', name: { ru: 'Пост 9', en: 'Post 9' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' } },
-  { id: 'post-10', name: { ru: 'Пост 10', en: 'Post 10' }, type: 'diag', desc: { ru: 'Диагностика', en: 'Diagnostics' } },
-  { id: 'parking', name: { ru: 'Парковка', en: 'Parking' }, type: 'parking' },
+  { id: 'barrier', name: { ru: 'Шлагбаум', en: 'Barrier' }, type: 'entry' },
+  { id: 'parking', name: { ru: 'Стоянка', en: 'Parking' }, type: 'parking' },
+  { id: 'gates', name: { ru: 'Ворота', en: 'Gates' }, type: 'entry' },
+  { id: 'post-1', name: { ru: 'Пост 1', en: 'Post 1' }, type: 'lift' },
+  { id: 'post-2', name: { ru: 'Пост 2', en: 'Post 2' }, type: 'lift' },
+  { id: 'post-3', name: { ru: 'Пост 3', en: 'Post 3' }, type: 'lift' },
+  { id: 'post-4', name: { ru: 'Пост 4', en: 'Post 4' }, type: 'lift' },
+  { id: 'post-5', name: { ru: 'Пост 5', en: 'Post 5' }, type: 'lift' },
+  { id: 'post-6', name: { ru: 'Пост 6', en: 'Post 6' }, type: 'lift' },
+  { id: 'post-7', name: { ru: 'Пост 7', en: 'Post 7' }, type: 'lift' },
+  { id: 'post-8', name: { ru: 'Пост 8', en: 'Post 8' }, type: 'lift' },
+  { id: 'post-9', name: { ru: 'Пост 9', en: 'Post 9' }, type: 'lift' },
+  { id: 'post-10', name: { ru: 'Пост 10', en: 'Post 10' }, type: 'lift' },
+  { id: 'zone-01', name: { ru: 'Зона 01', en: 'Zone 01' }, type: 'parking' },
+  { id: 'zone-03', name: { ru: 'Зона 03', en: 'Zone 03' }, type: 'parking' },
+  { id: 'zone-04', name: { ru: 'Зона 04', en: 'Zone 04' }, type: 'parking' },
+  { id: 'zone-05', name: { ru: 'Зона 05', en: 'Zone 05' }, type: 'parking' },
+  { id: 'zone-06', name: { ru: 'Зона 06', en: 'Zone 06' }, type: 'parking' },
+  { id: 'zone-07', name: { ru: 'Зона 07', en: 'Zone 07' }, type: 'parking' },
+  { id: 'intake-warehouse', name: { ru: 'Склад приёмки', en: 'Intake warehouse' }, type: 'warehouse' },
+  { id: 'parts-warehouse', name: { ru: 'Склад деталей', en: 'Parts warehouse' }, type: 'warehouse' },
 ];
 
 const zn = (zone, isRu) => typeof zone.name === 'string' ? zone.name : zone.name[isRu ? 'ru' : 'en'];
 const zd = (zone, isRu) => zone.desc ? zone.desc[isRu ? 'ru' : 'en'] : '';
 
-const DEFAULT_CAMERAS = Array.from({ length: 10 }, (_, i) => ({ id: `cam-${String(i+1).padStart(2,'0')}`, num: String(i+1).padStart(2,'0') }));
+const DEFAULT_CAMERAS = Array.from({ length: 16 }, (_, i) => ({ id: `cam-${String(i).padStart(2,'0')}`, num: String(i).padStart(2,'0') }));
 const camLabel = (num, isRu) => (isRu ? 'КАМ' : 'CAM') + num;
 
 const DEFAULT_MAPPING = {
-  'entry':   { 'cam-09': 10 },
-  'exit':    { 'cam-09': 10 },
-  'post-1':  { 'cam-01': 10, 'cam-03': 5 },
-  'post-2':  { 'cam-01': 8, 'cam-03': 10 },
-  'post-3':  { 'cam-03': 5, 'cam-04': 10 },
-  'post-4':  { 'cam-04': 8, 'cam-06': 5 },
-  'post-5':  { 'cam-02': 10, 'cam-05': 5 },
-  'post-6':  { 'cam-02': 8, 'cam-05': 10 },
-  'post-7':  { 'cam-05': 5, 'cam-06': 10 },
-  'post-8':  { 'cam-06': 8, 'cam-07': 5 },
-  'post-9':  { 'cam-07': 10, 'cam-08': 5 },
-  'post-10': { 'cam-08': 10, 'cam-10': 5 },
-  'parking': { 'cam-09': 5, 'cam-01': 3 },
+  'barrier':          { 'cam-00': 10 },
+  'parking':          { 'cam-01': 10 },
+  'gates':            { 'cam-02': 10 },
+  'post-1':           { 'cam-12': 10, 'cam-11': 5 },
+  'post-2':           { 'cam-12': 8, 'cam-11': 10 },
+  'post-3':           { 'cam-14': 10 },
+  'post-4':           { 'cam-14': 8, 'cam-13': 10 },
+  'post-5':           { 'cam-13': 10, 'cam-08': 8, 'cam-09': 5 },
+  'post-6':           { 'cam-08': 10 },
+  'post-7':           { 'cam-03': 10, 'cam-04': 8, 'cam-02': 5 },
+  'post-8':           { 'cam-04': 10, 'cam-03': 8, 'cam-02': 5 },
+  'post-9':           { 'cam-04': 10, 'cam-05': 8 },
+  'post-10':          { 'cam-05': 10 },
+  'zone-01':          { 'cam-15': 10 },
+  'zone-03':          { 'cam-14': 5 },
+  'zone-04':          { 'cam-10': 10, 'cam-11': 8 },
+  'zone-05':          { 'cam-10': 10, 'cam-08': 5 },
+  'zone-06':          { 'cam-09': 10, 'cam-08': 8, 'cam-10': 5 },
+  'zone-07':          { 'cam-05': 5 },
+  'intake-warehouse': { 'cam-06': 10 },
+  'parts-warehouse':  { 'cam-07': 10 },
 };
 
-const TYPE_COLORS = { entry: '#10b981', exit: '#ef4444', lift: '#6366f1', diag: '#a855f7', parking: '#f59e0b' };
-const TYPE_ICONS_MAP = { entry: DoorOpen, exit: DoorOpen, lift: Wrench, diag: Search, parking: ParkingCircle };
+const TYPE_COLORS = { entry: '#10b981', exit: '#ef4444', lift: '#6366f1', diag: '#a855f7', parking: '#f59e0b', warehouse: '#64748b' };
+const TYPE_ICONS_MAP = { entry: DoorOpen, exit: DoorOpen, lift: Wrench, diag: Search, parking: ParkingCircle, warehouse: Warehouse };
 
 function ZoneIcon({ type, size = 12 }) {
   const Icon = TYPE_ICONS_MAP[type] || Wrench;

@@ -19,16 +19,22 @@ import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constan
 import { useCameraStatus } from '../hooks/useCameraStatus';
 
 const ALL_CAMERAS = [
-  { num: '01', loc: { ru: 'Нижний ряд, левый угол', en: 'Lower row, left corner' }, covers: { ru: 'Пост 1, Пост 2, Парковка', en: 'Post 1, Post 2, Parking' } },
-  { num: '02', loc: { ru: 'Верхний ряд, левый угол', en: 'Upper row, left corner' }, covers: { ru: 'Пост 5, Пост 6', en: 'Post 5, Post 6' } },
-  { num: '03', loc: { ru: 'Проезд, левая часть', en: 'Driveway, left' }, covers: { ru: 'Пост 1, Пост 2, Пост 3', en: 'Post 1, Post 2, Post 3' } },
-  { num: '04', loc: { ru: 'Проезд, центр-лево', en: 'Driveway, center-left' }, covers: { ru: 'Пост 3, Пост 4', en: 'Post 3, Post 4' } },
-  { num: '05', loc: { ru: 'Проезд, центр', en: 'Driveway, center' }, covers: { ru: 'Пост 6, Пост 7', en: 'Post 6, Post 7' } },
-  { num: '06', loc: { ru: 'Проезд, центр-право', en: 'Driveway, center-right' }, covers: { ru: 'Пост 7, Пост 8', en: 'Post 7, Post 8' } },
-  { num: '07', loc: { ru: 'Проезд, правая часть', en: 'Driveway, right' }, covers: { ru: 'Пост 8, Пост 9', en: 'Post 8, Post 9' } },
-  { num: '08', loc: { ru: 'Правая стена, верх', en: 'Right wall, upper' }, covers: { ru: 'Пост 9, Пост 10', en: 'Post 9, Post 10' } },
-  { num: '09', loc: { ru: 'Въезд/Выезд', en: 'Entry/Exit' }, covers: { ru: 'Въезд, Выезд, Парковка', en: 'Entry, Exit, Parking' } },
-  { num: '10', loc: { ru: 'Правая стена, низ', en: 'Right wall, lower' }, covers: { ru: 'Пост 10', en: 'Post 10' } },
+  { num: '00', loc: { ru: 'Шлагбаум', en: 'Barrier' }, covers: { ru: 'Шлагбаум', en: 'Barrier' } },
+  { num: '01', loc: { ru: 'Стоянка', en: 'Parking' }, covers: { ru: 'Стоянка', en: 'Parking' } },
+  { num: '02', loc: { ru: 'Ворота', en: 'Gates' }, covers: { ru: 'Ворота, Пост 7, Пост 8', en: 'Gates, Post 7, Post 8' } },
+  { num: '03', loc: { ru: 'Посты 7, 8', en: 'Posts 7, 8' }, covers: { ru: 'Пост 7, Пост 8', en: 'Post 7, Post 8' } },
+  { num: '04', loc: { ru: 'Посты 9, 8, 7', en: 'Posts 9, 8, 7' }, covers: { ru: 'Пост 9, Пост 8, Пост 7', en: 'Post 9, Post 8, Post 7' } },
+  { num: '05', loc: { ru: 'Пост 10, Зона 07', en: 'Post 10, Zone 07' }, covers: { ru: 'Пост 10, Зона 07', en: 'Post 10, Zone 07' } },
+  { num: '06', loc: { ru: 'Склад приёмки', en: 'Intake warehouse' }, covers: { ru: 'Склад приёмки', en: 'Intake warehouse' } },
+  { num: '07', loc: { ru: 'Склад деталей', en: 'Parts warehouse' }, covers: { ru: 'Склад деталей', en: 'Parts warehouse' } },
+  { num: '08', loc: { ru: 'Посты 6, 5', en: 'Posts 6, 5' }, covers: { ru: 'Пост 6, Пост 5, Зона 6, Зона 5', en: 'Post 6, Post 5, Zone 6, Zone 5' } },
+  { num: '09', loc: { ru: 'Зона 06, Пост 5', en: 'Zone 06, Post 5' }, covers: { ru: 'Зона 06, Пост 5', en: 'Zone 06, Post 5' } },
+  { num: '10', loc: { ru: 'Зоны 5, 4, 6', en: 'Zones 5, 4, 6' }, covers: { ru: 'Зона 05, Зона 04, Зона 06', en: 'Zone 05, Zone 04, Zone 06' } },
+  { num: '11', loc: { ru: 'Пост 2, Зоны 4, 5', en: 'Post 2, Zones 4, 5' }, covers: { ru: 'Пост 2, Зона 04, Зона 05', en: 'Post 2, Zone 04, Zone 05' } },
+  { num: '12', loc: { ru: 'Посты 1, 2', en: 'Posts 1, 2' }, covers: { ru: 'Пост 1, Пост 2', en: 'Post 1, Post 2' } },
+  { num: '13', loc: { ru: 'Посты 5, 4', en: 'Posts 5, 4' }, covers: { ru: 'Пост 5, Пост 4', en: 'Post 5, Post 4' } },
+  { num: '14', loc: { ru: 'Посты 3, 4, Зона 03', en: 'Posts 3, 4, Zone 03' }, covers: { ru: 'Пост 3, Пост 4, Зона 03', en: 'Post 3, Post 4, Zone 03' } },
+  { num: '15', loc: { ru: 'Зона 01', en: 'Zone 01' }, covers: { ru: 'Зона 01', en: 'Zone 01' } },
 ];
 
 function fmtTime(t) {
