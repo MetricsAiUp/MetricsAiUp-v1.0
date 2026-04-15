@@ -47,10 +47,11 @@ export default function CameraStreamModal({ camId, camName, camLocation, camCove
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [status, setStatus] = useState('connecting'); // connecting, playing, error, offline
-  const [time, setTime] = useState(new Date().toLocaleTimeString());
+  const fmt = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Moscow' });
+  const [time, setTime] = useState(fmt);
 
   useEffect(() => {
-    const id = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
+    const id = setInterval(() => setTime(fmt()), 1000);
     return () => clearInterval(id);
   }, []);
 

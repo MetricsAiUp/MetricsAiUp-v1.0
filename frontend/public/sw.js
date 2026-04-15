@@ -1,4 +1,4 @@
-const CACHE_NAME = 'metricsaiup-v20';
+const CACHE_NAME = 'metricsaiup-v26';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -25,10 +25,14 @@ self.addEventListener('activate', (event) => {
 
 // Fetch — network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET and API requests
+  // Skip non-GET, API, socket, and streaming requests
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('/api/')) return;
   if (event.request.url.includes('/socket.io/')) return;
+  if (event.request.url.includes('/hls/')) return;
+  if (event.request.url.includes('.m3u8')) return;
+  if (event.request.url.includes('.ts')) return;
+  if (event.request.url.includes(':8181')) return;
 
   event.respondWith(
     fetch(event.request)
