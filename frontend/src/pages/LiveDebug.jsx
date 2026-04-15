@@ -30,6 +30,7 @@ const PARTS_RU = {
 
 function tr(dict, val) {
   if (!val) return val;
+  if (typeof val !== 'string') return String(val);
   const lower = val.toLowerCase();
   if (dict[lower]) return dict[lower];
   // Handle compound values like "dark (black or dark gray)" or "sedan or hatchback"

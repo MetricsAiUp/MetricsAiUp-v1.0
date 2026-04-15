@@ -94,9 +94,9 @@ export default function Dashboard() {
         api.get('/api/recommendations'),
         api.get('/api/events?limit=10'),
       ]);
-      setOverview(ovRes.data);
-      setRecommendations(recRes.data);
-      setEvents(evRes.data.events || []);
+      setOverview(ovRes.data || null);
+      setRecommendations(recRes.data || []);
+      setEvents(evRes.data?.events || []);
       api.get('/api/dashboard/trends').then(r => setTrends(r.data || [])).catch(() => {});
     } catch (err) {
       console.error('Dashboard fetch error:', err);
