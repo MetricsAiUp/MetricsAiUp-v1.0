@@ -71,7 +71,7 @@ const swaggerSpec = swaggerJsdoc({
     openapi: '3.0.0',
     info: { title: 'MetricsAiUp API', version: '1.0.0', description: 'API мониторинга СТО' },
     servers: [
-      { url: 'https://artisom.dev.metricsavto.com:3444', description: 'HTTPS' },
+      { url: 'https://artisom.dev.metricsavto.com', description: 'HTTPS' },
       { url: 'http://localhost:3001', description: 'Development' },
     ],
     components: {
@@ -132,7 +132,6 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-const PROXY_PORT = 8080; // VPS proxies artisom.dev.metricsavto.com → container:8080
 
 server.listen(PORT, '0.0.0.0', () => {
   logger.info('HTTP server started', { port: PORT });
@@ -181,19 +180,10 @@ server.listen(PORT, '0.0.0.0', () => {
   }
 });
 
-// Also listen on 8080 for VPS proxy (same app, just another HTTP server)
-if (parseInt(PORT) !== PROXY_PORT) {
-  const proxyServer = http.createServer(app);
-  initSocket(proxyServer);
-  proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
-    logger.info('VPS proxy server started', { port: PROXY_PORT });
-    logger.info('Frontend: https://artisom.dev.metricsavto.com/');
-  });
-}
 
 // HTTPS for direct external access
 if (httpsServer) {
-  const HTTPS_PORT = parseInt(PORT) + 443;
+  const HTTPS_PORT = 443;
   httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
     logger.info('HTTPS server started', { port: HTTPS_PORT });
   });

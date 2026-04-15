@@ -68,11 +68,17 @@ function startStream(camId) {
 
     cam.ffmpeg = spawn(ffmpegPath, args);
     cam.streaming = true;
+    cam.lastSegmentAt = Date.now();
     console.log(`[${camId}] Stream started`);
 
     cam.ffmpeg.stderr.on('data', (data) => {
         const line = data.toString().trim();
-        if (line) console.log(`[${camId}] ${line}`);
+        if (line) {
+            // Track segment creation to detect stale streams
+            if (line.includes('Opening') || line.includes('muxing')) {
+                cam.lastSegmentAt = Date.now();
+            }
+        }
     });
 
     cam.ffmpeg.on('close', (code) => {
@@ -201,6 +207,31 @@ const server = https.createServer({
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on https://artisom.dev.metricsavto.com:${PORT}/`);
 });
+
+// Watchdog: restart stale streams every 30 seconds
+// If FFmpeg is running but no new segments for 60s, RTSP source is likely dead
+const STALE_THRESHOLD_MS = 60_000;
+
+setInterval(() => {
+    for (const [camId, cam] of Object.entries(cameras)) {
+        if (!cam.streaming || !cam.ffmpeg) continue;
+
+        // Check actual file modification time
+        const m3u8Path = path.join(HLS_DIR, camId, 'stream.m3u8');
+        let lastMod = cam.lastSegmentAt || 0;
+        try {
+            const stat = fs.statSync(m3u8Path);
+            lastMod = Math.max(lastMod, stat.mtimeMs);
+        } catch {}
+
+        const staleMs = Date.now() - lastMod;
+        if (staleMs > STALE_THRESHOLD_MS) {
+            console.log(`[${camId}] Watchdog: stream stale for ${Math.round(staleMs / 1000)}s, restarting...`);
+            stopStream(camId);
+            setTimeout(() => startStream(camId), 2000);
+        }
+    }
+}, 30_000);
 
 process.on('SIGINT', () => {
     Object.keys(cameras).forEach(stopStream);

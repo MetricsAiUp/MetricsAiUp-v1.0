@@ -9,18 +9,18 @@
 ## Публичные URL
 | URL | Назначение |
 |-----|-----------|
-| `https://artisom.dev.metricsavto.com/` | Frontend (Nginx :8080) |
-| `https://artisom.dev.metricsavto.com:3001/api/` | Backend API (Express HTTP) |
-| `https://artisom.dev.metricsavto.com:3444/api/` | Backend API (Express HTTPS) |
+| `https://artisom.dev.metricsavto.com/` | Frontend + API (HTTPS :443) |
+| `http://artisom.dev.metricsavto.com:3001/api/` | Backend API (HTTP :3001) |
+| `https://artisom.dev.metricsavto.com/api/` | Backend API (HTTPS :443) |
 | `https://artisom.dev.metricsavto.com:8181/` | HLS-стриминг камер |
 | WebSocket | Socket.IO через `/socket.io/` |
 
 ## Запуск серверов
 ```bash
-# Backend (HTTP :3001 + HTTPS :3444)
+# Backend (HTTP :3001 + HTTPS :443 — фронт + API)
 cd /project/backend && node src/index.js
 
-# Frontend (билд → Nginx раздаёт статику)
+# Frontend (билд → Express раздаёт статику напрямую)
 cd /project/frontend && npm run build && cp -r dist/* /project/
 
 # HLS-стриминг камер (:8181)
@@ -63,7 +63,6 @@ cd /project && node server.js
 ├── ml/                         # predict_api.py — FastAPI ML-сервис (:8282)
 ├── data/                       # 28 JSON файлов (моки/fallback)
 ├── server.js                   # HLS-стриминг камер (FFmpeg RTSP→HLS :8181)
-├── https-proxy.js              # SSL-обёртка (:8443 → :8080)
 ├── sw.js                       # Service Worker v23 (network-first, push)
 ├── manifest.json               # PWA манифест
 └── index.html                  # Entry point (SPA)
@@ -251,14 +250,6 @@ cd /project/frontend && npm run build && cp -r dist/* /project/
 # После билда — бампить CACHE_NAME в sw.js (текущий: metricsaiup-v23)
 ```
 
-## Nginx (/etc/nginx/sites-enabled/default)
-- **Нет прав записи** (owner: root)
-- `/api/*` → proxy на backend (3001 → 3000 → 3002 fallback)
-- `/socket.io/` → WebSocket proxy
-- `/cam-api/*` → proxy на HLS сервер :8181
-- `/hls/*` → статика `/project/hls/` с CORS
-- `/` → SPA fallback (`try_files $uri $uri/ /index.html`)
-
 ## SSL/HTTPS
 - **Сертификат:** `/project/.ssl/fullchain.pem`
 - **Ключ:** `/project/.ssl/privkey.pem`
@@ -272,6 +263,17 @@ cd /project/frontend && npm run build && cp -r dist/* /project/
 | demo@metricsai.up | manager | Генри Форд |
 | manager@metricsai.up | manager | Сергей Петров |
 | mechanic@metricsai.up | mechanic | Иван Козлов (неактивен) |
+
+## КРИТИЧНО — НЕТ ПРОКСИ
+
+**НИКОГДА не используй Nginx, https-proxy, reverse proxy или любые прокси-сервера внутри этого контейнера!**
+- Express backend на :3001 раздаёт и API, и фронтенд напрямую
+- HTTPS через встроенный https.createServer на :443
+- HLS-стриминг на :8181 напрямую через node server.js
+- Все порты проброшены 1:1 на VPS через WireGuard — прокси НЕ НУЖНЫ
+- Не запускать `nginx`, не создавать nginx конфиги, не писать proxy-скрипты
+- НЕ слушать порт 8080 — он не нужен
+- Порты: 443 (HTTPS фронт+API), 3001 (HTTP фронт+API), 8181 (HLS камеры)
 
 ## Правила
 - **НЕ делать git commit и git push без прямой команды пользователя**
