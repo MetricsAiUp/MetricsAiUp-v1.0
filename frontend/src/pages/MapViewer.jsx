@@ -537,7 +537,7 @@ export default function MapViewer() {
     return { minX, minY, maxX, maxY };
   }, [layout]);
 
-  // Fit to container — same logic as STOMap: scale by width, height follows
+  // Fit to container — fit entire map into visible area and center it
   const fitToContainer = useCallback(() => {
     if (!containerRef.current) return;
     const bounds = computeBounds();
@@ -545,17 +545,25 @@ export default function MapViewer() {
     const mapH = bounds.maxY - bounds.minY;
     if (mapW <= 0 || mapH <= 0) return;
 
-    // Use page width minus padding for available width
-    const pageEl = containerRef.current.parentElement;
-    const cw = pageEl ? pageEl.clientWidth : containerRef.current.clientWidth;
-    if (cw < 10) return;
+    const el = containerRef.current;
+    const rect = el.getBoundingClientRect();
+    const cw = rect.width;
+    const ch = rect.height > 10 ? rect.height : window.innerHeight - rect.top;
+    if (cw < 10 || ch < 10) return;
 
-    const s = cw / mapW;
+    // Scale to fit both width and height
+    const s = Math.min(cw / mapW, ch / mapH);
+    const stageW = cw;
+    const stageH = ch;
+    // Center the map within the stage
+    const offsetX = (stageW - mapW * s) / 2 - bounds.minX * s;
+    const offsetY = (stageH - mapH * s) / 2 - bounds.minY * s;
+
     setScale(s);
     setBaseScale(s);
     setBaseBounds(bounds);
-    setStageSize({ width: mapW * s, height: mapH * s });
-    setPosition({ x: 0, y: 0 });
+    setStageSize({ width: stageW, height: stageH });
+    setPosition({ x: offsetX, y: offsetY });
   }, [computeBounds]);
 
   // Responsive sizing — use ResizeObserver for reliable container tracking
@@ -572,12 +580,28 @@ export default function MapViewer() {
 
   // Zoom controls (button-based, centered)
   const handleZoom = useCallback((dir) => {
-    const newScale = Math.min(baseScale * 3, Math.max(baseScale * 0.5, scale + dir * baseScale * 0.2));
+    const factor = dir > 0 ? 1.08 : 1 / 1.08;
+    const newScale = Math.min(baseScale * 3, Math.max(baseScale * 0.5, scale * factor));
     const cx = stageSize.width / 2, cy = stageSize.height / 2;
     const mousePointTo = { x: (cx - position.x) / scale, y: (cy - position.y) / scale };
     setScale(newScale);
     setPosition({ x: cx - mousePointTo.x * newScale, y: cy - mousePointTo.y * newScale });
   }, [scale, baseScale, position, stageSize]);
+
+  // Wheel zoom — smooth, fine-grained, centered on cursor
+  const handleWheel = useCallback((e) => {
+    e.evt.preventDefault();
+    const stage = e.target.getStage();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const scaleBy = 1.05;
+    const oldScale = scale;
+    const newScale = Math.min(baseScale * 3, Math.max(baseScale * 0.5,
+      e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy));
+    const mousePointTo = { x: (pointer.x - position.x) / oldScale, y: (pointer.y - position.y) / oldScale };
+    setScale(newScale);
+    setPosition({ x: pointer.x - mousePointTo.x * newScale, y: pointer.y - mousePointTo.y * newScale });
+  }, [scale, baseScale, position]);
 
   // Fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -754,7 +778,7 @@ export default function MapViewer() {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="overflow-hidden relative w-full rounded-xl">
+      <div ref={containerRef} className="overflow-hidden relative w-full rounded-xl flex-1 min-h-0">
         <Stage
           ref={stageRef}
           width={stageSize.width}
@@ -765,6 +789,7 @@ export default function MapViewer() {
           y={position.y}
           draggable
           onDragEnd={(e) => setPosition({ x: e.target.x(), y: e.target.y() })}
+          onWheel={handleWheel}
         >
 
           <Layer>
