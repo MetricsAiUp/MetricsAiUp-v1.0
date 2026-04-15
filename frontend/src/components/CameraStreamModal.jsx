@@ -19,9 +19,13 @@ function attachHls(videoEl, url, onPlaying, onError) {
       liveMaxLatencyDurationCount: 5,
       enableWorker: true,
       lowLatencyMode: true,
-      manifestLoadingTimeOut: 10000,
-      manifestLoadingMaxRetry: 3,
-      levelLoadingTimeOut: 10000,
+      manifestLoadingTimeOut: 15000,
+      manifestLoadingMaxRetry: 6,
+      manifestLoadingRetryDelay: 2000,
+      levelLoadingTimeOut: 15000,
+      levelLoadingMaxRetry: 6,
+      fragLoadingTimeOut: 15000,
+      fragLoadingMaxRetry: 6,
     });
     hls.loadSource(url);
     hls.attachMedia(videoEl);
@@ -29,9 +33,20 @@ function attachHls(videoEl, url, onPlaying, onError) {
       videoEl.play().catch(() => {});
       onPlaying();
     });
+    let retries = 0;
     hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) onError(data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'offline' : 'error');
+      if (!data.fatal) return;
+      if (retries < 3 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        retries++;
+        setTimeout(() => hls.startLoad(), 2000);
+      } else if (retries < 3 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+        retries++;
+        hls.recoverMediaError();
+      } else {
+        onError(data.type === Hls.ErrorTypes.NETWORK_ERROR ? 'offline' : 'error');
+      }
     });
+    hls.on(Hls.Events.FRAG_LOADED, () => { retries = 0; });
     return hls;
   } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
     videoEl.src = url;
