@@ -1,0 +1,311 @@
+openapi: 3.0.3
+info:
+  title: СТО Camera Streaming API
+  description: |
+    API для работы с камерами видеонаблюдения на СТО.
+    Позволяет получить список камер, их привязку к постам/зонам,
+    запускать/останавливать видеопотоки, получать снимки.
+
+    ## Базовые URL
+
+    - **Камеры и привязки:** `https://dev.metricsavto.com/p/test1/3100/api/monitoring/cameras`
+    - **Стриминг и снимки:** `https://dev.metricsavto.com/p/test1/8181`
+
+    ## Авторизация
+    Не требуется. CORS разрешён.
+
+    ## Камеры СТО
+
+    16 камер (cam00..cam15). Из них 13 внутри СТО, 3 внешних:
+    - **cam00** — Шлагбаум (внешняя)
+    - **cam01** — Стоянка (внешняя)
+    - **cam02** — Ворота + пост 07,08
+    - **cam03** — Пост 07,08
+    - **cam04** — Пост 09,08,07
+    - **cam05** — Пост 10 + с.зона 07
+    - **cam06** — Склад приёмки (внешняя)
+    - **cam07** — Склад деталей
+    - **cam08** — Пост 06,05 + с.зона 06,05
+    - **cam09** — С.зона 06 + пост 05
+    - **cam10** — С.зона 05,04,06
+    - **cam11** — Пост 02 + с.зона 04,05
+    - **cam12** — Пост 01,02
+    - **cam13** — Пост 05,04
+    - **cam14** — Пост 03,04 + с.зона 03
+    - **cam15** — С.зона 01
+
+    ## Как смотреть поток
+
+    ```
+    1. POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08
+    2. Подождать 3-5 секунд
+    3. Подключить HLS плеер к: https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8
+    4. После просмотра: POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam08
+    ```
+
+    **Пример с hls.js:**
+    ```html
+    <video id="video"></video>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+      // Запуск потока
+      fetch('https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08', { method: 'POST' })
+        .then(() => {
+          setTimeout(() => {
+            const hls = new Hls();
+            hls.loadSource('https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8');
+            hls.attachMedia(document.getElementById('video'));
+          }, 4000);
+        });
+    </script>
+    ```
+
+    ## Как получить снимок (без запуска потока)
+
+    ```
+    GET https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08
+    → JPEG изображение (Content-Type: image/jpeg)
+    ```
+
+    **⚠️ ВАЖНО: Для обхода кэша прокси всегда добавляйте `?t=` с текущим timestamp:**
+    ```
+    GET https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08?t=1713168000000
+    ```
+
+    Можно использовать как `<img src="...">`:
+    ```html
+    <img src="https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08?t=${Date.now()}" />
+    ```
+
+    Без `?t=` промежуточный прокси может вернуть закэшированный старый кадр.
+
+  version: 1.0.0
+
+servers:
+  - url: https://dev.metricsavto.com/p/test1/3100/api
+    description: "Cameras API — список камер и привязки"
+  - url: https://dev.metricsavto.com/p/test1/8181
+    description: "Streaming API — видеопотоки и снимки"
+
+paths:
+
+  /monitoring/cameras:
+    get:
+      summary: Все камеры с привязкой к зонам и ссылками на потоки
+      description: |
+        ```
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/cameras
+        ```
+        Возвращает 13 камер внутри СТО. Для каждой:
+        - id и название
+        - список постов/зон которые камера видит
+        - готовые ссылки на запуск/остановку потока, HLS, снимок
+      responses:
+        '200':
+          description: Массив камер
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Camera'
+              example:
+                - id: "cam08"
+                  name: "CAM 08"
+                  zones:
+                    - zone: "Пост 06 — шиномонтаж"
+                      type: "lift"
+                    - zone: "Свободная зона 06 — автоэлектрика"
+                      type: "other"
+                  stream:
+                    status: "https://dev.metricsavto.com/p/test1/8181/api/stream/status"
+                    start: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08"
+                    stop: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam08"
+                    hls: "https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8"
+                    snapshot: "https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08"
+                - id: "cam12"
+                  name: "CAM 12"
+                  zones:
+                    - zone: "Пост 01 — легковое"
+                      type: "lift"
+                    - zone: "Пост 03 — легковое"
+                      type: "lift"
+                    - zone: "Свободная зона 02 — доп. зона"
+                      type: "other"
+                  stream:
+                    status: "https://dev.metricsavto.com/p/test1/8181/api/stream/status"
+                    start: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam12"
+                    stop: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam12"
+                    hls: "https://dev.metricsavto.com/p/test1/8181/hls/cam12/stream.m3u8"
+                    snapshot: "https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam12"
+
+  /api/stream/status:
+    get:
+      summary: Статус всех камер (streaming / not streaming)
+      description: |
+        ```
+        GET https://dev.metricsavto.com/p/test1/8181/api/stream/status
+        ```
+        Возвращает объект где ключ = id камеры.
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                cam00: { name: "CAM 00 — Шлагбаум", streaming: false }
+                cam08: { name: "CAM 08 — Пост 06,05 + с.зона 06,05", streaming: true }
+                cam12: { name: "CAM 12 — Пост 01,02", streaming: false }
+
+  /api/stream/start/{camId}:
+    post:
+      summary: Запустить видеопоток камеры
+      description: |
+        ```
+        POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08
+        ```
+        Запускает конвертацию RTSP → HLS. HLS плейлист доступен через 3-5 секунд.
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          description: "ID камеры: cam00, cam01, ..., cam15"
+          schema: { type: string }
+          example: "cam08"
+      responses:
+        '200':
+          content:
+            application/json:
+              example: { status: "started", camId: "cam08" }
+        '404':
+          description: "Камера не найдена"
+
+  /api/stream/stop/{camId}:
+    post:
+      summary: Остановить видеопоток
+      description: |
+        ```
+        POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam08
+        ```
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              example: { status: "stopped", camId: "cam08" }
+
+  /hls/{camId}/stream.m3u8:
+    get:
+      summary: HLS плейлист для видеоплеера
+      description: |
+        ```
+        https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8
+        ```
+        Доступен после вызова start. Подключать через hls.js, Video.js, VLC.
+
+        **hls.js пример:**
+        ```javascript
+        const hls = new Hls({ liveSyncDuration: 3 });
+        hls.loadSource('https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8');
+        hls.attachMedia(videoElement);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
+        ```
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: M3U8 плейлист
+          content:
+            application/vnd.apple.mpegurl: {}
+
+  /api/stream/snapshot/{camId}:
+    get:
+      summary: Один JPEG-кадр с камеры
+      description: |
+        ```
+        GET https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08?t=1713168000000
+        ```
+        Захватывает кадр напрямую с RTSP. Не требует запуска потока.
+        Возвращает JPEG. Можно использовать как src для `<img>`.
+
+        **⚠️ Обязательно добавляйте `?t={timestamp}` для обхода кэша прокси.**
+        Без этого параметра nginx-прокси может вернуть старый кадр.
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: JPEG изображение
+          content:
+            image/jpeg: {}
+
+components:
+  schemas:
+    Camera:
+      type: object
+      required: [id, name, zones, stream]
+      properties:
+        id:
+          type: string
+          description: "ID камеры (cam00..cam15)"
+          example: "cam08"
+        name:
+          type: string
+          description: "Название камеры"
+          example: "CAM 08"
+        zones:
+          type: array
+          description: "Какие посты/зоны видит эта камера (может быть пустой [])"
+          items:
+            type: object
+            required: [zone, type]
+            properties:
+              zone:
+                type: string
+                description: "Название поста/зоны (совпадает с полем zone в /monitoring/state)"
+                example: "Пост 06 — шиномонтаж"
+              type:
+                type: string
+                enum: [lift, other]
+                description: "lift = пост (подъёмник), other = свободная зона"
+        stream:
+          type: object
+          description: "Готовые ссылки для работы с видеопотоком камеры"
+          required: [status, start, stop, hls, snapshot]
+          properties:
+            status:
+              type: string
+              description: "GET — статус всех камер"
+            start:
+              type: string
+              description: "POST — запустить HLS поток"
+            stop:
+              type: string
+              description: "POST — остановить HLS поток"
+            hls:
+              type: string
+              description: "HLS M3U8 плейлист (доступен после start)"
+            snapshot:
+              type: string
+              description: "GET — один JPEG кадр (без запуска потока). Добавляйте ?t={timestamp} для обхода кэша"
+            snapshot_nocache:
+              type: string
+              description: "GET — snapshot с уже добавленным ?t= (готовый URL без кэша)"

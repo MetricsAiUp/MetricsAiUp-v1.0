@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '../../store/useStore';
-import { getProjection, getZones2d, saveZones2d } from '../../api/client';
 import { getSnapshotUrl } from '../../api/streaming';
+
+// Direct fetch to avoid circular dep with client.js → useStore chain
+const fetchJson = (path, opts) => fetch(`./api${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(r => r.json());
+const getProjection = (roomId, camId) => fetchJson(`/rooms/${roomId}/cameras/${camId}/projection`);
+const getZones2d = (roomId, camId) => fetchJson(`/rooms/${roomId}/cameras/${camId}/zones2d`);
+const saveZones2d = (roomId, camId, zones2d) => fetchJson(`/rooms/${roomId}/cameras/${camId}/zones2d`, { method: 'PUT', body: JSON.stringify({ zones2d }) });
 
 // Editable rectangle zone on SVG
 function EditableZone({ zone, scale, selected, onSelect, onChange, onDelete }) {
@@ -139,6 +144,37 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
 
   const resolution = camera.resolution || { width: 1920, height: 1080 };
 
+  // Ensure at least 10% of each zone is visible on the frame
+  const clampZonesToFrame = useCallback((zoneList) => {
+    const W = resolution.width, H = resolution.height;
+    return zoneList.map(z => {
+      const { x, y, w, h } = z.rect;
+      // Calculate visible area
+      const visX1 = Math.max(0, x), visY1 = Math.max(0, y);
+      const visX2 = Math.min(W, x + w), visY2 = Math.min(H, y + h);
+      const visW = Math.max(0, visX2 - visX1), visH = Math.max(0, visY2 - visY1);
+      const visArea = visW * visH;
+      const totalArea = w * h;
+      if (totalArea <= 0) return z;
+
+      const visiblePct = visArea / totalArea;
+      if (visiblePct >= 0.1) return z; // at least 10% visible, OK
+
+      // Clamp: move the rect so at least 10% is inside the frame
+      let nx = x, ny = y;
+      if (x + w < W * 0.02) nx = -w * 0.9;       // mostly off left — bring right edge in
+      if (x > W * 0.98) nx = W - w * 0.1;          // mostly off right
+      if (y + h < H * 0.02) ny = -h * 0.9;         // mostly off top
+      if (y > H * 0.98) ny = H - h * 0.1;           // mostly off bottom
+
+      // Simple clamp: ensure at least 10% overlap
+      nx = Math.max(-w * 0.9, Math.min(W - w * 0.1, nx));
+      ny = Math.max(-h * 0.9, Math.min(H - h * 0.1, ny));
+
+      return { ...z, rect: { x: nx, y: ny, w, h } };
+    });
+  }, [resolution]);
+
   const [frameStatus, setFrameStatus] = useState('idle'); // idle | loading | done | error
 
   // Capture frame: server-side FFmpeg snapshot (single JPEG from RTSP, no HLS needed)
@@ -168,7 +204,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
       }
 
       if (custom && custom.length > 0) {
-        setZones(custom);
+        setZones(clampZonesToFrame(custom));
         setHasCustom(true);
       } else {
         const proj = await getProjection(roomId, camera.id);
@@ -186,7 +222,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
               rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY }
             };
           });
-        setZones(projected);
+        setZones(clampZonesToFrame(projected));
         setHasCustom(false);
       }
     } catch (err) {
@@ -201,7 +237,12 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
   }, [loadZones, captureFrame]);
 
   const handleZoneChange = (zoneId, newRect) => {
-    setZones(prev => prev.map(z => z.zoneId === zoneId ? { ...z, rect: newRect } : z));
+    const W = resolution.width, H = resolution.height;
+    // Clamp so at least 10% stays visible
+    const r = { ...newRect };
+    r.x = Math.max(-r.w * 0.9, Math.min(W - r.w * 0.1, r.x));
+    r.y = Math.max(-r.h * 0.9, Math.min(H - r.h * 0.1, r.y));
+    setZones(prev => prev.map(z => z.zoneId === zoneId ? { ...z, rect: r } : z));
     setHasCustom(true);
   };
 

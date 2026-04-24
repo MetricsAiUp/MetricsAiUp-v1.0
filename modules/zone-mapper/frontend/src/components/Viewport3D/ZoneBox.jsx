@@ -7,6 +7,51 @@ import { useSceneContext } from './SceneContext';
 const HANDLE_SIZE = 0.15;
 const MIN_SIZE = 0.2;
 
+function ZoneStatusLabel({ zone, monitoringState }) {
+  const ms = monitoringState;
+  const isOccupied = ms ? ms.status === 'occupied' : zone.liftStatus === 'occupied';
+  const isLift = (zone.type || 'lift') === 'lift';
+  const statusBg = isOccupied ? (isLift ? '#dc2626' : '#ea580c') : '#16a34a';
+  const statusText = isLift
+    ? (isOccupied ? 'ЗАНЯТ' : 'СВОБОДЕН')
+    : (isOccupied ? 'РАБОТЫ ВЕДУТСЯ' : 'НЕТ РАБОТ');
+
+  return (
+    <>
+      <div style={{
+        background: statusBg, color: '#fff', padding: '2px 6px',
+        fontSize: '10px', fontFamily: 'system-ui, sans-serif',
+        fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.5px',
+        borderRadius: ms?.car ? '0' : '0 0 3px 3px',
+      }}>
+        {statusText}
+        {ms?.lastUpdate && (
+          <span style={{ fontWeight: 400, opacity: 0.7, marginLeft: 4, fontSize: '8px' }}>
+            {new Date(ms.lastUpdate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'})}
+          </span>
+        )}
+      </div>
+      {ms?.car && (
+        <div style={{
+          background: 'rgba(0,0,0,0.8)', color: '#e2e8f0',
+          padding: '2px 6px', borderRadius: '0 0 3px 3px',
+          fontSize: '9px', fontFamily: 'system-ui, sans-serif',
+          whiteSpace: 'nowrap', lineHeight: 1.4,
+        }}>
+          {ms.car.model && (
+            <div style={{ color: '#93c5fd' }}>{ms.car.model} {ms.car.color && `(${ms.car.color})`}</div>
+          )}
+          {ms.car.plate && (
+            <div style={{ color: '#fbbf24', fontFamily: 'monospace', fontWeight: 700, fontSize: '10px' }}>
+              {ms.car.plate}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
 function ResizeHandle({ position, onDragStart, onDrag, onDragEnd, orbitControlsRef }) {
   const [hovered, setHovered] = useState(false);
 
@@ -32,7 +77,7 @@ function ResizeHandle({ position, onDragStart, onDrag, onDragEnd, orbitControlsR
   );
 }
 
-export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
+export default function ZoneBox({ zone, selected, onClick, onUpdate, room, editMode, monitoringState }) {
   const { position: pos, size, color } = zone;
   const { orbitControlsRef } = useSceneContext();
   const [localPos, setLocalPos] = useState(null);
@@ -71,7 +116,7 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
       setLocalPos(null);
     },
     orbitControlsRef,
-    enabled: selected,
+    enabled: selected && editMode,
   });
 
   const handleClick = useCallback((e) => {
@@ -171,11 +216,13 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
           position={[0, currentSize.height / 2 + 0.15, 0]}
           center
           distanceFactor={8}
+          zIndexRange={[10, 0]}
           style={{ pointerEvents: 'none' }}
         >
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', minWidth: 100 }}>
+            {/* Zone name */}
             <div style={{
-              background: selected ? color : 'rgba(0,0,0,0.6)',
+              background: selected ? color : 'rgba(0,0,0,0.7)',
               color: '#fff',
               padding: '2px 6px',
               borderRadius: '3px 3px 0 0',
@@ -188,29 +235,12 @@ export default function ZoneBox({ zone, selected, onClick, onUpdate, room }) {
             }}>
               {zone.name}
             </div>
-            <div style={{
-              background: zone.liftStatus === 'occupied'
-                ? ((zone.type || 'lift') === 'lift' ? '#dc2626' : '#ea580c')
-                : '#16a34a',
-              color: '#fff',
-              padding: '2px 6px',
-              borderRadius: '0 0 3px 3px',
-              fontSize: '10px',
-              fontFamily: 'system-ui, sans-serif',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-              letterSpacing: '0.5px',
-            }}>
-              {(zone.type || 'lift') === 'lift'
-                ? (zone.liftStatus === 'occupied' ? 'ЗАНЯТ' : 'СВОБОДЕН')
-                : (zone.liftStatus === 'occupied' ? 'РАБОТЫ ВЕДУТСЯ' : 'НЕТ РАБОТ')
-              }
-            </div>
+            <ZoneStatusLabel zone={zone} monitoringState={monitoringState} />
           </div>
         </Html>
       </group>
 
-      {selected && corners.map(c => (
+      {selected && editMode && corners.map(c => (
         <ResizeHandle
           key={c.key}
           position={c.pos}

@@ -1,0 +1,31 @@
+# Max-accuracy config — EVA-02 Large (305M, 448px). Top-performing image
+# classifier in 2024-2025 on ImageNet (90.0% top-1 via 22k→1k).
+# Training on RTX 3070 is tight (OOM likely) — use A100 / RTX 4090 / 5090.
+# Inference on 3070 works fine.
+
+run_name: eva02_large_448
+
+dataset_root: dataset
+splits_root: splits
+
+img_size: 448
+batch_size: 4                  # A100 80GB: raise to 24; 4090 24GB: 8
+batch_size_eval: 8
+num_workers: 8
+
+model:
+  name: eva02_large_patch14_448.mim_m38m_ft_in22k_in1k
+  pretrained: true
+  drop_path: 0.2
+
+epochs: 6
+amp: true
+compile: false
+
+optim:
+  lr_backbone: 1.5e-5
+  lr_head: 5.0e-4
+  weight_decay: 0.05
+
+body_loss_weight: 0.3
+log_interval: 50

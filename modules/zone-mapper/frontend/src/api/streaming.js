@@ -12,16 +12,22 @@ const streamApi = axios.create({ baseURL: getStreamBase() });
 
 // Known RTSP cameras from the main server
 export const RTSP_CAMERAS = [
-  { id: 'cam01', name: 'CAM 01 — 3.5 СТО' },
-  { id: 'cam02', name: 'CAM 02 — 3.11 СТО' },
-  { id: 'cam03', name: 'CAM 03 — 3.9 СТО' },
-  { id: 'cam04', name: 'CAM 04 — 3.10 СТО' },
-  { id: 'cam05', name: 'CAM 05 — 3.4 СТО' },
-  { id: 'cam06', name: 'CAM 06 — 3.6 СТО' },
-  { id: 'cam07', name: 'CAM 07 — 3.2 СТО' },
-  { id: 'cam08', name: 'CAM 08 — 3.3 СТО' },
-  { id: 'cam09', name: 'CAM 09 — 3.1 СТО' },
-  { id: 'cam10', name: 'CAM 10 — 3.7 Склад СТО' },
+  { id: 'cam00', name: 'CAM 00 — Шлагбаум' },
+  { id: 'cam01', name: 'CAM 01 — Стоянка' },
+  { id: 'cam02', name: 'CAM 02 — Ворота + пост 07,08' },
+  { id: 'cam03', name: 'CAM 03 — Пост 07,08' },
+  { id: 'cam04', name: 'CAM 04 — Пост 09,08,07' },
+  { id: 'cam05', name: 'CAM 05 — Пост 10 + с.зона 07' },
+  { id: 'cam06', name: 'CAM 06 — Склад приёмки' },
+  { id: 'cam07', name: 'CAM 07 — Склад деталей' },
+  { id: 'cam08', name: 'CAM 08 — Пост 06,05 + с.зона 06,05' },
+  { id: 'cam09', name: 'CAM 09 — С.зона 06 + пост 05' },
+  { id: 'cam10', name: 'CAM 10 — С.зона 05,04,06' },
+  { id: 'cam11', name: 'CAM 11 — Пост 02 + с.зона 04,05' },
+  { id: 'cam12', name: 'CAM 12 — Пост 01,02' },
+  { id: 'cam13', name: 'CAM 13 — Пост 05,04' },
+  { id: 'cam14', name: 'CAM 14 — Пост 03,04 + с.зона 03' },
+  { id: 'cam15', name: 'CAM 15 — С.зона 01' },
 ];
 
 export const startStream = (camId) => streamApi.post(`/api/stream/start/${camId}`).then(r => r.data);
@@ -36,6 +42,11 @@ export const getHlsUrl = (camId) => {
 export const getSnapshotUrl = (camId) => {
   const base = getStreamBase();
   return `${base}/api/stream/snapshot/${camId}`;
+};
+
+export const getCropUrl = (camId, rect, frameW = 1920, frameH = 1080) => {
+  const base = getStreamBase();
+  return `${base}/api/stream/snapshot/${camId}/crop?x=${rect.x}&y=${rect.y}&w=${rect.w}&h=${rect.h}&fw=${frameW}&fh=${frameH}`;
 };
 
 // Motion detection API (port 8182)

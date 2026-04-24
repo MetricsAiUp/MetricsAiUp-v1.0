@@ -27,6 +27,27 @@ export const deleteCamera = (roomId, camId) => api.delete(`/rooms/${roomId}/came
 export const getProjection = (roomId, camId) => api.get(`/rooms/${roomId}/cameras/${camId}/projection`).then(r => r.data);
 export const exportConfig = (roomId, camId) => api.get(`/rooms/${roomId}/cameras/${camId}/export`).then(r => r.data);
 
+// Settings
+export const getSettings = () => api.get('/settings').then(r => r.data);
+export const updateSettings = (data) => api.put('/settings', data).then(r => r.data);
+
+// Vision analysis
+export const analyzeImage = (imageBase64, zoneName, zoneType) =>
+  api.post('/analyze', { imageBase64, zoneName, zoneType }).then(r => r.data);
+
+// Collector — send analysis results to DB
+export const sendToCollector = (data) => api.post('/collector/result', data).then(r => r.data);
+export const sendBulkToCollector = (results) => api.post('/collector/bulk', { results }).then(r => r.data);
+
+// Monitoring — current state + history
+export const getMonitoringState = () => api.get('/monitoring/state').then(r => r.data);
+
+// Auto-poll
+export const startAutoPoll = (intervalMs) => api.post('/autopoll/start', { intervalMs }).then(r => r.data);
+export const stopAutoPoll = () => api.post('/autopoll/stop').then(r => r.data);
+export const getAutoPollStatus = () => api.get('/autopoll/status').then(r => r.data);
+export const runAutoPollOnce = () => api.post('/autopoll/once').then(r => r.data);
+
 // Custom 2D zone overrides
 export const getZones2d = (roomId, camId) => api.get(`/rooms/${roomId}/cameras/${camId}/zones2d`).then(r => r.data);
 export const saveZones2d = (roomId, camId, zones2d) => api.put(`/rooms/${roomId}/cameras/${camId}/zones2d`, { zones2d }).then(r => r.data);

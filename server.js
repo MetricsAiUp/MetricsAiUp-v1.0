@@ -28,16 +28,22 @@ function cam(name, rtspUrl) {
 }
 
 const cameras = {
-    cam01: cam('CAM 01 — 3.5 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/t8rFCkD7_m/'),
-    cam02: cam('CAM 02 — 3.11 СТО',       'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/w9fKX1CE_m/'),
-    cam03: cam('CAM 03 — 3.9 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/RTHaqqOJ_m/'),
-    cam04: cam('CAM 04 — 3.10 СТО',       'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/Mn1PZPF0_m/'),
-    cam05: cam('CAM 05 — 3.4 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/NQ5s26a6_m/'),
-    cam06: cam('CAM 06 — 3.6 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/'),
-    cam07: cam('CAM 07 — 3.2 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/k0HNWQDk_m/'),
-    cam08: cam('CAM 08 — 3.3 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/KRoX0tGZ_m/'),
-    cam09: cam('CAM 09 — 3.1 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/we4rvi8t_m/'),
-    cam10: cam('CAM 10 — 3.7 Склад СТО',  'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/PxPU26jt_m/'),
+    cam00: cam('CAM 00 — Шлагбаум',                  'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/kjhSbewx_m/'),
+    cam01: cam('CAM 01 — Стоянка',                    'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/cCjCHzt3_m/'),
+    cam02: cam('CAM 02 — Ворота + пост 07,08',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/'),
+    cam03: cam('CAM 03 — Пост 07,08',                 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/xOEOeQZG_m/'),
+    cam04: cam('CAM 04 — Пост 09,08,07',              'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/we4rvi8t_m/'),
+    cam05: cam('CAM 05 — Пост 10 + с.зона 07',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/KRoX0tGZ_m/'),
+    cam06: cam('CAM 06 — Склад приёмки',              'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/PxPU26jt_m/'),
+    cam07: cam('CAM 07 — Склад деталей',              'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/lIfkh3Zk_m/'),
+    cam08: cam('CAM 08 — Пост 06,05 + с.зона 06,05',  'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/k0HNWQDk_m/'),
+    cam09: cam('CAM 09 — С.зона 06 + пост 05',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/Mn1PZPF0_m/'),
+    cam10: cam('CAM 10 — С.зона 05,04,06',            'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/NQ5s26a6_m/'),
+    cam11: cam('CAM 11 — Пост 02 + с.зона 04,05',     'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/qvGFujHD_m/'),
+    cam12: cam('CAM 12 — Пост 01,02',                 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/t8rFCkD7_m/'),
+    cam13: cam('CAM 13 — Пост 05,04',                 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/w9fKX1CE_m/'),
+    cam14: cam('CAM 14 — Пост 03,04 + с.зона 03',     'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/SopzkgqV_m/'),
+    cam15: cam('CAM 15 — С.зона 01',                  'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/RTHaqqOJ_m/'),
 };
 
 function startStream(camId) {
@@ -180,7 +186,12 @@ const server = http.createServer((req, res) => {
                     'Content-Type': 'image/jpeg',
                     'Content-Length': jpeg.length,
                     'Access-Control-Allow-Origin': '*',
-                    'Cache-Control': 'no-cache'
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                    'Surrogate-Control': 'no-store',
+                    'X-Accel-Expires': '0',
+                    'ETag': `"${Date.now()}-${camId}"`,
                 });
                 res.end(jpeg);
             } else {
@@ -194,6 +205,68 @@ const server = http.createServer((req, res) => {
             jsonResponse(res, 500, { error: 'Snapshot failed: ' + err.message });
         });
 
+        return;
+    }
+
+    // API: GET /api/stream/snapshot/:camId/crop?x=&y=&w=&h=&fw=&fh= — crop zone from snapshot
+    const cropMatch = urlPath.match(/^\/api\/stream\/snapshot\/(\w+)\/crop$/);
+    if (cropMatch && req.method === 'GET') {
+        const camId = cropMatch[1];
+        const camObj = cameras[camId];
+        if (!camObj) return jsonResponse(res, 404, { error: 'Camera not found' });
+
+        const url = new URL(req.url, 'http://localhost');
+        const zx = parseFloat(url.searchParams.get('x')) || 0;
+        const zy = parseFloat(url.searchParams.get('y')) || 0;
+        const zw = parseFloat(url.searchParams.get('w')) || 200;
+        const zh = parseFloat(url.searchParams.get('h')) || 200;
+        const fw = parseFloat(url.searchParams.get('fw')) || 1920;  // frame width (zone coord space)
+        const fh = parseFloat(url.searchParams.get('fh')) || 1080;  // frame height
+
+        // FFmpeg: capture 1 frame, crop the zone area, output JPEG
+        // crop filter: crop=out_w:out_h:x:y (in pixels of actual video)
+        // We scale zone coords to video resolution using vf scale+crop
+        const cropFilter = `crop=iw*${zw/fw}:ih*${zh/fh}:iw*${Math.max(0,zx)/fw}:ih*${Math.max(0,zy)/fh}`;
+        const args = [
+            '-rtsp_transport', 'tcp',
+            '-i', camObj.rtspUrl,
+            '-frames:v', '1',
+            '-vf', cropFilter,
+            '-q:v', '2',
+            '-f', 'image2',
+            '-vcodec', 'mjpeg',
+            'pipe:1'
+        ];
+
+        const proc = spawn(ffmpegPath, args, { timeout: 15000 });
+        const chunks = [];
+        let errData = '';
+
+        proc.stdout.on('data', (chunk) => chunks.push(chunk));
+        proc.stderr.on('data', (chunk) => { errData += chunk.toString(); });
+
+        proc.on('close', () => {
+            if (chunks.length > 0) {
+                const jpeg = Buffer.concat(chunks);
+                res.writeHead(200, {
+                    'Content-Type': 'image/jpeg',
+                    'Content-Length': jpeg.length,
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                    'Surrogate-Control': 'no-store',
+                    'X-Accel-Expires': '0',
+                    'ETag': `"${Date.now()}-${camId}"`,
+                });
+                res.end(jpeg);
+            } else {
+                console.error(`[${camId}] Crop failed:`, errData.slice(-200));
+                jsonResponse(res, 500, { error: 'Crop failed' });
+            }
+        });
+
+        proc.on('error', (err) => jsonResponse(res, 500, { error: err.message }));
         return;
     }
 

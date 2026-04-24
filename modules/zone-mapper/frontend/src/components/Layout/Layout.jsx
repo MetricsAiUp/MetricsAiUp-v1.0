@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useStore } from '../../store/useStore';
-import { getZones2d } from '../../api/client';
 import Sidebar from '../Sidebar/Sidebar';
 import Scene from '../Viewport3D/Scene';
 import PreviewPanel from '../CameraPreview/PreviewPanel';
@@ -8,20 +7,34 @@ import CameraContextMenu from '../Viewport3D/CameraContextMenu';
 import StreamModal from '../StreamModal/StreamModal';
 import ZoneOverlayModal from '../ZoneOverlayModal/ZoneOverlayModal';
 import CameraGrid from '../CameraGrid/CameraGrid';
+import AnalysisTab from '../AnalysisTab/AnalysisTab';
 
 const TABS = [
   { id: 'cameras', label: 'Все камеры', icon: '📹' },
   { id: '3d', label: '3D Конструктор', icon: '🧊' },
+  { id: 'analysis', label: 'Тестовая обработка', icon: '🔬' },
 ];
 
 export default function Layout() {
   const { fetchRooms, currentRoom, selectedCameraId } = useStore();
   const [activeTab, setActiveTab] = useState('cameras');
+  const [editMode, setEditMode] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [streamCamera, setStreamCamera] = useState(null);
   const [zoneOverlayCamera, setZoneOverlayCamera] = useState(null);
+  const [monitoringData, setMonitoringData] = useState([]);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
+
+  // Poll monitoring state every 10s for 3D labels
+  useEffect(() => {
+    const load = () => {
+      fetch('./api/monitoring/state').then(r => r.ok ? r.json() : []).then(setMonitoringData).catch(() => {});
+    };
+    load();
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
+  }, []);
 
   const handleCameraContextMenu = useCallback((screenPos, camera) => {
     setContextMenu({ x: screenPos.x, y: screenPos.y, camera });
@@ -33,22 +46,30 @@ export default function Layout() {
     let zones2d = null;
     if (currentRoom) {
       try {
-        const raw = await getZones2d(currentRoom.id, cam.id);
+        const raw = await fetch(`./api/rooms/${currentRoom.id}/cameras/${cam.id}/zones2d`).then(r => r.json());
         if (raw && raw.length) {
           const zones3d = currentRoom.zones || [];
+          let monState = monitoringData;
+          if (!monState.length) {
+            try { monState = await fetch('./api/monitoring/state').then(r => r.json()); } catch {}
+          }
           zones2d = raw.map(z2d => {
             const z3d = zones3d.find(zz => zz.id === z2d.zoneId);
+            const mon = monState.find(m => m.zone === (z3d?.name || z2d.zoneName));
             return {
               ...z2d,
+              zoneName: z3d?.name || z2d.zoneName,
+              color: z3d?.color || z2d.color,
               type: z3d?.type || z2d.type || 'lift',
-              liftStatus: z3d?.liftStatus || z2d.liftStatus || 'free',
+              liftStatus: mon?.status || z3d?.liftStatus || z2d.liftStatus || 'free',
+              car: mon?.car || null,
             };
           });
         }
       } catch {}
     }
     setStreamCamera({ name: cam.name, rtspCameraId: cam.rtspCameraId, zones2d: zones2d || [] });
-  }, [contextMenu, currentRoom]);
+  }, [contextMenu, currentRoom, monitoringData]);
 
   const handleShowZones = useCallback(() => {
     if (contextMenu?.camera) setZoneOverlayCamera(contextMenu.camera);
@@ -97,14 +118,31 @@ export default function Layout() {
 
         {/* Tab content */}
         {activeTab === 'cameras' && (
-          <CameraGrid />
+          <CameraGrid currentRoom={currentRoom} />
+        )}
+
+        {activeTab === 'analysis' && (
+          <AnalysisTab currentRoom={currentRoom} />
         )}
 
         {activeTab === '3d' && (
           <div className="flex-1 flex flex-col">
             <div className="flex-1 relative">
+              {/* Edit mode toggle */}
+              {currentRoom && (
+                <button
+                  onClick={() => setEditMode(!editMode)}
+                  className={`absolute top-3 right-3 z-20 text-xs px-3 py-1.5 rounded-md font-medium shadow-lg transition-colors ${
+                    editMode
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                  }`}
+                >
+                  {editMode ? 'Запретить редактирование' : 'Разрешить редактирование'}
+                </button>
+              )}
               {currentRoom ? (
-                <Scene onCameraContextMenu={handleCameraContextMenu} />
+                <Scene onCameraContextMenu={handleCameraContextMenu} editMode={editMode} monitoringData={monitoringData} />
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-500">
                   <div className="text-center">

@@ -26,7 +26,7 @@ function getRoomBounds(room) {
   return { minX, minY, minZ, maxX, maxY, maxZ, width: maxX - minX, height: maxY - minY, depth: maxZ - minZ };
 }
 
-function SceneContent({ onCameraContextMenu }) {
+function SceneContent({ onCameraContextMenu, editMode, monitoringData }) {
   const { currentRoom, selectedZoneId, selectedCameraId, selectZone, selectCamera, editZone, editCamera } = useStore();
   const orbitRef = useRef();
 
@@ -51,6 +51,8 @@ function SceneContent({ onCameraContextMenu }) {
           onClick={() => selectZone(zone.id === selectedZoneId ? null : zone.id)}
           onUpdate={(data) => editZone(zone.id, data)}
           room={currentRoom}
+          editMode={editMode}
+          monitoringState={monitoringData?.find(m => m.zone === zone.name)}
         />
       ))}
 
@@ -63,6 +65,7 @@ function SceneContent({ onCameraContextMenu }) {
           onUpdate={(data) => editCamera(cam.id, data)}
           onContextMenu={onCameraContextMenu}
           room={currentRoom}
+          editMode={editMode}
         />
       ))}
 
@@ -81,7 +84,7 @@ function SceneContent({ onCameraContextMenu }) {
   );
 }
 
-export default function Scene({ onCameraContextMenu }) {
+export default function Scene({ onCameraContextMenu, editMode, monitoringData }) {
   const { currentRoom } = useStore();
   if (!currentRoom) return null;
 
@@ -93,7 +96,7 @@ export default function Scene({ onCameraContextMenu }) {
       camera={{ position: [maxDim * 1.5, maxDim * 1.2, maxDim * 1.5], fov: 50, near: 0.1, far: 500 }}
       style={{ width: '100%', height: '100%' }}
     >
-      <SceneContent onCameraContextMenu={onCameraContextMenu} />
+      <SceneContent onCameraContextMenu={onCameraContextMenu} editMode={editMode} monitoringData={monitoringData} />
     </Canvas>
   );
 }

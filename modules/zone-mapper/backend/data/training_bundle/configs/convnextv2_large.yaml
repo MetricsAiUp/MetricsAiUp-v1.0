@@ -1,0 +1,32 @@
+# Primary config — ConvNeXt-V2 Large. Best accuracy/VRAM tradeoff on RTX 3070.
+# Expected: val-F1 > 0.97, test accuracy > 0.97 on our dataset.
+
+run_name: convnextv2_large_384
+
+# === Data ===
+dataset_root: dataset          # relative to bundle root; absolute path also ok
+splits_root: splits
+
+img_size: 384                  # 384 gives +1-2% accuracy vs 224 on this task
+batch_size: 8                  # RTX 3070 (8GB) w/ fp16 handles 8 @ 384 safely
+batch_size_eval: 16
+num_workers: 6
+
+# === Model ===
+model:
+  name: convnextv2_large.fcmae_ft_in22k_in1k_384    # 198M params, ImageNet-22k→1k
+  pretrained: true
+  drop_path: 0.2
+
+# === Training ===
+epochs: 8                      # dataset is large+clean, converges fast
+amp: true                      # mixed precision (fp16) — 2x faster on 3070
+compile: false                 # torch.compile — set true on 4090+ for speedup
+
+optim:
+  lr_backbone: 3.0e-5          # low LR for pretrained backbone
+  lr_head: 1.0e-3              # 30x higher for freshly-initialized heads
+  weight_decay: 0.05
+
+body_loss_weight: 0.3          # auxiliary task weight
+log_interval: 50

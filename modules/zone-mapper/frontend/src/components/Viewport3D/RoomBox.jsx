@@ -31,7 +31,7 @@ function Segment({ segment, isMain }) {
 
       {/* Segment label (only for non-main segments) */}
       {!isMain && segment.name && (
-        <Html position={[0, height / 2 + 0.1, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
+        <Html position={[0, height / 2 + 0.1, 0]} center distanceFactor={12} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
           <div style={{
             background: 'rgba(0,0,0,0.5)',
             color: '#94a3b8',

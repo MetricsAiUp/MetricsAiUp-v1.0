@@ -36,7 +36,7 @@ function Handle({ worldPosition, color, hoverColor, size = 0.12, cursor = 'grab'
   );
 }
 
-export default function CameraCone({ camera, selected, onClick, onUpdate, onContextMenu, room }) {
+export default function CameraCone({ camera, selected, onClick, onUpdate, onContextMenu, room, editMode }) {
   const { position: pos, rotation: rot, fov } = camera;
   const { orbitControlsRef } = useSceneContext();
   const [localPos, setLocalPos] = useState(null);
@@ -97,7 +97,7 @@ export default function CameraCone({ camera, selected, onClick, onUpdate, onCont
       setLocalPos(null);
     },
     orbitControlsRef,
-    enabled: selected,
+    enabled: selected && editMode,
   });
 
   const handleClick = useCallback((e) => {
@@ -212,6 +212,7 @@ export default function CameraCone({ camera, selected, onClick, onUpdate, onCont
           position={[0, 0.25, 0]}
           center
           distanceFactor={8}
+          zIndexRange={[10, 0]}
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
@@ -241,7 +242,7 @@ export default function CameraCone({ camera, selected, onClick, onUpdate, onCont
       </group>
 
       {/* Handles are OUTSIDE the body group — no event bubbling to move drag */}
-      {selected && (
+      {selected && editMode && (
         <>
           {/* Yaw ring visual */}
           <line geometry={yawRing}>

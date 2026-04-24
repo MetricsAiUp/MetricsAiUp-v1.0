@@ -7,8 +7,11 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
-    "express": "^4.21.0",
+    "@anthropic-ai/sdk": "^0.85.0",
+    "amqplib": "^1.0.3",
+    "better-sqlite3": "^12.9.0",
     "cors": "^2.8.5",
+    "express": "^4.21.0",
     "uuid": "^10.0.0"
   }
 }

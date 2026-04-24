@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RTSP_CAMERAS, startStream, stopStream, getHlsUrl, startMotion, stopMotion } from '../../api/streaming';
-import { useStore } from '../../store/useStore';
-import { getZones2d } from '../../api/client';
+import { RTSP_CAMERAS, startStream, stopStream, getHlsUrl, startMotion, stopMotion, getMotionStatus } from '../../api/streaming';
 import useServerMotion from '../../hooks/useServerMotion';
+
+// Direct fetch to avoid circular dep
+const getZones2d = (roomId, camId) => fetch(`./api/rooms/${roomId}/cameras/${camId}/zones2d`).then(r => r.json());
 
 function ZoneOverlaySvg({ zones }) {
   if (!zones || zones.length === 0) return null;
@@ -62,32 +63,47 @@ function EventLog({ events, clearEvents, connected }) {
   );
 }
 
-function CameraCard({ cam, roomCameras, linkedCamera }) {
+function CameraCard({ cam, roomCameras, linkedCamera, currentRoom }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  const containerRef = useRef(null);
+  const [videoHeight, setVideoHeight] = useState(0);
   const [streaming, setStreaming] = useState(false);
   const [status, setStatus] = useState('offline');
   const [zones2d, setZones2d] = useState(null);
   const [showZones, setShowZones] = useState(true);
   const [detecting, setDetecting] = useState(false);
   const [frameInterval, setFrameInterval] = useState(2);
-  const [sensitivity, setSensitivity] = useState('medium'); // low | medium | high
-  const { currentRoom } = useStore();
+  const [sensitivity, setSensitivity] = useState('medium');
 
   const { events, connected, clearEvents } = useServerMotion(cam.id);
 
-  // Load zones and enrich with 3D zone metadata (type, liftStatus)
+  // Check if detection is already running on server
+  useEffect(() => {
+    getMotionStatus().then(status => {
+      if (status[cam.id]?.active) setDetecting(true);
+    }).catch(() => {});
+  }, [cam.id]);
+
+  // Load zones and enrich with monitoring API data (live statuses)
   useEffect(() => {
     if (!currentRoom || !linkedCamera) return;
-    getZones2d(currentRoom.id, linkedCamera.id).then(z => {
+    Promise.all([
+      getZones2d(currentRoom.id, linkedCamera.id),
+      fetch('./api/monitoring/state').then(r => r.ok ? r.json() : []).catch(() => []),
+    ]).then(([z, monState]) => {
       if (!z || !z.length) { setZones2d(null); return; }
       const zones3d = currentRoom.zones || [];
       const enriched = z.map(z2d => {
         const z3d = zones3d.find(zz => zz.id === z2d.zoneId);
+        const mon = monState.find(m => m.zone === (z3d?.name || z2d.zoneName));
         return {
           ...z2d,
+          zoneName: z3d?.name || z2d.zoneName,
+          color: z3d?.color || z2d.color,
           type: z3d?.type || z2d.type || 'lift',
-          liftStatus: z3d?.liftStatus || z2d.liftStatus || 'free',
+          liftStatus: mon?.status || z3d?.liftStatus || z2d.liftStatus || 'free',
+          car: mon?.car || null,
         };
       });
       setZones2d(enriched);
@@ -163,6 +179,16 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
 
   useEffect(() => () => { if (hlsRef.current) { hlsRef.current.destroy(); } }, []);
 
+  // Track video container height for events panel
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const obs = new ResizeObserver(entries => {
+      for (const e of entries) setVideoHeight(e.contentRect.height);
+    });
+    obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
   const statusColors = {
     offline: 'bg-red-500/15 text-red-500', connecting: 'bg-yellow-500/15 text-yellow-500',
     online: 'bg-green-500/15 text-green-500', error: 'bg-red-500/15 text-red-500',
@@ -173,8 +199,8 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
 
   return (
     <div className={`bg-[#252525] border border-[#333] rounded-lg overflow-hidden ${streaming ? 'ring-1 ring-green-500/30' : ''}`}>
-      {/* Video + Events */}
-      <div className="flex">
+      {/* Video + Events — outer container gets height from video aspect ratio */}
+      <div className="flex relative" ref={containerRef}>
         <div className={`relative bg-[#111] ${showEvents ? 'flex-1 min-w-0' : 'w-full'}`}>
           <div style={{ aspectRatio: '16/9' }} className="relative">
             {!streaming && (
@@ -197,20 +223,25 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
           </div>
         </div>
         {showEvents && (
-          <div className="w-36 border-l border-[#333] bg-[#1e1e1e] flex flex-col" style={{ minHeight: 0 }}>
+          <div className="w-36 border-l border-[#333] bg-[#1e1e1e] flex flex-col overflow-hidden" style={{ height: videoHeight || 'auto' }}>
             {/* Lift statuses */}
             {zones2d && zones2d.length > 0 && (
               <div className="px-2 py-1.5 border-b border-[#333] space-y-0.5">
                 {zones2d.map(z => (
-                  <div key={z.zoneId} className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${z.liftStatus === 'occupied' ? ((z.type || 'lift') === 'lift' ? 'bg-red-500' : 'bg-orange-500') : 'bg-green-500'}`} />
-                    <span className="text-[0.6rem] text-slate-300 truncate">{z.zoneName}</span>
-                    <span className={`text-[0.55rem] ml-auto flex-shrink-0 ${z.liftStatus === 'occupied' ? 'text-red-400' : 'text-green-400'}`}>
-                      {(z.type || 'lift') === 'lift'
-                        ? (z.liftStatus === 'occupied' ? 'занят' : 'свободен')
-                        : (z.liftStatus === 'occupied' ? 'работы' : 'нет работ')
-                      }
-                    </span>
+                  <div key={z.zoneId}>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${z.liftStatus === 'occupied' ? ((z.type || 'lift') === 'lift' ? 'bg-red-500' : 'bg-orange-500') : 'bg-green-500'}`} />
+                      <span className="text-[0.6rem] text-slate-300 truncate">{z.zoneName}</span>
+                      <span className={`text-[0.55rem] ml-auto flex-shrink-0 ${z.liftStatus === 'occupied' ? 'text-red-400' : 'text-green-400'}`}>
+                        {(z.type || 'lift') === 'lift'
+                          ? (z.liftStatus === 'occupied' ? 'занят' : 'свободен')
+                          : (z.liftStatus === 'occupied' ? 'работы' : 'нет работ')
+                        }
+                      </span>
+                    </div>
+                    {z.car?.plate && (
+                      <div className="text-[0.5rem] text-yellow-400 font-mono ml-3">{z.car.plate} {z.car.model && <span className="text-slate-500">{z.car.model}</span>}</div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -278,8 +309,7 @@ function CameraCard({ cam, roomCameras, linkedCamera }) {
   );
 }
 
-export default function CameraGrid() {
-  const { currentRoom } = useStore();
+export default function CameraGrid({ currentRoom }) {
   const roomCameras = currentRoom?.cameras || [];
 
   return (
@@ -288,7 +318,7 @@ export default function CameraGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {RTSP_CAMERAS.map(cam => {
           const linked = roomCameras.find(c => c.rtspCameraId === cam.id);
-          return <CameraCard key={cam.id} cam={cam} roomCameras={roomCameras} linkedCamera={linked} />;
+          return <CameraCard key={cam.id} cam={cam} roomCameras={roomCameras} linkedCamera={linked} currentRoom={currentRoom} />;
         })}
       </div>
     </div>

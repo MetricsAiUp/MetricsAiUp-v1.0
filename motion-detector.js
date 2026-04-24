@@ -16,16 +16,22 @@ const ffmpegPath = path.join(__dirname, 'node_modules/ffmpeg-static/ffmpeg');
 
 // Camera RTSP URLs (same as main server)
 const CAMERAS = {
-  cam01: { name: 'CAM 01 — 3.5 СТО',       rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/t8rFCkD7_m/' },
-  cam02: { name: 'CAM 02 — 3.11 СТО',       rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/w9fKX1CE_m/' },
-  cam03: { name: 'CAM 03 — 3.9 СТО',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/RTHaqqOJ_m/' },
-  cam04: { name: 'CAM 04 — 3.10 СТО',       rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/Mn1PZPF0_m/' },
-  cam05: { name: 'CAM 05 — 3.4 СТО',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/NQ5s26a6_m/' },
-  cam06: { name: 'CAM 06 — 3.6 СТО',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/' },
-  cam07: { name: 'CAM 07 — 3.2 СТО',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/k0HNWQDk_m/' },
-  cam08: { name: 'CAM 08 — 3.3 СТО',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/KRoX0tGZ_m/' },
-  cam09: { name: 'CAM 09 — 3.1 СТО',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/we4rvi8t_m/' },
-  cam10: { name: 'CAM 10 — 3.7 Склад СТО',  rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/PxPU26jt_m/' },
+  cam00: { name: 'CAM 00 — Шлагбаум',                  rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/kjhSbewx_m/' },
+  cam01: { name: 'CAM 01 — Стоянка',                    rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/cCjCHzt3_m/' },
+  cam02: { name: 'CAM 02 — Ворота + пост 07,08',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/' },
+  cam03: { name: 'CAM 03 — Пост 07,08',                 rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/xOEOeQZG_m/' },
+  cam04: { name: 'CAM 04 — Пост 09,08,07',              rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/we4rvi8t_m/' },
+  cam05: { name: 'CAM 05 — Пост 10 + с.зона 07',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/KRoX0tGZ_m/' },
+  cam06: { name: 'CAM 06 — Склад приёмки',              rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/PxPU26jt_m/' },
+  cam07: { name: 'CAM 07 — Склад деталей',              rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/lIfkh3Zk_m/' },
+  cam08: { name: 'CAM 08 — Пост 06,05 + с.зона 06,05',  rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/k0HNWQDk_m/' },
+  cam09: { name: 'CAM 09 — С.зона 06 + пост 05',        rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/Mn1PZPF0_m/' },
+  cam10: { name: 'CAM 10 — С.зона 05,04,06',            rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/NQ5s26a6_m/' },
+  cam11: { name: 'CAM 11 — Пост 02 + с.зона 04,05',     rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/qvGFujHD_m/' },
+  cam12: { name: 'CAM 12 — Пост 01,02',                 rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/t8rFCkD7_m/' },
+  cam13: { name: 'CAM 13 — Пост 05,04',                 rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/w9fKX1CE_m/' },
+  cam14: { name: 'CAM 14 — Пост 03,04 + с.зона 03',     rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/SopzkgqV_m/' },
+  cam15: { name: 'CAM 15 — С.зона 01',                  rtspUrl: 'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/RTHaqqOJ_m/' },
 };
 
 // Active detectors: camId -> { ffmpeg, config, prevFrame, events[] }
@@ -33,6 +39,33 @@ const detectors = {};
 
 // SSE clients
 const sseClients = new Set();
+
+// Persistent config storage
+const CONFIG_PATH = path.join(__dirname, 'motion-configs.json');
+
+function saveConfigs() {
+  const configs = {};
+  for (const [camId, det] of Object.entries(detectors)) {
+    configs[camId] = det.originalConfig;
+  }
+  try {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(configs, null, 2));
+  } catch (err) {
+    console.error('[Motion] Failed to save configs:', err.message);
+  }
+}
+
+function loadConfigs() {
+  try {
+    if (fs.existsSync(CONFIG_PATH)) {
+      const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.error('[Motion] Failed to load configs:', err.message);
+  }
+  return {};
+}
 
 // Broadcast event to all SSE clients
 function broadcastEvent(event) {
@@ -105,6 +138,7 @@ function startDetection(camId, config) {
   const detector = {
     ffmpeg,
     config: cfg,
+    originalConfig: config, // save original for persistence
     scaledZones,
     prevFrame: null,
     events: [],
@@ -149,6 +183,7 @@ function startDetection(camId, config) {
   });
 
   detectors[camId] = detector;
+  saveConfigs();
   return true;
 }
 
@@ -226,6 +261,7 @@ function stopDetection(camId) {
     det.ffmpeg.kill('SIGTERM');
   }
   delete detectors[camId];
+  saveConfigs();
   console.log(`[Motion] Stopped detection for ${camId}`);
   return true;
 }
@@ -341,4 +377,17 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Motion] Detection server running on http://0.0.0.0:${PORT}`);
+
+  // Restore saved detection configs on startup
+  const saved = loadConfigs();
+  const camIds = Object.keys(saved);
+  if (camIds.length > 0) {
+    console.log(`[Motion] Restoring ${camIds.length} saved detection configs...`);
+    for (const camId of camIds) {
+      setTimeout(() => {
+        console.log(`[Motion] Auto-starting ${camId}...`);
+        startDetection(camId, saved[camId]);
+      }, 2000); // small delay to let FFmpeg connections stagger
+    }
+  }
 });

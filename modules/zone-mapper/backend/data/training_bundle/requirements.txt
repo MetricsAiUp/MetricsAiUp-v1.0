@@ -1,0 +1,23 @@
+# === Core deep learning ===
+# For RTX 3070 / 4090 / 5090 — install torch matching your CUDA:
+# RTX 30xx (CUDA 12.1): pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121
+# RTX 40xx (CUDA 12.1): same as above
+# RTX 50xx (CUDA 12.8): pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu128
+torch>=2.3
+torchvision>=0.18
+
+# === Model zoo (ConvNeXtV2, EVA-02, Swin, ViT, etc.) ===
+timm>=1.0.12
+
+# === Data ===
+Pillow>=10.0
+numpy>=1.24
+PyYAML>=6.0
+
+# === Inference server ===
+fastapi>=0.110
+uvicorn[standard]>=0.27
+
+# === Optional: progress bars, tensorboard ===
+tqdm>=4.66
+# tensorboard>=2.14     # uncomment if you want TB logs

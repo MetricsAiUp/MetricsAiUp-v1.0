@@ -1,0 +1,526 @@
+openapi: 3.0.3
+info:
+  title: СТО Monitoring API
+  description: |
+    API для мониторинга состояния постов и зон автосервиса (СТО), Беларусь.
+    Система анализирует видеопотоки с камер и определяет занятость постов, наличие автомобилей,
+    их характеристики (марка, модель, цвет, гос. номер), ведутся ли работы.
+
+    ## Базовые URL
+
+    - **Monitoring API (состояние постов, камеры, история):** `https://dev.metricsavto.com/p/test1/3100/api`
+    - **Streaming API (видеопотоки, снимки):** `https://dev.metricsavto.com/p/test1/8181`
+
+    ## Авторизация
+    Не требуется. CORS разрешён для всех origins.
+
+    ## Быстрый старт
+
+    ### 1. Получить все посты/зоны и их текущее состояние:
+    ```
+    GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/state
+    ```
+
+    ### 2. Получить все камеры с привязкой к зонам и ссылками на потоки:
+    ```
+    GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/cameras
+    ```
+
+    ### 3. Запустить видеопоток камеры:
+    ```
+    POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08
+    ```
+
+    ### 4. Смотреть HLS поток (после запуска):
+    ```
+    https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8
+    ```
+
+    ### 5. Получить один JPEG-кадр (без запуска потока):
+    ```
+    GET https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08?t=1713168000000
+    ```
+    **⚠️ Всегда добавляйте `?t={timestamp}` — иначе прокси может вернуть кэшированный старый кадр.**
+
+    ## Структура данных
+
+    - **10 постов** (type: `lift`) — подъёмники, Пост 01..10
+    - **7 свободных зон** (type: `other`) — Свободная зона 01..07
+    - **13 камер** внутри СТО (cam02..cam15) + 3 внешних (cam00, cam01, cam06)
+    - Каждый пост/зона **ВСЕГДА** возвращает одинаковый набор полей
+    - Объект `car` **ВСЕГДА** присутствует, все его поля могут быть null если данных нет
+
+  version: 2.0.0
+
+servers:
+  - url: https://dev.metricsavto.com/p/test1/3100/api
+    description: "Monitoring API — состояние постов, камеры, история"
+  - url: https://dev.metricsavto.com/p/test1/8181
+    description: "Streaming API — видеопотоки, снимки"
+
+tags:
+  - name: Monitoring
+    description: Состояние постов и зон
+  - name: Cameras
+    description: Камеры, привязки к зонам, ссылки на потоки
+  - name: Streaming
+    description: "Управление видеопотоками (базовый URL: порт 8181)"
+  - name: History
+    description: История изменений за период
+
+paths:
+
+  # ==================== MONITORING ====================
+
+  /monitoring/state:
+    get:
+      summary: Текущее состояние всех постов/зон
+      description: |
+        Возвращает массив из 17 объектов — по одному на каждый пост/зону.
+        Каждый объект имеет **одинаковую структуру** (см. ZoneState).
+
+        Без параметров: текущее состояние + история за последние 24 часа.
+        С from/to: текущее состояние + история за указанный период.
+
+        ```
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/state
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/state?from=2026-04-14T08:00:00Z&to=2026-04-14T18:00:00Z
+        ```
+      tags: [Monitoring]
+      parameters:
+        - name: from
+          in: query
+          description: "Начало периода (ISO 8601, UTC). Пример: 2026-04-14T00:00:00Z"
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: "Конец периода (ISO 8601, UTC). Пример: 2026-04-14T23:59:59Z"
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Массив состояний
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ZoneState'
+
+  /monitoring/state/{zoneName}:
+    get:
+      summary: Состояние одного поста/зоны
+      description: |
+        ```
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/state/Пост%2001%20%E2%80%94%20легковое
+        ```
+      tags: [Monitoring]
+      parameters:
+        - name: zoneName
+          in: path
+          required: true
+          description: "Название (URL-encoded). Пример: Пост%2001%20—%20легковое"
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneState'
+        '404':
+          description: Зона не найдена
+
+  # ==================== CAMERAS ====================
+
+  /monitoring/cameras:
+    get:
+      summary: Все камеры с привязкой к зонам и ссылками на потоки
+      description: |
+        Возвращает 13 камер внутри СТО. Для каждой камеры:
+        - id и название
+        - список зон/постов которые камера видит
+        - готовые ссылки на запуск/остановку потока, HLS плейлист, снимок кадра
+
+        ```
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/cameras
+        ```
+      tags: [Cameras]
+      responses:
+        '200':
+          description: Массив камер
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Camera'
+              example:
+                - id: "cam08"
+                  name: "CAM 08"
+                  zones:
+                    - zone: "Пост 06 — шиномонтаж"
+                      type: "lift"
+                    - zone: "Свободная зона 06 — автоэлектрика"
+                      type: "other"
+                  stream:
+                    status: "https://dev.metricsavto.com/p/test1/8181/api/stream/status"
+                    start: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08"
+                    stop: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam08"
+                    hls: "https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8"
+                    snapshot: "https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08"
+
+  # ==================== STREAMING ====================
+
+  /api/stream/status:
+    get:
+      summary: Статус всех камер (streaming/not streaming)
+      description: |
+        **Базовый URL:** порт 8181
+        ```
+        GET https://dev.metricsavto.com/p/test1/8181/api/stream/status
+        ```
+        Возвращает объект: ключ = id камеры, значение = { name, streaming: true/false }
+      tags: [Streaming]
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      responses:
+        '200':
+          content:
+            application/json:
+              example:
+                cam08:
+                  name: "CAM 08 — Пост 06,05 + с.зона 06,05"
+                  streaming: true
+                cam09:
+                  name: "CAM 09 — С.зона 06 + пост 05"
+                  streaming: false
+
+  /api/stream/start/{camId}:
+    post:
+      summary: Запустить HLS видеопоток камеры
+      description: |
+        Запускает FFmpeg для конвертации RTSP → HLS. После запуска HLS плейлист
+        доступен через 3-5 секунд.
+        ```
+        POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08
+        ```
+      tags: [Streaming]
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          description: "ID камеры (cam00..cam15)"
+          schema: { type: string }
+          example: "cam08"
+      responses:
+        '200':
+          content:
+            application/json:
+              example: { status: "started", camId: "cam08" }
+        '404':
+          description: Камера не найдена
+
+  /api/stream/stop/{camId}:
+    post:
+      summary: Остановить видеопоток камеры
+      description: |
+        ```
+        POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam08
+        ```
+      tags: [Streaming]
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              example: { status: "stopped", camId: "cam08" }
+
+  /hls/{camId}/stream.m3u8:
+    get:
+      summary: HLS плейлист (для видеоплеера)
+      description: |
+        M3U8 плейлист для HLS-совместимого плеера (hls.js, Video.js, VLC и т.д.)
+        Доступен после вызова `/api/stream/start/{camId}`.
+        ```
+        https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8
+        ```
+
+        **Пример подключения с hls.js:**
+        ```javascript
+        const hls = new Hls();
+        hls.loadSource('https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8');
+        hls.attachMedia(videoElement);
+        ```
+      tags: [Streaming]
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: M3U8 плейлист
+          content:
+            application/vnd.apple.mpegurl: {}
+
+  /api/stream/snapshot/{camId}:
+    get:
+      summary: Один JPEG-кадр с камеры (без запуска потока)
+      description: |
+        Захватывает один кадр напрямую с RTSP камеры через FFmpeg.
+        Не требует предварительного запуска потока. Ответ — JPEG изображение.
+        ```
+        GET https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08?t=1713168000000
+        ```
+        **⚠️ Обязательно добавляйте `?t={timestamp}` для обхода кэша прокси.**
+      tags: [Streaming]
+      servers:
+        - url: https://dev.metricsavto.com/p/test1/8181
+      parameters:
+        - name: camId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: JPEG изображение
+          content:
+            image/jpeg: {}
+
+  # ==================== HISTORY ====================
+
+  /monitoring/history:
+    get:
+      summary: История событий за период
+      description: |
+        Массив записей истории за период. Обязательны from и to.
+        ```
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/history?from=2026-04-14T00:00:00Z&to=2026-04-14T23:59:59Z
+        GET https://dev.metricsavto.com/p/test1/3100/api/monitoring/history?from=2026-04-14T00:00:00Z&to=2026-04-14T23:59:59Z&zone=Пост%2001%20—%20легковое
+        ```
+      tags: [History]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: zone
+          in: query
+          description: "Фильтр по зоне (опционально)"
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryEntry'
+        '400':
+          description: from и to обязательны
+
+  /monitoring/health:
+    get:
+      summary: Health check
+      tags: [Monitoring]
+      responses:
+        '200':
+          content:
+            application/json:
+              example: { status: "ok", timestamp: "2026-04-14T16:30:00Z", service: "monitoring" }
+
+components:
+  schemas:
+
+    ZoneState:
+      type: object
+      description: |
+        Состояние одного поста или зоны. **ВСЕ поля присутствуют ВСЕГДА**.
+      required: [zone, type, status, car, worksInProgress, worksDescription, peopleCount, openParts, confidence, lastUpdate, history]
+      properties:
+        zone:
+          type: string
+          description: "Уникальное название поста/зоны (идентификатор)"
+          example: "Пост 01 — легковое"
+        type:
+          type: string
+          enum: [lift, other]
+          description: |
+            `lift` — пост (подъёмник), 10 штук
+            `other` — свободная зона, 7 штук
+        status:
+          type: string
+          enum: [free, occupied]
+          description: |
+            `free` — свободен, авто нет
+            `occupied` — занят, авто присутствует
+        car:
+          $ref: '#/components/schemas/Car'
+          description: "Объект ВСЕГДА присутствует. Если free — все поля null."
+        worksInProgress:
+          type: boolean
+          description: "Ведутся ли работы (true/false)"
+        worksDescription:
+          type: string
+          nullable: true
+          description: "Описание работ или null"
+        peopleCount:
+          type: integer
+          description: "Количество людей рядом (0 если нет)"
+        openParts:
+          type: array
+          items: { type: string }
+          description: "Открытые элементы: hood, trunk, door_left, wheel и т.д. Пустой [] если нет."
+        confidence:
+          type: string
+          nullable: true
+          enum: [HIGH, MEDIUM, LOW]
+          description: "Уверенность анализа. null если ещё не анализировали."
+        lastUpdate:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Время последнего обновления (ISO 8601, UTC)"
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryEntry'
+          description: "История (от нового к старому). Может быть []."
+
+    Car:
+      type: object
+      description: "Информация об авто. **ВСЕ 6 полей присутствуют ВСЕГДА**. null если данных нет."
+      required: [plate, color, model, make, body, firstSeen]
+      properties:
+        plate:
+          type: string
+          nullable: true
+          description: |
+            Гос. номер (консенсус из нескольких распознаваний).
+            Беларусь: "2350 LH-7", "6109 КР-2"
+            Россия: "А123ВС77"
+            null если не распознан.
+          example: "2350 LH-7"
+        color:
+          type: string
+          nullable: true
+          description: "Цвет (англ.): black, white, red, grey, dark blue и т.д."
+          example: "black"
+        model:
+          type: string
+          nullable: true
+          description: "Марка + модель: Nissan Qashqai, Toyota Camry"
+          example: "Nissan Qashqai"
+        make:
+          type: string
+          nullable: true
+          description: "Только марка: Nissan, Toyota, BMW"
+          example: "Nissan"
+        body:
+          type: string
+          nullable: true
+          description: "Кузов: sedan, SUV, hatchback, van, truck, wagon"
+          example: "SUV"
+        firstSeen:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Когда авто впервые зафиксировано на этом посту (UTC). Сбрасывается при смене авто."
+          example: "2026-04-14T10:15:00.000Z"
+
+    HistoryEntry:
+      type: object
+      description: "Одна запись истории. **ВСЕ поля присутствуют ВСЕГДА**."
+      required: [timestamp, status, car, worksInProgress, worksDescription, peopleCount, confidence]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: "Время замера (UTC)"
+        status:
+          type: string
+          enum: [free, occupied]
+        car:
+          $ref: '#/components/schemas/Car'
+          description: "Данные авто на момент замера. Объект ВСЕГДА, поля могут быть null."
+        worksInProgress:
+          type: boolean
+        worksDescription:
+          type: string
+          nullable: true
+        peopleCount:
+          type: integer
+        confidence:
+          type: string
+          nullable: true
+          enum: [HIGH, MEDIUM, LOW]
+
+    Camera:
+      type: object
+      description: "Камера видеонаблюдения с привязкой к зонам"
+      required: [id, name, zones, stream]
+      properties:
+        id:
+          type: string
+          description: "ID камеры (cam00..cam15)"
+          example: "cam08"
+        name:
+          type: string
+          description: "Название камеры"
+          example: "CAM 08"
+        zones:
+          type: array
+          description: "Какие посты/зоны видит эта камера"
+          items:
+            type: object
+            properties:
+              zone:
+                type: string
+                description: "Название поста/зоны (совпадает с zone в /monitoring/state)"
+                example: "Пост 06 — шиномонтаж"
+              type:
+                type: string
+                enum: [lift, other]
+        stream:
+          type: object
+          description: "Ссылки для работы с видеопотоком"
+          properties:
+            status:
+              type: string
+              description: "GET — статус всех камер"
+              example: "https://dev.metricsavto.com/p/test1/8181/api/stream/status"
+            start:
+              type: string
+              description: "POST — запустить поток"
+              example: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/start/cam08"
+            stop:
+              type: string
+              description: "POST — остановить поток"
+              example: "POST https://dev.metricsavto.com/p/test1/8181/api/stream/stop/cam08"
+            hls:
+              type: string
+              description: "HLS плейлист (доступен после start, подключать через hls.js)"
+              example: "https://dev.metricsavto.com/p/test1/8181/hls/cam08/stream.m3u8"
+            snapshot:
+              type: string
+              description: "GET — один JPEG кадр (без запуска потока)"
+              example: "https://dev.metricsavto.com/p/test1/8181/api/stream/snapshot/cam08?t={timestamp}"
