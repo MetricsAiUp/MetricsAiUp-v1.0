@@ -3,17 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // Direct fetch helpers — no imports from client.js or useStore to avoid circular deps
 const api = (path, opts) => fetch(`./api${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(r => r.json());
 const apiGet = (path) => api(path);
-const apiPost = (path, body) => api(path, { method: 'POST', body: JSON.stringify(body) });
 const apiPut = (path, body) => api(path, { method: 'PUT', body: JSON.stringify(body) });
 
 const getZones2d = (roomId, camId) => apiGet(`/rooms/${roomId}/cameras/${camId}/zones2d`);
 const getSettings = () => apiGet('/settings');
 const updateSettings = (data) => apiPut('/settings', data);
 const getMonitoringState = () => apiGet('/monitoring/state');
-const apiStartAutoPoll = (intervalMs) => apiPost('/autopoll/start', { intervalMs });
-const apiStopAutoPoll = () => apiPost('/autopoll/stop', {});
 const getAutoPollStatus = () => apiGet('/autopoll/status');
-const runAutoPollOnce = () => apiPost('/autopoll/once', {});
 
 function SettingsPanel({ onClose }) {
   const [apiKey, setApiKey] = useState('');
@@ -150,7 +146,6 @@ export default function AnalysisTab({ currentRoom }) {
   const [showSettings, setShowSettings] = useState(false);
   const [apiConfigured, setApiConfigured] = useState(false);
   const [autoPollRunning, setAutoPollRunning] = useState(false);
-  const [autoPollInterval, setAutoPollInterval] = useState(60000);
   const [autoPollStats, setAutoPollStats] = useState(null);
   const [monitoringState, setMonitoringState] = useState([]);
   const [liveState, setLiveState] = useState({ phase: 'idle', currentZone: null, currentCamera: null, cycleNum: 0 });
@@ -357,7 +352,6 @@ export default function AnalysisTab({ currentRoom }) {
         if (snap.stats) {
           setAutoPollStats(snap.stats);
           setAutoPollRunning(!!snap.stats.running);
-          if (snap.stats.intervalMs) setAutoPollInterval(snap.stats.intervalMs);
         }
         if (Array.isArray(snap.recentEvents)) {
           for (const ev of snap.recentEvents) {
@@ -385,38 +379,13 @@ export default function AnalysisTab({ currentRoom }) {
     };
   }, [applyEvent, addLog]);
 
-  // Start/stop autopoll on the server. UI just observes.
-  const handleStart = useCallback(async () => {
-    try {
-      await apiStartAutoPoll(autoPollInterval);
-      setAutoPollRunning(true);
-    } catch (err) {
-      addLog(`✕ start failed: ${err.message}`);
-    }
-  }, [autoPollInterval, addLog]);
-
-  const handleStop = useCallback(async () => {
-    try {
-      await apiStopAutoPoll();
-      setAutoPollRunning(false);
-    } catch (err) {
-      addLog(`✕ stop failed: ${err.message}`);
-    }
-  }, [addLog]);
-
-  const handleRunOnce = useCallback(async () => {
-    try { await runAutoPollOnce(); } catch (err) { addLog(`✕ runOnce: ${err.message}`); }
-  }, [addLog]);
+  // The server owns autopoll lifecycle (autopollEnabled + autopollIntervalMs in
+  // settings.json). This page is a pure observer — no start/stop/run-once UI.
 
   const cycleRunning = liveState.phase !== 'idle';
   const cycleProgress = liveState.currentZone
     ? `${liveState.currentZone}${liveState.currentCamera ? ` • ${liveState.currentCamera}` : ''}`
     : '';
-
-  // Existing UI bindings — server drives cycles now, so these point at backend control.
-  const runSmartCycle = handleRunOnce;
-  const startAutoPollLocal = handleStart;
-  const stopAutoPollLocal = handleStop;
 
   // Build zone-to-cameras mapping
   useEffect(() => {
@@ -508,32 +477,12 @@ export default function AnalysisTab({ currentRoom }) {
           </div>
         </div>
 
-        {/* Auto-poll control bar */}
+        {/* Status bar — observer of the server-side autopoll loop */}
         <div className="flex items-center gap-3 bg-[#252525] rounded-lg px-4 py-2.5">
           <span className="text-xs text-slate-400 font-medium">Auto-poll:</span>
-          <select value={autoPollInterval} onChange={e => setAutoPollInterval(+e.target.value)}
-            disabled={autoPollRunning}
-            className="bg-[#333] text-xs text-slate-300 border border-[#444] rounded px-2 py-1 disabled:opacity-50">
-            <option value={30000}>30 сек</option>
-            <option value={60000}>1 мин</option>
-            <option value={120000}>2 мин</option>
-            <option value={180000}>3 мин</option>
-            <option value={300000}>5 мин</option>
-            <option value={600000}>10 мин</option>
-            <option value={1200000}>20 мин</option>
-          </select>
-          <button onClick={autoPollRunning ? stopAutoPollLocal : startAutoPollLocal} disabled={!apiConfigured}
-            className={`text-xs px-4 py-1.5 rounded-md font-medium disabled:opacity-50 ${
-              autoPollRunning ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-green-600 hover:bg-green-700 text-white'
-            }`}>
-            {autoPollRunning ? 'Stop' : 'Start'}
-          </button>
-          <button onClick={runSmartCycle} disabled={!apiConfigured || cycleRunning}
-            className={`text-xs px-3 py-1.5 rounded-md font-medium disabled:opacity-50 ${
-              cycleRunning ? 'bg-yellow-600 text-white animate-pulse' : 'bg-purple-600 hover:bg-purple-700 text-white'
-            }`}>
-            {cycleRunning ? 'Running...' : '1 цикл'}
-          </button>
+          <span className={`text-xs px-2 py-0.5 rounded ${autoPollRunning ? 'bg-green-900/40 text-green-400 border border-green-700/40' : 'bg-slate-700/40 text-slate-400 border border-slate-600/40'}`}>
+            {autoPollRunning ? 'on' : 'off'}
+          </span>
 
           <div className="ml-auto flex items-center gap-4 text-[0.65rem] text-slate-500">
             {cycleRunning && cycleProgress && (
@@ -548,7 +497,6 @@ export default function AnalysisTab({ currentRoom }) {
                 Waiting...
               </span>
             )}
-            <span className="text-slate-600">skip if no visual change</span>
             {autoPollStats && (
               <>
                 {autoPollStats.cyclesTotal > 0 && (

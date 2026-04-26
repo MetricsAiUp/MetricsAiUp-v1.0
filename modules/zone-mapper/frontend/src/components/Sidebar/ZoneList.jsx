@@ -40,6 +40,27 @@ export default function ZoneList() {
 
   const zones = currentRoom?.zones || [];
   const [monState, setMonState] = useState([]);
+  // Two-step delete: first click on a zone arms it (id stored here),
+  // second click within 4s actually removes it. Auto-disarms on timeout.
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+
+  useEffect(() => {
+    if (!pendingDeleteId) return;
+    const t = setTimeout(() => setPendingDeleteId(null), 4000);
+    return () => clearTimeout(t);
+  }, [pendingDeleteId]);
+
+  const requestDelete = async (zone) => {
+    if (pendingDeleteId !== zone.id) {
+      // First click — arm.
+      setPendingDeleteId(zone.id);
+      return;
+    }
+    // Second click — final confirm via native dialog, then delete.
+    const ok = window.confirm(`Удалить зону "${zone.name}" безвозвратно?\nЭто действие нельзя отменить.`);
+    setPendingDeleteId(null);
+    if (ok) await removeZone(zone.id);
+  };
 
   useEffect(() => {
     const load = () => {
@@ -124,10 +145,15 @@ export default function ZoneList() {
               </div>
             </div>
             <button
-              onClick={e => { e.stopPropagation(); removeZone(z.id); }}
-              className="text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100"
+              onClick={e => { e.stopPropagation(); requestDelete(z); }}
+              title={pendingDeleteId === z.id ? 'Нажмите ещё раз для подтверждения' : 'Удалить зону'}
+              className={
+                pendingDeleteId === z.id
+                  ? 'text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-0.5 rounded animate-pulse opacity-100'
+                  : 'text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100'
+              }
             >
-              Del
+              {pendingDeleteId === z.id ? 'Точно?' : 'Del'}
             </button>
           </div>
         ))}
