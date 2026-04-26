@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useStore } from '../../store/useStore';
 
-// Direct fetch helpers — no imports from client.js or useStore to avoid circular deps
+// Direct fetch helpers for AnalysisTab-specific endpoints (settings, autopoll,
+// monitoring). The store / client.js doesn't expose these, so they live here.
 const api = (path, opts) => fetch(`./api${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(r => r.json());
 const apiGet = (path) => api(path);
 const apiPut = (path, body) => api(path, { method: 'PUT', body: JSON.stringify(body) });
@@ -140,6 +142,18 @@ function eventToLogMsg(ev) {
 }
 
 export default function AnalysisTab({ currentRoom }) {
+  // Pull room list + selector from the global store so this tab can switch
+  // ремзоны without forcing the user back to the 3D tab.
+  const { rooms, fetchRoom } = useStore();
+
+  // Auto-select the first room when this tab is opened and nothing is selected
+  // yet. Done once per rooms-list change; explicit user picks aren't overridden.
+  useEffect(() => {
+    if (!currentRoom && rooms && rooms.length > 0) {
+      fetchRoom(rooms[0].id);
+    }
+  }, [currentRoom, rooms, fetchRoom]);
+
   const [zoneMap, setZoneMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
@@ -449,7 +463,11 @@ export default function AnalysisTab({ currentRoom }) {
   }, [currentRoom, addLog]);
 
   if (!currentRoom) {
-    return <div className="h-full flex items-center justify-center text-slate-500">Select a room in 3D Constructor first</div>;
+    return (
+      <div className="h-full flex items-center justify-center text-slate-500">
+        {rooms && rooms.length > 0 ? 'Загрузка ремзоны...' : 'Сначала создайте ремзону во вкладке 3D Конструктор'}
+      </div>
+    );
   }
 
   const zoneEntries = Object.entries(zoneMap);
@@ -458,11 +476,11 @@ export default function AnalysisTab({ currentRoom }) {
     <div className="h-full flex flex-col bg-[#1a1a1a]">
       {/* Header */}
       <div className="px-6 py-3 border-b border-[#333] flex-shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h2 className="text-lg font-semibold text-white">Тестовая обработка</h2>
+        <div className="flex items-center justify-between mb-2 gap-3">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-white">Работа системы распознавания</h2>
             <span className="text-xs text-slate-400">
-              {currentRoom.name} — {zoneEntries.length} zones
+              {zoneEntries.length} zones
               {apiConfigured
                 ? <span className="text-green-400 ml-2">API configured</span>
                 : <span className="text-red-400 ml-2">API key not set</span>
@@ -470,6 +488,16 @@ export default function AnalysisTab({ currentRoom }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-400">Ремзона:</label>
+            <select
+              value={currentRoom.id}
+              onChange={e => fetchRoom(e.target.value)}
+              className="bg-[#252525] border border-[#444] text-slate-200 text-xs rounded px-2 py-1.5 max-w-[18rem]"
+            >
+              {(rooms || []).map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
             <button onClick={() => setShowSettings(true)}
               className="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs px-3 py-1.5 rounded-md">
               Settings

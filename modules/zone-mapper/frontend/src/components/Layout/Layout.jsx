@@ -12,7 +12,7 @@ import AnalysisTab from '../AnalysisTab/AnalysisTab';
 const TABS = [
   { id: 'cameras', label: 'Все камеры', icon: '📹' },
   { id: '3d', label: '3D Конструктор', icon: '🧊' },
-  { id: 'analysis', label: 'Тестовая обработка', icon: '🔬' },
+  { id: 'analysis', label: 'Работа системы распознавания', icon: '🔬' },
 ];
 
 export default function Layout() {
