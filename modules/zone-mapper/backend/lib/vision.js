@@ -367,10 +367,38 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType) {
     ? Object.entries(z.open_parts).filter(([, v]) => v && v.open).map(([k]) => k)
     : [];
 
-  // Plate: prefer matched_plate (already filtered by service), normalize to BY/RU format
-  const rawPlate = z.matched_plate || null;
+  // Plate selection — preference order:
+  //   1) z.matched_plate    — geometrically matched into our zone bbox by the service.
+  //   2) result.plates[best] — service detected a plate on the frame but didn't
+  //      match it to the zone (e.g. its IoU/centroid threshold rejected the match).
+  //      Since we send bbox=[0,0,w,h] (full crop), the only plate on the frame
+  //      *is* the one that belongs to this zone — fall back to the top-confidence
+  //      detection.
+  //   3) null — no plate detected at all.
+  const allPlates = Array.isArray(res.plates) ? res.plates : [];
+  let rawPlate = z.matched_plate || null;
+  let plateSource = rawPlate ? 'anpr-v2' : null;
+  if (!rawPlate && allPlates.length > 0) {
+    const best = allPlates.reduce((a, b) => ((b.confidence || 0) > (a.confidence || 0) ? b : a), allPlates[0]);
+    if (best && best.text) {
+      rawPlate = best.text;
+      plateSource = 'anpr-v2-unmatched';
+    }
+  }
   const plate = rawPlate ? (normalizePlate(rawPlate) || rawPlate) : null;
-  const plateSource = plate ? 'anpr-v2' : null;
+
+  // Diagnostic — make plate path visible in zone-mapper.log so we can tell
+  // "service didn't see the plate" from "service saw it but didn't match it".
+  if (occupied) {
+    const topConf = allPlates[0]?.confidence != null ? `${(allPlates[0].confidence * 100).toFixed(0)}%` : '—';
+    const topText = allPlates[0]?.text || '—';
+    console.log(
+      `[ANPRv2] "${zoneName}": plates=${allPlates.length} (top "${topText}" ${topConf})` +
+      `, matched=${z.matched_plate || 'null'}` +
+      `, source=${plateSource || 'none'}` +
+      (plate ? ` → "${plate}"` : '')
+    );
+  }
 
   const peopleCount = (() => {
     const v = z.people_count;
