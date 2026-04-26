@@ -2,7 +2,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { recognizePlateBest, isAvailable: isAnprAvailable } = require('./plateRecognition');
+const { recognizePlateBest, isAvailable: isAnprAvailable, normalizePlate } = require('./plateRecognition');
+const { recognizeV2 } = require('./plateRecognitionV2');
 
 const CONFIG_PATH = path.join(__dirname, '..', 'data', 'settings.json');
 const ffmpegPath = path.join(__dirname, '..', '..', '..', '..', 'node_modules/ffmpeg-static/ffmpeg');
@@ -27,6 +28,12 @@ function slugify(str) {
  * Label: data/dataset/labels/{id}.json
  */
 function saveToDataset(jpegBuffer, zoneName, zoneType, claudeResult) {
+  // Dataset collection toggle — defaults OFF now that the v2 service is in
+  // production. Re-enable by setting `"collectDataset": true` in settings.json
+  // when relabeling work or a new training round is needed.
+  const settings = loadSettings();
+  if (!settings.collectDataset) return;
+
   try {
     const ts = Date.now();
     const slug = slugify(zoneName);
@@ -129,12 +136,16 @@ function cropAndEnlarge(jpegBuffer, cropX, cropY, cropW, cropH, imgW, imgH) {
 }
 
 /**
- * Analyze a JPEG image buffer to determine if there's a vehicle.
+ * Claude Vision + ANPR-v1 analyzer (legacy path).
+ * Kept under the explicit name `analyzeZoneImageClaude`; the public
+ * `analyzeZoneImage` further down is a router that picks v2 vs claude
+ * based on settings.visionProvider.
+ *
  * Two-pass approach:
  *   Pass 1: General analysis (car, color, model, approximate plate location)
  *   Pass 2: If plate not confidently read, crop+enlarge plate area and re-read
  */
-async function analyzeZoneImage(jpegBuffer, zoneName, zoneType) {
+async function analyzeZoneImageClaude(jpegBuffer, zoneName, zoneType) {
   const settings = loadSettings();
   const apiKey = settings.anthropicApiKey;
 
@@ -270,4 +281,177 @@ async function analyzeZoneImage(jpegBuffer, zoneName, zoneType) {
   };
 }
 
-module.exports = { analyzeZoneImage, loadSettings, saveSettings };
+// ===== v2 service path (replaces Claude Vision) =====================
+
+/** Read JPEG width/height from SOF0/SOF2 marker. */
+function jpegDims(buf) {
+  for (let i = 0; i < buf.length - 9; i++) {
+    if (buf[i] === 0xFF && (buf[i + 1] === 0xC0 || buf[i + 1] === 0xC2)) {
+      return {
+        h: (buf[i + 5] << 8) | buf[i + 6],
+        w: (buf[i + 7] << 8) | buf[i + 8],
+      };
+    }
+  }
+  return { w: 0, h: 0 };
+}
+
+/** Map v2 occupancy_prob into the legacy HIGH/MEDIUM/LOW bucket. */
+function probToConfidence(prob, occupied) {
+  // Confidence in the *decision*, not in "occupied".
+  const decisionProb = occupied ? prob : (1 - prob);
+  if (decisionProb >= 0.85) return 'HIGH';
+  if (decisionProb >= 0.65) return 'MEDIUM';
+  return 'LOW';
+}
+
+/** Build a short Russian description from v2 zone result so UI/logs stay compatible. */
+function buildDescription(z) {
+  if (!z.occupied) return 'Зона свободна.';
+  const parts = [];
+  if (z.body) parts.push(z.body);
+  if (z.color) parts.push(z.color);
+  let desc = parts.length ? `В зоне: ${parts.join(', ')}` : 'В зоне автомобиль';
+  if (z.make) desc += ` (${z.make}${z.make_prob ? ` ${(z.make_prob * 100).toFixed(0)}%` : ''})`;
+  if (z.matched_plate) desc += `, номер ${normalizePlate(z.matched_plate) || z.matched_plate}`;
+  if (z.works_in_progress) {
+    const open = z.open_parts
+      ? Object.entries(z.open_parts).filter(([, v]) => v.open).map(([k]) => k)
+      : [];
+    desc += `. Идут работы${open.length ? ` (открыто: ${open.join(', ')})` : ''}`;
+  }
+  desc += '.';
+  return desc;
+}
+
+/**
+ * v2 analyzer — sends crop as full frame with one zone covering it.
+ * Returns the same shape as analyzeZoneImage (Claude path) so callers don't change.
+ */
+async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType) {
+  const { w, h } = jpegDims(jpegBuffer);
+  if (!w || !h) throw new Error('analyzeZoneImageV2: cannot read JPEG dimensions');
+
+  const t0 = Date.now();
+  const res = await recognizeV2(jpegBuffer, [
+    { zone_id: 'crop', bbox: [0, 0, w, h] },
+  ], { timeout: 60000 });
+
+  if (res.error) {
+    throw new Error(`v2 service error: ${res.error}`);
+  }
+
+  const z = (res.zones || [])[0];
+  if (!z) {
+    // Service returned nothing — treat as low-confidence empty.
+    return {
+      occupied: false, confidence: 'LOW', vehicle: null, plate: null,
+      openParts: [], worksInProgress: false, worksDescription: null,
+      peopleCount: 0, description: '',
+      model: 'anpr-v2', tokensUsed: 0, plateSource: null,
+      processingMs: Date.now() - t0,
+    };
+  }
+
+  const occupied = !!z.occupied;
+  const vehicle = occupied
+    ? {
+        make: z.make || null,
+        model: null,            // v2 has no separate model field
+        body: z.body || null,
+        color: z.color || null,
+      }
+    : null;
+
+  const openParts = z.open_parts
+    ? Object.entries(z.open_parts).filter(([, v]) => v && v.open).map(([k]) => k)
+    : [];
+
+  // Plate: prefer matched_plate (already filtered by service), normalize to BY/RU format
+  const rawPlate = z.matched_plate || null;
+  const plate = rawPlate ? (normalizePlate(rawPlate) || rawPlate) : null;
+  const plateSource = plate ? 'anpr-v2' : null;
+
+  const peopleCount = (() => {
+    const v = z.people_count;
+    if (v === null || v === undefined) return 0;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  })();
+
+  const result = {
+    occupied,
+    confidence: probToConfidence(z.occupancy_prob ?? 0, occupied),
+    vehicle,
+    plate,
+    openParts,
+    worksInProgress: !!z.works_in_progress,
+    worksDescription: null,     // v2 has no free-text description; kept null for UI compat
+    peopleCount,
+    description: buildDescription(z),
+    model: 'anpr-v2',
+    tokensUsed: 0,
+    plateSource,
+    processingMs: Date.now() - t0,
+    serverProcessingMs: res.processing_time_ms || 0,
+    // raw v2 probs preserved for diagnostics / future training
+    v2: {
+      occupancy_prob: z.occupancy_prob,
+      body_prob: z.body_prob,
+      color_prob: z.color_prob,
+      make_prob: z.make_prob,
+      works_prob: z.works_prob,
+      people_prob: z.people_prob,
+    },
+  };
+
+  // Save to dataset as before, mapped into Claude-shaped object so saveToDataset works.
+  saveToDataset(jpegBuffer, zoneName, zoneType, {
+    occupied: result.occupied,
+    confidence: result.confidence,
+    vehicle: result.vehicle,
+    worksInProgress: result.worksInProgress,
+    worksDescription: result.worksDescription,
+    peopleCount: result.peopleCount,
+    openParts: result.openParts,
+    description: result.description,
+  });
+
+  return result;
+}
+
+/**
+ * Router: pick between v2 service and Claude Vision based on settings.visionProvider.
+ *  - 'v2'      → ANPR-v2 only (no Claude calls, no token spend) — DEFAULT
+ *  - 'claude'  → original Claude Vision + ANPR-v1 path
+ *  - 'auto'    → try v2 first, fall back to Claude on error
+ *
+ * Keeping `analyzeZoneImage` as the public entry so autoPoll.js stays untouched.
+ */
+async function analyzeZoneImage(jpegBuffer, zoneName, zoneType) {
+  const settings = loadSettings();
+  const provider = settings.visionProvider || 'v2';
+
+  if (provider === 'v2') {
+    return analyzeZoneImageV2(jpegBuffer, zoneName, zoneType);
+  }
+
+  if (provider === 'auto') {
+    try {
+      return await analyzeZoneImageV2(jpegBuffer, zoneName, zoneType);
+    } catch (err) {
+      console.warn(`[Vision] v2 failed (${err.message}), falling back to Claude`);
+      return analyzeZoneImageClaude(jpegBuffer, zoneName, zoneType);
+    }
+  }
+
+  return analyzeZoneImageClaude(jpegBuffer, zoneName, zoneType);
+}
+
+module.exports = {
+  analyzeZoneImage,
+  analyzeZoneImageV2,
+  analyzeZoneImageClaude,
+  loadSettings,
+  saveSettings,
+};

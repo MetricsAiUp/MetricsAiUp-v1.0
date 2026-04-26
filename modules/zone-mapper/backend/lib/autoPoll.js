@@ -1,5 +1,6 @@
 const http = require('http');
 const crypto = require('crypto');
+const { EventEmitter } = require('events');
 const { read } = require('./storage');
 const { analyzeZoneImage, loadSettings } = require('./vision');
 const { enqueue } = require('./monitoringDb');
@@ -13,8 +14,34 @@ let intervalMs = 60000;
 let changeThreshold = 5; // % of pixels changed to trigger analysis
 let stats = { cyclesTotal: 0, zonesAnalyzed: 0, zonesSkipped: 0, lastCycleDuration: 0, apiCalls: 0 };
 
+// === Live event stream for UI observers ===
+// bus carries lifecycle events; recent[] keeps a replay tail so a freshly
+// connecting client immediately sees the last activity instead of an empty
+// screen waiting for the next cycle.
+const bus = new EventEmitter();
+bus.setMaxListeners(50); // each SSE client is one listener
+const RECENT_LIMIT = 250;
+const recent = [];
+// Live "current activity" snapshot — what zone/camera is being processed
+// right now; replaced as the cycle moves forward.
+let liveState = { cycleNum: 0, currentZone: null, currentCamera: null, phase: 'idle' };
+
+function emit(name, payload) {
+  const ev = { name, ts: new Date().toISOString(), ...payload };
+  recent.push(ev);
+  if (recent.length > RECENT_LIMIT) recent.shift();
+  bus.emit('event', ev);
+}
+
 // Previous frame hashes per zone for change detection
 const prevFrames = {}; // key: `${camId}_${zoneName}` → { buffer, hash }
+
+// Latest JPEG per (zone, camera) — cached so the observer page can render
+// the same crop the server just analyzed without re-hitting the camera proxy.
+// key: `${zoneName}__${camId}` → { jpeg, ts }
+const lastCrops = {};
+function cropKey(zoneName, camId) { return `${zoneName}__${camId}`; }
+function getLastCrop(zoneName, camId) { return lastCrops[cropKey(zoneName, camId)] || null; }
 
 const CAMERA_SERVER = 'http://127.0.0.1:8181';
 
@@ -69,6 +96,10 @@ async function runOnce() {
     return { error: 'No API key' };
   }
 
+  const cycleNum = stats.cyclesTotal + 1;
+  liveState = { cycleNum, currentZone: null, currentCamera: null, phase: 'starting' };
+  emit('cycle_start', { cycleNum });
+
   const results = [];
   let skipped = 0;
 
@@ -106,30 +137,52 @@ async function runOnce() {
     for (const [zoneName, entry] of Object.entries(zoneMap)) {
       if (entry.cameras.length === 0) continue;
 
+      liveState = { cycleNum, currentZone: zoneName, currentCamera: null, phase: 'fetching' };
+      emit('zone_start', {
+        cycleNum, zoneName, zoneType: entry.type,
+        cameras: entry.cameras.map(c => ({ camId: c.camId, camName: c.camName })),
+      });
+
       // Step 1: Fetch crops from all cameras and check for changes
       let anyChanged = false;
       const crops = [];
 
       for (const cam of entry.cameras) {
+        liveState = { cycleNum, currentZone: zoneName, currentCamera: cam.camName, phase: 'fetching' };
         try {
           const jpegBuffer = await fetchCrop(cam.camId, cam.rect, cam.resolution);
           const key = `${cam.camId}_${zoneName}`;
           const changed = hasContentChanged(key, jpegBuffer);
+          // Cache for the observer page so it doesn't re-fetch from the
+          // camera proxy. Stamped with cycleNum so the client can detect
+          // a new frame via cache-busting query param.
+          lastCrops[cropKey(zoneName, cam.camId)] = { jpeg: jpegBuffer, ts: Date.now(), cycleNum };
           crops.push({ cam, jpegBuffer, changed });
           if (changed) anyChanged = true;
+          emit('crop_fetched', {
+            cycleNum, zoneName, camId: cam.camId, camName: cam.camName,
+            changed, jpegSize: jpegBuffer.length,
+          });
         } catch (err) {
           console.error(`[AutoPoll] ${cam.camName} crop error for "${zoneName}": ${err.message}`);
           crops.push({ cam, jpegBuffer: null, changed: false, error: true });
+          emit('crop_error', {
+            cycleNum, zoneName, camId: cam.camId, camName: cam.camName, error: err.message,
+          });
         }
       }
 
-      // Step 2: If nothing changed in any camera view — skip Claude analysis
-      if (!anyChanged) {
+      // Mode switch: 'always' analyzes every cycle (preferred when the
+      // recognition service is local/free), 'on_change' skips when the
+      // JPEG-hash heuristic sees no visual change (saves load when using
+      // a metered/external provider). Default is 'always'.
+      const mode = settings.analyzeMode || 'always';
+      if (mode === 'on_change' && !anyChanged) {
         skipped++;
+        emit('zone_skipped', { cycleNum, zoneName, reason: 'no_change' });
         continue;
       }
-
-      console.log(`[AutoPoll] "${zoneName}": change detected, analyzing (${crops.filter(c => c.changed).length}/${crops.length} cameras changed)...`);
+      console.log(`[AutoPoll] "${zoneName}": analyzing ${crops.length} cameras (${crops.filter(c => c.changed).length} changed, mode=${mode})...`);
       const analyses = [];
 
       for (const { cam, jpegBuffer, error } of crops) {
@@ -137,14 +190,35 @@ async function runOnce() {
           analyses.push({ camId: cam.camId, camName: cam.camName, error: true, occupied: false });
           continue;
         }
+        liveState = { cycleNum, currentZone: zoneName, currentCamera: cam.camName, phase: 'analyzing' };
+        emit('camera_call', { cycleNum, zoneName, camId: cam.camId, camName: cam.camName });
+        const callStart = Date.now();
         try {
           const result = await analyzeZoneImage(jpegBuffer, zoneName, entry.type);
           analyses.push({ camId: cam.camId, camName: cam.camName, ...result });
           stats.apiCalls++;
+          const latencyMs = Date.now() - callStart;
           console.log(`[AutoPoll]   ${cam.camName}: ${result.occupied ? 'OCCUPIED' : 'FREE'} [${result.confidence}]`);
+          emit('camera_result', {
+            cycleNum, zoneName, camId: cam.camId, camName: cam.camName,
+            occupied: !!result.occupied,
+            status: result.occupied ? 'occupied' : 'free',
+            confidence: result.confidence,
+            vehicle: result.vehicle || null,
+            plate: result.plate || null,
+            worksInProgress: !!result.worksInProgress,
+            peopleCount: result.peopleCount || 0,
+            openParts: result.openParts || [],
+            description: result.description || '',
+            latencyMs,
+          });
         } catch (err) {
           console.error(`[AutoPoll]   ${cam.camName}: Vision ERROR — ${err.message}`);
           analyses.push({ camId: cam.camId, camName: cam.camName, error: true, occupied: false });
+          emit('camera_error', {
+            cycleNum, zoneName, camId: cam.camId, camName: cam.camName,
+            error: err.message, latencyMs: Date.now() - callStart,
+          });
         }
       }
 
@@ -170,6 +244,11 @@ async function runOnce() {
       enqueue({ zoneName, zoneType: entry.type, mergedResult, timestamp: new Date().toISOString() });
       results.push({ zoneName, status, occupiedCount, freeCount });
       console.log(`[AutoPoll] "${zoneName}": ${status} → queued`);
+      emit('zone_result', {
+        cycleNum, zoneName, zoneType: entry.type,
+        status, mergedResult,
+        camerasOccupied: occupiedCount, camerasFree: freeCount,
+      });
     }
   }
 
@@ -179,8 +258,13 @@ async function runOnce() {
   stats.zonesAnalyzed += results.length;
   stats.zonesSkipped += skipped;
   stats.lastCycleDuration = Date.now() - startTime;
+  liveState = { cycleNum, currentZone: null, currentCamera: null, phase: 'idle' };
 
   console.log(`[AutoPoll] Cycle #${stats.cyclesTotal}: ${results.length} analyzed, ${skipped} skipped (no change), ${stats.apiCalls} total API calls, ${Math.round(stats.lastCycleDuration / 1000)}s`);
+  emit('cycle_end', {
+    cycleNum, durationMs: stats.lastCycleDuration,
+    analyzed: results.length, skipped, apiCalls: stats.apiCalls,
+  });
   return { ok: true, zonesProcessed: results.length, skipped, results, durationMs: stats.lastCycleDuration };
 }
 
@@ -190,12 +274,14 @@ function startAutoPoll(ms, threshold) {
   if (threshold !== undefined) changeThreshold = threshold;
   running = true;
   console.log(`[AutoPoll] Started (interval: ${intervalMs / 1000}s, change threshold: ${changeThreshold}%)`);
+  emit('autopoll_started', { intervalMs, changeThreshold });
 
   currentCycle = runOnce().catch(err => console.error('[AutoPoll] Error:', err.message)).finally(() => { currentCycle = null; });
 
   pollTimer = setInterval(() => {
     if (currentCycle) {
       console.log('[AutoPoll] Previous cycle still running, skipping');
+      emit('cycle_skipped', { reason: 'previous_still_running' });
       return;
     }
     currentCycle = runOnce()
@@ -210,11 +296,18 @@ function stopAutoPoll() {
   running = false;
   currentCycle = null;
   console.log('[AutoPoll] Stopped');
+  emit('autopoll_stopped', {});
 }
 
 function isRunning() { return running; }
 function getLastRun() { return lastRun; }
 function getInterval() { return intervalMs; }
 function getStats() { return { ...stats, running, intervalMs, changeThreshold, lastRun }; }
+function getRecentEvents(limit) { return limit ? recent.slice(-limit) : recent.slice(); }
+function getLiveState() { return { ...liveState, running, intervalMs, lastRun }; }
 
-module.exports = { startAutoPoll, stopAutoPoll, isRunning, getLastRun, getInterval, getStats, runOnce };
+module.exports = {
+  startAutoPoll, stopAutoPoll, isRunning, getLastRun, getInterval, getStats, runOnce,
+  // Live observer API
+  bus, getRecentEvents, getLiveState, getLastCrop,
+};

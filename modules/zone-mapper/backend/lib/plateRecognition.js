@@ -17,17 +17,25 @@ const DEFAULT_TIMEOUT = 45000; // 45s (processing takes 2-16s, queue wait possib
 let connection = null;
 let channel = null;
 let connecting = false;
+let lastConnectAttempt = 0;
+const RECONNECT_BACKOFF_MS = 5000;
 let pendingRequests = new Map(); // frameId → { resolve, reject, timer }
 
 async function ensureConnection() {
   if (channel && connection) return;
+
+  const sinceLast = Date.now() - lastConnectAttempt;
+  if (!connecting && sinceLast < RECONNECT_BACKOFF_MS && lastConnectAttempt > 0) {
+    throw new Error(`ANPR reconnect throttled (last attempt ${sinceLast}ms ago)`);
+  }
+
   if (connecting) {
-    // Wait for ongoing connection attempt
-    await new Promise(r => setTimeout(r, 1000));
-    if (channel) return;
+    for (let i = 0; i < 50 && connecting; i++) await new Promise(r => setTimeout(r, 100));
+    if (channel && connection) return;
   }
 
   connecting = true;
+  lastConnectAttempt = Date.now();
   try {
     connection = await amqp.connect(RABBITMQ_URL, { heartbeat: 60 });
     channel = await connection.createChannel();
@@ -49,15 +57,25 @@ async function ensureConnection() {
       } catch (err) {
         console.error('[ANPR] Failed to parse response:', err.message);
       }
-      channel.ack(msg);
+      try { channel && channel.ack(msg); } catch {}
     });
 
     connection.on('error', (err) => {
       console.error('[ANPR] Connection error:', err.message);
       cleanup();
     });
-    connection.on('close', () => {
-      console.warn('[ANPR] Connection closed');
+    connection.on('close', (err) => {
+      console.warn('[ANPR] Connection closed' + (err ? `: ${err.message}` : ''));
+      cleanup();
+    });
+    // Channel-level errors (e.g. precondition-failed, server-side close) MUST
+    // be handled — otherwise amqplib emits unhandled 'error' and Node exits.
+    channel.on('error', (err) => {
+      console.error('[ANPR] Channel error:', err.message);
+      cleanup();
+    });
+    channel.on('close', () => {
+      console.warn('[ANPR] Channel closed');
       cleanup();
     });
 
@@ -72,10 +90,12 @@ async function ensureConnection() {
 }
 
 function cleanup() {
+  if (connection) { try { connection.removeAllListeners(); } catch {} }
+  if (channel)    { try { channel.removeAllListeners(); }    catch {} }
   channel = null;
   connection = null;
   // Reject all pending requests
-  for (const [id, pending] of pendingRequests) {
+  for (const [, pending] of pendingRequests) {
     clearTimeout(pending.timer);
     pending.reject(new Error('ANPR connection lost'));
   }
@@ -109,11 +129,19 @@ async function recognizePlate(jpegBuffer, frameId, timeout) {
 
     pendingRequests.set(fid, { resolve, reject, timer });
 
-    channel.sendToQueue(
-      REQUEST_QUEUE,
-      Buffer.from(JSON.stringify(message)),
-      { persistent: true }
-    );
+    try {
+      if (!channel) throw new Error('ANPR channel not available');
+      channel.sendToQueue(
+        REQUEST_QUEUE,
+        Buffer.from(JSON.stringify(message)),
+        { persistent: true }
+      );
+    } catch (err) {
+      clearTimeout(timer);
+      pendingRequests.delete(fid);
+      cleanup();
+      reject(new Error(`ANPR send failed: ${err.message}`));
+    }
   });
 }
 
@@ -224,4 +252,4 @@ async function disconnect() {
   cleanup();
 }
 
-module.exports = { recognizePlate, recognizePlateBest, isAvailable, disconnect };
+module.exports = { recognizePlate, recognizePlateBest, isAvailable, disconnect, normalizePlate };

@@ -10,6 +10,7 @@ const collectorRouter = require('./routes/collector');
 const monitoringRouter = require('./routes/monitoring');
 const { analyzeZoneImage, loadSettings, saveSettings } = require('./lib/vision');
 const { startWorker } = require('./lib/dbWorker');
+const { getFullState } = require('./lib/monitoringDb');
 const autoPoll = require('./lib/autoPoll');
 
 const app = express();
@@ -32,6 +33,8 @@ app.get('/api/settings', (req, res) => {
   res.json({
     anthropicApiKey: settings.anthropicApiKey ? '****' + settings.anthropicApiKey.slice(-8) : '',
     visionModel: settings.visionModel || 'claude-sonnet-4-20250514',
+    visionProvider: settings.visionProvider || 'v2',
+    analyzeMode: settings.analyzeMode || 'always',
     configured: !!settings.anthropicApiKey,
   });
 });
@@ -44,6 +47,9 @@ app.put('/api/settings', (req, res) => {
     }
   }
   if (req.body.visionModel) settings.visionModel = req.body.visionModel;
+  if (req.body.analyzeMode === 'always' || req.body.analyzeMode === 'on_change') {
+    settings.analyzeMode = req.body.analyzeMode;
+  }
   saveSettings(settings);
   res.json({ ok: true, configured: !!settings.anthropicApiKey });
 });
@@ -66,11 +72,20 @@ app.post('/api/autopoll/start', (req, res) => {
   const intervalMs = req.body.intervalMs || 60000;
   const changeThreshold = req.body.changeThreshold;
   autoPoll.startAutoPoll(intervalMs, changeThreshold);
+  // Persist so backend restarts pick up where we left off.
+  const s = loadSettings();
+  s.autopollEnabled = true;
+  s.autopollIntervalMs = intervalMs;
+  if (changeThreshold !== undefined) s.autopollChangeThreshold = changeThreshold;
+  saveSettings(s);
   res.json({ ok: true, running: true, intervalMs });
 });
 
 app.post('/api/autopoll/stop', (req, res) => {
   autoPoll.stopAutoPoll();
+  const s = loadSettings();
+  s.autopollEnabled = false;
+  saveSettings(s);
   res.json({ ok: true, running: false });
 });
 
@@ -85,6 +100,72 @@ app.post('/api/autopoll/once', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Snapshot for a freshly opened observer page — gives current live state,
+// stats, full per-zone DB state (so the page can render zones immediately
+// without waiting for the next cycle), and recent event tail.
+app.get('/api/autopoll/state', (req, res) => {
+  try {
+    res.json({
+      liveState: autoPoll.getLiveState(),
+      stats: autoPoll.getStats(),
+      zones: getFullState(),
+      recentEvents: autoPoll.getRecentEvents(50),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Latest crop bytes from the most recent server-side cycle, per (zone, camera).
+// Lets the observer page render the SAME image the server just analyzed,
+// without re-hitting the camera proxy and creating a parallel fetch stream.
+app.get('/api/autopoll/crop', (req, res) => {
+  const zone = String(req.query.zone || '');
+  const camId = String(req.query.camId || '');
+  if (!zone || !camId) return res.status(400).send('zone & camId required');
+  const c = autoPoll.getLastCrop(zone, camId);
+  if (!c) return res.status(404).send('no crop yet');
+  res.set('Content-Type', 'image/jpeg');
+  res.set('Cache-Control', 'no-store');
+  res.send(c.jpeg);
+});
+
+// SSE event stream — page subscribes once on mount and receives every
+// lifecycle event (cycle_start, zone_start, camera_call, zone_result, ...).
+// Replays last 50 events on connect so reconnects don't lose context.
+app.get('/api/autopoll/events', (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    // Disable proxy buffering (nginx) — without this, events queue up and
+    // the page only updates in bursts.
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders();
+
+  const send = (ev) => {
+    try { res.write(`data: ${JSON.stringify(ev)}\n\n`); } catch {}
+  };
+
+  // Replay tail so a fresh client immediately sees recent activity.
+  for (const ev of autoPoll.getRecentEvents(50)) send(ev);
+
+  const listener = (ev) => send(ev);
+  autoPoll.bus.on('event', listener);
+
+  // Heartbeat — keeps proxies + browsers from closing an idle connection
+  // during long pauses between cycles.
+  const heartbeat = setInterval(() => {
+    try { res.write(`: ping\n\n`); } catch {}
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    autoPoll.bus.off('event', listener);
+  });
 });
 
 // Serve API documentation
@@ -114,8 +195,38 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+// Process-level safety nets — prevent unhandled events from killing the
+// whole backend. Connection drops to the v2 service are normal and recover
+// on next request via the per-client reconnect logic.
+process.on('uncaughtException', (err) => {
+  console.error('[Server] uncaughtException:', err.message);
+  console.error(err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Server] unhandledRejection:', reason && reason.message ? reason.message : reason);
+});
+
+// Graceful shutdown so the supervisor can restart us cleanly.
+function shutdown(signal) {
+  console.log(`[Server] ${signal} received, shutting down...`);
+  try { autoPoll.stopAutoPoll(); } catch {}
+  setTimeout(() => process.exit(0), 1500);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Zone Mapper API running on http://0.0.0.0:${PORT}`);
   // Start DB worker
   startWorker(500);
+
+  // Auto-resume autopoll if it was running before last shutdown/crash.
+  // Lets supervisor restart fully restore service without manual button-press.
+  const s = loadSettings();
+  if (s.autopollEnabled) {
+    const interval = s.autopollIntervalMs || 60000;
+    const threshold = s.autopollChangeThreshold;
+    console.log(`[Server] Auto-resuming autopoll (interval=${interval}ms)`);
+    autoPoll.startAutoPoll(interval, threshold);
+  }
 });
