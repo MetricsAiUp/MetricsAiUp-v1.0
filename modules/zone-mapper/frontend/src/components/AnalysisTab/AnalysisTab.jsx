@@ -17,6 +17,11 @@ function SettingsPanel({ onClose }) {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('claude-sonnet-4-20250514');
   const [analyzeMode, setAnalyzeMode] = useState('always');
+  const [provider, setProvider] = useState('v2');
+  const [anpr, setAnpr] = useState({
+    anprHost: '', anprPort: '', anprUser: '', anprPassword: '',
+    anprRequestQueue: '', anprAppId: '',
+  });
   const [configured, setConfigured] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -26,6 +31,15 @@ function SettingsPanel({ onClose }) {
       setApiKey(s.anthropicApiKey || '');
       setModel(s.visionModel || 'claude-sonnet-4-20250514');
       setAnalyzeMode(s.analyzeMode || 'always');
+      setProvider(s.visionProvider || 'v2');
+      setAnpr({
+        anprHost: s.anprHost || '',
+        anprPort: s.anprPort || '',
+        anprUser: s.anprUser || '',
+        anprPassword: s.anprPassword || '',
+        anprRequestQueue: s.anprRequestQueue || '',
+        anprAppId: s.anprAppId || '',
+      });
       setConfigured(s.configured);
       setLoaded(true);
     }).catch(() => setLoaded(true));
@@ -38,6 +52,8 @@ function SettingsPanel({ onClose }) {
         anthropicApiKey: apiKey,
         visionModel: model,
         analyzeMode,
+        visionProvider: provider,
+        ...anpr,
       });
       setConfigured(result.configured);
     } catch {}
@@ -46,11 +62,104 @@ function SettingsPanel({ onClose }) {
 
   if (!loaded) return null;
 
+  const setAnprField = (k, v) => setAnpr(prev => ({ ...prev, [k]: v }));
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="bg-slate-900 rounded-lg border border-slate-600 shadow-2xl w-[480px] p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-slate-900 rounded-lg border border-slate-600 shadow-2xl w-[520px] max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
         <h3 className="text-sm font-semibold text-white mb-4">Settings</h3>
         <div className="space-y-4">
+
+          {/* Provider toggle — top-level decision: Anthropic vs ANPR-RTX3070 */}
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Метод распознавания</label>
+            <div className="space-y-1.5">
+              <label className="flex items-start gap-2 p-2 bg-slate-800/50 border border-slate-700 rounded cursor-pointer hover:bg-slate-800">
+                <input
+                  type="radio" name="visionProvider" value="v2"
+                  checked={provider === 'v2'} onChange={() => setProvider('v2')}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm text-slate-200">Сервер ANPR — RTX 3070 <span className="text-[0.65rem] text-slate-500">(по умолчанию)</span></div>
+                  <div className="text-[0.65rem] text-slate-500">Локальный сервис распознавания во внутренней VPN — занятость, ТС, госномер.</div>
+                </div>
+              </label>
+              <label className="flex items-start gap-2 p-2 bg-slate-800/50 border border-slate-700 rounded cursor-pointer hover:bg-slate-800">
+                <input
+                  type="radio" name="visionProvider" value="claude"
+                  checked={provider === 'claude'} onChange={() => setProvider('claude')}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm text-slate-200">Anthropic (Claude Vision)</div>
+                  <div className="text-[0.65rem] text-slate-500">Внешний платный провайдер. Используется ключ и модель ниже.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* ANPR connection — shown when v2 is selected (collapsed otherwise) */}
+          {provider === 'v2' && (
+            <div className="border border-slate-700 rounded p-3 bg-slate-800/30 space-y-2">
+              <div className="text-xs text-slate-400 font-medium">ANPR-сервер (RabbitMQ)</div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-[0.65rem] text-slate-500 block mb-0.5">IP / Host</label>
+                  <input
+                    type="text" value={anpr.anprHost}
+                    onChange={e => setAnprField('anprHost', e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.65rem] text-slate-500 block mb-0.5">Port</label>
+                  <input
+                    type="number" value={anpr.anprPort}
+                    onChange={e => setAnprField('anprPort', e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[0.65rem] text-slate-500 block mb-0.5">Логин</label>
+                  <input
+                    type="text" value={anpr.anprUser}
+                    onChange={e => setAnprField('anprUser', e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.65rem] text-slate-500 block mb-0.5">Пароль</label>
+                  <input
+                    type="password" value={anpr.anprPassword}
+                    onChange={e => setAnprField('anprPassword', e.target.value)}
+                    placeholder={anpr.anprPassword?.startsWith('****') ? '' : 'пароль'}
+                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[0.65rem] text-slate-500 block mb-0.5">Очередь запросов</label>
+                <input
+                  type="text" value={anpr.anprRequestQueue}
+                  onChange={e => setAnprField('anprRequestQueue', e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[0.65rem] text-slate-500 block mb-0.5">App ID <span className="text-slate-600">(очередь ответов: plate_results_v2_&lt;app_id&gt;)</span></label>
+                <input
+                  type="text" value={anpr.anprAppId}
+                  onChange={e => setAnprField('anprAppId', e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 font-mono"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Anthropic credentials — kept as-is, only relevant when provider=claude */}
           <div>
             <label className="text-xs text-slate-400 block mb-1">Anthropic API Key</label>
             <input

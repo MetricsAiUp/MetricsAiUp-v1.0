@@ -9,14 +9,61 @@
  */
 
 const amqp = require('amqplib');
+const fs = require('fs');
+const path = require('path');
 
-const RABBITMQ_URL = 'amqp://sto_service:Sto%24Plate2026%21@10.12.0.7:5672';
-const REQUEST_QUEUE = 'plate_recognition_v2_requests';
-const APP_ID = 'sto_plate_reader_v2';
-// Service uses pattern `plate_results_v2_<app_id>` — note the v2_ prefix is
-// what distinguishes v2 responses from the old (non-v2) `plate_results_<app_id>`.
-const RESPONSE_QUEUE = `plate_results_v2_${APP_ID}`;
+const SETTINGS_PATH = path.join(__dirname, '..', 'data', 'settings.json');
+
+// Built-in defaults — used both as fallback when settings.json is missing a
+// field, and exported as DEFAULTS for the settings UI.
+const DEFAULTS = Object.freeze({
+  anprHost: '10.12.0.7',
+  anprPort: 5672,
+  anprUser: 'sto_service',
+  anprPassword: 'Sto$Plate2026!',
+  anprRequestQueue: 'plate_recognition_v2_requests',
+  anprAppId: 'sto_plate_reader_v2',
+});
+
 const DEFAULT_TIMEOUT = 60000; // 60s — v2 does more work than v1
+
+function readSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Compose live config from settings.json with built-in fallbacks.
+ * Response queue is always `plate_results_v2_<appId>` (service convention).
+ */
+function getConfig() {
+  const s = readSettings();
+  const host = s.anprHost || DEFAULTS.anprHost;
+  const port = Number(s.anprPort) || DEFAULTS.anprPort;
+  const user = s.anprUser || DEFAULTS.anprUser;
+  const password = s.anprPassword || DEFAULTS.anprPassword;
+  const requestQueue = s.anprRequestQueue || DEFAULTS.anprRequestQueue;
+  const appId = s.anprAppId || DEFAULTS.anprAppId;
+  const url = `amqp://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}`;
+  return {
+    url,
+    host,
+    port,
+    requestQueue,
+    appId,
+    responseQueue: `plate_results_v2_${appId}`,
+  };
+}
+
+// Track the config the current connection was opened with — if settings change,
+// we drop the connection so the next call re-connects with the new params.
+let activeConfigKey = null;
+function configKey(cfg) {
+  return [cfg.url, cfg.requestQueue, cfg.responseQueue].join('|');
+}
 
 let connection = null;
 let channel = null;
@@ -26,6 +73,16 @@ const RECONNECT_BACKOFF_MS = 5000; // throttle reconnect attempts
 const pendingRequests = new Map(); // frameId → { resolve, reject, timer }
 
 async function ensureConnection() {
+  const cfg = getConfig();
+  const key = configKey(cfg);
+
+  // Settings changed since last connect — drop the stale connection so we
+  // re-open with the new host/credentials/queue.
+  if ((channel && connection) && activeConfigKey && activeConfigKey !== key) {
+    console.log('[ANPRv2] Settings changed, reconnecting');
+    try { await disconnect(); } catch {}
+  }
+
   if (channel && connection) return;
 
   // Throttle reconnect storms — if last attempt failed recently, fail fast.
@@ -43,13 +100,13 @@ async function ensureConnection() {
   connecting = true;
   lastConnectAttempt = Date.now();
   try {
-    connection = await amqp.connect(RABBITMQ_URL, { heartbeat: 60 });
+    connection = await amqp.connect(cfg.url, { heartbeat: 60 });
     channel = await connection.createChannel();
 
-    await channel.assertQueue(REQUEST_QUEUE, { durable: true });
-    await channel.assertQueue(RESPONSE_QUEUE, { durable: true });
+    await channel.assertQueue(cfg.requestQueue, { durable: true });
+    await channel.assertQueue(cfg.responseQueue, { durable: true });
 
-    channel.consume(RESPONSE_QUEUE, (msg) => {
+    channel.consume(cfg.responseQueue, (msg) => {
       if (!msg) return;
       try {
         const result = JSON.parse(msg.content.toString());
@@ -87,7 +144,8 @@ async function ensureConnection() {
       cleanup();
     });
 
-    console.log('[ANPRv2] Connected to RabbitMQ at 10.12.0.7');
+    activeConfigKey = key;
+    console.log(`[ANPRv2] Connected to RabbitMQ at ${cfg.host}:${cfg.port}`);
   } catch (err) {
     console.error('[ANPRv2] Connection failed:', err.message);
     cleanup();
@@ -104,6 +162,7 @@ function cleanup() {
   if (channel)    { try { channel.removeAllListeners(); }    catch {} }
   channel = null;
   connection = null;
+  activeConfigKey = null;
   for (const [, pending] of pendingRequests) {
     clearTimeout(pending.timer);
     pending.reject(new Error('ANPRv2 connection lost'));
@@ -180,6 +239,7 @@ async function recognizeV2(jpegBuffer, zones, opts = {}) {
   zones.forEach(validateZone);
 
   await ensureConnection();
+  const cfg = getConfig();
 
   const fid = opts.frameId || `zm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const timeoutMs = opts.timeout || DEFAULT_TIMEOUT;
@@ -192,7 +252,7 @@ async function recognizeV2(jpegBuffer, zones, opts = {}) {
 
   const message = {
     frame_id: fid,
-    app_id: APP_ID,
+    app_id: cfg.appId,
     image_base64: jpegBuffer.toString('base64'),
     zones: cleanZones,
   };
@@ -210,7 +270,7 @@ async function recognizeV2(jpegBuffer, zones, opts = {}) {
       // and now; guard so we reject cleanly instead of crashing.
       if (!channel) throw new Error('ANPRv2 channel not available');
       channel.sendToQueue(
-        REQUEST_QUEUE,
+        cfg.requestQueue,
         Buffer.from(JSON.stringify(message)),
         { persistent: true }
       );
@@ -257,7 +317,11 @@ module.exports = {
   indexZones,
   isAvailable,
   disconnect,
-  APP_ID,
-  REQUEST_QUEUE,
-  RESPONSE_QUEUE,
+  getConfig,
+  DEFAULTS,
+  // Legacy getters — preserve compatibility with scripts that imported the
+  // old constants. Each access reads current settings.
+  get APP_ID() { return getConfig().appId; },
+  get REQUEST_QUEUE() { return getConfig().requestQueue; },
+  get RESPONSE_QUEUE() { return getConfig().responseQueue; },
 };

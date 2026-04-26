@@ -9,6 +9,7 @@ const camerasRouter = require('./routes/cameras');
 const collectorRouter = require('./routes/collector');
 const monitoringRouter = require('./routes/monitoring');
 const { analyzeZoneImage, loadSettings, saveSettings } = require('./lib/vision');
+const { DEFAULTS: ANPR_DEFAULTS } = require('./lib/plateRecognitionV2');
 const { startWorker } = require('./lib/dbWorker');
 const { getFullState } = require('./lib/monitoringDb');
 const autoPoll = require('./lib/autoPoll');
@@ -28,6 +29,13 @@ app.use('/api/collector', collectorRouter);
 app.use('/api/monitoring', monitoringRouter);
 
 // Settings API
+//
+// Provider toggle: settings.visionProvider
+//   'v2'     → ANPR-RTX3070 service over RabbitMQ (default)
+//   'claude' → Anthropic Vision (legacy)
+// ANPR connection (host / port / user / password / queue / app id) is in
+// settings.json as anpr* fields; missing fields fall back to ANPR_DEFAULTS
+// pulled from plateRecognitionV2 (current production values).
 app.get('/api/settings', (req, res) => {
   const settings = loadSettings();
   res.json({
@@ -36,6 +44,15 @@ app.get('/api/settings', (req, res) => {
     visionProvider: settings.visionProvider || 'v2',
     analyzeMode: settings.analyzeMode || 'always',
     configured: !!settings.anthropicApiKey,
+    // ANPR-RTX3070 connection — password masked like the API key.
+    anprHost: settings.anprHost || ANPR_DEFAULTS.anprHost,
+    anprPort: settings.anprPort || ANPR_DEFAULTS.anprPort,
+    anprUser: settings.anprUser || ANPR_DEFAULTS.anprUser,
+    anprPassword: (settings.anprPassword || ANPR_DEFAULTS.anprPassword)
+      ? '****' + (settings.anprPassword || ANPR_DEFAULTS.anprPassword).slice(-4)
+      : '',
+    anprRequestQueue: settings.anprRequestQueue || ANPR_DEFAULTS.anprRequestQueue,
+    anprAppId: settings.anprAppId || ANPR_DEFAULTS.anprAppId,
   });
 });
 
@@ -47,9 +64,26 @@ app.put('/api/settings', (req, res) => {
     }
   }
   if (req.body.visionModel) settings.visionModel = req.body.visionModel;
+  if (req.body.visionProvider === 'v2' || req.body.visionProvider === 'claude') {
+    settings.visionProvider = req.body.visionProvider;
+  }
   if (req.body.analyzeMode === 'always' || req.body.analyzeMode === 'on_change') {
     settings.analyzeMode = req.body.analyzeMode;
   }
+  // ANPR connection fields. Empty strings clear (revert to defaults). Masked
+  // password (starts with '****') is ignored so the existing value is kept.
+  if (req.body.anprHost !== undefined) settings.anprHost = req.body.anprHost || undefined;
+  if (req.body.anprPort !== undefined) {
+    const p = Number(req.body.anprPort);
+    settings.anprPort = Number.isFinite(p) && p > 0 ? p : undefined;
+  }
+  if (req.body.anprUser !== undefined) settings.anprUser = req.body.anprUser || undefined;
+  if (req.body.anprPassword !== undefined && !String(req.body.anprPassword).startsWith('****')) {
+    settings.anprPassword = req.body.anprPassword || undefined;
+  }
+  if (req.body.anprRequestQueue !== undefined) settings.anprRequestQueue = req.body.anprRequestQueue || undefined;
+  if (req.body.anprAppId !== undefined) settings.anprAppId = req.body.anprAppId || undefined;
+
   saveSettings(settings);
   res.json({ ok: true, configured: !!settings.anthropicApiKey });
 });
