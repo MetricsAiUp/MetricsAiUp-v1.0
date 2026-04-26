@@ -325,16 +325,46 @@ function buildDescription(z) {
 }
 
 /**
- * v2 analyzer — sends crop as full frame with one zone covering it.
- * Returns the same shape as analyzeZoneImage (Claude path) so callers don't change.
+ * v2 analyzer — sends the FULL camera frame plus the zone bbox in original
+ * frame coordinates so the service can OCR plates at full resolution and still
+ * attribute matches to the right zone.
+ *
+ * @param {Buffer} jpegBuffer  Full frame from the camera (or a crop, for back-compat).
+ * @param {string} zoneName
+ * @param {string} zoneType
+ * @param {object} [opts]
+ * @param {{x:number,y:number,w:number,h:number}} [opts.rect] zone rect in
+ *        the camera's calibration frame (cam.resolution coords).
+ * @param {{width:number,height:number}} [opts.resolution] calibration resolution.
+ *        If omitted/mismatched, bbox falls back to the whole JPEG.
+ *
+ * Returns the same shape as the Claude path so callers don't change.
  */
-async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType) {
-  const { w, h } = jpegDims(jpegBuffer);
-  if (!w || !h) throw new Error('analyzeZoneImageV2: cannot read JPEG dimensions');
+async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts = {}) {
+  const { w: jpegW, h: jpegH } = jpegDims(jpegBuffer);
+  if (!jpegW || !jpegH) throw new Error('analyzeZoneImageV2: cannot read JPEG dimensions');
+
+  // Build bbox in JPEG-pixel coordinates.
+  // - If we have a rect + calibration resolution, scale rect into JPEG pixels.
+  //   This is the new "full frame + zone bbox" path that gives the OCR enough
+  //   pixels on the plate.
+  // - Otherwise fall back to the whole frame (legacy "crop with bbox=full" path).
+  let bbox;
+  if (opts.rect && opts.resolution && opts.resolution.width > 0 && opts.resolution.height > 0) {
+    const sx = jpegW / opts.resolution.width;
+    const sy = jpegH / opts.resolution.height;
+    const x1 = Math.max(0, Math.round(opts.rect.x * sx));
+    const y1 = Math.max(0, Math.round(opts.rect.y * sy));
+    const x2 = Math.min(jpegW, Math.round((opts.rect.x + opts.rect.w) * sx));
+    const y2 = Math.min(jpegH, Math.round((opts.rect.y + opts.rect.h) * sy));
+    bbox = (x2 > x1 && y2 > y1) ? [x1, y1, x2, y2] : [0, 0, jpegW, jpegH];
+  } else {
+    bbox = [0, 0, jpegW, jpegH];
+  }
 
   const t0 = Date.now();
   const res = await recognizeV2(jpegBuffer, [
-    { zone_id: 'crop', bbox: [0, 0, w, h] },
+    { zone_id: 'crop', bbox },
   ], { timeout: 60000 });
 
   if (res.error) {
@@ -371,9 +401,10 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType) {
   //   1) z.matched_plate    — geometrically matched into our zone bbox by the service.
   //   2) result.plates[best] — service detected a plate on the frame but didn't
   //      match it to the zone (e.g. its IoU/centroid threshold rejected the match).
-  //      Since we send bbox=[0,0,w,h] (full crop), the only plate on the frame
-  //      *is* the one that belongs to this zone — fall back to the top-confidence
-  //      detection.
+  //      We now send the full frame with the zone bbox in original coords, so
+  //      a frame plate that didn't match into our bbox is most likely from a
+  //      neighbouring zone — but on a single-zone request the only plate on the
+  //      frame *is* this zone's, so the fallback stays useful.
   //   3) null — no plate detected at all.
   const allPlates = Array.isArray(res.plates) ? res.plates : [];
   let rawPlate = z.matched_plate || null;
@@ -393,7 +424,8 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType) {
     const topConf = allPlates[0]?.confidence != null ? `${(allPlates[0].confidence * 100).toFixed(0)}%` : '—';
     const topText = allPlates[0]?.text || '—';
     console.log(
-      `[ANPRv2] "${zoneName}": plates=${allPlates.length} (top "${topText}" ${topConf})` +
+      `[ANPRv2] "${zoneName}": frame=${jpegW}x${jpegH} bbox=[${bbox.join(',')}]` +
+      ` plates=${allPlates.length} (top "${topText}" ${topConf})` +
       `, matched=${z.matched_plate || 'null'}` +
       `, source=${plateSource || 'none'}` +
       (plate ? ` → "${plate}"` : '')
@@ -456,17 +488,17 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType) {
  *
  * Keeping `analyzeZoneImage` as the public entry so autoPoll.js stays untouched.
  */
-async function analyzeZoneImage(jpegBuffer, zoneName, zoneType) {
+async function analyzeZoneImage(jpegBuffer, zoneName, zoneType, opts = {}) {
   const settings = loadSettings();
   const provider = settings.visionProvider || 'v2';
 
   if (provider === 'v2') {
-    return analyzeZoneImageV2(jpegBuffer, zoneName, zoneType);
+    return analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts);
   }
 
   if (provider === 'auto') {
     try {
-      return await analyzeZoneImageV2(jpegBuffer, zoneName, zoneType);
+      return await analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts);
     } catch (err) {
       console.warn(`[Vision] v2 failed (${err.message}), falling back to Claude`);
       return analyzeZoneImageClaude(jpegBuffer, zoneName, zoneType);

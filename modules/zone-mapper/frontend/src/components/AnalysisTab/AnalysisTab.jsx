@@ -365,7 +365,9 @@ export default function AnalysisTab({ currentRoom }) {
               if (a.camId !== ev.camId) return a;
               // Revoke the previous object URL to avoid memory leaks across cycles.
               if (a.imageUrl) { try { URL.revokeObjectURL(a.imageUrl); } catch {} }
-              return { ...a, imageUrl };
+              // Server now returns the FULL camera frame; we keep rect/resolution
+              // on the tile so the renderer can CSS-crop to the zone area.
+              return { ...a, imageUrl, rect: ev.rect || a.rect, resolution: ev.resolution || a.resolution };
             });
             return { ...prev, [ev.zoneName]: { ...z, analyses } };
           });
@@ -724,7 +726,27 @@ export default function AnalysisTab({ currentRoom }) {
                           <div className="relative aspect-video bg-black" style={{ cursor: a.imageUrl ? 'pointer' : 'default' }}
                             onClick={() => { if (a.imageUrl) window.open(a.imageUrl, '_blank'); }}>
                             {a.imageUrl ? (
-                              <img src={a.imageUrl} alt={`${a.camName} crop`} className="w-full h-full object-cover" />
+                              a.rect && a.resolution && a.resolution.width > 0 && a.resolution.height > 0 ? (
+                                // Backend now sends the full camera frame so v2 ANPR has enough
+                                // resolution to read plates. Crop to the zone's rect via CSS so
+                                // the tile keeps showing the same area as before.
+                                <div className="absolute inset-0 overflow-hidden">
+                                  <img
+                                    src={a.imageUrl}
+                                    alt={`${a.camName} crop`}
+                                    style={{
+                                      position: 'absolute',
+                                      left: `${-(a.rect.x / a.rect.w) * 100}%`,
+                                      top: `${-(a.rect.y / a.rect.h) * 100}%`,
+                                      width: `${(a.resolution.width / a.rect.w) * 100}%`,
+                                      height: `${(a.resolution.height / a.rect.h) * 100}%`,
+                                      maxWidth: 'none',
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <img src={a.imageUrl} alt={`${a.camName} crop`} className="w-full h-full object-cover" />
+                              )
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-red-400 text-xs">{a.errorMsg || 'Error'}</div>
                             )}

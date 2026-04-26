@@ -58,11 +58,14 @@ function httpGet(url) {
   });
 }
 
-function fetchCrop(camId, rect, resolution) {
-  const { x, y, w, h } = rect;
-  const fw = resolution?.width || 1920;
-  const fh = resolution?.height || 1080;
-  return httpGet(`${CAMERA_SERVER}/api/stream/snapshot/${camId}/crop?x=${x}&y=${y}&w=${w}&h=${h}&fw=${fw}&fh=${fh}`);
+/**
+ * Fetch a FULL camera frame (no crop). The v2 ANPR service needs the original
+ * resolution to OCR plates — pre-cropping to the zone rect leaves the plate at
+ * ~50×20 px which is below nomeroff's confident range. We pass the zone bbox
+ * separately to v2 so it knows which area to attribute matches to.
+ */
+function fetchFullFrame(camId) {
+  return httpGet(`${CAMERA_SERVER}/api/stream/snapshot/${camId}`);
 }
 
 /**
@@ -150,18 +153,22 @@ async function runOnce() {
       for (const cam of entry.cameras) {
         liveState = { cycleNum, currentZone: zoneName, currentCamera: cam.camName, phase: 'fetching' };
         try {
-          const jpegBuffer = await fetchCrop(cam.camId, cam.rect, cam.resolution);
+          const jpegBuffer = await fetchFullFrame(cam.camId);
           const key = `${cam.camId}_${zoneName}`;
           const changed = hasContentChanged(key, jpegBuffer);
-          // Cache for the observer page so it doesn't re-fetch from the
-          // camera proxy. Stamped with cycleNum so the client can detect
-          // a new frame via cache-busting query param.
-          lastCrops[cropKey(zoneName, cam.camId)] = { jpeg: jpegBuffer, ts: Date.now(), cycleNum };
+          // Cache for the observer page (full frame). The page will CSS-crop
+          // to cam.rect on its side using the rect/resolution we ship in the
+          // SSE event. cycleNum is the client's cache-buster.
+          lastCrops[cropKey(zoneName, cam.camId)] = {
+            jpeg: jpegBuffer, ts: Date.now(), cycleNum,
+            rect: cam.rect, resolution: cam.resolution,
+          };
           crops.push({ cam, jpegBuffer, changed });
           if (changed) anyChanged = true;
           emit('crop_fetched', {
             cycleNum, zoneName, camId: cam.camId, camName: cam.camName,
             changed, jpegSize: jpegBuffer.length,
+            rect: cam.rect, resolution: cam.resolution,
           });
         } catch (err) {
           console.error(`[AutoPoll] ${cam.camName} crop error for "${zoneName}": ${err.message}`);
@@ -194,7 +201,10 @@ async function runOnce() {
         emit('camera_call', { cycleNum, zoneName, camId: cam.camId, camName: cam.camName });
         const callStart = Date.now();
         try {
-          const result = await analyzeZoneImage(jpegBuffer, zoneName, entry.type);
+          const result = await analyzeZoneImage(jpegBuffer, zoneName, entry.type, {
+            rect: cam.rect,
+            resolution: cam.resolution,
+          });
           analyses.push({ camId: cam.camId, camName: cam.camName, ...result });
           stats.apiCalls++;
           const latencyMs = Date.now() - callStart;
