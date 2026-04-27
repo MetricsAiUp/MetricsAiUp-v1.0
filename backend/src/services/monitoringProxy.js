@@ -8,6 +8,7 @@
  */
 
 const logger = require('../config/logger');
+const prisma = require('../config/database');
 
 const MONITORING_API_BASE = 'https://dev.metricsavto.com/p/test1/3100/api';
 const POLL_INTERVAL = 10_000; // 10 seconds
@@ -142,11 +143,111 @@ async function fetchMonitoringCameras() {
   }
 }
 
-function processState(rawState) {
-  if (!rawState || !Array.isArray(rawState)) return;
+// Track last saved state per zone to avoid duplicate snapshots
+const lastSavedState = new Map();
 
+async function saveSnapshots(rawState) {
+  if (!rawState || !Array.isArray(rawState)) return;
+  const toCreate = [];
+  for (const item of rawState) {
+    if (!item.zone) continue;
+    const key = item.zone;
+    const prev = lastSavedState.get(key);
+    // Only save if status, plate, or worksInProgress changed
+    const plate = item.car?.plate || null;
+    const works = !!item.worksInProgress;
+    if (prev && prev.status === item.status && prev.plate === plate && prev.works === works) continue;
+
+    lastSavedState.set(key, { status: item.status, plate, works });
+    toCreate.push({
+      zoneName: item.zone,
+      status: item.status || 'free',
+      plateNumber: plate,
+      carColor: item.car?.color || null,
+      carModel: item.car?.model || null,
+      carMake: item.car?.make || null,
+      carBody: item.car?.body || null,
+      worksInProgress: works,
+      worksDescription: item.worksDescription || null,
+      peopleCount: item.peopleCount || 0,
+      confidence: item.confidence || null,
+    });
+  }
+  if (toCreate.length > 0) {
+    try {
+      await prisma.monitoringSnapshot.createMany({ data: toCreate });
+    } catch (err) {
+      logger.error('Failed to save monitoring snapshots', { error: err.message });
+    }
+  }
+}
+
+function mergeHistory(rawState) {
+  if (!cachedFullHistory || !rawState) return;
+  for (const item of rawState) {
+    const cached = cachedFullHistory.find(z => z.zone === item.zone);
+    if (cached && item.history?.length) {
+      const existingTs = new Set(cached.history.map(h => h.timestamp));
+      for (const h of item.history) {
+        if (!existingTs.has(h.timestamp)) {
+          cached.history.push(h);
+        }
+      }
+    } else if (!cached && item.history?.length) {
+      cachedFullHistory.push(item);
+    }
+    // Update current state fields
+    if (cached) {
+      cached.status = item.status;
+      cached.car = item.car;
+      cached.worksInProgress = item.worksInProgress;
+      cached.worksDescription = item.worksDescription;
+      cached.peopleCount = item.peopleCount;
+      cached.lastUpdate = item.lastUpdate;
+    }
+  }
+}
+
+// Drop trashy bare duplicates from CV API.
+// External API returns both "Пост 04" (bare) and "Пост 04 — легковое/грузовое" (real).
+// The bare variant is always noise — drop it whenever a suffixed variant exists
+// for the same post/zone number, regardless of history content.
+function dropEmptyDuplicates(rawState) {
+  if (!Array.isArray(rawState)) return rawState;
+  const hasSuffixed = new Map(); // groupKey → true if suffixed variant exists
+  const isSuffixed = (zone) => /—/.test(zone || '');
+  const groupKey = (zone) => {
+    const p = extractPostNumber(zone);
+    if (p) return `post:${p}`;
+    const z = extractFreeZoneNumber(zone);
+    if (z) return `zone:${z}`;
+    return null;
+  };
+  for (const item of rawState) {
+    const key = groupKey(item.zone);
+    if (key && isSuffixed(item.zone)) hasSuffixed.set(key, true);
+  }
+  return rawState.filter(item => {
+    const key = groupKey(item.zone);
+    if (!key) return true;
+    // Drop bare entry if a suffixed sibling exists for this number
+    if (!isSuffixed(item.zone) && hasSuffixed.get(key)) return false;
+    return true;
+  });
+}
+
+function processState(rawStateInput) {
+  if (!rawStateInput || !Array.isArray(rawStateInput)) return;
+
+  const rawState = dropEmptyDuplicates(rawStateInput);
   cachedState = rawState;
   lastFetchTime = new Date();
+
+  // Merge new history entries into full history cache
+  mergeHistory(rawState);
+
+  // Persist snapshots to DB (fire-and-forget)
+  saveSnapshots(rawState);
 
   const posts = [];
   const zones = [];
@@ -221,14 +322,17 @@ async function loadFullHistory() {
     logger.info('Loading full monitoring history', { from, to });
     const raw = await fetchMonitoringState(from, to);
     if (raw && Array.isArray(raw)) {
-      cachedFullHistory = raw;
-      const totalHistory = raw.reduce((sum, z) => sum + (z.history?.length || 0), 0);
-      logger.info('Full history loaded', { zones: raw.length, historyRecords: totalHistory });
+      cachedFullHistory = dropEmptyDuplicates(raw);
+      const totalHistory = cachedFullHistory.reduce((sum, z) => sum + (z.history?.length || 0), 0);
+      logger.info('Full history loaded', { zones: cachedFullHistory.length, historyRecords: totalHistory });
     }
   } catch (err) {
     logger.error('Failed to load full history', { error: err.message });
   }
 }
+
+let historyTimer = null;
+const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000; // refresh full history every 5 min
 
 function start(io) {
   if (pollTimer) return;
@@ -237,14 +341,19 @@ function start(io) {
   // Load full history, then start polling
   loadFullHistory().then(() => poll());
   pollTimer = setInterval(poll, POLL_INTERVAL);
+  historyTimer = setInterval(loadFullHistory, HISTORY_REFRESH_INTERVAL);
 }
 
 function stop() {
   if (pollTimer) {
     clearInterval(pollTimer);
     pollTimer = null;
-    logger.info('Monitoring proxy stopped');
   }
+  if (historyTimer) {
+    clearInterval(historyTimer);
+    historyTimer = null;
+  }
+  logger.info('Monitoring proxy stopped');
 }
 
 function isRunning() {
@@ -320,6 +429,42 @@ async function fetchStateForPeriod(from, to) {
   return fetchMonitoringState(from, to);
 }
 
+// Get zone history from local DB
+async function getZoneHistoryFromDB(zoneName, from, to) {
+  const where = { zoneName };
+  if (from || to) {
+    where.timestamp = {};
+    if (from) where.timestamp.gte = new Date(from);
+    if (to) where.timestamp.lte = new Date(to);
+  }
+  const snapshots = await prisma.monitoringSnapshot.findMany({
+    where,
+    orderBy: { timestamp: 'desc' },
+    take: 5000,
+  });
+  return snapshots.map(s => ({
+    timestamp: s.timestamp.toISOString(),
+    status: s.status,
+    car: {
+      plate: s.plateNumber, color: s.carColor,
+      model: s.carModel, make: s.carMake, body: s.carBody, firstSeen: null,
+    },
+    worksInProgress: s.worksInProgress,
+    worksDescription: s.worksDescription,
+    peopleCount: s.peopleCount,
+    confidence: s.confidence,
+  }));
+}
+
+// Get all zone names that have DB history
+async function getZoneNamesFromDB() {
+  const result = await prisma.monitoringSnapshot.findMany({
+    distinct: ['zoneName'],
+    select: { zoneName: true },
+  });
+  return result.map(r => r.zoneName);
+}
+
 module.exports = {
   start,
   stop,
@@ -337,4 +482,6 @@ module.exports = {
   fetchMonitoringHistory,
   fetchMonitoringHealth,
   fetchMonitoringCameras,
+  getZoneHistoryFromDB,
+  getZoneNamesFromDB,
 };

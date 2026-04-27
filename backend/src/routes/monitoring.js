@@ -58,24 +58,47 @@ router.get('/history', authenticate, asyncHandler(async (req, res) => {
   res.json(history);
 }));
 
+// Merge API history with DB history (deduplicate by timestamp)
+function mergeHistories(apiHistory, dbHistory) {
+  const seen = new Set();
+  const merged = [];
+  for (const h of (apiHistory || [])) {
+    const key = h.timestamp;
+    if (!seen.has(key)) { seen.add(key); merged.push(h); }
+  }
+  for (const h of (dbHistory || [])) {
+    const key = h.timestamp;
+    if (!seen.has(key)) { seen.add(key); merged.push(h); }
+  }
+  merged.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return merged;
+}
+
 // GET /api/monitoring/zone-history/:zoneName — history for a specific zone
 router.get('/zone-history/:zoneName', authenticate, asyncHandler(async (req, res) => {
   const proxy = req.app.get('monitoringProxy');
   if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
 
   const zoneName = decodeURIComponent(req.params.zoneName);
-  const raw = proxy.getRawState() || [];
-  const item = raw.find(z => z.zone === zoneName);
 
-  // Also check full history
+  // Get current state from API cache
+  const raw = proxy.getRawState() || [];
+  let item = raw.find(z => z.zone === zoneName);
   if (!item) {
     const fullHistory = proxy.getFullHistory() || [];
-    const histItem = fullHistory.find(z => z.zone === zoneName);
-    if (histItem) return res.json(histItem);
+    item = fullHistory.find(z => z.zone === zoneName);
+  }
+
+  // Get DB history
+  const dbHistory = await proxy.getZoneHistoryFromDB(zoneName);
+
+  if (!item && dbHistory.length === 0) {
     return res.status(404).json({ error: `Zone "${zoneName}" not found` });
   }
 
-  res.json(item);
+  const result = item ? { ...item } : { zone: zoneName, status: 'free', history: [] };
+  result.history = mergeHistories(item?.history, dbHistory);
+  res.json(result);
 }));
 
 // GET /api/monitoring/post-history/:postNumber — history for a specific post
@@ -88,22 +111,34 @@ router.get('/post-history/:postNumber', authenticate, asyncHandler(async (req, r
     return res.status(400).json({ error: 'Invalid post number' });
   }
 
-  // Try cached full history first
-  const postData = proxy.getPostHistory(postNumber);
-  if (postData) {
-    return res.json(postData);
+  // Try cached history
+  let item = proxy.getPostHistory(postNumber);
+  if (!item) {
+    const raw = proxy.getRawState() || [];
+    const padded = String(postNumber).padStart(2, '0');
+    item = raw.find(z => {
+      const m = z.zone?.match(/Пост\s+(\d{2})/);
+      return m && m[1] === padded;
+    });
   }
 
-  // Fallback: search raw state
-  const raw = proxy.getRawState() || [];
+  // Get DB history for this post zone name
   const padded = String(postNumber).padStart(2, '0');
-  const item = raw.find(z => {
-    const m = z.zone?.match(/Пост\s+(\d{2})/);
+  const zoneNames = await proxy.getZoneNamesFromDB();
+  const postZoneName = zoneNames.find(n => {
+    const m = n.match(/Пост\s+(\d{2})/);
     return m && m[1] === padded;
   });
 
-  if (item) return res.json(item);
-  res.status(404).json({ error: `Post ${postNumber} not found` });
+  const dbHistory = postZoneName ? await proxy.getZoneHistoryFromDB(postZoneName) : [];
+
+  if (!item && dbHistory.length === 0) {
+    return res.status(404).json({ error: `Post ${postNumber} not found` });
+  }
+
+  const result = item ? { ...item } : { zone: postZoneName || `Пост ${padded}`, status: 'free', history: [] };
+  result.history = mergeHistories(item?.history, dbHistory);
+  res.json(result);
 }));
 
 // GET /api/monitoring/full-history — full cached history (all zones with history arrays)

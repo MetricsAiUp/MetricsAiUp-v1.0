@@ -504,6 +504,30 @@ model ReportSchedule {
   @@map("report_schedules")
 }
 
+// ==========================================
+// Снимки мониторинга (накопление истории)
+// ==========================================
+
+model MonitoringSnapshot {
+  id               String   @id @default(uuid())
+  zoneName         String   @map("zone_name")
+  status           String   // "free" | "occupied"
+  plateNumber      String?  @map("plate_number")
+  carColor         String?  @map("car_color")
+  carModel         String?  @map("car_model")
+  carMake          String?  @map("car_make")
+  carBody          String?  @map("car_body")
+  worksInProgress  Boolean  @default(false) @map("works_in_progress")
+  worksDescription String?  @map("works_description")
+  peopleCount      Int      @default(0) @map("people_count")
+  confidence       String?
+  timestamp        DateTime @default(now())
+
+  @@index([zoneName, timestamp])
+  @@index([timestamp])
+  @@map("monitoring_snapshots")
+}
+
 model ShiftWorker {
   id        String @id @default(uuid())
   shiftId   String @map("shift_id")
