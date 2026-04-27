@@ -540,6 +540,11 @@ export default function AnalysisTab({ currentRoom }) {
           const zones2d = await getZones2d(currentRoom.id, cam.id);
           if (!zones2d || !zones2d.length) continue;
           for (const z2d of zones2d) {
+            // Skip orphan mappings — 2D rects whose zoneId no longer exists
+            // among 3D zones (left over after a 3D zone was recreated). Without
+            // this guard they'd show up as ghost rows with the old short name.
+            const z3d = zones3d.find(z => z.id === z2d.zoneId);
+            if (!z3d) continue;
             const name = z2d.zoneName;
             let entry = map[name];
             if (!entry) {
@@ -548,10 +553,9 @@ export default function AnalysisTab({ currentRoom }) {
               }
             }
             if (!entry) {
-              const z3d = zones3d.find(z => z.id === z2d.zoneId);
               entry = {
-                zoneId: z2d.zoneId, type: z3d?.type || 'lift',
-                liftStatus: z3d?.liftStatus || 'free',
+                zoneId: z2d.zoneId, type: z3d.type || 'lift',
+                liftStatus: z3d.liftStatus || 'free',
                 cameras: [], analyses: [], status: null, result: null,
               };
               map[z2d.zoneName || z2d.zoneId] = entry;
