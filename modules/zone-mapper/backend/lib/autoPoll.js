@@ -5,6 +5,7 @@ const { read } = require('./storage');
 const { analyzeZoneImage, loadSettings } = require('./vision');
 const { enqueue } = require('./monitoringDb');
 const { nudge } = require('./dbWorker');
+const { mergeAnalyses } = require('./zoneVerdict');
 
 let pollTimer = null;
 let running = false;
@@ -232,32 +233,20 @@ async function runOnce() {
         }
       }
 
-      const valid = analyses.filter(a => !a.error);
-      const occupiedCount = valid.filter(a => a.occupied).length;
-      const freeCount = valid.filter(a => !a.occupied).length;
-      const status = occupiedCount > freeCount ? 'occupied' : 'free';
+      const m = mergeAnalyses(analyses);
+      if (!m) {
+        // every camera errored — don't overwrite previous good zone state
+        console.log(`[AutoPoll] "${zoneName}": all analyses failed, skipping enqueue`);
+        continue;
+      }
 
-      const best = valid.sort((a, b) => {
-        const co = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-        return (co[b.confidence] || 0) - (co[a.confidence] || 0);
-      })[0] || {};
-
-      const mergedResult = {
-        status, occupied: status === 'occupied',
-        vehicle: best.vehicle || null, plate: best.plate || null,
-        openParts: best.openParts || [], worksInProgress: !!best.worksInProgress,
-        worksDescription: best.worksDescription || null, peopleCount: best.peopleCount || 0,
-        confidence: best.confidence || 'LOW', description: best.description || '',
-        camerasAnalyzed: analyses.length, camerasOccupied: occupiedCount, camerasFree: freeCount,
-      };
-
-      enqueue({ zoneName, zoneType: entry.type, mergedResult, timestamp: new Date().toISOString() });
-      results.push({ zoneName, status, occupiedCount, freeCount });
-      console.log(`[AutoPoll] "${zoneName}": ${status} → queued`);
+      enqueue({ zoneName, zoneType: entry.type, mergedResult: m.merged, timestamp: new Date().toISOString() });
+      results.push({ zoneName, status: m.status, occupiedCount: m.occupiedCount, freeCount: m.freeCount });
+      console.log(`[AutoPoll] "${zoneName}": ${m.status} → queued`);
       emit('zone_result', {
         cycleNum, zoneName, zoneType: entry.type,
-        status, mergedResult,
-        camerasOccupied: occupiedCount, camerasFree: freeCount,
+        status: m.status, mergedResult: m.merged,
+        camerasOccupied: m.occupiedCount, camerasFree: m.freeCount,
       });
     }
   }
