@@ -270,7 +270,7 @@ export default function Events() {
                     {translateZone(ev.zone?.name, isRu) || '—'}
                   </td>
                   <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    {translatePost(ev.post?.name, isRu) || '—'}
+                    {translatePost(ev.post, isRu) || '—'}
                   </td>
                   <td className="px-3 py-2">
                     {plate ? (

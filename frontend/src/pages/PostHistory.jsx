@@ -381,7 +381,11 @@ export default function PostHistory() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                {isRu ? `Пост ${postNum} — История` : `Post ${postNum} — History`}
+                {(() => {
+                  const ruName = currentState?.displayName || currentState?.name || `Пост ${postNum}`;
+                  const enName = currentState?.displayNameEn || currentState?.displayName || currentState?.name || `Post ${postNum}`;
+                  return isRu ? `${ruName} — История` : `${enName} — History`;
+                })()}
               </h1>
               <HelpButton pageKey="postHistory" />
             </div>

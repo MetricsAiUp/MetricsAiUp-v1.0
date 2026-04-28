@@ -27,7 +27,17 @@ export function translateZone(name, isRu) {
     .replace('Парковка', 'Parking').replace('посты', 'posts');
 }
 
-export function translatePost(name, isRu) {
+export function translatePost(nameOrPost, isRu) {
+  // Принимает строку (legacy) или объект { name, displayName, displayNameEn }
+  if (nameOrPost && typeof nameOrPost === 'object') {
+    const ru = nameOrPost.displayName || nameOrPost.name;
+    const en = nameOrPost.displayNameEn || nameOrPost.displayName || nameOrPost.name;
+    const picked = isRu ? ru : en;
+    if (!picked) return picked;
+    if (isRu) return picked;
+    return POST_NAMES[picked] || picked.replace('Пост', 'Post');
+  }
+  const name = nameOrPost;
   if (isRu || !name) return name;
   return POST_NAMES[name] || name.replace('Пост', 'Post');
 }

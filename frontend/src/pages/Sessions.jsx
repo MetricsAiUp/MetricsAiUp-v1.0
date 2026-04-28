@@ -144,7 +144,7 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
           </div>
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Текущий пост' : 'Current Post'}</p>
-            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{translatePost(post?.name, isRu) || '—'}</p>
+            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{translatePost(post, isRu) || '—'}</p>
           </div>
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Время въезда' : 'Entry Time'}</p>
@@ -391,7 +391,7 @@ export default function Sessions() {
                   {translateZone(s.zoneStays?.[0]?.zone?.name, isRu) || '—'}
                 </td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
-                  {translatePost(s.postStays?.[0]?.post?.name, isRu) || '—'}
+                  {translatePost(s.postStays?.[0]?.post, isRu) || '—'}
                 </td>
                 <td className="px-4 py-3">
                   <span
