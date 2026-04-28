@@ -1,8 +1,19 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
+const logger = require('../config/logger');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { createMapLayoutSchema, updateMapLayoutSchema } = require('../schemas/mapLayout');
+const { syncMapLayoutToEntities } = require('../services/mapSyncService');
+
+// Best-effort sync: ошибка sync не должна ломать save карты.
+async function safeSync(layout) {
+  try {
+    await syncMapLayoutToEntities(layout);
+  } catch (err) {
+    logger.error('mapSync failed', { error: err.message, stack: err.stack });
+  }
+}
 
 // GET /api/map-layout — get active layout (public, no auth needed)
 router.get('/', async (req, res) => {
@@ -57,6 +68,7 @@ router.post('/', authenticate, requirePermission('manage_zones'), validate(creat
         isActive: isActive !== false,
       },
     });
+    if (layout.isActive) await safeSync(layout);
     res.status(201).json({ ...layout, elements: JSON.parse(layout.elements) });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -109,6 +121,7 @@ router.put('/:id', authenticate, requirePermission('manage_zones'), validate(upd
       where: { id: req.params.id },
       data,
     });
+    if (layout.isActive) await safeSync(layout);
     res.json({ ...layout, elements: JSON.parse(layout.elements) });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Layout not found' });
@@ -167,6 +180,7 @@ router.post('/:id/restore/:version', authenticate, requirePermission('manage_zon
         elements: ver.elements,
       },
     });
+    if (layout.isActive) await safeSync(layout);
     res.json({ ...layout, elements: JSON.parse(layout.elements) });
   } catch (err) {
     res.status(500).json({ error: err.message });

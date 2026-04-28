@@ -83,14 +83,19 @@ model RolePermission {
 // PostStatus: free, occupied, occupied_no_work, active_work
 
 model Zone {
-  id          String   @id @default(uuid())
-  name        String
-  type        String   @default("repair") // ZoneType
-  description String?
-  coordinates String?  // JSON полигон зоны на карте
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  name          String
+  type          String   @default("repair") // ZoneType
+  description   String?
+  coordinates   String?  // JSON полигон зоны на карте
+  isActive      Boolean  @default(true) @map("is_active")
+  // Map sync (auto-propagation from MapLayout)
+  displayName   String?  @map("display_name")
+  displayNameEn String?  @map("display_name_en")
+  deleted       Boolean  @default(false)
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   posts     Post[]
   stays     ZoneStay[]
@@ -99,6 +104,7 @@ model Zone {
   recommendations Recommendation[]
 
   @@index([isActive])
+  @@index([deleted])
   @@map("zones")
 }
 
@@ -110,6 +116,14 @@ model Post {
   status      String  @default("free")  // PostStatus
   coordinates String? // JSON позиция поста на карте
   isActive    Boolean @default(true) @map("is_active")
+  // Map sync (auto-propagation from MapLayout)
+  number           Int?      @unique                    // стабильный ключ синка с картой
+  displayName      String?   @map("display_name")        // "Пост 4 — легковое"
+  displayNameEn    String?   @map("display_name_en")     // "Post 4 — light vehicles"
+  externalZoneName String?   @map("external_zone_name")  // имя зоны во внешнем CV API
+  externalAliases  String?   @map("external_aliases")    // JSON-массив доп. имён
+  deleted          Boolean   @default(false)
+  deletedAt        DateTime? @map("deleted_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -120,6 +134,7 @@ model Post {
 
   @@index([isActive])
   @@index([zoneId])
+  @@index([deleted])
   @@map("posts")
 }
 
@@ -132,10 +147,14 @@ model Camera {
   name     String
   rtspUrl  String  @map("rtsp_url")
   isActive Boolean @default(true) @map("is_active")
+  // Map sync (auto-propagation from MapLayout)
+  deleted   Boolean   @default(false)
+  deletedAt DateTime? @map("deleted_at")
 
   zones  CameraZone[]
   events Event[]
 
+  @@index([deleted])
   @@map("cameras")
 }
 
