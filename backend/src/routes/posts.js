@@ -7,7 +7,7 @@ const { createPostSchema, updatePostSchema } = require('../schemas/posts');
 // GET /api/posts
 router.get('/', authenticate, async (req, res) => {
   try {
-    const where = { isActive: true };
+    const where = { isActive: true, deleted: false };
     if (req.query.zoneId) where.zoneId = req.query.zoneId;
 
     const posts = await prisma.post.findMany({
@@ -20,7 +20,7 @@ router.get('/', authenticate, async (req, res) => {
           take: 1,
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ number: 'asc' }, { name: 'asc' }],
     });
     res.json(posts);
   } catch (err) {
@@ -32,9 +32,10 @@ router.get('/', authenticate, async (req, res) => {
 // GET /api/posts/by-number/:number/history — full history for a post by number
 router.get('/by-number/:number/history', authenticate, async (req, res) => {
   try {
-    const padded = String(req.params.number).padStart(2, '0');
+    const number = parseInt(req.params.number, 10);
+    if (!Number.isFinite(number)) return res.status(400).json({ error: 'Invalid post number' });
     const post = await prisma.post.findFirst({
-      where: { name: `Пост ${padded}`, isActive: true },
+      where: { number, deleted: false },
       include: { zone: true },
     });
     if (!post) return res.status(404).json({ error: `Post ${req.params.number} not found` });
@@ -74,7 +75,16 @@ router.get('/by-number/:number/history', authenticate, async (req, res) => {
     ]);
 
     res.json({
-      post: { id: post.id, name: post.name, type: post.type, status: post.status, zone: post.zone },
+      post: {
+        id: post.id,
+        name: post.name,
+        number: post.number,
+        displayName: post.displayName,
+        displayNameEn: post.displayNameEn,
+        type: post.type,
+        status: post.status,
+        zone: post.zone,
+      },
       events,
       stays,
       workOrders,

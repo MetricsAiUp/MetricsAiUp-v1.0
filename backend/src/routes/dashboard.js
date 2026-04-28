@@ -164,19 +164,18 @@ router.get('/live', authenticate, async (req, res) => {
 
       // Map monitoring posts to our format, enriched with DB post IDs
       const dbPosts = await prisma.post.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
+        where: { isActive: true, deleted: false, number: { not: null } },
+        select: { id: true, name: true, number: true, displayName: true, displayNameEn: true },
+        orderBy: { number: 'asc' },
       });
 
       const posts = monPosts.map(mp => {
-        const dbPost = dbPosts.find(p => {
-          const num = parseInt(p.name.match(/\d+/)?.[0], 10);
-          return num === mp.postNumber;
-        });
+        const dbPost = dbPosts.find(p => p.number === mp.postNumber);
         return {
           id: dbPost?.id || `post-${mp.postNumber}`,
-          name: `Пост ${String(mp.postNumber).padStart(2, '0')}`,
+          name: dbPost?.displayName || dbPost?.name || `Пост ${String(mp.postNumber).padStart(2, '0')}`,
+          nameEn: dbPost?.displayNameEn || `Post ${mp.postNumber}`,
+          number: mp.postNumber,
           zone: mp.externalZoneName,
           status: mp.status,
           plateNumber: mp.plateNumber,
@@ -232,16 +231,16 @@ router.get('/live', authenticate, async (req, res) => {
     // Demo mode — return data from DB as before
     const activeSessions = await prisma.vehicleSession.count({ where: { status: 'active' } });
     const posts = await prisma.post.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deleted: false },
       include: {
-        zone: { select: { name: true } },
+        zone: { select: { name: true, displayName: true, displayNameEn: true } },
         stays: {
           where: { endTime: null },
           include: { vehicleSession: { select: { plateNumber: true } } },
           take: 1,
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ number: 'asc' }, { name: 'asc' }],
     });
     const totalPosts = posts.length;
     const working = posts.filter(p => p.status === 'active_work').length;
@@ -254,8 +253,10 @@ router.get('/live', authenticate, async (req, res) => {
       totalPosts,
       posts: posts.map(p => ({
         id: p.id,
-        name: p.name,
-        zone: p.zone?.name,
+        name: p.displayName || p.name,
+        nameEn: p.displayNameEn || null,
+        number: p.number,
+        zone: p.zone?.displayName || p.zone?.name,
         status: p.status,
         plateNumber: p.stays[0]?.vehicleSession?.plateNumber || null,
         startTime: p.stays[0]?.startTime?.toISOString() || null,

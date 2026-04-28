@@ -23,9 +23,11 @@ router.get('/', authenticate, async (req, res) => {
     if (zoneId) where.zoneId = zoneId;
     if (postId) where.postId = postId;
     if (postNumber && !postId) {
-      const padded = String(postNumber).padStart(2, '0');
-      const post = await prisma.post.findFirst({ where: { name: `Пост ${padded}`, isActive: true } });
-      if (post) where.postId = post.id;
+      const num = parseInt(postNumber, 10);
+      if (Number.isFinite(num)) {
+        const post = await prisma.post.findFirst({ where: { number: num, deleted: false } });
+        if (post) where.postId = post.id;
+      }
     }
     if (type) where.type = type;
 
