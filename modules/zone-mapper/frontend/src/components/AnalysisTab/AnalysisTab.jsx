@@ -367,7 +367,7 @@ export default function AnalysisTab({ currentRoom }) {
               if (a.imageUrl) { try { URL.revokeObjectURL(a.imageUrl); } catch {} }
               // Server now returns the FULL camera frame; we keep rect/resolution
               // on the tile so the renderer can CSS-crop to the zone area.
-              return { ...a, imageUrl, rect: ev.rect || a.rect, resolution: ev.resolution || a.resolution };
+              return { ...a, imageUrl, rect: ev.rect || a.rect, points: ev.points || a.points, resolution: ev.resolution || a.resolution };
             });
             return { ...prev, [ev.zoneName]: { ...z, analyses } };
           });
@@ -563,6 +563,10 @@ export default function AnalysisTab({ currentRoom }) {
             entry.cameras.push({
               camId: cam.rtspCameraId, camName: cam.name,
               cam3dId: cam.id, rect: z2d.rect,
+              // Optional polygon outline (≥3 pts in calibration coords). When
+              // present, the tile renders it as an overlay so the operator
+              // sees the same shape ANPR is filtering against.
+              points: Array.isArray(z2d.points) && z2d.points.length >= 3 ? z2d.points : null,
               resolution: cam.resolution || { width: 1920, height: 1080 },
             });
           }
@@ -747,6 +751,27 @@ export default function AnalysisTab({ currentRoom }) {
                                       maxWidth: 'none',
                                     }}
                                   />
+                                  {/* Polygon outline overlay — when this zone has a custom
+                                      polygon, draw it inside the tile so the operator can see
+                                      the actual shape ANPR is filtering against. SVG viewBox
+                                      uses rect-local coords (point - rect.origin) so the
+                                      polygon stretches with the cropped image regardless of
+                                      tile aspect. */}
+                                  {Array.isArray(a.points) && a.points.length >= 3 && (
+                                    <svg
+                                      className="absolute inset-0 w-full h-full pointer-events-none"
+                                      viewBox={`0 0 ${a.rect.w} ${a.rect.h}`}
+                                      preserveAspectRatio="none"
+                                    >
+                                      <polygon
+                                        points={a.points.map(p => `${p.x - a.rect.x},${p.y - a.rect.y}`).join(' ')}
+                                        fill="rgba(34,197,94,0.10)"
+                                        stroke="#22c55e"
+                                        strokeWidth={Math.max(2, a.rect.w / 200)}
+                                        vectorEffect="non-scaling-stroke"
+                                      />
+                                    </svg>
+                                  )}
                                 </div>
                               ) : (
                                 <img src={a.imageUrl} alt={`${a.camName} crop`} className="w-full h-full object-cover" />

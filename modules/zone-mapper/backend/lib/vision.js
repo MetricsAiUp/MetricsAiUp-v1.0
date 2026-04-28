@@ -335,6 +335,10 @@ function buildDescription(z) {
  * @param {object} [opts]
  * @param {{x:number,y:number,w:number,h:number}} [opts.rect] zone rect in
  *        the camera's calibration frame (cam.resolution coords).
+ * @param {Array<{x:number,y:number}>} [opts.points] optional ≥3-point polygon
+ *        in calibration coords. When present, polygon is sent to ANPR as a
+ *        post-filter (cv2.pointPolygonTest); bbox becomes the AABB of the
+ *        polygon so the OCR crop still covers all vertices.
  * @param {{width:number,height:number}} [opts.resolution] calibration resolution.
  *        If omitted/mismatched, bbox falls back to the whole JPEG.
  *
@@ -344,13 +348,33 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts = {}) {
   const { w: jpegW, h: jpegH } = jpegDims(jpegBuffer);
   if (!jpegW || !jpegH) throw new Error('analyzeZoneImageV2: cannot read JPEG dimensions');
 
-  // Build bbox in JPEG-pixel coordinates.
-  // - If we have a rect + calibration resolution, scale rect into JPEG pixels.
-  //   This is the new "full frame + zone bbox" path that gives the OCR enough
-  //   pixels on the plate.
-  // - Otherwise fall back to the whole frame (legacy "crop with bbox=full" path).
+  // Build bbox + (optional) polygon in JPEG-pixel coordinates.
+  //
+  //   1. Polygon path (preferred when cam.points is set): scale every vertex,
+  //      derive bbox = AABB(polygon). bbox still drives the OCR crop; polygon
+  //      is the tighter outline ANPR uses to reject neighbour-zone matches.
+  //   2. Rect path (legacy / new rect zones): scale opts.rect into JPEG pixels.
+  //   3. Fallback: whole frame (kept for back-compat with crop-only callers).
   let bbox;
-  if (opts.rect && opts.resolution && opts.resolution.width > 0 && opts.resolution.height > 0) {
+  let polygon = null;
+  const haveResolution = opts.resolution && opts.resolution.width > 0 && opts.resolution.height > 0;
+
+  if (haveResolution && Array.isArray(opts.points) && opts.points.length >= 3) {
+    const sx = jpegW / opts.resolution.width;
+    const sy = jpegH / opts.resolution.height;
+    const scaled = opts.points.map(p => [
+      Math.max(0, Math.min(jpegW, p.x * sx)),
+      Math.max(0, Math.min(jpegH, p.y * sy)),
+    ]);
+    const xs = scaled.map(p => p[0]);
+    const ys = scaled.map(p => p[1]);
+    const x1 = Math.max(0, Math.floor(Math.min(...xs)));
+    const y1 = Math.max(0, Math.floor(Math.min(...ys)));
+    const x2 = Math.min(jpegW, Math.ceil(Math.max(...xs)));
+    const y2 = Math.min(jpegH, Math.ceil(Math.max(...ys)));
+    bbox = (x2 > x1 && y2 > y1) ? [x1, y1, x2, y2] : [0, 0, jpegW, jpegH];
+    polygon = scaled;
+  } else if (opts.rect && haveResolution) {
     const sx = jpegW / opts.resolution.width;
     const sy = jpegH / opts.resolution.height;
     const x1 = Math.max(0, Math.round(opts.rect.x * sx));
@@ -363,9 +387,9 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts = {}) {
   }
 
   const t0 = Date.now();
-  const res = await recognizeV2(jpegBuffer, [
-    { zone_id: 'crop', bbox },
-  ], { timeout: 60000 });
+  const zoneReq = { zone_id: 'crop', bbox };
+  if (polygon) zoneReq.polygon = polygon;
+  const res = await recognizeV2(jpegBuffer, [zoneReq], { timeout: 60000 });
 
   if (res.error) {
     throw new Error(`v2 service error: ${res.error}`);
@@ -425,6 +449,7 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts = {}) {
     const topText = allPlates[0]?.text || '—';
     console.log(
       `[ANPRv2] "${zoneName}": frame=${jpegW}x${jpegH} bbox=[${bbox.join(',')}]` +
+      (polygon ? ` poly=${polygon.length}pt` : '') +
       ` plates=${allPlates.length} (top "${topText}" ${topConf})` +
       `, matched=${z.matched_plate || 'null'}` +
       `, source=${plateSource || 'none'}` +

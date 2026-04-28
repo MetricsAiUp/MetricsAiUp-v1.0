@@ -132,7 +132,12 @@ async function runOnce() {
         if (entry) {
           entry.cameras.push({
             camId: cam.rtspCameraId, camName: cam.name,
-            rect: z2d.rect, resolution: cam.resolution || { width: 1920, height: 1080 },
+            rect: z2d.rect,
+            // Optional polygon (≥3 pts) in calibration coords. When present,
+            // vision.js scales it to JPEG pixels and forwards as `polygon` so
+            // ANPR can reject neighbour-zone matches via cv2.pointPolygonTest.
+            points: Array.isArray(z2d.points) && z2d.points.length >= 3 ? z2d.points : null,
+            resolution: cam.resolution || { width: 1920, height: 1080 },
           });
         }
       }
@@ -162,14 +167,14 @@ async function runOnce() {
           // SSE event. cycleNum is the client's cache-buster.
           lastCrops[cropKey(zoneName, cam.camId)] = {
             jpeg: jpegBuffer, ts: Date.now(), cycleNum,
-            rect: cam.rect, resolution: cam.resolution,
+            rect: cam.rect, points: cam.points, resolution: cam.resolution,
           };
           crops.push({ cam, jpegBuffer, changed });
           if (changed) anyChanged = true;
           emit('crop_fetched', {
             cycleNum, zoneName, camId: cam.camId, camName: cam.camName,
             changed, jpegSize: jpegBuffer.length,
-            rect: cam.rect, resolution: cam.resolution,
+            rect: cam.rect, points: cam.points, resolution: cam.resolution,
           });
         } catch (err) {
           console.error(`[AutoPoll] ${cam.camName} crop error for "${zoneName}": ${err.message}`);
@@ -204,6 +209,7 @@ async function runOnce() {
         try {
           const result = await analyzeZoneImage(jpegBuffer, zoneName, entry.type, {
             rect: cam.rect,
+            points: cam.points,
             resolution: cam.resolution,
           });
           analyses.push({ camId: cam.camId, camName: cam.camName, ...result });

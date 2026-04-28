@@ -2,7 +2,7 @@
  * ANPR v2 client via RabbitMQ — plates + per-zone occupancy/body/color/brand.
  * Replaces Claude Vision for zone analysis. Old plateRecognition.js stays.
  *
- * Request:  { frame_id, app_id, image_base64, zones:[{zone_id,bbox:[x1,y1,x2,y2]}] }
+ * Request:  { frame_id, app_id, image_base64, zones:[{zone_id,bbox:[x1,y1,x2,y2],polygon?:[[x,y],...]}] }
  * Response: { frame_id, app_id, plates:[...], zones:[{zone_id,occupied,occupancy_prob,
  *             body,body_prob,color,color_prob,brand,brand_prob,matched_plate}],
  *             processing_time_ms, error }
@@ -191,14 +191,34 @@ function validateZone(z, idx) {
   if (x1 >= x2 || y1 >= y2 || x1 < 0 || y1 < 0) {
     throw new Error(`zones[${idx}].bbox invalid: [${x1},${y1},${x2},${y2}]`);
   }
+  // Optional polygon: ≥3 [x,y] points, finite numbers, in same pixel space as bbox.
+  // ANPR side post-filters detections via cv2.pointPolygonTest. Self-intersection
+  // is checked there; we only validate shape/types/non-negative coords here.
+  if (z.polygon !== undefined && z.polygon !== null) {
+    if (!Array.isArray(z.polygon) || z.polygon.length < 3) {
+      throw new Error(`zones[${idx}].polygon must be array of ≥3 [x,y] pairs`);
+    }
+    for (let i = 0; i < z.polygon.length; i++) {
+      const p = z.polygon[i];
+      if (!Array.isArray(p) || p.length !== 2 || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) {
+        throw new Error(`zones[${idx}].polygon[${i}] must be [x,y] of finite numbers`);
+      }
+      if (p[0] < 0 || p[1] < 0) {
+        throw new Error(`zones[${idx}].polygon[${i}] has negative coord: [${p[0]},${p[1]}]`);
+      }
+    }
+  }
 }
 
 /**
  * Send full frame + zones for combined plate + occupancy analysis.
  *
  * @param {Buffer} jpegBuffer Full-frame JPEG/PNG (no pre-cropping).
- * @param {Array<{zone_id:string|number, bbox:[number,number,number,number]}>} zones
+ * @param {Array<{zone_id:string|number, bbox:[number,number,number,number], polygon?:Array<[number,number]>}>} zones
  *        Pixel-space bboxes in the original frame. Empty array = plates-only mode.
+ *        Optional `polygon` is a tighter ≥3-pt outline in the same pixel space;
+ *        ANPR uses it as a post-filter (cv2.pointPolygonTest) so neighbour cars
+ *        sitting inside the bbox but outside the polygon are excluded.
  * @param {object} [opts]
  * @param {string} [opts.frameId] override generated id
  * @param {number} [opts.timeout] ms, default 60000
@@ -245,10 +265,17 @@ async function recognizeV2(jpegBuffer, zones, opts = {}) {
   const timeoutMs = opts.timeout || DEFAULT_TIMEOUT;
 
   // Cast bbox values to integers (service expects ints).
-  const cleanZones = zones.map(z => ({
-    zone_id: z.zone_id,
-    bbox: z.bbox.map(n => Math.round(n)),
-  }));
+  // Polygon, if present, is sent in same pixel space as bbox, also rounded.
+  const cleanZones = zones.map(z => {
+    const out = {
+      zone_id: z.zone_id,
+      bbox: z.bbox.map(n => Math.round(n)),
+    };
+    if (Array.isArray(z.polygon) && z.polygon.length >= 3) {
+      out.polygon = z.polygon.map(([x, y]) => [Math.round(x), Math.round(y)]);
+    }
+    return out;
+  });
 
   const message = {
     frame_id: fid,

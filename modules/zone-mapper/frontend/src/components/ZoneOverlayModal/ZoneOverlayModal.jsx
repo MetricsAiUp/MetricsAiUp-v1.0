@@ -8,8 +8,36 @@ const getProjection = (roomId, camId) => fetchJson(`/rooms/${roomId}/cameras/${c
 const getZones2d = (roomId, camId) => fetchJson(`/rooms/${roomId}/cameras/${camId}/zones2d`);
 const saveZones2d = (roomId, camId, zones2d) => fetchJson(`/rooms/${roomId}/cameras/${camId}/zones2d`, { method: 'PUT', body: JSON.stringify({ zones2d }) });
 
-// Editable rectangle zone on SVG
-function EditableZone({ zone, scale, selected, onSelect, onChange, onDelete }) {
+// AABB of a points array (used to keep `rect` in sync with `points` so
+// non-polygon-aware code paths still see a valid bounding rect.)
+function aabbOfPoints(points) {
+  if (!points || points.length === 0) return { x: 0, y: 0, w: 0, h: 0 };
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+// Inscribe an N-gon into the given rect. The polygon centre = rect centre,
+// vertices spread on an ellipse touching the rect edges. Top vertex is
+// slightly rotated (-90°) so a 4-gon ends up as a diamond instead of a
+// rectangle (giving instant visual feedback that polygon mode is on).
+function inscribeNGon(rect, n) {
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const rx = rect.w / 2;
+  const ry = rect.h / 2;
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    pts.push({ x: cx + rx * Math.cos(angle), y: cy + ry * Math.sin(angle) });
+  }
+  return pts;
+}
+
+// Editable rectangle zone on SVG (legacy / new rect zones).
+function EditableZone({ zone, scale, selected, onSelect, onChange }) {
   const startRef = useRef(null);
 
   const { x, y, w, h } = zone.rect;
@@ -128,6 +156,145 @@ function EditableZone({ zone, scale, selected, onSelect, onChange, onDelete }) {
   );
 }
 
+// Editable polygon zone on SVG. Drag a vertex to reshape; drag the polygon
+// body to translate; double-click an edge to insert a vertex at its mid-point;
+// right-click a vertex to remove (only when >3 vertices remain).
+function EditablePolygon({ zone, scale, selected, onSelect, onChange }) {
+  const startRef = useRef(null);
+  const points = zone.points;
+  const handleSize = 14 / scale;
+
+  const polyStr = points.map(p => `${p.x},${p.y}`).join(' ');
+  const labelAnchor = points.reduce(
+    (a, p) => (p.y < a.y || (p.y === a.y && p.x < a.x) ? p : a),
+    points[0],
+  );
+
+  const onBodyDown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onSelect(zone.zoneId);
+    const svg = e.target.closest('svg');
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+    startRef.current = { sx: svgPt.x, sy: svgPt.y, points: points.map(p => ({ ...p })) };
+
+    const onMove = (ev) => {
+      const mpt = svg.createSVGPoint();
+      mpt.x = ev.clientX; mpt.y = ev.clientY;
+      const mp = mpt.matrixTransform(svg.getScreenCTM().inverse());
+      const dx = mp.x - startRef.current.sx;
+      const dy = mp.y - startRef.current.sy;
+      const moved = startRef.current.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+      onChange(zone.zoneId, moved);
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  const onVertexDown = (e, idx) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onSelect(zone.zoneId);
+    if (e.button === 2) return; // handled by onContextMenu
+    const svg = e.target.closest('svg');
+    const startPts = points.map(p => ({ ...p }));
+
+    const onMove = (ev) => {
+      const mpt = svg.createSVGPoint();
+      mpt.x = ev.clientX; mpt.y = ev.clientY;
+      const mp = mpt.matrixTransform(svg.getScreenCTM().inverse());
+      const next = startPts.map((p, i) => i === idx ? { x: mp.x, y: mp.y } : p);
+      onChange(zone.zoneId, next);
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  // Right-click on vertex → remove (min 3 vertices).
+  const onVertexContext = (e, idx) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (points.length <= 3) return;
+    const next = points.filter((_, i) => i !== idx);
+    onChange(zone.zoneId, next);
+  };
+
+  // Double-click an edge → insert vertex at its midpoint, capped at 20 total.
+  const onEdgeDoubleClick = (e, idx) => {
+    e.stopPropagation();
+    if (points.length >= 20) return;
+    const a = points[idx];
+    const b = points[(idx + 1) % points.length];
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const next = [...points.slice(0, idx + 1), mid, ...points.slice(idx + 1)];
+    onChange(zone.zoneId, next);
+  };
+
+  return (
+    <g>
+      <polygon
+        points={polyStr}
+        fill={zone.color || '#22c55e'}
+        fillOpacity={selected ? 0.25 : 0.12}
+        stroke={zone.color || '#22c55e'}
+        strokeWidth={selected ? 2.5 / scale : 1.5 / scale}
+        style={{ cursor: 'move' }}
+        onPointerDown={onBodyDown}
+      />
+      {/* Invisible thicker stroke per edge to catch double-clicks for vertex insertion. */}
+      {selected && points.map((p, i) => {
+        const q = points[(i + 1) % points.length];
+        return (
+          <line
+            key={`edge-${i}`}
+            x1={p.x} y1={p.y} x2={q.x} y2={q.y}
+            stroke="transparent"
+            strokeWidth={10 / scale}
+            style={{ cursor: 'copy' }}
+            onDoubleClick={(e) => onEdgeDoubleClick(e, i)}
+          />
+        );
+      })}
+      <text
+        x={labelAnchor.x + 4 / scale} y={labelAnchor.y + 14 / scale}
+        fill="#fff"
+        fontSize={12 / scale}
+        fontFamily="system-ui, sans-serif"
+        fontWeight="600"
+        style={{ pointerEvents: 'none', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+      >
+        {zone.zoneName}
+      </text>
+      {selected && points.map((p, i) => (
+        <rect
+          key={`v-${i}`}
+          x={p.x - handleSize / 2}
+          y={p.y - handleSize / 2}
+          width={handleSize}
+          height={handleSize}
+          fill="#22c55e"
+          stroke="#fff"
+          strokeWidth={1.5 / scale}
+          rx={2 / scale}
+          style={{ cursor: 'grab' }}
+          onPointerDown={(e) => onVertexDown(e, i)}
+          onContextMenu={(e) => onVertexContext(e, i)}
+        />
+      ))}
+    </g>
+  );
+}
+
 export default function ZoneOverlayModal({ camera, roomId, onClose }) {
   const { currentRoom } = useStore();
   const [zones, setZones] = useState([]);
@@ -140,6 +307,10 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
   const [drawStart, setDrawStart] = useState(null);
   const [drawRect, setDrawRect] = useState(null);
   const [selectedZone3dId, setSelectedZone3dId] = useState('');
+  // Number of polygon vertices to inscribe into the rubber-banded rect.
+  // 0 = pure rectangle (legacy); 3..20 = N-gon. Rectangle stays the default
+  // because it covers >90% of bays; ANPR side accepts both shapes.
+  const [drawShapeN, setDrawShapeN] = useState(0);
   const svgRef = useRef();
 
   const resolution = camera.resolution || { width: 1920, height: 1080 };
@@ -178,7 +349,15 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
       nx = Math.max(-w * 0.9, Math.min(W - w * 0.1, nx));
       ny = Math.max(-h * 0.9, Math.min(H - h * 0.1, ny));
 
-      return { ...z, rect: { x: nx, y: ny, w, h } };
+      const dx = nx - x;
+      const dy = ny - y;
+      const out = { ...z, rect: { x: nx, y: ny, w, h } };
+      // If polygon zone, translate the points by the same delta so the visible
+      // shape and the bbox stay in sync.
+      if (Array.isArray(z.points) && z.points.length >= 3 && (dx || dy)) {
+        out.points = z.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+      }
+      return out;
     });
   }, [resolution]);
 
@@ -250,6 +429,17 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
     r.x = Math.max(-r.w * 0.9, Math.min(W - r.w * 0.1, r.x));
     r.y = Math.max(-r.h * 0.9, Math.min(H - r.h * 0.1, r.y));
     setZones(prev => prev.map(z => z.zoneId === zoneId ? { ...z, rect: r } : z));
+    setHasCustom(true);
+  };
+
+  // Polygon edit: receive new points[], recompute rect = AABB(points) so the
+  // legacy `rect` field (still used by the ANPR fallback path and analytics
+  // tile crops) stays accurate.
+  const handlePolygonChange = (zoneId, newPoints) => {
+    setZones(prev => prev.map(z => {
+      if (z.zoneId !== zoneId) return z;
+      return { ...z, points: newPoints, rect: aabbOfPoints(newPoints) };
+    }));
     setHasCustom(true);
   };
 
@@ -326,17 +516,43 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
       color,
       rect: { ...drawRect },
     };
+    if (drawShapeN >= 3 && drawShapeN <= 20) {
+      // Inscribe an N-gon inside the rubber-banded rect. The user then drags
+      // the vertices to fit the actual zone outline. rect stays = AABB(points).
+      const pts = inscribeNGon(drawRect, drawShapeN);
+      newZone.points = pts;
+      newZone.rect = aabbOfPoints(pts);
+    }
     setZones(prev => [...prev, newZone]);
     setHasCustom(true);
     setDrawStart(null);
     setDrawRect(null);
     setDrawing(false);
     setSelectedZone3dId('');
+    setDrawShapeN(0);
     setSelectedZoneId(newZone.zoneId);
   };
 
   const handleRenameZone = (zoneId, newName) => {
     setZones(prev => prev.map(z => z.zoneId === zoneId ? { ...z, zoneName: newName } : z));
+    setHasCustom(true);
+  };
+
+  // Convert a rect-only zone to a polygon (4 vertices = the rect corners).
+  // User can then drag/insert/remove vertices to refine the outline.
+  const handleConvertToPolygon = (zoneId) => {
+    setZones(prev => prev.map(z => {
+      if (z.zoneId !== zoneId) return z;
+      if (Array.isArray(z.points) && z.points.length >= 3) return z;
+      const { x, y, w, h } = z.rect;
+      const pts = [
+        { x, y },
+        { x: x + w, y },
+        { x: x + w, y: y + h },
+        { x, y: y + h },
+      ];
+      return { ...z, points: pts };
+    }));
     setHasCustom(true);
   };
 
@@ -424,6 +640,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
               onPointerDown={handleSvgPointerDown}
               onPointerMove={handleSvgPointerMove}
               onPointerUp={handleSvgPointerUp}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <rect
                 x={0} y={0}
@@ -439,36 +656,59 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
                 <text x={resolution.width / 2} y={resolution.height / 2} fill="#94a3b8" fontSize={16 / scale} textAnchor="middle">Loading zones...</text>
               ) : (
                 zones.map(z => (
-                  <EditableZone
-                    key={z.zoneId}
-                    zone={z}
-                    scale={scale}
-                    selected={z.zoneId === selectedZoneId}
-                    onSelect={setSelectedZoneId}
-                    onChange={handleZoneChange}
-                    onDelete={handleDeleteZone}
-                  />
+                  Array.isArray(z.points) && z.points.length >= 3 ? (
+                    <EditablePolygon
+                      key={z.zoneId}
+                      zone={z}
+                      scale={scale}
+                      selected={z.zoneId === selectedZoneId}
+                      onSelect={setSelectedZoneId}
+                      onChange={handlePolygonChange}
+                    />
+                  ) : (
+                    <EditableZone
+                      key={z.zoneId}
+                      zone={z}
+                      scale={scale}
+                      selected={z.zoneId === selectedZoneId}
+                      onSelect={setSelectedZoneId}
+                      onChange={handleZoneChange}
+                    />
+                  )
                 ))
               )}
 
               {/* Drawing preview */}
               {drawRect && (
-                <rect
-                  x={drawRect.x} y={drawRect.y}
-                  width={drawRect.w} height={drawRect.h}
-                  fill="#22c55e"
-                  fillOpacity={0.2}
-                  stroke="#22c55e"
-                  strokeWidth={2 / scale}
-                  strokeDasharray={`${4 / scale}`}
-                />
+                drawShapeN >= 3 ? (
+                  <polygon
+                    points={inscribeNGon(drawRect, drawShapeN).map(p => `${p.x},${p.y}`).join(' ')}
+                    fill="#22c55e"
+                    fillOpacity={0.2}
+                    stroke="#22c55e"
+                    strokeWidth={2 / scale}
+                    strokeDasharray={`${4 / scale}`}
+                  />
+                ) : (
+                  <rect
+                    x={drawRect.x} y={drawRect.y}
+                    width={drawRect.w} height={drawRect.h}
+                    fill="#22c55e"
+                    fillOpacity={0.2}
+                    stroke="#22c55e"
+                    strokeWidth={2 / scale}
+                    strokeDasharray={`${4 / scale}`}
+                  />
+                )
               )}
             </svg>
 
             {/* Drawing mode banner */}
             {drawing && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-green-800/90 text-green-200 text-xs px-3 py-1.5 rounded-full">
-                Draw a rectangle to create a zone
+                {drawShapeN >= 3
+                  ? `Draw a rectangle — ${drawShapeN}-угольник будет вписан в него`
+                  : 'Draw a rectangle to create a zone'}
               </div>
             )}
           </div>
@@ -488,7 +728,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
                 </button>
               ) : (
                 <button
-                  onClick={() => { setDrawing(false); setDrawStart(null); setDrawRect(null); setSelectedZone3dId(''); }}
+                  onClick={() => { setDrawing(false); setDrawStart(null); setDrawRect(null); setSelectedZone3dId(''); setDrawShapeN(0); }}
                   className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-0.5 rounded"
                 >
                   Cancel
@@ -500,62 +740,100 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
                 Forces the 2D mapping to carry a real 3D zone id, so it never
                 becomes an orphan if the 3D zone is renamed later. */}
             {drawing && (
-              <select
-                value={selectedZone3dId}
-                onChange={e => setSelectedZone3dId(e.target.value)}
-                className="mb-2 w-full bg-slate-800 border border-green-600 rounded px-2 py-1 text-xs text-slate-200"
-                autoFocus
-              >
-                <option value="">— выберите зону —</option>
-                {availableZones3d.map(z => (
-                  <option key={z.id} value={z.id}>{z.name}</option>
-                ))}
-              </select>
+              <>
+                <select
+                  value={selectedZone3dId}
+                  onChange={e => setSelectedZone3dId(e.target.value)}
+                  className="mb-2 w-full bg-slate-800 border border-green-600 rounded px-2 py-1 text-xs text-slate-200"
+                  autoFocus
+                >
+                  <option value="">— выберите зону —</option>
+                  {availableZones3d.map(z => (
+                    <option key={z.id} value={z.id}>{z.name}</option>
+                  ))}
+                </select>
+                {/* Shape picker: rect (default) or N-gon (3..20). Polygon zones
+                    are sent to ANPR as `polygon` so neighbour cars sitting in
+                    the bbox but outside the outline are excluded. */}
+                <div className="mb-2 flex items-center gap-2">
+                  <label className="text-[0.65rem] text-slate-400 uppercase tracking-wider">Форма</label>
+                  <select
+                    value={drawShapeN === 0 ? 'rect' : String(drawShapeN)}
+                    onChange={e => setDrawShapeN(e.target.value === 'rect' ? 0 : parseInt(e.target.value, 10))}
+                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-xs text-slate-200"
+                  >
+                    <option value="rect">Прямоугольник</option>
+                    {Array.from({ length: 18 }, (_, i) => i + 3).map(n => (
+                      <option key={n} value={n}>{n}-угольник</option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )}
             {drawing && !selectedZone3dId && (
               <div className="mb-2 text-[0.65rem] text-slate-500">
                 Выберите зону, затем нарисуйте прямоугольник на кадре
               </div>
             )}
+            {drawing && selectedZone3dId && drawShapeN >= 3 && (
+              <div className="mb-2 text-[0.65rem] text-slate-500">
+                После создания: тяните вершины. Двойной клик по ребру — добавить вершину; ПКМ по вершине — удалить.
+              </div>
+            )}
 
             <div className="space-y-1 overflow-y-auto flex-1">
-              {zones.map(z => (
-                <div
-                  key={z.zoneId}
-                  onClick={() => setSelectedZoneId(z.zoneId === selectedZoneId ? null : z.zoneId)}
-                  className={`p-2 rounded cursor-pointer text-xs group ${
-                    z.zoneId === selectedZoneId
-                      ? 'bg-green-900/50 border border-green-600'
-                      : 'bg-slate-800 hover:bg-slate-750 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: z.color }} />
-                      {z.zoneId === selectedZoneId ? (
-                        <input
-                          type="text"
-                          value={z.zoneName}
-                          onChange={e => { e.stopPropagation(); handleRenameZone(z.zoneId, e.target.value); }}
-                          onClick={e => e.stopPropagation()}
-                          className="bg-slate-700 border-none rounded px-1 py-0 text-xs text-slate-200 w-full"
-                        />
+              {zones.map(z => {
+                const isPoly = Array.isArray(z.points) && z.points.length >= 3;
+                return (
+                  <div
+                    key={z.zoneId}
+                    onClick={() => setSelectedZoneId(z.zoneId === selectedZoneId ? null : z.zoneId)}
+                    className={`p-2 rounded cursor-pointer text-xs group ${
+                      z.zoneId === selectedZoneId
+                        ? 'bg-green-900/50 border border-green-600'
+                        : 'bg-slate-800 hover:bg-slate-750 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: z.color }} />
+                        {z.zoneId === selectedZoneId ? (
+                          <input
+                            type="text"
+                            value={z.zoneName}
+                            onChange={e => { e.stopPropagation(); handleRenameZone(z.zoneId, e.target.value); }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-slate-700 border-none rounded px-1 py-0 text-xs text-slate-200 w-full"
+                          />
+                        ) : (
+                          <span className="text-slate-200 truncate">{z.zoneName}</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDeleteZone(z.zoneId); }}
+                        className="text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
+                      >
+                        Del
+                      </button>
+                    </div>
+                    <div className="text-slate-500 mt-0.5 ml-4 flex items-center gap-2">
+                      <span>{Math.round(z.rect.w)}x{Math.round(z.rect.h)}</span>
+                      {isPoly ? (
+                        <span className="text-cyan-400">{z.points.length}-уг.</span>
                       ) : (
-                        <span className="text-slate-200 truncate">{z.zoneName}</span>
+                        z.zoneId === selectedZoneId && (
+                          <button
+                            onClick={e => { e.stopPropagation(); handleConvertToPolygon(z.zoneId); }}
+                            className="text-cyan-400 hover:text-cyan-300 underline-offset-2 hover:underline"
+                          >
+                            → polygon
+                          </button>
+                        )
                       )}
                     </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDeleteZone(z.zoneId); }}
-                      className="text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0"
-                    >
-                      Del
-                    </button>
                   </div>
-                  <div className="text-slate-500 mt-0.5 ml-4">
-                    {Math.round(z.rect.w)}x{Math.round(z.rect.h)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {zones.length === 0 && !loading && (
                 <div className="text-xs text-slate-500 py-2">No zones yet. Click "+ Add" to draw one.</div>
               )}
