@@ -15,12 +15,43 @@ const POLL_INTERVAL = 10_000; // 10 seconds
 
 // In-memory cache of latest monitoring state
 let cachedState = null;        // full array from external API
-let cachedPosts = [];          // mapped posts (01-10)
-let cachedZones = [];          // mapped free zones (01-07)
+let cachedPosts = [];          // mapped posts (active in DB)
+let cachedZones = [];          // mapped free zones (active in DB)
 let cachedFullHistory = null;  // full state with all history (loaded once at start)
 let lastFetchTime = null;
 let pollTimer = null;
 let ioRef = null;
+
+// Active post/zone numbers from DB (source of truth — Post.number / Zone.name).
+// Refreshed periodically and on map:synced event so MapEditor changes propagate
+// without restart. Replaces previous hardcoded ranges (<= 11, <= 7).
+let activePostNumbers = new Set();
+let activeFreeZoneNumbers = new Set();
+let activeSetsRefreshTimer = null;
+const ACTIVE_SETS_REFRESH_INTERVAL = 60_000; // 60 sec
+
+async function refreshActiveSets() {
+  try {
+    const posts = await prisma.post.findMany({
+      where: { deleted: false, number: { not: null } },
+      select: { number: true },
+    });
+    activePostNumbers = new Set(posts.map(p => p.number));
+
+    const zones = await prisma.zone.findMany({
+      where: { deleted: false },
+      select: { name: true },
+    });
+    const zoneNums = new Set();
+    for (const z of zones) {
+      const m = (z.name || '').match(/(\d+)/);
+      if (m) zoneNums.add(parseInt(m[1], 10));
+    }
+    activeFreeZoneNumbers = zoneNums;
+  } catch (err) {
+    logger.error('Failed to refresh active map sets', { error: err.message });
+  }
+}
 
 // Map external zone name → internal post number (1-10)
 // External: "Пост 01 — легковое", "Пост 02 — легковое", ..., "Пост 06 — шиномонтаж", etc.
@@ -254,7 +285,7 @@ function processState(rawStateInput) {
 
   for (const item of rawState) {
     const postNum = extractPostNumber(item.zone);
-    if (postNum && postNum >= 1 && postNum <= 10) {
+    if (postNum && activePostNumbers.has(postNum)) {
       // Skip duplicates (e.g. "Пост 04" and "Пост 04 — легковое/грузовое")
       if (!posts.find(p => p.postNumber === postNum)) {
         posts.push(transformPost(item, postNum));
@@ -262,7 +293,7 @@ function processState(rawStateInput) {
     }
 
     const zoneNum = extractFreeZoneNumber(item.zone);
-    if (zoneNum && zoneNum >= 1 && zoneNum <= 7) {
+    if (zoneNum && activeFreeZoneNumbers.has(zoneNum)) {
       if (!zones.find(z => z.zoneNumber === zoneNum)) {
         zones.push(transformFreeZone(item, zoneNum));
       }
@@ -338,10 +369,13 @@ function start(io) {
   if (pollTimer) return;
   ioRef = io;
   logger.info('Monitoring proxy started', { interval: POLL_INTERVAL });
-  // Load full history, then start polling
-  loadFullHistory().then(() => poll());
+  // Refresh active post/zone sets from DB, then load history & start polling
+  refreshActiveSets()
+    .then(() => loadFullHistory())
+    .then(() => poll());
   pollTimer = setInterval(poll, POLL_INTERVAL);
   historyTimer = setInterval(loadFullHistory, HISTORY_REFRESH_INTERVAL);
+  activeSetsRefreshTimer = setInterval(refreshActiveSets, ACTIVE_SETS_REFRESH_INTERVAL);
 }
 
 function stop() {
@@ -352,6 +386,10 @@ function stop() {
   if (historyTimer) {
     clearInterval(historyTimer);
     historyTimer = null;
+  }
+  if (activeSetsRefreshTimer) {
+    clearInterval(activeSetsRefreshTimer);
+    activeSetsRefreshTimer = null;
   }
   logger.info('Monitoring proxy stopped');
 }
@@ -484,4 +522,5 @@ module.exports = {
   fetchMonitoringCameras,
   getZoneHistoryFromDB,
   getZoneNamesFromDB,
+  refreshActiveSets,
 };

@@ -5,11 +5,17 @@ const { authenticate, requirePermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { createMapLayoutSchema, updateMapLayoutSchema } = require('../schemas/mapLayout');
 const { syncMapLayoutToEntities } = require('../services/mapSyncService');
+const monitoringProxy = require('../services/monitoringProxy');
 
 // Best-effort sync: ошибка sync не должна ломать save карты.
+// После успешного sync дёргаем refresh кэшей зависимых сервисов.
 async function safeSync(layout) {
   try {
     await syncMapLayoutToEntities(layout);
+    // Дать monitoringProxy подхватить новые номера постов/зон без ожидания таймера.
+    if (typeof monitoringProxy.refreshActiveSets === 'function') {
+      monitoringProxy.refreshActiveSets().catch(() => {});
+    }
   } catch (err) {
     logger.error('mapSync failed', { error: err.message, stack: err.stack });
   }
