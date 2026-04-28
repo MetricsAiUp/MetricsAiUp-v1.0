@@ -160,13 +160,15 @@ function upsertZoneState(zoneName, result) {
     return;
   }
 
-  // Zone is occupied — apply consensus logic from recent history
-  // Get last N occupied records for this zone (within last 2 hours = same car session)
+  // Zone is occupied — apply consensus logic from recent history.
+  // Window is 20 min: long enough to ride out a few bad frames, short
+  // enough that an improved recognizer's new plate wins mostFrequent fast.
+  const CONSENSUS_WINDOW_MS = 20 * 60 * 1000;
   const recentHistory = d.prepare(`
     SELECT plate, car_color, car_model, car_make, car_body FROM zone_history
     WHERE zone_name = ? AND status = 'occupied' AND timestamp > ?
     ORDER BY timestamp DESC LIMIT 50
-  `).all(zoneName, new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString());
+  `).all(zoneName, new Date(Date.now() - CONSENSUS_WINDOW_MS).toISOString());
 
   // Add current result to the pool — sanitize plates
   const allPlates = [...recentHistory.map(h => h.plate), result.plate].map(sanitizePlate).filter(Boolean);
