@@ -63,7 +63,7 @@ async function main() {
   // Create zones if they don't exist
   const ZONE_DEFS = [
     { name: 'Ремонтная зона (посты 1-4)', type: 'repair', description: 'Нижний ряд, 2-х стоечные подъёмники', postNums: [1,2,3,4] },
-    { name: 'Ремонтная зона (посты 5-8)', type: 'repair', description: 'Верхний ряд, 2-х стоечные подъёмники', postNums: [5,6,7,8] },
+    { name: 'Ремонтная зона (посты 5-8, 11)', type: 'repair', description: 'Верхний ряд, 2-х стоечные подъёмники', postNums: [5,6,7,8,11] },
     { name: 'Диагностика (посты 9-10)', type: 'repair', description: 'Правая часть СТО, диагностические посты', postNums: [9,10] },
     { name: 'Зона Въезд/Выезд', type: 'entry', description: 'Ворота въезда и выезда', postNums: [] },
     { name: 'Зона Ожидания / Парковка', type: 'waiting', description: 'Зона ожидания и парковка готовых авто', postNums: [] },
@@ -71,15 +71,19 @@ async function main() {
 
   let zones = await prisma.zone.findMany();
   if (zones.length === 0) {
-    console.log('[SeedDemo] Creating zones and posts...');
+    console.log('[SeedDemo] Creating zones and posts (bootstrap fallback)...');
     for (const zd of ZONE_DEFS) {
       const zone = await prisma.zone.create({ data: { name: zd.name, type: zd.type, description: zd.description } });
       for (const pn of zd.postNums) {
+        // number/displayName — для совместимости с mapSyncService (MapEditor sync).
         await prisma.post.create({
           data: {
             zoneId: zone.id,
-            name: `Пост ${pn}`,
-            type: pn <= 4 ? 'heavy' : (pn <= 8 ? 'light' : 'special'),
+            name: `Пост ${String(pn).padStart(2, '0')}`,
+            number: pn,
+            displayName: `Пост ${pn}`,
+            displayNameEn: `Post ${pn}`,
+            type: pn <= 4 ? 'heavy' : (pn <= 8 || pn === 11 ? 'light' : 'special'),
             status: 'free',
           },
         });
@@ -390,32 +394,38 @@ async function main() {
     { name: 'Эксузьян Андроник Андроникович', id: uuid('user-eksuzyan') },
     { name: 'admin', id: uuid('user-admin') },
   ];
+  // Имена постов для audit-сообщений берём из реальной БД (не хардкод).
+  const postNameByIdx = (idx) => posts[idx % posts.length]?.name || `Пост ${idx + 1}`;
+  // Имя зоны для audit-сообщения — первая активная зона из БД.
+  const sampleZoneName = zones[0]?.name || 'Ремонтная зона';
+  // CAM N для audit — выбираем существующую камеру.
+  const sampleCamName = (await prisma.camera.findFirst())?.name || 'CAM 01';
   const auditEntries = [
     { action: 'create', entity: 'shift', detail: 'Создана дневная смена на ' + TODAY.toISOString().split('T')[0] },
     { action: 'update', entity: 'shift', detail: 'Смена активирована' },
     { action: 'create', entity: 'workOrder', detail: 'Импорт 12 ЗН из 1С' },
     { action: 'update', entity: 'workOrder', detail: 'ЗН КОЛ00036200 → в работе' },
     { action: 'update', entity: 'workOrder', detail: 'ЗН КОЛ00036205 → завершён' },
-    { action: 'update', entity: 'post', detail: 'Пост 1 → active_work' },
-    { action: 'update', entity: 'post', detail: 'Пост 3 → occupied' },
-    { action: 'update', entity: 'post', detail: 'Пост 8 → free' },
+    { action: 'update', entity: 'post', detail: `${postNameByIdx(0)} → active_work` },
+    { action: 'update', entity: 'post', detail: `${postNameByIdx(2)} → occupied` },
+    { action: 'update', entity: 'post', detail: `${postNameByIdx(7)} → free` },
     { action: 'create', entity: 'session', detail: 'Сессия А001ВС77 — въезд' },
     { action: 'create', entity: 'session', detail: 'Сессия О456РС77 — въезд' },
     { action: 'update', entity: 'session', detail: 'Сессия В234КМ50 — завершена' },
     { action: 'create', entity: 'user', detail: 'Создан пользователь mechanic@metricsai.up' },
     { action: 'update', entity: 'user', detail: 'Роль mechanic@metricsai.up → mechanic' },
-    { action: 'update', entity: 'camera', detail: 'CAM 03 — обновлён RTSP URL' },
+    { action: 'update', entity: 'camera', detail: `${sampleCamName} — обновлён RTSP URL` },
     { action: 'create', entity: 'mapLayout', detail: 'Сохранён макет карты v2' },
-    { action: 'update', entity: 'zone', detail: 'Ремонтная зона (посты 1-4) — обновлено описание' },
+    { action: 'update', entity: 'zone', detail: `${sampleZoneName} — обновлено описание` },
     { action: 'delete', entity: 'workOrder', detail: 'Удалён дубликат ЗН КОЛ00036199' },
     { action: 'update', entity: 'shift', detail: 'Добавлен работник Швец А.Б. в смену' },
     { action: 'create', entity: 'workOrder', detail: 'ЗН КОЛ00036210 — создан вручную' },
-    { action: 'update', entity: 'post', detail: 'Пост 5 → occupied_no_work' },
+    { action: 'update', entity: 'post', detail: `${postNameByIdx(4)} → occupied_no_work` },
     { action: 'update', entity: 'workOrder', detail: 'ЗН КОЛ00036215 → в работе' },
     { action: 'create', entity: 'session', detail: 'Сессия Р789ТУ97 — въезд' },
-    { action: 'update', entity: 'session', detail: 'Сессия Е567ОР77 — перемещение на Пост 6' },
-    { action: 'update', entity: 'shift', detail: 'Работник Бортник Я.К. назначен на Пост 5' },
-    { action: 'update', entity: 'camera', detail: 'CAM 07 — переключён приоритет зоны' },
+    { action: 'update', entity: 'session', detail: `Сессия Е567ОР77 — перемещение на ${postNameByIdx(5)}` },
+    { action: 'update', entity: 'shift', detail: `Работник Бортник Я.К. назначен на ${postNameByIdx(4)}` },
+    { action: 'update', entity: 'camera', detail: `${sampleCamName} — переключён приоритет зоны` },
   ];
   for (let i = 0; i < auditEntries.length; i++) {
     const e = auditEntries[i];
