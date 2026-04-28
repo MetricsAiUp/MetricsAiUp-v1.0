@@ -11,6 +11,7 @@ export const POST_STATUS_COLORS = {
   occupied: '#f59e0b',
   occupied_no_work: '#ef4444',
   active_work: '#6366f1',
+  no_data: '#64748b', // slate-500 — пост в БД/на карте, но не репортится CV
 };
 
 // --- Work order status colors ---

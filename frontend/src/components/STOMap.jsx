@@ -10,6 +10,7 @@ const STATUS_LABELS = {
   occupied: { ru: 'Занят', en: 'Occupied' },
   occupied_no_work: { ru: 'Простой', en: 'Idle' },
   active_work: { ru: 'В работе', en: 'Active' },
+  no_data: { ru: 'Нет данных', en: 'No data' },
 };
 
 const STATUS_COLORS = POST_STATUS_COLORS;

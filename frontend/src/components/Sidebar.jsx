@@ -171,29 +171,49 @@ export default function Sidebar() {
                     {posts.map(post => {
                       const isSelected = location.search.includes(post.id);
                       // In live mode, get status from monitoring data
-                      const postNum = parseInt(post.name?.match(/\d+/)?.[0], 10);
+                      const postNum = post.number ?? parseInt(post.name?.match(/\d+/)?.[0], 10);
                       const livePost = isLive && liveData?.posts?.find(p => {
-                        const n = parseInt(p.name?.match(/\d+/)?.[0], 10);
+                        const n = p.number ?? parseInt(p.name?.match(/\d+/)?.[0], 10);
                         return n === postNum;
                       });
-                      const isActive = livePost ? livePost.status !== 'free' : post.today?.loadPercent > 0;
+                      const status = livePost?.status ?? post.status;
+                      const isNoData = status === 'no_data';
+                      const isActive = !isNoData && (livePost ? livePost.status !== 'free' : post.today?.loadPercent > 0);
+                      const noDataTitle = isRu
+                        ? 'Нет данных от CV-системы. Пост существует в БД и на карте, но не репортится.'
+                        : 'No data from CV system. Post exists in DB and map but is not reported.';
                       return (
                         <button
                           key={post.id}
                           onClick={() => navigate(`/posts-detail?post=${post.id}`)}
+                          title={isNoData ? noDataTitle : undefined}
                           className="w-full text-left pl-3 py-1 rounded-r-lg transition-all flex items-center gap-1.5"
                           style={{
                             color: isSelected ? 'var(--accent)' : 'var(--text-muted)',
                             background: isSelected ? 'var(--accent-light)' : 'transparent',
                             fontSize: '10px',
                             fontWeight: isSelected ? 600 : 400,
+                            opacity: isNoData ? 0.55 : 1,
+                            fontStyle: isNoData ? 'italic' : 'normal',
                           }}
                         >
                           <div
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: isActive ? 'var(--success)' : 'var(--text-muted)' }}
+                            style={isNoData
+                              ? { background: 'transparent', border: '1px dashed var(--text-muted)' }
+                              : { background: isActive ? 'var(--success)' : 'var(--text-muted)' }
+                            }
                           />
-                          <span className="truncate">{(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}</span>
+                          <span className="truncate">{(() => {
+                            // Кастомное displayName (отличается от стандартного "Пост N" / "Post N") — приоритет
+                            const isDefaultName = (s) => !s || /^(Пост|Post)\s*0?\d+$/i.test(s.trim());
+                            const dn = isRu ? post.displayName : (post.displayNameEn || post.displayName);
+                            if (dn && !isDefaultName(dn)) return dn;
+                            // Иначе — i18n-ключ по post.number
+                            const num = post.number ?? parseInt(post.name?.match(/\d+/)?.[0] || '0', 10);
+                            if (num > 0) return t(`posts.post${num}`);
+                            return post.name;
+                          })()}</span>
                         </button>
                       );
                     })}

@@ -291,6 +291,7 @@ router.get('/posts-analytics', async (req, res) => {
       const postsMap = await getActivePostsMap();
       const monPosts = proxy.getPosts();
       const result = monPosts.map(mp => {
+        const dbPost = postsMap.get(mp.postNumber);
         const history = mp.history || [];
         const occupiedEntries = history.filter(h => h.status === 'occupied' || h.status !== 'free');
         const freeEntries = history.filter(h => h.status === 'free');
@@ -300,6 +301,8 @@ router.get('/posts-analytics', async (req, res) => {
           id: `post-${mp.postNumber}`,
           number: mp.postNumber,
           name: postDisplayName(postsMap, mp.postNumber),
+          displayName: dbPost?.displayName || null,
+          displayNameEn: dbPost?.displayNameEn || null,
           type: postTypeOf(postsMap, mp.postNumber),
           zone: mp.externalZoneName,
           status: mp.status,
@@ -423,6 +426,44 @@ router.get('/posts-analytics', async (req, res) => {
         };
       });
 
+      // Добавляем посты, которые есть в БД, но не репортятся CV-системой:
+      // sidebar и аналитика должны их видеть, чтобы пользователь знал, что они существуют.
+      const seenNumbers = new Set(result.map(r => r.number));
+      for (const [num, dbPost] of postsMap) {
+        if (seenNumbers.has(num)) continue;
+        result.push({
+          id: `post-${num}`,
+          number: num,
+          name: dbPost.displayName || dbPost.name || `Пост ${num}`,
+          displayName: dbPost.displayName || null,
+          displayNameEn: dbPost.displayNameEn || null,
+          type: dbPost.type || 'light',
+          zone: dbPost.zone?.displayName || dbPost.zone?.name || '',
+          status: 'no_data',
+          maxCapacityHours: shiftBounds.maxH,
+          occupancy: 0,
+          efficiency: 0,
+          vehiclesToday: 0,
+          avgServiceTime: 0,
+          totalNormHours: 0,
+          totalActualHours: 0,
+          completedWOs: 0,
+          scheduledWOs: 0,
+          workerPresence: 0,
+          worker: null,
+          master: null,
+          today: {
+            factHours: 0, planHours: 0, loadPercent: 0, efficiency: 0,
+            workers: [], workOrders: [], alerts: [], eventLog: [],
+            workStats: { byGroup: [], byBrand: [], avgTimePerOrder: 0, total: 0 },
+            cameras: [], currentPlateImage: null, currentVehicle: null,
+            worksDescription: null, peopleCount: 0, openParts: [], confidence: null,
+          },
+          daily: [], calendar: [], workOrders: [],
+        });
+      }
+      result.sort((a, b) => a.number - b.number);
+
       return res.json({ posts: result, zones, mode: 'live' });
     }
 
@@ -523,10 +564,13 @@ router.get('/posts-analytics', async (req, res) => {
         currentPlateImage: null,
       };
 
+      const dbPostForRow = postsMap.get(num);
       result.push({
         id: `post-${num}`,
         number: num,
         name: postDisplayName(postsMap, num),
+        displayName: dbPostForRow?.displayName || null,
+        displayNameEn: dbPostForRow?.displayNameEn || null,
         type: postTypeOf(postsMap, num),
         zone: postZoneOf(postsMap, num),
         status: computePostStatus(todayWOs),
@@ -602,6 +646,7 @@ router.get('/dashboard-posts', async (req, res) => {
       const postsMap = await getActivePostsMap();
       const monPosts = proxy.getPosts();
       const posts = monPosts.map(mp => {
+        const dbPost = postsMap.get(mp.postNumber);
         // Build timeline from history
         const timeline = (mp.history || []).map((h, idx) => ({
           id: `mon-${mp.postNumber}-${idx}`,
@@ -632,6 +677,8 @@ router.get('/dashboard-posts', async (req, res) => {
           id: `post-${mp.postNumber}`,
           number: mp.postNumber,
           name: postDisplayName(postsMap, mp.postNumber),
+          displayName: dbPost?.displayName || null,
+          displayNameEn: dbPost?.displayNameEn || null,
           type: postTypeOf(postsMap, mp.postNumber),
           zone: mp.externalZoneName,
           status: mp.status,
@@ -645,6 +692,31 @@ router.get('/dashboard-posts', async (req, res) => {
           freeWorkOrders: [],
         };
       });
+
+      // Добавляем посты, известные БД, но отсутствующие в monitoring (status=no_data)
+      const seenNums = new Set(posts.map(p => p.number));
+      for (const [num, dbPost] of postsMap) {
+        if (seenNums.has(num)) continue;
+        posts.push({
+          id: `post-${num}`,
+          number: num,
+          name: dbPost.displayName || dbPost.name || `Пост ${num}`,
+          displayName: dbPost.displayName || null,
+          displayNameEn: dbPost.displayNameEn || null,
+          type: dbPost.type || 'light',
+          zone: dbPost.zone?.displayName || dbPost.zone?.name || '',
+          status: 'no_data',
+          currentVehicle: null,
+          worksDescription: null,
+          peopleCount: 0,
+          openParts: [],
+          confidence: null,
+          lastUpdate: null,
+          timeline: [],
+          freeWorkOrders: [],
+        });
+      }
+      posts.sort((a, b) => a.number - b.number);
 
       return res.json({
         settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || postsMap.size, weekSchedule: settings.weekSchedule, mode: 'live' },
@@ -705,10 +777,13 @@ router.get('/dashboard-posts', async (req, res) => {
         };
       }
 
+      const dbPostForDash = dbPostsMap.get(num);
       posts.push({
         id: `post-${num}`,
         number: num,
         name: postDisplayName(dbPostsMap, num),
+        displayName: dbPostForDash?.displayName || null,
+        displayNameEn: dbPostForDash?.displayNameEn || null,
         type: postTypeOf(dbPostsMap, num),
         zone: postZoneOf(dbPostsMap, num),
         status,

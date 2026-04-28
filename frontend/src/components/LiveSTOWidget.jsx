@@ -10,6 +10,7 @@ const STATUS_DOT_COLORS = {
   occupied: POST_STATUS_COLORS.occupied || '#ef4444',
   occupied_no_work: POST_STATUS_COLORS.occupied_no_work || '#f59e0b',
   active_work: POST_STATUS_COLORS.active_work || '#6366f1',
+  no_data: POST_STATUS_COLORS.no_data || '#64748b',
 };
 
 const ZONE_DOT_COLORS = {
@@ -100,24 +101,42 @@ export default function LiveSTOWidget() {
       {/* Posts grid */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
         {posts.map(post => {
-          const num = post.name?.match(/\d+/)?.[0];
+          const num = post.number ?? parseInt(post.name?.match(/\d+/)?.[0] || '0', 10);
+          const isNoData = post.status === 'no_data';
           const dotColor = STATUS_DOT_COLORS[post.status] || '#94a3b8';
+          const noDataTitle = isRu
+            ? 'Нет данных от CV-системы. Пост существует в БД и на карте, но не репортится.'
+            : 'No data from CV system. Post exists in DB and map but is not reported.';
           return (
             <div
               key={post.id}
+              title={isNoData ? noDataTitle : undefined}
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+              style={{
+                background: 'var(--bg-glass)',
+                border: '1px solid var(--border-glass)',
+                opacity: isNoData ? 0.55 : 1,
+                fontStyle: isNoData ? 'italic' : 'normal',
+              }}
             >
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={isNoData
+                  ? { background: 'transparent', border: '1px dashed var(--text-muted)' }
+                  : { background: dotColor }
+                }
+              />
               <div className="min-w-0 flex-1">
                 <span className="text-xs font-medium block" style={{ color: 'var(--text-primary)' }}>
-                  {num ? (isRu ? `П${num}` : `P${num}`) : post.name}
+                  {num > 0 ? (isRu ? `П${num}` : `P${num}`) : post.name}
                 </span>
                 <span className="text-[10px] block truncate" style={{ color: 'var(--text-muted)' }}>
-                  {post.plateNumber || (isLive && post.carModel ? post.carModel : t('liveWidget.noVehicle'))}
+                  {isNoData
+                    ? (isRu ? 'Нет данных' : 'No data')
+                    : (post.plateNumber || (isLive && post.carModel ? post.carModel : t('liveWidget.noVehicle')))}
                 </span>
               </div>
-              {(post.startTime || post.carFirstSeen) && (
+              {!isNoData && (post.startTime || post.carFirstSeen) && (
                 <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
                   {timeSince(post.startTime || post.carFirstSeen)}
                 </span>

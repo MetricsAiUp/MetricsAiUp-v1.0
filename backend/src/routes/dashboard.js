@@ -191,6 +191,31 @@ router.get('/live', authenticate, async (req, res) => {
         };
       });
 
+      // Merge DB-known posts that monitoring doesn't report — show as no_data
+      const seenNumbers = new Set(posts.map(p => p.number));
+      for (const dbPost of dbPosts) {
+        if (seenNumbers.has(dbPost.number)) continue;
+        posts.push({
+          id: dbPost.id,
+          name: dbPost.displayName || dbPost.name || `Пост ${String(dbPost.number).padStart(2, '0')}`,
+          nameEn: dbPost.displayNameEn || `Post ${dbPost.number}`,
+          number: dbPost.number,
+          zone: null,
+          status: 'no_data',
+          plateNumber: null,
+          startTime: null,
+          carModel: null,
+          carColor: null,
+          worksInProgress: false,
+          worksDescription: null,
+          peopleCount: 0,
+          openParts: 0,
+          confidence: 0,
+          lastUpdate: null,
+        });
+      }
+      posts.sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
+
       const freeZones = monZones.map(mz => ({
         id: `zone-${mz.zoneNumber}`,
         name: `Зона ${String(mz.zoneNumber).padStart(2, '0')}`,
