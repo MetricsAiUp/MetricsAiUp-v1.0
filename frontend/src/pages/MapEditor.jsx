@@ -1146,6 +1146,94 @@ export default function MapEditor() {
                 </div>
               )}
 
+              {/* Post-specific properties (number, label, postType) — синхронизируются в БД через mapSyncService */}
+              {selected.type === 'post' && (
+                <div className="space-y-2 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                  <label className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
+                    {i18n.language === 'ru' ? 'Параметры поста' : 'Post properties'}
+                  </label>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Номер' : 'Number'}
+                    </label>
+                    <input type="number" min="1" value={selected.number ?? ''}
+                      onChange={e => updateProp('number', e.target.value === '' ? null : +e.target.value)}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Метка (RU)' : 'Label (RU)'}
+                    </label>
+                    <input value={selected.label || ''} onChange={e => updateProp('label', e.target.value)}
+                      placeholder={i18n.language === 'ru' ? 'Пост 4 — легковое' : 'e.g. Пост 4 — легковое'}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Метка (EN)' : 'Label (EN)'}
+                    </label>
+                    <input value={selected.labelEn || ''} onChange={e => updateProp('labelEn', e.target.value)}
+                      placeholder="Post 4 — light"
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Тип поста' : 'Post type'}
+                    </label>
+                    <select value={selected.postType || 'light'} onChange={e => updateProp('postType', e.target.value)}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }}>
+                      <option value="light">light</option>
+                      <option value="heavy">heavy</option>
+                      <option value="special">special</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Имя зоны во внешнем CV API' : 'External CV zone name'}
+                    </label>
+                    <input value={selected.externalZoneName || ''} onChange={e => updateProp('externalZoneName', e.target.value)}
+                      placeholder={i18n.language === 'ru' ? 'Пост 04 — легковое/грузовое' : 'CV API zone name'}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Zone-specific properties (label, zoneType) */}
+              {selected.type === 'zone' && (
+                <div className="space-y-2 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
+                  <label className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
+                    {i18n.language === 'ru' ? 'Параметры зоны' : 'Zone properties'}
+                  </label>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Метка (RU)' : 'Label (RU)'}
+                    </label>
+                    <input value={selected.label || ''} onChange={e => updateProp('label', e.target.value)}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Метка (EN)' : 'Label (EN)'}
+                    </label>
+                    <input value={selected.labelEn || ''} onChange={e => updateProp('labelEn', e.target.value)}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {i18n.language === 'ru' ? 'Тип зоны' : 'Zone type'}
+                    </label>
+                    <select value={selected.zoneType || 'repair'} onChange={e => updateProp('zoneType', e.target.value)}
+                      className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }}>
+                      <option value="repair">repair</option>
+                      <option value="waiting">waiting</option>
+                      <option value="entry">entry</option>
+                      <option value="parking">parking</option>
+                      <option value="free">free</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
               {selected.type === 'camera' && (
                 <div className="space-y-2 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
                   <label className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
