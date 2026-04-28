@@ -2,18 +2,36 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const settingsReader = require('./settings');
 
-const POST_TYPES = {
-  1: 'heavy', 2: 'heavy', 3: 'heavy', 4: 'heavy',
-  5: 'light', 6: 'light', 7: 'light', 8: 'light',
-  9: 'special', 10: 'special',
-};
-const POST_ZONES = {
-  1: 'Ремонтная зона (посты 1-4)', 2: 'Ремонтная зона (посты 1-4)',
-  3: 'Ремонтная зона (посты 1-4)', 4: 'Ремонтная зона (посты 1-4)',
-  5: 'Ремонтная зона (посты 5-9)', 6: 'Ремонтная зона (посты 5-9)',
-  7: 'Ремонтная зона (посты 5-9)', 8: 'Ремонтная зона (посты 5-9)',
-  9: 'Ремонтная зона (посты 5-9)', 10: 'Ремонтная зона (посты 1-4, 10)',
-};
+// Активные посты из БД (после Этапа А — источник истины: Map (number → post)).
+// Возвращает Map с гарантированно заполненными number.
+async function getActivePostsMap() {
+  const posts = await prisma.post.findMany({
+    where: { deleted: false, number: { not: null } },
+    orderBy: { number: 'asc' },
+    include: { zone: { select: { name: true, displayName: true, displayNameEn: true } } },
+  });
+  const map = new Map();
+  for (const p of posts) map.set(p.number, p);
+  return map;
+}
+
+// Резолв типа поста из БД-карты по номеру (fallback 'light').
+function postTypeOf(postsMap, number) {
+  return postsMap.get(number)?.type || 'light';
+}
+
+// Резолв имени зоны (отображаемого) для поста.
+function postZoneOf(postsMap, number) {
+  const p = postsMap.get(number);
+  if (!p?.zone) return '';
+  return p.zone.displayName || p.zone.name || '';
+}
+
+// Display-имя поста.
+function postDisplayName(postsMap, number) {
+  const p = postsMap.get(number);
+  return p?.displayName || p?.name || `Пост ${number}`;
+}
 
 // Helper: get post status from its work orders
 function computePostStatus(wos) {
@@ -270,6 +288,7 @@ router.get('/posts-analytics', async (req, res) => {
     }
 
     if (curSettings.mode === 'live' && proxy && proxy.isRunning()) {
+      const postsMap = await getActivePostsMap();
       const monPosts = proxy.getPosts();
       const result = monPosts.map(mp => {
         const history = mp.history || [];
@@ -280,8 +299,8 @@ router.get('/posts-analytics', async (req, res) => {
         return {
           id: `post-${mp.postNumber}`,
           number: mp.postNumber,
-          name: `Пост ${mp.postNumber}`,
-          type: POST_TYPES[mp.postNumber] || 'light',
+          name: postDisplayName(postsMap, mp.postNumber),
+          type: postTypeOf(postsMap, mp.postNumber),
           zone: mp.externalZoneName,
           status: mp.status,
           maxCapacityHours: shiftBounds.maxH,
@@ -433,8 +452,9 @@ router.get('/posts-analytics', async (req, res) => {
     }
     const refDayStart = new Date(refDate); refDayStart.setHours(0, 0, 0, 0);
 
+    const postsMap = await getActivePostsMap();
     const result = [];
-    for (let num = 1; num <= 10; num++) {
+    for (const num of postsMap.keys()) {
       const postWOs = allWOs.filter(w => w.postNumber === num);
       const todayWOs = postWOs.filter(w => (w.startTime || w.scheduledTime) >= refDayStart);
       const completedToday = todayWOs.filter(w => w.status === 'completed');
@@ -506,9 +526,9 @@ router.get('/posts-analytics', async (req, res) => {
       result.push({
         id: `post-${num}`,
         number: num,
-        name: `Пост ${num}`,
-        type: POST_TYPES[num] || 'light',
-        zone: POST_ZONES[num] || '',
+        name: postDisplayName(postsMap, num),
+        type: postTypeOf(postsMap, num),
+        zone: postZoneOf(postsMap, num),
         status: computePostStatus(todayWOs),
         maxCapacityHours: shiftBounds.maxH,
         today,
@@ -536,25 +556,22 @@ router.get('/posts-analytics', async (req, res) => {
       });
     }
 
-    // Add placeholder zones for demo mode (basic info from DB)
+    // Add zones for demo mode — берём все активные не-deleted зоны из БД
     const dbZones = await prisma.zone.findMany({
-      where: { isActive: true, type: 'free' },
+      where: { deleted: false, isActive: true },
       include: { _count: { select: { stays: { where: { exitTime: null } } } } },
       orderBy: { name: 'asc' },
     });
     const zones = [];
-    for (let num = 1; num <= 7; num++) {
-      const dbZ = dbZones.find(z => {
-        const n = parseInt(z.name?.match(/\d+/)?.[0], 10);
-        return n === num;
-      });
+    for (const dbZ of dbZones) {
+      const num = parseInt(dbZ.name?.match(/\d+/)?.[0], 10) || (zones.length + 1);
       zones.push({
-        id: `zone-${num}`,
+        id: `zone-${dbZ.id}`,
         number: num,
-        name: `Зона ${String(num).padStart(2, '0')}`,
+        name: dbZ.displayName || dbZ.name,
         type: 'zone',
-        zone: dbZ?.name || `Свободная зона ${String(num).padStart(2, '0')}`,
-        status: dbZ && dbZ._count?.stays > 0 ? 'occupied' : 'free',
+        zone: dbZ.name,
+        status: dbZ._count?.stays > 0 ? 'occupied' : 'free',
         maxCapacityHours: shiftBounds.maxH,
         occupancy: 0,
         efficiency: 0,
@@ -582,6 +599,7 @@ router.get('/dashboard-posts', async (req, res) => {
     const shiftBounds = getShiftBoundsForDate(settings);
     const proxy = req.app.get('monitoringProxy');
     if (settings.mode === 'live' && proxy && proxy.isRunning()) {
+      const postsMap = await getActivePostsMap();
       const monPosts = proxy.getPosts();
       const posts = monPosts.map(mp => {
         // Build timeline from history
@@ -613,8 +631,8 @@ router.get('/dashboard-posts', async (req, res) => {
         return {
           id: `post-${mp.postNumber}`,
           number: mp.postNumber,
-          name: `Пост ${mp.postNumber}`,
-          type: POST_TYPES[mp.postNumber] || 'light',
+          name: postDisplayName(postsMap, mp.postNumber),
+          type: postTypeOf(postsMap, mp.postNumber),
           zone: mp.externalZoneName,
           status: mp.status,
           currentVehicle,
@@ -629,7 +647,7 @@ router.get('/dashboard-posts', async (req, res) => {
       });
 
       return res.json({
-        settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || 10, weekSchedule: settings.weekSchedule, mode: 'live' },
+        settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || postsMap.size, weekSchedule: settings.weekSchedule, mode: 'live' },
         posts,
         freeWorkOrders: [],
       });
@@ -671,8 +689,9 @@ router.get('/dashboard-posts', async (req, res) => {
       take: 10,
     });
 
+    const dbPostsMap = await getActivePostsMap();
     const posts = [];
-    for (let num = 1; num <= 10; num++) {
+    for (const num of dbPostsMap.keys()) {
       const postWOs = allWOs.filter(w => w.postNumber === num);
       const inProgress = postWOs.find(w => w.status === 'in_progress');
       const status = computePostStatus(postWOs);
@@ -689,9 +708,9 @@ router.get('/dashboard-posts', async (req, res) => {
       posts.push({
         id: `post-${num}`,
         number: num,
-        name: `Пост ${num}`,
-        type: POST_TYPES[num] || 'light',
-        zone: POST_ZONES[num] || '',
+        name: postDisplayName(dbPostsMap, num),
+        type: postTypeOf(dbPostsMap, num),
+        zone: postZoneOf(dbPostsMap, num),
         status,
         currentVehicle,
         timeline: postWOs.map(w => ({
@@ -724,7 +743,7 @@ router.get('/dashboard-posts', async (req, res) => {
     }
 
     res.json({
-      settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || 10, weekSchedule: settings.weekSchedule, mode: 'db' },
+      settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || dbPostsMap.size, weekSchedule: settings.weekSchedule, mode: 'db' },
       posts,
       freeWorkOrders: freeWOs.map(w => ({
         id: w.id,
@@ -878,17 +897,20 @@ router.get('/analytics-history', async (req, res) => {
       return (curve[h] || 0.3) * (isWeekend ? 0.4 : 1.0);
     }
 
-    const postTraits = Array.from({ length: 10 }, (_, i) => ({
-      occBase: 0.55 + (i % 3) * 0.1,
-      effBase: 0.60 + ((i + 1) % 4) * 0.08,
-      vehicleBase: i < 8 ? 4 : 3,
-    }));
+    // Список постов из БД (источник истины: MapLayout → mapSyncService).
+    const dbPosts = await prisma.post.findMany({
+      where: { deleted: false, number: { not: null } },
+      orderBy: { number: 'asc' },
+      select: { number: true, type: true, displayName: true, displayNameEn: true, name: true },
+    });
 
-    const postTypes = { 0: 'heavy', 1: 'heavy', 2: 'heavy', 3: 'heavy', 4: 'light', 5: 'light', 6: 'light', 7: 'light', 8: 'special', 9: 'special' };
-
-    const posts = Array.from({ length: 10 }, (_, pi) => {
-      const trait = postTraits[pi];
-      const num = pi + 1;
+    const posts = dbPosts.map((dbPost, pi) => {
+      const trait = {
+        occBase: 0.55 + (pi % 3) * 0.1,
+        effBase: 0.60 + ((pi + 1) % 4) * 0.08,
+        vehicleBase: pi < 8 ? 4 : 3,
+      };
+      const num = dbPost.number;
       const days = [];
 
       for (let d = 29; d >= 0; d--) {
@@ -929,8 +951,10 @@ router.get('/analytics-history', async (req, res) => {
       }
 
       return {
-        id: `post-${num}`, name: `Пост ${String(num).padStart(2, '0')}`, nameEn: `Post ${num}`,
-        type: postTypes[pi] || 'light',
+        id: `post-${num}`,
+        name: dbPost.displayName || dbPost.name || `Пост ${String(num).padStart(2, '0')}`,
+        nameEn: dbPost.displayNameEn || `Post ${num}`,
+        type: dbPost.type || 'light',
         worker: WORKERS_NAMES[pi % WORKERS_NAMES.length],
         master: MASTERS_NAMES[pi % MASTERS_NAMES.length],
         days,
