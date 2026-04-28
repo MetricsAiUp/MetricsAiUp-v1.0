@@ -91,34 +91,44 @@ const WORK_TYPES = [
   { type: 'Балансировка колёс', normMin: 0.5, normMax: 1 },
 ];
 
-// ─── Zone/Post definitions ───
-const ZONES = [
-  { id: uuid('zone-repair-1-4'), name: 'Ремонтная зона (посты 1-4)', type: 'repair', desc: 'Нижний ряд, 2-х стоечные подъёмники', posts: [1,2,3,4] },
-  { id: uuid('zone-repair-5-8'), name: 'Ремонтная зона (посты 5-8)', type: 'repair', desc: 'Верхний ряд, 2-х стоечные подъёмники', posts: [5,6,7,8] },
-  { id: uuid('zone-diag-9-10'), name: 'Диагностика (посты 9-10)', type: 'repair', desc: 'Правая часть СТО, диагностические посты', posts: [9,10] },
-  { id: uuid('zone-entry'), name: 'Зона Въезд/Выезд', type: 'entry', desc: 'Ворота въезда и выезда', posts: [] },
-  { id: uuid('zone-parking'), name: 'Зона Ожидания / Парковка', type: 'waiting', desc: 'Зона ожидания и парковка готовых авто', posts: [] },
-];
+// ─── Infrastructure (zones/posts/cameras) ───
+// Источник истины — БД (заполняется через MapEditor → mapSyncService).
+// Demo-генератор инфраструктуру НЕ создаёт и НЕ удаляет, только читает.
+async function loadInfrastructure() {
+  const [zonesRaw, postsRaw, camerasRaw] = await Promise.all([
+    prisma.zone.findMany({
+      where: { deleted: false },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, type: true, description: true },
+    }),
+    prisma.post.findMany({
+      where: { deleted: false, number: { not: null } },
+      orderBy: { number: 'asc' },
+      select: { id: true, number: true, name: true, type: true, zoneId: true },
+    }),
+    prisma.camera.findMany({
+      where: { deleted: false },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, rtspUrl: true },
+    }),
+  ]);
 
-const POSTS = [];
-for (let i = 1; i <= 10; i++) {
-  const zone = ZONES.find(z => z.posts.includes(i));
-  POSTS.push({
-    id: uuid(`post-${i}`),
-    number: i,
-    name: `Пост ${String(i).padStart(2, '0')}`,
-    type: i <= 4 ? 'heavy' : (i <= 8 ? 'light' : 'special'),
-    zoneId: zone?.id,
-    zoneName: zone?.name,
-    zoneType: zone?.type,
-  });
+  const ZONES = zonesRaw.map(z => ({ id: z.id, name: z.name, type: z.type, desc: z.description || '' }));
+  const POSTS = postsRaw.map(p => ({
+    id: p.id,
+    number: p.number,
+    name: p.name,
+    type: p.type,
+    zoneId: p.zoneId,
+  }));
+  const CAMERAS = camerasRaw.map(c => ({ id: c.id, name: c.name, rtspUrl: c.rtspUrl }));
+
+  // Зоны для специальных ролей: entry / waiting (нужны для парковки и въезда).
+  const entryZone = ZONES.find(z => z.type === 'entry') || ZONES[0] || null;
+  const parkingZone = ZONES.find(z => z.type === 'waiting' || z.type === 'parking') || entryZone;
+
+  return { ZONES, POSTS, CAMERAS, entryZone, parkingZone };
 }
-
-const CAMERAS = Array.from({ length: 10 }, (_, i) => ({
-  id: uuid(`cam-${i + 1}`),
-  name: `CAM ${String(i + 1).padStart(2, '0')}`,
-  rtspUrl: `rtsp://cam${i + 1}`,
-}));
 
 // ─── Seeded random ───
 let _seed = 42;
@@ -151,12 +161,20 @@ function addHours(date, h) { return addMin(date, h * 60); }
 async function generate() {
   _seed = Math.floor(TODAY.getTime() / 86400000);
 
+  // Инфраструктура — из БД (источник истины: MapEditor → mapSyncService)
+  const { ZONES, POSTS, CAMERAS, entryZone, parkingZone } = await loadInfrastructure();
+  if (POSTS.length === 0) {
+    console.log('[DemoGen] no posts in DB — skipping demo generation');
+    return;
+  }
+
   // ─── 1. Generate work orders for today's shift ───
   const usedCars = new Set();
   const allWorkOrders = [];
   const postTimelines = {};
 
-  for (let pn = 1; pn <= 10; pn++) {
+  for (const post of POSTS) {
+    const pn = post.number;
     postTimelines[pn] = [];
     let cursor = new Date(shiftStart);
     const woCount = Math.floor(randBetween(3, 6));
@@ -332,20 +350,23 @@ async function generate() {
   });
 
   // Parking vehicles
-  for (let i = 0; i < 2; i++) {
-    const car = CARS[CARS.length - 1 - i];
-    const entryTime = addMin(NOW, -Math.floor(randBetween(10, 40)));
-    const sessId = uuid(`parking-session-${i}`);
-    dbSessions.push({ id: sessId, plateNumber: car.plate, entryTime, exitTime: null, status: 'active', trackId: `track_park_${i}` });
-    dbZoneStays.push({ id: uuid(`zs-park-${i}`), zoneId: ZONES[4].id, vehicleSessionId: sessId, entryTime, exitTime: null, duration: null });
+  if (parkingZone) {
+    for (let i = 0; i < 2; i++) {
+      const car = CARS[CARS.length - 1 - i];
+      const entryTime = addMin(NOW, -Math.floor(randBetween(10, 40)));
+      const sessId = uuid(`parking-session-${i}`);
+      dbSessions.push({ id: sessId, plateNumber: car.plate, entryTime, exitTime: null, status: 'active', trackId: `track_park_${i}` });
+      dbZoneStays.push({ id: uuid(`zs-park-${i}`), zoneId: parkingZone.id, vehicleSessionId: sessId, entryTime, exitTime: null, duration: null });
+    }
   }
 
   // ─── 4. Generate events ───
   const dbEvents = [];
   const eventStart = addMin(NOW, -120);
 
-  postStates.filter(p => p.status !== 'free').forEach(ps => {
-    const cam = CAMERAS[ps.number - 1] || CAMERAS[0];
+  postStates.filter(p => p.status !== 'free').forEach((ps, idx) => {
+    const cam = CAMERAS[idx % CAMERAS.length] || CAMERAS[0];
+    if (!cam) return;
     let t = new Date(eventStart);
     while (t < NOW) {
       const isWork = seededRandom() > 0.3;
@@ -367,21 +388,23 @@ async function generate() {
   });
 
   // Entry events
-  dbSessions.filter(s => s.status === 'active').forEach((sess, i) => {
-    dbEvents.push({
-      id: uuid(`ev-entry-${i}`),
-      type: 'vehicle_entered_zone',
-      zoneId: ZONES[3].id,
-      postId: null,
-      vehicleSessionId: sess.id,
-      cameraId: CAMERAS[0].id,
-      cameraSources: JSON.stringify([CAMERAS[0].name.toLowerCase().replace(' ', '')]),
-      confidence: roundTo(randBetween(0.88, 0.99), 4),
-      startTime: sess.entryTime,
-      endTime: null,
-      rawData: JSON.stringify({ plateNumber: sess.plateNumber, source: 'cv_engine_v2' }),
+  if (entryZone && CAMERAS.length > 0) {
+    dbSessions.filter(s => s.status === 'active').forEach((sess, i) => {
+      dbEvents.push({
+        id: uuid(`ev-entry-${i}`),
+        type: 'vehicle_entered_zone',
+        zoneId: entryZone.id,
+        postId: null,
+        vehicleSessionId: sess.id,
+        cameraId: CAMERAS[0].id,
+        cameraSources: JSON.stringify([CAMERAS[0].name.toLowerCase().replace(' ', '')]),
+        confidence: roundTo(randBetween(0.88, 0.99), 4),
+        startTime: sess.entryTime,
+        endTime: null,
+        rawData: JSON.stringify({ plateNumber: sess.plateNumber, source: 'cv_engine_v2' }),
+      });
     });
-  });
+  }
 
   // Limit events to 200 most recent
   dbEvents.sort((a, b) => b.startTime - a.startTime);
@@ -414,7 +437,7 @@ async function generate() {
   });
 
   // Capacity available
-  if (freePosts.length >= 2) {
+  if (freePosts.length >= 2 && ZONES.length > 0) {
     dbRecs.push({
       id: uuid('rec-capacity'),
       type: 'capacity_available',
@@ -511,7 +534,8 @@ async function generate() {
   // WRITE TO DATABASE
   // ═════════════════════════════════════════════
 
-  // Phase 1: Delete all demo data (order matters for foreign keys)
+  // Phase 1: Delete only demo-generated data (order matters for foreign keys).
+  // Инфраструктуру (zones/posts/cameras/cameraZone) НЕ трогаем — это домен MapEditor → mapSyncService.
   await prisma.event.deleteMany({});
   await prisma.workOrderLink.deleteMany({});
   await prisma.postStay.deleteMany({});
@@ -522,53 +546,14 @@ async function generate() {
   await prisma.shift.deleteMany({});
   await prisma.workOrder.deleteMany({});
 
-  // Phase 1b: Delete old seed infrastructure (posts/zones not in our deterministic set)
-  const myPostIds = POSTS.map(p => p.id);
-  const myZoneIds = ZONES.map(z => z.id);
-  const myCameraIds = CAMERAS.map(c => c.id);
-  await prisma.post.deleteMany({ where: { id: { notIn: myPostIds } } });
-  await prisma.zone.deleteMany({ where: { id: { notIn: myZoneIds } } });
-  await prisma.camera.deleteMany({ where: { id: { notIn: myCameraIds } } });
-
-  // Phase 2: Upsert infrastructure (zones, posts, cameras)
-  for (const z of ZONES) {
-    await prisma.zone.upsert({
-      where: { id: z.id },
-      create: { id: z.id, name: z.name, type: z.type, description: z.desc, isActive: true },
-      update: { name: z.name, type: z.type, description: z.desc, isActive: true },
-    });
-  }
-
+  // Phase 2: Sync post statuses (только status, без upsert id/name/type).
   for (const p of POSTS) {
     const ps = postStates.find(s => s.number === p.number);
-    await prisma.post.upsert({
+    await prisma.post.update({
       where: { id: p.id },
-      create: { id: p.id, zoneId: p.zoneId, name: p.name, type: p.type, status: ps?.status || 'free', isActive: true },
-      update: { zoneId: p.zoneId, name: p.name, type: p.type, status: ps?.status || 'free', isActive: true },
-    });
+      data: { status: ps?.status || 'free' },
+    }).catch(() => {}); // best-effort
   }
-
-  for (const c of CAMERAS) {
-    await prisma.camera.upsert({
-      where: { id: c.id },
-      create: { id: c.id, name: c.name, rtspUrl: c.rtspUrl, isActive: true },
-      update: { name: c.name, rtspUrl: c.rtspUrl, isActive: true },
-    });
-  }
-
-  // Camera-zone mappings
-  await prisma.cameraZone.deleteMany({});
-  const cameraZoneMappings = [];
-  CAMERAS.forEach((cam, ci) => {
-    // Each camera maps to nearest zone(s)
-    const zoneIdx = ci < 4 ? 0 : (ci < 8 ? 1 : 2);
-    cameraZoneMappings.push({ cameraId: cam.id, zoneId: ZONES[zoneIdx].id, priority: 10 - ci });
-    // Some cameras also cover entry/parking
-    if (ci === 0 || ci === 9) {
-      cameraZoneMappings.push({ cameraId: cam.id, zoneId: ZONES[3].id, priority: 5 });
-    }
-  });
-  await prisma.cameraZone.createMany({ data: cameraZoneMappings });
 
   // Phase 3: Create demo data
   await prisma.workOrder.createMany({
@@ -705,5 +690,4 @@ async function generate() {
   console.log(`  Shifts: ${dbShifts.length}`);
 }
 
-// Export constants for use by analytics routes
-module.exports = { generate, WORKERS, MASTERS, POSTS, ZONES, CAMERAS, WORK_TYPES };
+module.exports = { generate, WORKERS, MASTERS, WORK_TYPES };
