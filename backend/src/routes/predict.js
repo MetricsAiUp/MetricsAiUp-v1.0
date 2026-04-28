@@ -2,8 +2,19 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
+const prisma = require('../config/database');
 
 const DATA_DIR = path.join(__dirname, '../../../data');
+
+// Список номеров активных постов из БД (источник истины — MapLayout → mapSyncService).
+async function getActivePostNumbers() {
+  const posts = await prisma.post.findMany({
+    where: { deleted: false, number: { not: null } },
+    orderBy: { number: 'asc' },
+    select: { number: true },
+  });
+  return posts.map(p => p.number);
+}
 
 // ─── Deterministic seeded random for consistent predictions within the hour ───
 function seededRand(seed) {
@@ -28,14 +39,14 @@ function baseLoad(hour, dow) {
 }
 
 // ─── GET /predict/load ───
-router.get('/load', (req, res) => {
+router.get('/load', async (req, res) => {
   const dateStr = req.query.date || new Date().toISOString().split('T')[0];
   const postFilter = req.query.post ? parseInt(req.query.post) : null;
   const date = new Date(dateStr);
   const dow = date.getDay();
   const dateSeed = Math.floor(date.getTime() / 86400000);
 
-  const posts = postFilter ? [postFilter] : Array.from({ length: 10 }, (_, i) => i + 1);
+  const posts = postFilter ? [postFilter] : await getActivePostNumbers();
   const hourly = [];
 
   for (let h = 8; h <= 20; h++) {
@@ -56,10 +67,13 @@ router.get('/load', (req, res) => {
 });
 
 // ─── GET /predict/load/week ───
-router.get('/load/week', (req, res) => {
+router.get('/load/week', async (req, res) => {
   const postFilter = req.query.post ? parseInt(req.query.post) : null;
   const now = new Date();
   const days = [];
+
+  // Один запрос к БД на весь week (вместо 7 итераций).
+  const allActivePosts = postFilter ? [postFilter] : await getActivePostNumbers();
 
   for (let d = 0; d < 7; d++) {
     const date = new Date(now);
@@ -67,7 +81,7 @@ router.get('/load/week', (req, res) => {
     const dateStr = date.toISOString().split('T')[0];
     const dow = date.getDay();
     const dateSeed = Math.floor(date.getTime() / 86400000);
-    const posts = postFilter ? [postFilter] : Array.from({ length: 10 }, (_, i) => i + 1);
+    const posts = allActivePosts;
     const hourly = [];
 
     for (let h = 8; h <= 20; h++) {
