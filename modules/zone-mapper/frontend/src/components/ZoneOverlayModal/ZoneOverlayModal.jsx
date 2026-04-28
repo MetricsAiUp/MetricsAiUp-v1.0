@@ -37,7 +37,7 @@ function inscribeNGon(rect, n) {
 }
 
 // Editable rectangle zone on SVG (legacy / new rect zones).
-function EditableZone({ zone, scale, selected, onSelect, onChange }) {
+function EditableZone({ zone, scale, selected, onSelect, onChange, onRequestNGon }) {
   const startRef = useRef(null);
 
   const { x, y, w, h } = zone.rect;
@@ -109,6 +109,11 @@ function EditableZone({ zone, scale, selected, onSelect, onChange }) {
         strokeWidth={selected ? 2.5 / scale : 1.5 / scale}
         style={{ cursor: 'move' }}
         onPointerDown={(e) => onPointerDown(e, 'move')}
+        onContextMenu={(e) => {
+          e.preventDefault(); e.stopPropagation();
+          onSelect(zone.zoneId);
+          if (onRequestNGon) onRequestNGon(zone.zoneId, e.clientX, e.clientY);
+        }}
       />
       {/* Zone name label */}
       <text
@@ -159,7 +164,7 @@ function EditableZone({ zone, scale, selected, onSelect, onChange }) {
 // Editable polygon zone on SVG. Drag a vertex to reshape; drag the polygon
 // body to translate; double-click an edge to insert a vertex at its mid-point;
 // right-click a vertex to remove (only when >3 vertices remain).
-function EditablePolygon({ zone, scale, selected, onSelect, onChange }) {
+function EditablePolygon({ zone, scale, selected, onSelect, onChange, onRequestNGon }) {
   const startRef = useRef(null);
   const points = zone.points;
   const handleSize = 14 / scale;
@@ -250,6 +255,11 @@ function EditablePolygon({ zone, scale, selected, onSelect, onChange }) {
         strokeWidth={selected ? 2.5 / scale : 1.5 / scale}
         style={{ cursor: 'move' }}
         onPointerDown={onBodyDown}
+        onContextMenu={(e) => {
+          e.preventDefault(); e.stopPropagation();
+          onSelect(zone.zoneId);
+          if (onRequestNGon) onRequestNGon(zone.zoneId, e.clientX, e.clientY);
+        }}
       />
       {/* Invisible thicker stroke per edge to catch double-clicks for vertex insertion. */}
       {selected && points.map((p, i) => {
@@ -311,6 +321,10 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
   // 0 = pure rectangle (legacy); 3..20 = N-gon. Rectangle stays the default
   // because it covers >90% of bays; ANPR side accepts both shapes.
   const [drawShapeN, setDrawShapeN] = useState(0);
+  // Floating context menu for changing vertex count of an EXISTING zone via
+  // right-click. Coordinates are screen-space (clientX/clientY) so we can
+  // position with `position: fixed`.
+  const [polygonPicker, setPolygonPicker] = useState(null); // { zoneId, x, y } | null
   const svgRef = useRef();
 
   const resolution = camera.resolution || { width: 1920, height: 1080 };
@@ -538,6 +552,22 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
     setHasCustom(true);
   };
 
+  // Re-shape an existing zone (rect or polygon) into an inscribed N-gon
+  // sitting inside its current bbox. For polygon zones currentN may differ
+  // from N — old vertices are discarded and replaced with the inscribed set.
+  // For rect zones, this is the right-click "more vertices" path.
+  const handleReshapeToNGon = (zoneId, n) => {
+    if (n < 3 || n > 20) return;
+    setZones(prev => prev.map(z => {
+      if (z.zoneId !== zoneId) return z;
+      const baseRect = (Array.isArray(z.points) && z.points.length >= 3) ? aabbOfPoints(z.points) : z.rect;
+      const pts = inscribeNGon(baseRect, n);
+      return { ...z, points: pts, rect: aabbOfPoints(pts) };
+    }));
+    setHasCustom(true);
+    setPolygonPicker(null);
+  };
+
   // Convert a rect-only zone to a polygon (4 vertices = the rect corners).
   // User can then drag/insert/remove vertices to refine the outline.
   const handleConvertToPolygon = (zoneId) => {
@@ -562,12 +592,16 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
   const svgW = resolution.width * scale;
   const svgH = resolution.height * scale;
 
+  // Currently picked zone for the floating N-gon picker.
+  const pickerZone = polygonPicker ? zones.find(z => z.zoneId === polygonPicker.zoneId) : null;
+  const pickerCurrentN = pickerZone && Array.isArray(pickerZone.points) ? pickerZone.points.length : 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
         className="bg-slate-900 rounded-lg border border-slate-600 shadow-2xl overflow-hidden"
         style={{ width: svgW + 250 }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); if (polygonPicker) setPolygonPicker(null); }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
@@ -664,6 +698,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
                       selected={z.zoneId === selectedZoneId}
                       onSelect={setSelectedZoneId}
                       onChange={handlePolygonChange}
+                      onRequestNGon={(zoneId, x, y) => setPolygonPicker({ zoneId, x, y })}
                     />
                   ) : (
                     <EditableZone
@@ -673,6 +708,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
                       selected={z.zoneId === selectedZoneId}
                       onSelect={setSelectedZoneId}
                       onChange={handleZoneChange}
+                      onRequestNGon={(zoneId, x, y) => setPolygonPicker({ zoneId, x, y })}
                     />
                   )
                 ))
@@ -840,6 +876,55 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
             </div>
           </div>
         </div>
+
+        {/* Right-click vertex-count picker for an existing zone. Reshapes the
+            zone into an N-gon inscribed in its current bbox. Click outside or
+            on the close (×) closes the picker without changes. */}
+        {polygonPicker && pickerZone && (
+          <div
+            className="fixed z-[60] bg-slate-800 border border-slate-600 rounded-md shadow-xl text-xs"
+            style={{
+              left: Math.min(polygonPicker.x, window.innerWidth - 200),
+              top: Math.min(polygonPicker.y, window.innerHeight - 360),
+              width: 180,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-700">
+              <span className="text-slate-300 truncate">{pickerZone.zoneName}</span>
+              <button
+                onClick={() => setPolygonPicker(null)}
+                className="text-slate-500 hover:text-white text-sm leading-none ml-1"
+              >&times;</button>
+            </div>
+            <div className="px-2 py-1.5 text-[0.65rem] text-slate-400 uppercase tracking-wider">
+              Форма {pickerCurrentN ? `(сейчас: ${pickerCurrentN}-уг.)` : '(сейчас: прямоугольник)'}
+            </div>
+            <div className="px-1 pb-1 max-h-72 overflow-y-auto">
+              {!pickerZone.points && (
+                <button
+                  onClick={() => { setPolygonPicker(null); }}
+                  className="w-full text-left px-2 py-1 rounded hover:bg-slate-700 text-cyan-300"
+                  title="Зона уже прямоугольник"
+                >
+                  ▢ Прямоугольник
+                </button>
+              )}
+              {Array.from({ length: 18 }, (_, i) => i + 3).map(n => (
+                <button
+                  key={n}
+                  onClick={() => handleReshapeToNGon(pickerZone.zoneId, n)}
+                  className={`w-full text-left px-2 py-1 rounded hover:bg-slate-700 ${
+                    n === pickerCurrentN ? 'bg-green-900/40 text-green-300' : 'text-slate-200'
+                  }`}
+                >
+                  {n}-угольник
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
