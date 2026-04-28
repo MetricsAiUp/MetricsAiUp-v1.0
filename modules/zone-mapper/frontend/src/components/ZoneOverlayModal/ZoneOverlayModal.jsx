@@ -139,10 +139,17 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
   const [drawing, setDrawing] = useState(false); // drawing new zone mode
   const [drawStart, setDrawStart] = useState(null);
   const [drawRect, setDrawRect] = useState(null);
-  const [newZoneName, setNewZoneName] = useState('');
+  const [selectedZone3dId, setSelectedZone3dId] = useState('');
   const svgRef = useRef();
 
   const resolution = camera.resolution || { width: 1920, height: 1080 };
+
+  // 3D zones available for binding on this camera — full room list minus
+  // those already mapped here. Picking from this list (instead of typing a
+  // free-form name) guarantees that 2D mappings carry the real 3D zone id,
+  // so they never become orphans if a 3D zone is renamed later.
+  const zones3d = currentRoom?.zones || [];
+  const availableZones3d = zones3d.filter(z3 => !zones.some(z2 => z2.zoneId === z3.id));
 
   // Ensure at least 10% of each zone is visible on the frame
   const clampZonesToFrame = useCallback((zoneList) => {
@@ -304,13 +311,18 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
       setDrawRect(null);
       return;
     }
-    // Create the new zone
-    const name = newZoneName.trim() || `Zone ${zones.length + 1}`;
+    // Resolve the picked 3D zone — required for adding a mapping.
+    const z3d = zones3d.find(z => z.id === selectedZone3dId);
+    if (!z3d) {
+      setDrawStart(null);
+      setDrawRect(null);
+      return;
+    }
     const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
     const color = colors[zones.length % colors.length];
     const newZone = {
-      zoneId: `custom_${Date.now()}`,
-      zoneName: name,
+      zoneId: z3d.id,
+      zoneName: z3d.name,
       color,
       rect: { ...drawRect },
     };
@@ -319,7 +331,7 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
     setDrawStart(null);
     setDrawRect(null);
     setDrawing(false);
-    setNewZoneName('');
+    setSelectedZone3dId('');
     setSelectedZoneId(newZone.zoneId);
   };
 
@@ -468,13 +480,15 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
               {!drawing ? (
                 <button
                   onClick={() => setDrawing(true)}
-                  className="text-xs bg-green-700 hover:bg-green-600 text-white px-2 py-0.5 rounded"
+                  disabled={availableZones3d.length === 0}
+                  title={availableZones3d.length === 0 ? 'Все зоны комнаты уже привязаны к этой камере' : ''}
+                  className="text-xs bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white px-2 py-0.5 rounded"
                 >
                   + Add
                 </button>
               ) : (
                 <button
-                  onClick={() => { setDrawing(false); setDrawStart(null); setDrawRect(null); }}
+                  onClick={() => { setDrawing(false); setDrawStart(null); setDrawRect(null); setSelectedZone3dId(''); }}
                   className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-0.5 rounded"
                 >
                   Cancel
@@ -482,16 +496,26 @@ export default function ZoneOverlayModal({ camera, roomId, onClose }) {
               )}
             </div>
 
-            {/* New zone name input (shown when drawing) */}
+            {/* Pick which 3D zone this rectangle maps to (shown when drawing).
+                Forces the 2D mapping to carry a real 3D zone id, so it never
+                becomes an orphan if the 3D zone is renamed later. */}
             {drawing && (
-              <input
-                type="text"
-                placeholder="Zone name..."
-                value={newZoneName}
-                onChange={e => setNewZoneName(e.target.value)}
+              <select
+                value={selectedZone3dId}
+                onChange={e => setSelectedZone3dId(e.target.value)}
                 className="mb-2 w-full bg-slate-800 border border-green-600 rounded px-2 py-1 text-xs text-slate-200"
                 autoFocus
-              />
+              >
+                <option value="">— выберите зону —</option>
+                {availableZones3d.map(z => (
+                  <option key={z.id} value={z.id}>{z.name}</option>
+                ))}
+              </select>
+            )}
+            {drawing && !selectedZone3dId && (
+              <div className="mb-2 text-[0.65rem] text-slate-500">
+                Выберите зону, затем нарисуйте прямоугольник на кадре
+              </div>
             )}
 
             <div className="space-y-1 overflow-y-auto flex-1">
