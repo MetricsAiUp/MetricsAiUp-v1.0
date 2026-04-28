@@ -448,7 +448,7 @@ async function analyzeZoneImageV2(jpegBuffer, zoneName, zoneType, opts = {}) {
     const topConf = allPlates[0]?.confidence != null ? `${(allPlates[0].confidence * 100).toFixed(0)}%` : '—';
     const topText = allPlates[0]?.text || '—';
     console.log(
-      `[ANPRv2] "${zoneName}": frame=${jpegW}x${jpegH} bbox=[${bbox.join(',')}]` +
+      `[ANPRv2] "${zoneName}": fid=${res.frame_id} frame=${jpegW}x${jpegH} bbox=[${bbox.join(',')}]` +
       (polygon ? ` poly=${polygon.length}pt` : '') +
       ` plates=${allPlates.length} (top "${topText}" ${topConf})` +
       `, matched=${z.matched_plate || 'null'}` +
