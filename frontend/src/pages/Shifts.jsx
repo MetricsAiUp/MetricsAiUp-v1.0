@@ -491,12 +491,16 @@ export default function Shifts() {
   const [conflictModal, setConflictModal] = useState(null);
 
   // Load shifts data
-  useEffect(() => {
+  const reloadShifts = () => {
     setLoading(true);
-    api.get('/api/shifts')
+    return api.get('/api/shifts')
       .then(res => setAllShifts((res.data || res).shifts || []))
       .catch(() => setAllShifts([]))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reloadShifts();
   }, []);
 
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
@@ -557,26 +561,22 @@ export default function Shifts() {
     return conflicts;
   }
 
-  // CRUD
-  const doSave = (form) => {
-    if (editingShift) {
-      setAllShifts(prev => prev.map(s => s.id === editingShift.id ? { ...s, ...form } : s));
-    } else {
-      const newShift = {
-        ...form,
-        id: `shift-${Date.now()}`,
-        workOrdersCount: 0,
-        completedCount: 0,
-      };
-      setAllShifts(prev => [...prev, newShift]);
+  // CRUD — backend-backed
+  const doSave = async (form, force = false) => {
+    try {
+      const body = force ? { ...form, force: true } : form;
+      if (editingShift) {
+        await api.put(`/api/shifts/${editingShift.id}`, body);
+      } else {
+        await api.post('/api/shifts', body);
+      }
+      await reloadShifts();
+      setShowForm(false);
+      setEditingShift(null);
+      setConflictModal(null);
+    } catch (e) {
+      console.error('Save shift failed', e);
     }
-    const updated = editingShift
-      ? allShifts.map(s => s.id === editingShift.id ? { ...s, ...form } : s)
-      : [...allShifts, { ...form, id: `shift-${Date.now()}`, workOrdersCount: 0, completedCount: 0 }];
-    localStorage.setItem('shiftsData', JSON.stringify({ shifts: updated }));
-    setShowForm(false);
-    setEditingShift(null);
-    setConflictModal(null);
   };
 
   const handleSave = (form) => {
@@ -588,12 +588,15 @@ export default function Shifts() {
     doSave(form);
   };
 
-  const handleDelete = (shiftId) => {
+  const handleDelete = async (shiftId) => {
     if (!confirm(t('shifts.deleteConfirm'))) return;
-    const updated = allShifts.filter(s => s.id !== shiftId);
-    setAllShifts(updated);
-    localStorage.setItem('shiftsData', JSON.stringify({ shifts: updated }));
-    setSelectedShift(null);
+    try {
+      await api.delete(`/api/shifts/${shiftId}`);
+      await reloadShifts();
+      setSelectedShift(null);
+    } catch (e) {
+      console.error('Delete shift failed', e);
+    }
   };
 
   const handleComplete = (shift) => {
@@ -601,20 +604,14 @@ export default function Shifts() {
     setShowHandover(shift);
   };
 
-  const confirmComplete = () => {
+  const confirmComplete = async () => {
     const shift = showHandover;
-    const updated = allShifts.map(s => s.id === shift.id ? { ...s, status: 'completed' } : s);
-    setAllShifts(updated);
-    localStorage.setItem('shiftsData', JSON.stringify({ shifts: updated }));
-
-    // Save handover act
-    const handoverData = JSON.parse(localStorage.getItem('shiftHandovers') || '[]');
-    handoverData.push({
-      shiftId: shift.id,
-      completedAt: new Date().toISOString(),
-      workers: shift.workers,
-    });
-    localStorage.setItem('shiftHandovers', JSON.stringify(handoverData));
+    try {
+      await api.post(`/api/shifts/${shift.id}/complete`, {});
+      await reloadShifts();
+    } catch (e) {
+      console.error('Complete shift failed', e);
+    }
     setShowHandover(null);
   };
 
@@ -845,7 +842,7 @@ export default function Shifts() {
                 {t('shifts.fixConflicts')}
               </button>
               <button
-                onClick={() => doSave(conflictModal.form)}
+                onClick={() => doSave(conflictModal.form, true)}
                 className="px-4 py-1.5 rounded-xl text-sm font-medium"
                 style={{ background: 'var(--warning)', color: '#fff' }}
               >

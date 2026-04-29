@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { DoorOpen, Wrench, Search, ParkingCircle, Camera, ArrowLeft, Warehouse } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
@@ -77,24 +78,41 @@ const PRIORITY_OPTIONS = [
 export default function CameraMapping() {
   const { i18n } = useTranslation();
   const { theme } = useTheme();
+  const { api } = useAuth();
   const isDark = theme === 'dark';
   const isRu = i18n.language === 'ru';
 
-  const [mapping, setMapping] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cameraMappingData');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object' && Object.keys(parsed).some(k => k in DEFAULT_MAPPING)) return parsed;
-      }
-    } catch {}
-    return JSON.parse(JSON.stringify(DEFAULT_MAPPING));
-  });
+  const [mapping, setMapping] = useState(() => JSON.parse(JSON.stringify(DEFAULT_MAPPING)));
   const [selectedZone, setSelectedZone] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const saveMapping = () => { localStorage.setItem('cameraMappingData', JSON.stringify(mapping)); setHasChanges(false); };
-  const resetMapping = () => { localStorage.removeItem('cameraMappingData'); setMapping(JSON.parse(JSON.stringify(DEFAULT_MAPPING))); setSelectedZone(null); setHasChanges(false); };
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/api/camera-mapping')
+      .then(data => {
+        if (cancelled) return;
+        if (data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0) {
+          setMapping(data);
+        }
+      })
+      .catch(() => { /* keep defaults on error */ });
+    return () => { cancelled = true; };
+  }, [api]);
+
+  const saveMapping = async () => {
+    try {
+      await api.post('/api/camera-mapping', mapping);
+      setHasChanges(false);
+    } catch (e) {
+      console.error('Save camera mapping failed', e);
+    }
+  };
+  const resetMapping = async () => {
+    try { await api.delete('/api/camera-mapping'); } catch { /* ignore */ }
+    setMapping(JSON.parse(JSON.stringify(DEFAULT_MAPPING)));
+    setSelectedZone(null);
+    setHasChanges(false);
+  };
 
   const toggleCamera = (zoneId, camId) => {
     setMapping(prev => {

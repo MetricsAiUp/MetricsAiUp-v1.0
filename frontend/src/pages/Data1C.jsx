@@ -408,8 +408,6 @@ function SyncTab({ lang, api }) {
   const [importResult, setImportResult] = useState(null);
   const inputRef = useRef(null);
 
-  const SYNC_LOG_KEY = '1c-sync-log';
-
   useEffect(() => {
     loadSyncHistory();
   }, []);
@@ -417,37 +415,22 @@ function SyncTab({ lang, api }) {
   const loadSyncHistory = async () => {
     setLoading(true);
     try {
-      // Try API first
       const res = await api.get('/api/1c/sync-history');
-      if (res.data && Array.isArray(res.data)) {
-        setSyncHistory(res.data);
-        setLoading(false);
-        return;
-      }
-    } catch (e) {
-      // API not available
-    }
-    // Fallback: localStorage
-    try {
-      const saved = localStorage.getItem(SYNC_LOG_KEY);
-      setSyncHistory(saved ? JSON.parse(saved) : []);
+      setSyncHistory(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       setSyncHistory([]);
     }
     setLoading(false);
   };
 
+  // Optimistic in-memory log entry — backend SyncLog is the source of truth, refreshed on next loadSyncHistory()
   const addLocalLog = (entry) => {
     const log = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
       ...entry,
       createdAt: new Date().toISOString(),
     };
-    setSyncHistory(prev => {
-      const updated = [log, ...prev].slice(0, 100);
-      localStorage.setItem(SYNC_LOG_KEY, JSON.stringify(updated));
-      return updated;
-    });
+    setSyncHistory(prev => [log, ...prev].slice(0, 100));
     return log;
   };
 
@@ -758,19 +741,8 @@ export default function Data1C() {
 
   useEffect(() => {
     api.get('/api/1c/stats').then(r => setStats(r.data)).catch(console.error);
-    // localStorage overrides mock JSON if present, no merging to avoid duplicates
-    const savedPlanning = localStorage.getItem('1c-imported-planning');
-    if (savedPlanning) {
-      setPlanning(JSON.parse(savedPlanning));
-    } else {
-      api.get('/api/1c/planning').then(r => setPlanning(r.data || [])).catch(console.error);
-    }
-    const savedWorkers = localStorage.getItem('1c-imported-workers');
-    if (savedWorkers) {
-      setWorkers(JSON.parse(savedWorkers));
-    } else {
-      api.get('/api/1c/workers').then(r => setWorkers(r.data || [])).catch(console.error);
-    }
+    api.get('/api/1c/planning').then(r => setPlanning(r.data || [])).catch(console.error);
+    api.get('/api/1c/workers').then(r => setWorkers(r.data || [])).catch(console.error);
   }, []);
 
   const handleProcessFiles = ({ planning: newPlanning, workers: newWorkers }) => {
@@ -804,18 +776,20 @@ export default function Data1C() {
     else if (addedW > 0) setTab('workers');
   };
 
-  const handleSave = () => {
-    // Save full current state — replaces any previous data
-    if (planning.length) {
-      localStorage.setItem('1c-imported-planning', JSON.stringify(planning));
+  const handleSave = async () => {
+    // Save full current state to backend — replaces any previous data
+    try {
+      const calls = [];
+      if (planning.length) calls.push(api.post('/api/1c/planning', planning));
+      if (workers.length) calls.push(api.post('/api/1c/workers', workers));
+      await Promise.all(calls);
+      setUnsavedPlanning([]);
+      setUnsavedWorkers([]);
+      setSaved(true);
+      setTimeout(() => { setSaved(false); setImportResult(null); }, 4000);
+    } catch (e) {
+      console.error('Save 1C data failed', e);
     }
-    if (workers.length) {
-      localStorage.setItem('1c-imported-workers', JSON.stringify(workers));
-    }
-    setUnsavedPlanning([]);
-    setUnsavedWorkers([]);
-    setSaved(true);
-    setTimeout(() => { setSaved(false); setImportResult(null); }, 4000);
   };
 
   const tabs = [

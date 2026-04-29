@@ -42,6 +42,7 @@ const { startCameraHealthCheck } = require('./services/cameraHealthCheck');
 const { startReportScheduler } = require('./services/reportScheduler');
 const monitoringProxy = require('./services/monitoringProxy');
 const settingsRoutes = require('./routes/settings');
+const cameraMappingRoutes = require('./routes/cameraMapping');
 
 const app = express();
 
@@ -117,6 +118,7 @@ app.use('/api/workers', workersRoutes);
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
 app.use('/api/monitoring', require('./routes/monitoring'));
+app.use('/api/camera-mapping', cameraMappingRoutes);
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check

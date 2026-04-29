@@ -93,4 +93,39 @@ router.get('/stats', (req, res) => {
   res.json(data || {});
 });
 
+// Helper: write JSON file to data directory
+function writeDataFile(filename, data) {
+  const filepath = path.join(DATA_DIR, filename);
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
+}
+
+// POST /api/1c/planning — Replace planning data (full set)
+router.post('/planning', (req, res) => {
+  if (!Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Body must be an array' });
+  }
+  try {
+    writeDataFile('1c-planning.json', req.body);
+    res.json({ success: true, count: req.body.length });
+  } catch (e) {
+    logger.error('Save planning error', { error: e.message });
+    res.status(500).json({ error: 'Save failed', message: e.message });
+  }
+});
+
+// POST /api/1c/workers — Replace workers data (full set)
+router.post('/workers', (req, res) => {
+  if (!Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Body must be an array' });
+  }
+  try {
+    writeDataFile('1c-workers.json', req.body);
+    res.json({ success: true, count: req.body.length });
+  } catch (e) {
+    logger.error('Save workers error', { error: e.message });
+    res.status(500).json({ error: 'Save failed', message: e.message });
+  }
+});
+
 module.exports = router;
