@@ -10,7 +10,19 @@ const SETTINGS_FILE = path.join(__dirname, '../../data/app-settings.json');
 
 const DEFAULT_SETTINGS = {
   mode: 'demo', // 'demo' | 'live'
+  timezone: 'Europe/Moscow', // IANA TZ для интерпретации shiftStart/shiftEnd и дневных границ
 };
+
+// Проверка, что строка — валидная IANA-таймзона (поддерживается рантаймом).
+function isValidTimezone(tz) {
+  if (typeof tz !== 'string' || !tz) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function readSettings() {
   try {
@@ -39,7 +51,7 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   }
 
   const current = readSettings();
-  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd } = req.body;
+  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd, timezone } = req.body;
 
   if (mode && ['demo', 'live'].includes(mode)) {
     current.mode = mode;
@@ -48,6 +60,12 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   if (postsCount !== undefined) current.postsCount = postsCount;
   if (shiftStart !== undefined) current.shiftStart = shiftStart;
   if (shiftEnd !== undefined) current.shiftEnd = shiftEnd;
+  if (timezone !== undefined) {
+    if (!isValidTimezone(timezone)) {
+      return res.status(400).json({ error: `Invalid timezone: ${timezone}` });
+    }
+    current.timezone = timezone;
+  }
 
   writeSettings(current);
 

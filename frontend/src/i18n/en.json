@@ -260,6 +260,8 @@
     "shiftEnd": "Shift End",
     "postsCount": "Number of Posts",
     "mode": "Mode",
+    "timezone": "STO timezone",
+    "timezoneHint": "Used for shift, load and efficiency calculations.",
     "weekSchedule": "Weekly Schedule",
     "dayOff": "Off",
     "copyToAll": "Apply to all days",

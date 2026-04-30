@@ -103,6 +103,7 @@ export default function DashboardPosts() {
       postsCount: newSettings.postsCount,
       shiftStart: newSettings.shiftStart,
       shiftEnd: newSettings.shiftEnd,
+      timezone: newSettings.timezone,
     }).catch(() => {});
   };
 

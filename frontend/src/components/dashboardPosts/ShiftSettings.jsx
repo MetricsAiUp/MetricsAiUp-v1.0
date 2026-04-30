@@ -3,6 +3,31 @@ import { Settings, X, Copy } from 'lucide-react';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
+// Часто используемые таймзоны для постсоветского пространства + UTC.
+// Если нужно расширение — список достраивается без изменений API.
+const TIMEZONE_OPTIONS = [
+  'Europe/Moscow',
+  'Europe/Kaliningrad',
+  'Europe/Samara',
+  'Asia/Yekaterinburg',
+  'Asia/Omsk',
+  'Asia/Krasnoyarsk',
+  'Asia/Irkutsk',
+  'Asia/Yakutsk',
+  'Asia/Vladivostok',
+  'Asia/Magadan',
+  'Asia/Kamchatka',
+  'Europe/Minsk',
+  'Europe/Kyiv',
+  'Asia/Almaty',
+  'Asia/Bishkek',
+  'Asia/Tashkent',
+  'Asia/Tbilisi',
+  'Asia/Yerevan',
+  'Asia/Baku',
+  'UTC',
+];
+
 const defaultDaySchedule = (start = '08:00', end = '20:00') => ({
   start,
   end,
@@ -42,6 +67,7 @@ export default function ShiftSettings({ settings, onSettingsChange, onClose, t }
       ...local,
       shiftStart: local.weekSchedule.mon.start,
       shiftEnd: local.weekSchedule.mon.end,
+      timezone: local.timezone || 'Europe/Moscow',
     };
     onSettingsChange(toSave);
     onClose();
@@ -167,6 +193,26 @@ export default function ShiftSettings({ settings, onSettingsChange, onClose, t }
                 );
               })}
             </div>
+          </div>
+
+          {/* Timezone */}
+          <div>
+            <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-secondary)' }}>
+              {t('dashboardPosts.timezone')}
+            </label>
+            <select
+              value={local.timezone || 'Europe/Moscow'}
+              onChange={(e) => setLocal({ ...local, timezone: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl text-sm"
+              style={inputStyle}
+            >
+              {TIMEZONE_OPTIONS.map((tz) => (
+                <option key={tz} value={tz}>{tz}</option>
+              ))}
+            </select>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              {t('dashboardPosts.timezoneHint')}
+            </p>
           </div>
 
           {/* Posts count */}

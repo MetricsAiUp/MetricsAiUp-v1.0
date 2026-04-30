@@ -2,6 +2,50 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const settingsReader = require('./settings');
 
+// Парсит wall-clock время "YYYY-MM-DD" + "HH:MM" в указанной IANA-таймзоне
+// и возвращает соответствующий UTC-timestamp (ms). Не зависит от TZ хост-системы.
+// Алгоритм: берём наивный UTC, форматируем в целевой TZ, считаем offset, корректируем.
+function parseInTz(dateStr, timeStr, tz) {
+  const naive = new Date(`${dateStr}T${timeStr}:00Z`).getTime();
+  if (!Number.isFinite(naive)) return NaN;
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  });
+  const parts = Object.fromEntries(
+    dtf.formatToParts(new Date(naive))
+      .filter(p => p.type !== 'literal')
+      .map(p => [p.type, p.value])
+  );
+  const hour = parts.hour === '24' ? 0 : Number(parts.hour);
+  const wallInTz = Date.UTC(
+    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+    hour, Number(parts.minute), Number(parts.second)
+  );
+  const offsetMs = wallInTz - naive; // насколько TZ опережает UTC в этот момент
+  return naive - offsetMs;
+}
+
+function tzOf(settings) {
+  return settings && settings.timezone ? settings.timezone : 'Europe/Moscow';
+}
+
+// Возвращает дату YYYY-MM-DD «по часам» указанной таймзоны (а не UTC).
+function dateStrInTz(d, tz) {
+  const dtf = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  return dtf.format(d); // en-CA даёт YYYY-MM-DD
+}
+
+// Возвращает ключ дня недели (mon..sun) по часам TZ.
+function dayKeyInTz(d, tz) {
+  const dtf = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
+  const wk = dtf.format(d).toLowerCase(); // mon, tue...
+  return wk;
+}
+
 // Активные посты из БД (после Этапа А — источник истины: Map (number → post)).
 // Возвращает Map с гарантированно заполненными number.
 async function getActivePostsMap() {
@@ -102,13 +146,15 @@ function computeDaily(wos) {
   return days;
 }
 
-// Get shift bounds for a given date from settings
+// Get shift bounds for a given date from settings.
+// Все wall-clock времена интерпретируются в settings.timezone (IANA), а не в TZ хоста.
 function getShiftBoundsForDate(settings, date) {
-  const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const tz = tzOf(settings);
   const d = date ? new Date(date) : new Date();
-  const jsDay = d.getDay(); // 0=Sun
-  const dayMap = [6, 0, 1, 2, 3, 4, 5];
-  const dayKey = DAYS[dayMap[jsDay]];
+  // День недели и YYYY-MM-DD считаем по календарю TZ, а не UTC,
+  // иначе при сдвиге часового пояса можем перейти на сутки раньше/позже.
+  const dayKey = dayKeyInTz(d, tz);
+  const dateStr = dateStrInTz(d, tz);
   const ws = settings.weekSchedule;
 
   let startStr = '08:00', endStr = '22:00';
@@ -120,35 +166,35 @@ function getShiftBoundsForDate(settings, date) {
     endStr = settings.shiftEnd || '22:00';
   }
 
-  const dateStr = d.toISOString().split('T')[0];
-  const shiftStart = new Date(`${dateStr}T${startStr}:00`).getTime();
-  const shiftEnd = new Date(`${dateStr}T${endStr}:00`).getTime();
+  const shiftStart = parseInTz(dateStr, startStr, tz);
+  const shiftEnd = parseInTz(dateStr, endStr, tz);
   const maxMs = shiftEnd - shiftStart;
   const maxH = maxMs / 3600000;
   return { shiftStart, shiftEnd, maxMs, maxH, dayOff: !!(ws && ws[dayKey] && ws[dayKey].dayOff) };
 }
 
-// Get period date range from query params
-function getPeriodRange(period, from, to) {
+// Get period date range from query params. Все «сегодня/вчера» считаются
+// по календарю TZ из настроек, иначе на UTC-сервере переход дня сдвинут.
+function getPeriodRange(period, from, to, settings) {
+  const tz = tzOf(settings);
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = dateStrInTz(now, tz);
+  // Сдвинуть на N календарных дней назад в TZ.
+  function shiftDate(baseStr, deltaDays) {
+    // Парсим как полночь TZ → корректный UTC момент → прибавляем дни (через UTC, безопасно).
+    const startOfDayUtc = parseInTz(baseStr, '00:00', tz);
+    const shifted = new Date(startOfDayUtc + deltaDays * 86400000);
+    return dateStrInTz(shifted, tz);
+  }
   switch (period) {
     case 'yesterday': {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 1);
-      const ds = d.toISOString().split('T')[0];
+      const ds = shiftDate(todayStr, -1);
       return { dateFrom: ds, dateTo: ds };
     }
-    case 'week': {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 6);
-      return { dateFrom: d.toISOString().split('T')[0], dateTo: todayStr };
-    }
-    case 'month': {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 29);
-      return { dateFrom: d.toISOString().split('T')[0], dateTo: todayStr };
-    }
+    case 'week':
+      return { dateFrom: shiftDate(todayStr, -6), dateTo: todayStr };
+    case 'month':
+      return { dateFrom: shiftDate(todayStr, -29), dateTo: todayStr };
     case 'custom':
       return { dateFrom: from || todayStr, dateTo: to || todayStr };
     default: // today
@@ -163,7 +209,7 @@ router.get('/posts-analytics', async (req, res) => {
     const curSettings = settingsReader.readSettings();
     const proxy = req.app.get('monitoringProxy');
     const { period, from, to } = req.query;
-    const { dateFrom, dateTo } = getPeriodRange(period, from, to);
+    const { dateFrom, dateTo } = getPeriodRange(period, from, to, curSettings);
     // Compute daily breakdown from monitoring history
     function computeDailyFromHistory(history, settings) {
       const days = [];
@@ -234,8 +280,8 @@ router.get('/posts-analytics', async (req, res) => {
       }
       shiftBounds.maxMs = totalMs;
       shiftBounds.maxH = totalMs / 3600000;
-      shiftBounds.shiftStart = new Date(`${dateFrom}T00:00:00`).getTime();
-      shiftBounds.shiftEnd = new Date(`${dateTo}T23:59:59`).getTime();
+      shiftBounds.shiftStart = parseInTz(dateFrom, '00:00', tzOf(curSettings));
+      shiftBounds.shiftEnd = parseInTz(dateTo, '23:59', tzOf(curSettings)) + 59000;
     }
 
     // Calculate occupancy metrics from history timeline within shift bounds
@@ -719,7 +765,7 @@ router.get('/dashboard-posts', async (req, res) => {
       posts.sort((a, b) => a.number - b.number);
 
       return res.json({
-        settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || postsMap.size, weekSchedule: settings.weekSchedule, mode: 'live' },
+        settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || postsMap.size, weekSchedule: settings.weekSchedule, timezone: tzOf(settings), mode: 'live' },
         posts,
         freeWorkOrders: [],
       });
@@ -818,7 +864,7 @@ router.get('/dashboard-posts', async (req, res) => {
     }
 
     res.json({
-      settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || dbPostsMap.size, weekSchedule: settings.weekSchedule, mode: 'db' },
+      settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || dbPostsMap.size, weekSchedule: settings.weekSchedule, timezone: tzOf(settings), mode: 'db' },
       posts,
       freeWorkOrders: freeWOs.map(w => ({
         id: w.id,
