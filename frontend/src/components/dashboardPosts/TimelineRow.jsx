@@ -73,7 +73,7 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
           />
           <PostIcon size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
           <span className="font-semibold" style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
-            {(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}
+            {(() => { const m = post.name?.match(/\d+/)?.[0]; const num = m ? parseInt(m, 10) : null; return num ? t(`posts.post${num}`) : post.name; })()}
           </span>
           <span
             className="px-1.5 py-0.5 rounded"

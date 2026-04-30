@@ -17,7 +17,8 @@ function effColor(v) {
 
 function translatePostName(name, t, type) {
   if (type === 'zone') return name; // zones keep their name as-is
-  const num = name?.match(/\d+/)?.[0];
+  const numStr = name?.match(/\d+/)?.[0];
+  const num = numStr ? parseInt(numStr, 10) : null;
   if (num) return t(`posts.post${num}`);
   return name;
 }

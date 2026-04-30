@@ -179,7 +179,7 @@ export default function WorkOrderModal({ item, post, onClose, t }) {
               {t('dashboardPosts.post')}
             </div>
             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {(() => { const num = post.name?.match(/\d+/)?.[0]; return num ? t(`posts.post${num}`) : post.name; })()}
+              {(() => { const m = post.name?.match(/\d+/)?.[0]; const num = m ? parseInt(m, 10) : null; return num ? t(`posts.post${num}`) : post.name; })()}
             </div>
           </div>
 
