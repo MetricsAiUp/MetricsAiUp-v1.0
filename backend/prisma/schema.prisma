@@ -530,21 +530,49 @@ model ReportSchedule {
 model MonitoringSnapshot {
   id               String   @id @default(uuid())
   zoneName         String   @map("zone_name")
+  externalType     String?  @map("external_type") // "lift" | "other"
   status           String   // "free" | "occupied"
   plateNumber      String?  @map("plate_number")
   carColor         String?  @map("car_color")
   carModel         String?  @map("car_model")
   carMake          String?  @map("car_make")
   carBody          String?  @map("car_body")
+  carFirstSeen     DateTime? @map("car_first_seen")
   worksInProgress  Boolean  @default(false) @map("works_in_progress")
   worksDescription String?  @map("works_description")
   peopleCount      Int      @default(0) @map("people_count")
+  openParts        String?  @map("open_parts") // JSON array as string (SQLite)
   confidence       String?
+  externalUpdate   DateTime? @map("external_update") // lastUpdate from external API
   timestamp        DateTime @default(now())
 
   @@index([zoneName, timestamp])
   @@index([timestamp])
   @@map("monitoring_snapshots")
+}
+
+// Текущее (последнее) состояние зоны/поста — обновляется на каждый poll внешнего API.
+// Источник истины для live-режима. Кэш в памяти monitoringProxy — проекция этой таблицы.
+model MonitoringCurrent {
+  zoneName         String   @id @map("zone_name")
+  externalType     String?  @map("external_type")
+  status           String
+  plateNumber      String?  @map("plate_number")
+  carColor         String?  @map("car_color")
+  carModel         String?  @map("car_model")
+  carMake          String?  @map("car_make")
+  carBody          String?  @map("car_body")
+  carFirstSeen     DateTime? @map("car_first_seen")
+  worksInProgress  Boolean  @default(false) @map("works_in_progress")
+  worksDescription String?  @map("works_description")
+  peopleCount      Int      @default(0) @map("people_count")
+  openParts        String?  @map("open_parts")
+  confidence       String?
+  externalUpdate   DateTime? @map("external_update")
+  fetchedAt        DateTime @default(now()) @map("fetched_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("monitoring_current")
 }
 
 model ShiftWorker {

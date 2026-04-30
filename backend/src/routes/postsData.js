@@ -693,26 +693,79 @@ router.get('/dashboard-posts', async (req, res) => {
       const monPosts = proxy.getPosts();
       const posts = monPosts.map(mp => {
         const dbPost = postsMap.get(mp.postNumber);
-        // Build timeline from history
-        const timeline = (mp.history || []).map((h, idx) => ({
+        // Сворачиваем сырые snapshot-ы в «визиты» (один блок на одного авто на посту).
+        // Без этого на каждый snapshot создавался бы блок таймлайна, и /api/dashboard-posts
+        // отдавал бы тысячи записей за одну смену → дашборд становился неповоротливым,
+        // а каждый snapshot со status='free' попадал в счётчик «Выполнено ЗН» (16k+).
+        // Фильтруем snapshot-ы границами текущей смены.
+        const allHistory = Array.isArray(mp.history) ? mp.history : [];
+        const inShift = allHistory.filter(h => {
+          const ts = new Date(h.timestamp).getTime();
+          return ts >= shiftBounds.shiftStart && ts <= shiftBounds.shiftEnd;
+        }).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        const timeline = [];
+        let visit = null;
+        for (const h of inShift) {
+          if (h.status !== 'free') {
+            // Начало визита или продолжение
+            if (!visit) {
+              visit = {
+                start: h.timestamp,
+                end: h.timestamp,
+                plate: h.car?.plate || null,
+                brand: h.car?.make || null,
+                model: h.car?.model || null,
+                worksInProgress: !!h.worksInProgress,
+                worksDescription: h.worksDescription || null,
+                peopleCount: h.peopleCount || 0,
+                confidence: h.confidence,
+              };
+            } else {
+              visit.end = h.timestamp;
+              visit.worksInProgress = visit.worksInProgress || !!h.worksInProgress;
+              visit.peopleCount = Math.max(visit.peopleCount, h.peopleCount || 0);
+              if (h.worksDescription) visit.worksDescription = h.worksDescription;
+            }
+          } else if (visit) {
+            // Конец визита — закрываем блок (status='completed', endTime = первый free)
+            timeline.push({ ...visit, endTime: h.timestamp, completed: true });
+            visit = null;
+          }
+        }
+        // Открытый визит на момент конца смены/сейчас → in_progress / scheduled
+        if (visit) {
+          timeline.push({ ...visit, endTime: null, completed: false });
+        }
+
+        // Маппинг визитов в формат таймлайна.
+        // В live-режиме у нас от CV только два сигнала: была работа или нет.
+        // - была работа в визите → 'in_progress' (фиолетовый = "обслуживание шло")
+        // - авто стояло без работ → 'scheduled' (серый = "просто стояло")
+        // Зелёный 'completed' не используем — мы не знаем, был ли визит закрытием ЗН;
+        // зелёный остаётся для свободных промежутков (gap между визитами).
+        const tlBlocks = timeline.map((v, idx) => ({
           id: `mon-${mp.postNumber}-${idx}`,
           workOrderNumber: null,
           workOrderId: null,
-          plateNumber: h.car?.plate || null,
-          brand: h.car?.make || null,
-          model: h.car?.model || null,
-          workType: h.worksInProgress ? 'monitoring' : null,
-          status: h.status === 'occupied' && h.worksInProgress ? 'in_progress' : h.status === 'occupied' ? 'scheduled' : 'completed',
-          startTime: h.timestamp,
-          endTime: null,
+          plateNumber: v.plate,
+          brand: v.brand,
+          model: v.model,
+          workType: v.worksInProgress ? 'monitoring' : null,
+          status: v.worksInProgress ? 'in_progress' : 'scheduled',
+          startTime: v.start,
+          endTime: v.endTime,
           normHours: null,
           master: null,
           worker: null,
           actualHours: null,
           estimatedEnd: null,
-          confidence: h.confidence,
-          peopleCount: h.peopleCount,
-          worksDescription: null,
+          confidence: v.confidence,
+          peopleCount: v.peopleCount,
+          worksDescription: v.worksDescription,
+          // Технические флаги для аналитики (не на рендер):
+          visitClosed: v.completed,
+          hadWork: v.worksInProgress,
         }));
 
         const currentVehicle = mp.status !== 'free' && (mp.plateNumber || mp.carModel)
@@ -734,7 +787,7 @@ router.get('/dashboard-posts', async (req, res) => {
           openParts: mp.openParts,
           confidence: mp.confidence,
           lastUpdate: mp.lastUpdate,
-          timeline,
+          timeline: tlBlocks,
           freeWorkOrders: [],
         };
       });
@@ -764,10 +817,34 @@ router.get('/dashboard-posts', async (req, res) => {
       }
       posts.sort((a, b) => a.number - b.number);
 
+      // Реальные ЗН (1С → WorkOrder в БД) за текущую смену.
+      // Визиты CV ≠ ЗН: визит — это машина на посту, ЗН — это документ из 1С.
+      // Счётчик «Выполнено ЗН» должен брать ЗН, а не визиты.
+      const shiftStartDate = new Date(shiftBounds.shiftStart);
+      const shiftEndDate = new Date(shiftBounds.shiftEnd);
+      const shiftWOs = await prisma.workOrder.findMany({
+        where: { scheduledTime: { gte: shiftStartDate, lte: shiftEndDate } },
+        select: { status: true, normHours: true, actualHours: true, startTime: true, endTime: true },
+      });
+      const woStats = {
+        completed: shiftWOs.filter(w => w.status === 'completed').length,
+        inProgress: shiftWOs.filter(w => w.status === 'in_progress').length,
+        scheduled: shiftWOs.filter(w => w.status === 'scheduled').length,
+        totalNormHours: shiftWOs.reduce((s, w) => s + (w.normHours || 0), 0),
+        totalActualHours: shiftWOs.reduce((s, w) => s + (w.actualHours || 0), 0),
+        savedMinutes: shiftWOs.reduce((s, w) => {
+          if (w.status === 'completed' && w.actualHours != null && w.normHours != null && w.normHours > w.actualHours) {
+            return s + (w.normHours - w.actualHours) * 60;
+          }
+          return s;
+        }, 0),
+      };
+
       return res.json({
         settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || postsMap.size, weekSchedule: settings.weekSchedule, timezone: tzOf(settings), mode: 'live' },
         posts,
         freeWorkOrders: [],
+        workOrdersStats: woStats,
       });
     }
 

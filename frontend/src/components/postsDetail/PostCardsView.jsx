@@ -43,7 +43,14 @@ export default function PostCardsView({ posts, navigate }) {
             {/* Card header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.loadPercent > 50 ? 'var(--success)' : d.loadPercent > 0 ? 'var(--warning)' : 'var(--text-muted)' }} />
+                {/* Дот = текущий статус (free → green, active_work/occupied → red, no_data → grey).
+                    Если статус не передан (старые ответы API), fallback на loadPercent. */}
+                <div className="w-2.5 h-2.5 rounded-full" style={{
+                  background: post.status === 'free' ? 'var(--success)'
+                    : (post.status === 'active_work' || post.status === 'occupied') ? 'var(--danger)'
+                    : post.status === 'no_data' ? 'var(--text-muted)'
+                    : (d.loadPercent > 50 ? 'var(--success)' : d.loadPercent > 0 ? 'var(--warning)' : 'var(--text-muted)')
+                }} />
                 <Icon size={14} style={{ color: 'var(--text-secondary)' }} />
                 <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{translatePostName(post.name, t, post.type)}</span>
                 <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '9px' }}>{t(`posts.${post.type}`)}</span>

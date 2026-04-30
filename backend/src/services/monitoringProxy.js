@@ -76,53 +76,6 @@ function mapStatus(ext) {
   return 'occupied';
 }
 
-// Transform external zone data to our post format
-function transformPost(ext, postNumber) {
-  const status = mapStatus(ext);
-  const car = ext.car || null;
-  return {
-    postNumber,
-    externalZoneName: ext.zone,
-    status,
-    plateNumber: car?.plate || null,
-    carColor: car?.color || null,
-    carModel: car?.model || null,
-    carMake: car?.make || null,
-    carBody: car?.body || null,
-    carFirstSeen: car?.firstSeen || null,
-    worksInProgress: ext.worksInProgress || false,
-    worksDescription: ext.worksDescription || null,
-    peopleCount: ext.peopleCount || 0,
-    openParts: ext.openParts || [],
-    confidence: ext.confidence || 'LOW',
-    lastUpdate: ext.lastUpdate,
-    history: ext.history || [],
-  };
-}
-
-// Transform external zone data to our free zone format
-function transformFreeZone(ext, zoneNumber) {
-  const car = ext.car || null;
-  return {
-    zoneNumber,
-    externalZoneName: ext.zone,
-    status: ext.status, // free or occupied
-    plateNumber: car?.plate || null,
-    carColor: car?.color || null,
-    carModel: car?.model || null,
-    carMake: car?.make || null,
-    carBody: car?.body || null,
-    carFirstSeen: car?.firstSeen || null,
-    worksInProgress: ext.worksInProgress || false,
-    worksDescription: ext.worksDescription || null,
-    peopleCount: ext.peopleCount || 0,
-    openParts: ext.openParts || [],
-    confidence: ext.confidence || 'LOW',
-    lastUpdate: ext.lastUpdate,
-    history: ext.history || [],
-  };
-}
-
 async function fetchMonitoringState(from, to) {
   try {
     let url = `${MONITORING_API_BASE}/monitoring/state`;
@@ -174,42 +127,175 @@ async function fetchMonitoringCameras() {
   }
 }
 
-// Track last saved state per zone to avoid duplicate snapshots
+// Track last saved state per zone to avoid duplicate snapshots.
+// Снимки в monitoring_snapshots — append-only история; пишем только при
+// изменении значимых полей (status, plate, works, openParts, peopleCount).
 const lastSavedState = new Map();
 
-async function saveSnapshots(rawState) {
+// Преобразование значений внешнего API в формат БД.
+function carFirstSeenDate(item) {
+  const v = item?.car?.firstSeen;
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function externalUpdateDate(item) {
+  const v = item?.lastUpdate;
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function openPartsJson(item) {
+  const arr = Array.isArray(item?.openParts) ? item.openParts : [];
+  return arr.length ? JSON.stringify(arr) : null;
+}
+
+// Полная запись внешнего состояния в БД:
+// 1) MonitoringCurrent — upsert (всегда, отражает актуальное состояние);
+// 2) MonitoringSnapshot — insert только при изменении значимых полей.
+async function persistToDb(rawState) {
   if (!rawState || !Array.isArray(rawState)) return;
-  const toCreate = [];
+
+  const snapshotsToCreate = [];
+  const upsertOps = [];
+
   for (const item of rawState) {
     if (!item.zone) continue;
-    const key = item.zone;
-    const prev = lastSavedState.get(key);
-    // Only save if status, plate, or worksInProgress changed
     const plate = item.car?.plate || null;
     const works = !!item.worksInProgress;
-    if (prev && prev.status === item.status && prev.plate === plate && prev.works === works) continue;
+    const peopleCount = item.peopleCount || 0;
+    const openPartsStr = openPartsJson(item);
+    const status = item.status || 'free';
+    const confidence = item.confidence || null;
 
-    lastSavedState.set(key, { status: item.status, plate, works });
-    toCreate.push({
-      zoneName: item.zone,
-      status: item.status || 'free',
+    const baseRow = {
+      externalType: item.type || null,
+      status,
       plateNumber: plate,
       carColor: item.car?.color || null,
       carModel: item.car?.model || null,
       carMake: item.car?.make || null,
       carBody: item.car?.body || null,
+      carFirstSeen: carFirstSeenDate(item),
       worksInProgress: works,
       worksDescription: item.worksDescription || null,
-      peopleCount: item.peopleCount || 0,
-      confidence: item.confidence || null,
+      peopleCount,
+      openParts: openPartsStr,
+      confidence,
+      externalUpdate: externalUpdateDate(item),
+    };
+
+    upsertOps.push(
+      prisma.monitoringCurrent.upsert({
+        where: { zoneName: item.zone },
+        create: { zoneName: item.zone, ...baseRow, fetchedAt: new Date() },
+        update: { ...baseRow, fetchedAt: new Date() },
+      })
+    );
+
+    // Дедуп для snapshot-таблицы — расширенный набор ключей.
+    const dedupKey = JSON.stringify({
+      s: status, p: plate, w: works, pc: peopleCount, op: openPartsStr, c: confidence,
     });
-  }
-  if (toCreate.length > 0) {
-    try {
-      await prisma.monitoringSnapshot.createMany({ data: toCreate });
-    } catch (err) {
-      logger.error('Failed to save monitoring snapshots', { error: err.message });
+    const prev = lastSavedState.get(item.zone);
+    if (prev !== dedupKey) {
+      lastSavedState.set(item.zone, dedupKey);
+      snapshotsToCreate.push({ zoneName: item.zone, ...baseRow });
     }
+  }
+
+  try {
+    // Параллельно upsert текущих состояний.
+    if (upsertOps.length) await Promise.all(upsertOps);
+    // И append истории изменений.
+    if (snapshotsToCreate.length) {
+      await prisma.monitoringSnapshot.createMany({ data: snapshotsToCreate });
+    }
+  } catch (err) {
+    logger.error('Failed to persist monitoring state to DB', { error: err.message });
+  }
+}
+
+// Прочитать MonitoringCurrent и собрать кэш постов/зон в формате,
+// совместимом с потребителями (posts-analytics, /api/monitoring/state).
+async function refreshCacheFromDb() {
+  let rows;
+  try {
+    rows = await prisma.monitoringCurrent.findMany();
+  } catch (err) {
+    logger.error('Failed to load monitoring_current from DB', { error: err.message });
+    return { posts: [], zones: [] };
+  }
+
+  // Маппинг статуса для постов: free / active_work (occupied + worksInProgress) / occupied.
+  const postStatus = (row) => {
+    if (row.status === 'free') return 'free';
+    if (row.worksInProgress) return 'active_work';
+    return 'occupied';
+  };
+  // Свободные зоны имеют только two states (free/occupied) — на карте/в дашборде
+  // не различают active_work, чтобы не сломать рендер ZoneEl. Возвращаем raw status.
+  const zoneStatus = (row) => row.status === 'free' ? 'free' : 'occupied';
+
+  const posts = [];
+  const zones = [];
+
+  for (const row of rows) {
+    const baseFields = {
+      externalZoneName: row.zoneName,
+      externalType: row.externalType,
+      plateNumber: row.plateNumber,
+      carColor: row.carColor,
+      carModel: row.carModel,
+      carMake: row.carMake,
+      carBody: row.carBody,
+      carFirstSeen: row.carFirstSeen ? row.carFirstSeen.toISOString() : null,
+      worksInProgress: row.worksInProgress,
+      worksDescription: row.worksDescription,
+      peopleCount: row.peopleCount,
+      openParts: row.openParts ? safeJsonArray(row.openParts) : [],
+      confidence: row.confidence,
+      lastUpdate: row.externalUpdate ? row.externalUpdate.toISOString() : null,
+      fetchedAt: row.fetchedAt ? row.fetchedAt.toISOString() : null,
+      // history — заполним ниже из cachedFullHistory (если есть).
+      history: [],
+    };
+
+    const postNum = extractPostNumber(row.zoneName);
+    if (postNum && activePostNumbers.has(postNum) && !posts.find(p => p.postNumber === postNum)) {
+      posts.push({ postNumber: postNum, status: postStatus(row), ...baseFields });
+      continue;
+    }
+    const zoneNum = extractFreeZoneNumber(row.zoneName);
+    if (zoneNum && activeFreeZoneNumbers.has(zoneNum) && !zones.find(z => z.zoneNumber === zoneNum)) {
+      zones.push({ zoneNumber: zoneNum, status: zoneStatus(row), ...baseFields });
+    }
+  }
+
+  // Проставим history из cachedFullHistory (если он успел загрузиться) — это
+  // богатая последовательность записей, нужная аналитике factHours/efficiency.
+  if (cachedFullHistory) {
+    for (const p of posts) {
+      const cached = cachedFullHistory.find(z => z.zone === p.externalZoneName);
+      if (cached?.history) p.history = cached.history;
+    }
+    for (const z of zones) {
+      const cached = cachedFullHistory.find(c => c.zone === z.externalZoneName);
+      if (cached?.history) z.history = cached.history;
+    }
+  }
+
+  posts.sort((a, b) => a.postNumber - b.postNumber);
+  zones.sort((a, b) => a.zoneNumber - b.zoneNumber);
+  return { posts, zones };
+}
+
+function safeJsonArray(s) {
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
   }
 }
 
@@ -267,43 +353,25 @@ function dropEmptyDuplicates(rawState) {
   });
 }
 
-function processState(rawStateInput) {
+// Полный цикл write-through: external → DB → cache → emit.
+// БД — источник истины для live-режима; в кэш загружаем из MonitoringCurrent.
+async function processState(rawStateInput) {
   if (!rawStateInput || !Array.isArray(rawStateInput)) return;
 
   const rawState = dropEmptyDuplicates(rawStateInput);
   cachedState = rawState;
   lastFetchTime = new Date();
 
-  // Merge new history entries into full history cache
+  // Слить новые записи истории в долгоживущий in-memory кэш истории.
   mergeHistory(rawState);
 
-  // Persist snapshots to DB (fire-and-forget)
-  saveSnapshots(rawState);
+  // 1) Сначала пишем внешнее состояние в БД (current + snapshot при изменении).
+  await persistToDb(rawState);
 
-  const posts = [];
-  const zones = [];
+  // 2) Перечитываем кэш постов/зон из БД — БД источник истины.
+  const { posts, zones } = await refreshCacheFromDb();
 
-  for (const item of rawState) {
-    const postNum = extractPostNumber(item.zone);
-    if (postNum && activePostNumbers.has(postNum)) {
-      // Skip duplicates (e.g. "Пост 04" and "Пост 04 — легковое/грузовое")
-      if (!posts.find(p => p.postNumber === postNum)) {
-        posts.push(transformPost(item, postNum));
-      }
-    }
-
-    const zoneNum = extractFreeZoneNumber(item.zone);
-    if (zoneNum && activeFreeZoneNumbers.has(zoneNum)) {
-      if (!zones.find(z => z.zoneNumber === zoneNum)) {
-        zones.push(transformFreeZone(item, zoneNum));
-      }
-    }
-  }
-
-  posts.sort((a, b) => a.postNumber - b.postNumber);
-  zones.sort((a, b) => a.zoneNumber - b.zoneNumber);
-
-  // Detect changes and emit Socket.IO events
+  // 3) Diff против предыдущего кэша → Socket.IO events.
   if (ioRef) {
     for (const newPost of posts) {
       const old = cachedPosts.find(p => p.postNumber === newPost.postNumber);
@@ -340,10 +408,67 @@ function processState(rawStateInput) {
 
 async function poll() {
   const raw = await fetchMonitoringState();
-  if (raw) processState(raw);
+  if (raw) await processState(raw);
 }
 
 // ---- Public API ----
+
+// Backfill — записать недостающие записи истории из внешнего API в нашу БД.
+// Берём latest timestamp в monitoring_snapshots по zoneName и пишем только новее.
+async function backfillHistoryToDb(fullHistory) {
+  if (!Array.isArray(fullHistory) || fullHistory.length === 0) return 0;
+  let inserted = 0;
+  for (const item of fullHistory) {
+    if (!item.zone || !Array.isArray(item.history) || item.history.length === 0) continue;
+    let latestTs = null;
+    try {
+      const latest = await prisma.monitoringSnapshot.findFirst({
+        where: { zoneName: item.zone },
+        orderBy: { timestamp: 'desc' },
+        select: { timestamp: true },
+      });
+      latestTs = latest?.timestamp || null;
+    } catch (err) {
+      logger.error('Backfill: failed to read latest snapshot', { zone: item.zone, error: err.message });
+      continue;
+    }
+    const toCreate = [];
+    for (const h of item.history) {
+      const ts = h.timestamp ? new Date(h.timestamp) : null;
+      if (!ts || Number.isNaN(ts.getTime())) continue;
+      if (latestTs && ts <= latestTs) continue;
+      const car = h.car || null;
+      toCreate.push({
+        zoneName: item.zone,
+        externalType: item.type || null,
+        status: h.status || 'free',
+        plateNumber: car?.plate || null,
+        carColor: car?.color || null,
+        carModel: car?.model || null,
+        carMake: car?.make || null,
+        carBody: car?.body || null,
+        carFirstSeen: car?.firstSeen ? (() => { const d = new Date(car.firstSeen); return Number.isNaN(d.getTime()) ? null : d; })() : null,
+        worksInProgress: !!h.worksInProgress,
+        worksDescription: h.worksDescription || null,
+        peopleCount: h.peopleCount || 0,
+        openParts: Array.isArray(h.openParts) && h.openParts.length ? JSON.stringify(h.openParts) : null,
+        confidence: h.confidence || null,
+        externalUpdate: ts,
+        timestamp: ts,
+      });
+    }
+    if (toCreate.length) {
+      try {
+        // createMany не поддерживает skipDuplicates по @id default(uuid), но дубли исключаются по latestTs.
+        await prisma.monitoringSnapshot.createMany({ data: toCreate });
+        inserted += toCreate.length;
+      } catch (err) {
+        logger.error('Backfill: createMany failed', { zone: item.zone, error: err.message });
+      }
+    }
+  }
+  return inserted;
+}
 
 async function loadFullHistory() {
   try {
@@ -356,6 +481,9 @@ async function loadFullHistory() {
       cachedFullHistory = dropEmptyDuplicates(raw);
       const totalHistory = cachedFullHistory.reduce((sum, z) => sum + (z.history?.length || 0), 0);
       logger.info('Full history loaded', { zones: cachedFullHistory.length, historyRecords: totalHistory });
+      // Сохранить недостающие записи в нашу БД (write-through истории).
+      const inserted = await backfillHistoryToDb(cachedFullHistory);
+      if (inserted > 0) logger.info('Backfilled history into DB', { inserted });
     }
   } catch (err) {
     logger.error('Failed to load full history', { error: err.message });
@@ -503,6 +631,80 @@ async function getZoneNamesFromDB() {
   return result.map(r => r.zoneName);
 }
 
+// Статистика БД мониторинга для LiveDebug.
+async function getDbStats() {
+  try {
+    const [snapshotsTotal, currentTotal, latestSnapshot, latestCurrent, perZoneRaw] = await Promise.all([
+      prisma.monitoringSnapshot.count(),
+      prisma.monitoringCurrent.count(),
+      prisma.monitoringSnapshot.findFirst({
+        orderBy: { timestamp: 'desc' },
+        select: { timestamp: true },
+      }),
+      prisma.monitoringCurrent.findFirst({
+        orderBy: { fetchedAt: 'desc' },
+        select: { fetchedAt: true },
+      }),
+      prisma.monitoringSnapshot.groupBy({
+        by: ['zoneName'],
+        _count: { _all: true },
+        _max: { timestamp: true },
+      }),
+    ]);
+    const perZone = perZoneRaw
+      .map(r => ({
+        zoneName: r.zoneName,
+        snapshots: r._count._all,
+        latest: r._max.timestamp ? r._max.timestamp.toISOString() : null,
+      }))
+      .sort((a, b) => a.zoneName.localeCompare(b.zoneName, 'ru'));
+    return {
+      snapshotsTotal,
+      currentTotal,
+      latestSnapshot: latestSnapshot?.timestamp?.toISOString() || null,
+      latestFetch: latestCurrent?.fetchedAt?.toISOString() || null,
+      perZone,
+    };
+  } catch (err) {
+    logger.error('Failed to compute monitoring DB stats', { error: err.message });
+    return {
+      snapshotsTotal: 0,
+      currentTotal: 0,
+      latestSnapshot: null,
+      latestFetch: null,
+      perZone: [],
+      error: err.message,
+    };
+  }
+}
+
+// Прочитать актуальное состояние всех зон/постов из MonitoringCurrent.
+// Используется для LiveDebug — показать всё, что сейчас лежит в БД.
+async function getCurrentFromDB() {
+  const rows = await prisma.monitoringCurrent.findMany({
+    orderBy: { zoneName: 'asc' },
+  });
+  return rows.map(r => ({
+    zoneName: r.zoneName,
+    externalType: r.externalType,
+    status: r.status,
+    plateNumber: r.plateNumber,
+    carColor: r.carColor,
+    carModel: r.carModel,
+    carMake: r.carMake,
+    carBody: r.carBody,
+    carFirstSeen: r.carFirstSeen ? r.carFirstSeen.toISOString() : null,
+    worksInProgress: r.worksInProgress,
+    worksDescription: r.worksDescription,
+    peopleCount: r.peopleCount,
+    openParts: r.openParts ? safeJsonArray(r.openParts) : [],
+    confidence: r.confidence,
+    externalUpdate: r.externalUpdate ? r.externalUpdate.toISOString() : null,
+    fetchedAt: r.fetchedAt ? r.fetchedAt.toISOString() : null,
+    updatedAt: r.updatedAt ? r.updatedAt.toISOString() : null,
+  }));
+}
+
 module.exports = {
   start,
   stop,
@@ -523,4 +725,6 @@ module.exports = {
   getZoneHistoryFromDB,
   getZoneNamesFromDB,
   refreshActiveSets,
+  getDbStats,
+  getCurrentFromDB,
 };

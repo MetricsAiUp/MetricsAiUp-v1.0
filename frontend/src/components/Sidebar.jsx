@@ -178,7 +178,12 @@ export default function Sidebar() {
                       });
                       const status = livePost?.status ?? post.status;
                       const isNoData = status === 'no_data';
-                      const isActive = !isNoData && (livePost ? livePost.status !== 'free' : post.today?.loadPercent > 0);
+                      // Canonical scheme: free → green, occupied/active_work → red, no_data → dashed
+                      // В demo-режиме fallback на "был ли сегодня загружен" (loadPercent > 0).
+                      const isOccupied = !isNoData && (livePost
+                        ? livePost.status !== 'free'
+                        : post.today?.loadPercent > 0);
+                      const isFree = !isNoData && !isOccupied;
                       const noDataTitle = isRu
                         ? 'Нет данных от CV-системы. Пост существует в БД и на карте, но не репортится.'
                         : 'No data from CV system. Post exists in DB and map but is not reported.';
@@ -201,7 +206,7 @@ export default function Sidebar() {
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                             style={isNoData
                               ? { background: 'transparent', border: '1px dashed var(--text-muted)' }
-                              : { background: isActive ? 'var(--success)' : 'var(--text-muted)' }
+                              : { background: isOccupied ? 'var(--danger)' : isFree ? 'var(--success)' : 'var(--text-muted)' }
                             }
                           />
                           <span className="truncate">{(() => {
@@ -241,7 +246,7 @@ export default function Sidebar() {
                         >
                           <div
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: isOccupied ? 'var(--success)' : 'var(--text-muted)' }}
+                            style={{ background: isOccupied ? 'var(--danger)' : 'var(--success)' }}
                           />
                           <span className="truncate">{isRu ? `Зона ${String(zone.number).padStart(2, '0')}` : `Zone ${String(zone.number).padStart(2, '0')}`}</span>
                         </button>

@@ -3,15 +3,19 @@ const { authenticate } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/asyncHandler');
 
 // GET /api/monitoring/state — full monitoring state (posts + zones)
+// History-массивы намеренно не отдаём — клиенты (dashboard, фронт)
+// используют только current-поля + summary. Полную историю можно
+// получить через /api/monitoring/full-history. Без strip ответ может
+// весить 19+ МБ и сильно тормозить фронт при auto-refresh каждые 10с.
 router.get('/state', authenticate, asyncHandler(async (req, res) => {
   const proxy = req.app.get('monitoringProxy');
   if (!proxy || !proxy.isRunning()) {
     return res.status(503).json({ error: 'Monitoring proxy not running (switch to live mode)' });
   }
-
+  const stripHistory = (arr) => (arr || []).map(({ history: _h, ...rest }) => rest);
   res.json({
-    posts: proxy.getPosts(),
-    freeZones: proxy.getFreeZones(),
+    posts: stripHistory(proxy.getPosts()),
+    freeZones: stripHistory(proxy.getFreeZones()),
     summary: proxy.getSummary(),
     lastUpdate: proxy.getLastFetchTime()?.toISOString() || null,
   });
@@ -151,6 +155,22 @@ router.get('/full-history', authenticate, asyncHandler(async (req, res) => {
     return res.json([]);
   }
   res.json(fullHistory);
+}));
+
+// GET /api/monitoring/db-stats — статистика по сохранённым данным мониторинга в нашей БД
+router.get('/db-stats', authenticate, asyncHandler(async (req, res) => {
+  const proxy = req.app.get('monitoringProxy');
+  if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
+  const stats = await proxy.getDbStats();
+  res.json(stats);
+}));
+
+// GET /api/monitoring/db-current — актуальное состояние всех зон/постов из нашей БД
+router.get('/db-current', authenticate, asyncHandler(async (req, res) => {
+  const proxy = req.app.get('monitoringProxy');
+  if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
+  const rows = await proxy.getCurrentFromDB();
+  res.json(rows);
 }));
 
 // GET /api/monitoring/health — external monitoring service health

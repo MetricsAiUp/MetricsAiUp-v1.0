@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Clock, AlertTriangle, Settings, Save, Check,
-  CircleDot, Timer, FileText, Calendar, ArrowRight,
+  CircleDot, Timer, FileText, Calendar, ArrowRight, Car,
 } from 'lucide-react';
 import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
 import GanttTimeline from '../components/dashboardPosts/GanttTimeline';
@@ -321,8 +321,29 @@ export default function DashboardPosts() {
       return h > 0 ? `${h}\u0447 ${min}\u043c` : `${min}\u043c`;
     };
 
-    return { occupied, free, completedWO, totalNormHours: Math.round(totalNormHours * 10) / 10, idleTime: fmtMin(idleMinutes), overdueTime: fmtMin(overdueMinutes), savedTime: fmtMin(savedMinutes) };
-  }, [posts, todayShift.shiftStart, todayShift.shiftEnd]);
+    // Завершённые визиты CV — закрытые блоки (visitClosed=true), либо fallback по статусу
+    // 'completed' для совместимости с demo-режимом, где timeline = ЗН.
+    const completedVisits = posts.reduce((s, p) =>
+      s + (p.timeline || []).filter(t => t.visitClosed === true || t.status === 'completed').length, 0);
+
+    // В live-режиме timeline = визиты CV (≠ ЗН). Реальные ЗН (1С → WorkOrder в БД)
+    // приходят отдельным полем data.workOrdersStats. Используем его для счётчиков ЗН.
+    const woStats = data?.workOrdersStats;
+    if (woStats) {
+      return {
+        occupied,
+        free,
+        completedWO: woStats.completed || 0,
+        completedVisits,
+        totalNormHours: Math.round((woStats.totalNormHours || 0) * 10) / 10,
+        idleTime: fmtMin(idleMinutes),
+        overdueTime: fmtMin(overdueMinutes),
+        savedTime: fmtMin(woStats.savedMinutes || 0),
+      };
+    }
+
+    return { occupied, free, completedWO, completedVisits, totalNormHours: Math.round(totalNormHours * 10) / 10, idleTime: fmtMin(idleMinutes), overdueTime: fmtMin(overdueMinutes), savedTime: fmtMin(savedMinutes) };
+  }, [posts, todayShift.shiftStart, todayShift.shiftEnd, data?.workOrdersStats]);
 
   if (loading) {
     return (
@@ -435,13 +456,17 @@ export default function DashboardPosts() {
             tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u044b\u0445 \u043f\u043e\u0441\u0442\u043e\u0432, \u0433\u043e\u0442\u043e\u0432\u044b\u0445 \u043f\u0440\u0438\u043d\u044f\u0442\u044c \u0430\u0432\u0442\u043e' : 'Number of free posts ready to accept a vehicle' },
           { sep: true },
           { label: isRu ? '\u0412\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043e \u0417\u041d' : 'Completed WO', value: stats.completedWO, color: 'var(--success)', icon: FileText,
-            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u0445 \u0437\u0430\u043a\u0430\u0437-\u043d\u0430\u0440\u044f\u0434\u043e\u0432 \u0437\u0430 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0441\u043c\u0435\u043d\u0443' : 'Number of completed work orders this shift' },
+            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u0445 \u0437\u0430\u043a\u0430\u0437-\u043d\u0430\u0440\u044f\u0434\u043e\u0432 (\u0438\u0437 1\u0421) \u0437\u0430 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0441\u043c\u0435\u043d\u0443' : 'Number of completed work orders (from 1C) this shift' },
+          ...(isLive ? [{ label: isRu ? '\u0417\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e \u0432\u0438\u0437\u0438\u0442\u043e\u0432' : 'Completed visits', value: stats.completedVisits, color: 'var(--accent)', icon: Car,
+            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0437\u0430\u043a\u0440\u044b\u0442\u044b\u0445 \u0432\u0438\u0437\u0438\u0442\u043e\u0432 \u043f\u043e \u0434\u0430\u043d\u043d\u044b\u043c CV-\u0441\u0438\u0441\u0442\u0435\u043c\u044b (\u0430\u0432\u0442\u043e \u043f\u0440\u0438\u0435\u0445\u0430\u043b\u043e \u2192 \u0443\u0435\u0445\u0430\u043b\u043e). \u041d\u0435 \u043f\u0443\u0442\u0430\u0442\u044c \u0441 \u0417\u041d \u2014 \u044d\u0442\u043e \u0440\u0430\u0437\u043d\u044b\u0435 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438' : 'Number of closed visits per CV system (vehicle arrived \u2192 left). Not the same as work orders' }] : []),
           { label: isRu ? '\u041d\u043e\u0440\u043c\u043e-\u0447\u0430\u0441\u044b' : 'Norm hours', value: stats.totalNormHours, color: 'var(--text-primary)', icon: Clock,
             tip: isRu ? '\u0421\u0443\u043c\u043c\u0430 \u043d\u043e\u0440\u043c\u043e-\u0447\u0430\u0441\u043e\u0432 \u043f\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u043c \u0437\u0430\u043a\u0430\u0437-\u043d\u0430\u0440\u044f\u0434\u0430\u043c' : 'Total norm hours from completed work orders' },
           { label: isRu ? '\u041f\u0440\u043e\u0441\u0442\u043e\u0439' : 'Idle time', value: stats.idleTime, color: 'var(--text-muted)', icon: Timer,
             tip: isRu ? '\u0421\u0443\u043c\u043c\u0430\u0440\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f, \u043a\u043e\u0433\u0434\u0430 \u043f\u043e\u0441\u0442\u044b \u0431\u044b\u043b\u0438 \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u044b \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0435 \u0441\u043c\u0435\u043d\u044b' : 'Total time posts were idle during the shift' },
-          { label: isRu ? '\u041f\u0440\u043e\u0441\u0440\u043e\u0447\u043a\u0430' : 'Overdue', value: stats.overdueTime, color: 'var(--danger)', icon: AlertTriangle,
-            tip: isRu ? '\u0421\u0443\u043c\u043c\u0430\u0440\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f \u0437\u0430\u0434\u0435\u0440\u0436\u043a\u0438 \u2014 \u0440\u0430\u0431\u043e\u0442\u044b \u0438\u0434\u0443\u0442 \u0434\u043e\u043b\u044c\u0448\u0435 \u0437\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0433\u043e' : 'Total overdue time \u2014 work taking longer than planned' },
+          // «Просрочка» считается из estimatedEnd ЗН. В live-режиме у визитов нет
+          // estimatedEnd → всегда 0м, поэтому скрываем.
+          ...(isLive ? [] : [{ label: isRu ? '\u041f\u0440\u043e\u0441\u0440\u043e\u0447\u043a\u0430' : 'Overdue', value: stats.overdueTime, color: 'var(--danger)', icon: AlertTriangle,
+            tip: isRu ? '\u0421\u0443\u043c\u043c\u0430\u0440\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f \u0437\u0430\u0434\u0435\u0440\u0436\u043a\u0438 \u2014 \u0440\u0430\u0431\u043e\u0442\u044b \u0438\u0434\u0443\u0442 \u0434\u043e\u043b\u044c\u0448\u0435 \u0437\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0433\u043e' : 'Total overdue time \u2014 work taking longer than planned' }]),
           { label: isRu ? '\u0422\u0443\u0440\u0431\u043e' : 'Turbo', value: stats.savedTime, color: 'var(--success)', icon: ArrowRight,
             tip: isRu ? '\u0421\u044d\u043a\u043e\u043d\u043e\u043c\u043b\u0435\u043d\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f \u2014 \u0440\u0430\u0431\u043e\u0442\u044b \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u044b \u0431\u044b\u0441\u0442\u0440\u0435\u0435 \u043d\u043e\u0440\u043c\u043e-\u0447\u0430\u0441\u043e\u0432' : 'Saved time \u2014 work completed faster than norm hours' },
         ].map((card, i) => card.sep ? (
@@ -464,7 +489,7 @@ export default function DashboardPosts() {
       </div>}
 
       {/* Legend */}
-      <Legend t={t} />
+      <Legend t={t} isLive={isLive} />
 
       {/* Gantt Timeline */}
       {elVis('ganttTimeline') && <GanttTimeline

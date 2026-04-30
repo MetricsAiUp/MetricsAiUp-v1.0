@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin, Camera, Video } from 'lucide-react';
+import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin, Camera, Video, Database } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import { translateWorksDesc } from '../utils/translate';
 
@@ -196,7 +196,9 @@ export default function LiveDebug() {
   const [rawData, setRawData] = useState([]);
   const [fullHistory, setFullHistory] = useState(null);
   const [cameras, setCameras] = useState([]);
-  const [viewMode, setViewMode] = useState('current'); // current | history | cameras
+  const [dbCurrent, setDbCurrent] = useState([]);
+  const [dbStats, setDbStats] = useState(null);
+  const [viewMode, setViewMode] = useState('current'); // current | history | cameras | db
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -235,11 +237,37 @@ export default function LiveDebug() {
     setLoading(false);
   }, [api]);
 
+  // Загрузка current-состояния из нашей БД (MonitoringCurrent) + сводной статистики.
+  const fetchDb = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [curRes, statsRes] = await Promise.all([
+        api.get('/api/monitoring/db-current'),
+        api.get('/api/monitoring/db-stats'),
+      ]);
+      if (curRes.data) setDbCurrent(Array.isArray(curRes.data) ? curRes.data : []);
+      if (statsRes.data) setDbStats(statsRes.data);
+    } catch {}
+    setLoading(false);
+  }, [api]);
+
+  // Лёгкая периодическая подгрузка статистики БД для шапки (вне зависимости от вкладки).
+  const fetchDbStatsOnly = useCallback(async () => {
+    try {
+      const res = await api.get('/api/monitoring/db-stats');
+      if (res.data) setDbStats(res.data);
+    } catch {}
+  }, [api]);
+
   useEffect(() => {
     if (viewMode === 'current') fetchCurrent();
     else if (viewMode === 'history') fetchHistory();
     else if (viewMode === 'cameras') fetchCameras();
+    else if (viewMode === 'db') fetchDb();
   }, [viewMode]);
+
+  // Подгружаем DB stats при первом маунте (для верхней статистической карточки).
+  useEffect(() => { fetchDbStatsOnly(); }, [fetchDbStatsOnly]);
 
   // Auto-refresh for current mode
   useEffect(() => {
@@ -260,7 +288,35 @@ export default function LiveDebug() {
     );
   }
 
-  const displayData = viewMode === 'cameras' ? [] : (viewMode === 'current' ? rawData : (fullHistory || []));
+  // Преобразуем dbCurrent в формат, совместимый с RawDataRow (zone, car, history, …).
+  const dbCurrentAsRaw = dbCurrent.map(r => ({
+    zone: r.zoneName,
+    type: r.externalType,
+    status: r.status,
+    car: {
+      plate: r.plateNumber,
+      color: r.carColor,
+      model: r.carModel,
+      make: r.carMake,
+      body: r.carBody,
+      firstSeen: r.carFirstSeen,
+    },
+    worksInProgress: r.worksInProgress,
+    worksDescription: r.worksDescription,
+    peopleCount: r.peopleCount,
+    openParts: r.openParts || [],
+    confidence: r.confidence,
+    lastUpdate: r.externalUpdate || r.fetchedAt,
+    history: [],
+  }));
+
+  const displayData = viewMode === 'cameras'
+    ? []
+    : viewMode === 'current'
+      ? rawData
+      : viewMode === 'db'
+        ? dbCurrentAsRaw
+        : (fullHistory || []);
 
   // Separate posts and zones
   const posts = displayData.filter(d => /^Пост\s+\d/.test(d.zone));
@@ -313,6 +369,16 @@ export default function LiveDebug() {
             >
               <Camera size={12} /> {isRu ? 'Камеры' : 'Cameras'}
             </button>
+            <button
+              onClick={() => setViewMode('db')}
+              className="px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors"
+              style={{
+                background: viewMode === 'db' ? 'var(--accent)' : 'transparent',
+                color: viewMode === 'db' ? '#fff' : 'var(--text-secondary)',
+              }}
+            >
+              <Database size={12} /> {isRu ? 'Наша БД' : 'Our DB'}
+            </button>
           </div>
           {/* Auto-refresh toggle */}
           {viewMode === 'current' && (
@@ -330,7 +396,12 @@ export default function LiveDebug() {
           )}
           {/* Manual refresh */}
           <button
-            onClick={() => viewMode === 'current' ? fetchCurrent() : fetchHistory()}
+            onClick={() => {
+              if (viewMode === 'current') fetchCurrent();
+              else if (viewMode === 'history') fetchHistory();
+              else if (viewMode === 'cameras') fetchCameras();
+              else if (viewMode === 'db') fetchDb();
+            }}
             className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1"
             style={{ border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
           >
@@ -378,6 +449,26 @@ export default function LiveDebug() {
             <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</div>
             <div className="text-sm font-medium flex items-center gap-1 mt-1" style={{ color: 'var(--text-primary)' }}>
               <Clock size={12} /> {formatDate(lastUpdate)}
+            </div>
+          </div>
+        )}
+        {/* Карточка статистики нашей БД мониторинга */}
+        {dbStats && (
+          <div className="glass p-3 rounded-lg flex-1" style={{ minWidth: 220, borderColor: 'var(--accent)', borderWidth: 1, borderStyle: 'solid' }}>
+            <div className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+              <Database size={11} /> {isRu ? 'Наша БД' : 'Our DB'}
+            </div>
+            <div className="text-xl font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
+              {dbStats.snapshotsTotal ?? 0}
+              <span className="text-xs font-normal ml-1" style={{ color: 'var(--text-muted)' }}>
+                {isRu ? 'снимков' : 'snapshots'}
+              </span>
+            </div>
+            <div className="text-xs mt-1 space-y-0.5" style={{ color: 'var(--text-muted)' }}>
+              <div>{isRu ? 'Текущих зон' : 'Current zones'}: <span style={{ color: 'var(--text-secondary)' }}>{dbStats.currentTotal ?? 0}</span></div>
+              {dbStats.latestFetch && (
+                <div>{isRu ? 'Последняя запись' : 'Last fetch'}: <span style={{ color: 'var(--text-secondary)' }}>{formatDate(dbStats.latestFetch)}</span></div>
+              )}
             </div>
           </div>
         )}
