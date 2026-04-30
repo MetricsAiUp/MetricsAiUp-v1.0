@@ -233,15 +233,15 @@ export default function Sidebar() {
                           onClick={() => navigate(`/posts-detail?zone=${zone.id}`)}
                           className="w-full text-left pl-3 py-1 rounded-r-lg transition-all flex items-center gap-1.5"
                           style={{
-                            color: isSelected ? '#a855f7' : 'var(--text-muted)',
-                            background: isSelected ? 'rgba(168,85,247,0.1)' : 'transparent',
+                            color: isSelected ? 'var(--accent)' : 'var(--text-muted)',
+                            background: isSelected ? 'var(--accent-light)' : 'transparent',
                             fontSize: '10px',
                             fontWeight: isSelected ? 600 : 400,
                           }}
                         >
                           <div
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: isOccupied ? '#a855f7' : 'var(--text-muted)' }}
+                            style={{ background: isOccupied ? 'var(--success)' : 'var(--text-muted)' }}
                           />
                           <span className="truncate">{isRu ? `Зона ${String(zone.number).padStart(2, '0')}` : `Zone ${String(zone.number).padStart(2, '0')}`}</span>
                         </button>
