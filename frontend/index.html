@@ -11,7 +11,7 @@
     <title>MetricsAiUp</title>
     <script>
       // Force clear old SW caches on version mismatch
-      (async()=>{const V='v31';const ks=await caches.keys();const old=ks.filter(k=>k!=='metricsaiup-'+V);if(old.length){await Promise.all(old.map(k=>caches.delete(k)));const regs=await navigator.serviceWorker?.getRegistrations()||[];await Promise.all(regs.map(r=>r.unregister()));location.reload();}})();
+      (async()=>{const V='v32';const ks=await caches.keys();const old=ks.filter(k=>k!=='metricsaiup-'+V);if(old.length){await Promise.all(old.map(k=>caches.delete(k)));const regs=await navigator.serviceWorker?.getRegistrations()||[];await Promise.all(regs.map(r=>r.unregister()));location.reload();}})();
     </script>
   </head>
   <body>

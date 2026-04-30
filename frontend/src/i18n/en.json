@@ -95,6 +95,7 @@
     "occupied": "Occupied",
     "occupied_no_work": "Occupied (idle)",
     "active_work": "Active Work",
+    "no_data": "No data",
     "light": "Light vehicle",
     "heavy": "Heavy vehicle",
     "special": "Special",
