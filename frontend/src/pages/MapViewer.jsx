@@ -328,7 +328,9 @@ function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t
   if (!liveItem && isLive) return null;
 
   const isOccupied = liveItem?.status === 'occupied';
-  const statusColor = isOccupied ? '#ef4444' : 'var(--success)';
+  // Unified status palette with PostEl/PostModal: free / active_work / occupied
+  const zoneStatus = !isOccupied ? 'free' : (liveItem?.worksInProgress ? 'active_work' : 'occupied');
+  const statusColor = POST_STATUS_COLORS[zoneStatus] || '#94a3b8';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
@@ -1227,7 +1229,9 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
   }
 
   const isOccupied = vehicleCount > 0;
-  const occupiedStroke = isOccupied ? '#ef4444' : stroke;
+  // Unified status palette with PostEl: free / active_work / occupied
+  const zoneStatus = !isOccupied ? 'free' : (zoneInfo?.worksInProgress ? 'active_work' : 'occupied');
+  const occupiedStroke = POST_STATUS_COLORS[zoneStatus] || stroke;
   const textColor = isDark ? '#94a3b8' : '#64748b';
   const textPrimary = isDark ? '#e2e8f0' : '#1e293b';
   const w = el.width || 160, h = el.height || 100;
