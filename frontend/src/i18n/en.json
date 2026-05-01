@@ -230,7 +230,22 @@
     "openParts": "Open Parts",
     "firstSeen": "First Seen",
     "viewHistory": "History",
-    "noLiveData": "No monitoring data"
+    "noLiveData": "No monitoring data",
+    "replay": "Replay",
+    "replayLive": "Go live",
+    "replayLoading": "Loading history…",
+    "replayEmpty": "No records in the last 24 hours",
+    "replayDemoNotice": "Replay is available only in live mode",
+    "replayPlay": "Play",
+    "replayPause": "Pause",
+    "replayBack": "Step back",
+    "replayForward": "Step forward",
+    "replayJumpStart": "Jump to start",
+    "replayJumpEnd": "Jump to end",
+    "replayStep": "Step",
+    "replayStep30s": "30 sec",
+    "replayStep1m": "1 min",
+    "replayStep5m": "5 min"
   },
   "dashboardPosts": {
     "title": "Posts Dashboard",

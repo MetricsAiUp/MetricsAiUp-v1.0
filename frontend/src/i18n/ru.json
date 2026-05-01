@@ -230,7 +230,22 @@
     "openParts": "Открытые части",
     "firstSeen": "Обнаружен",
     "viewHistory": "История",
-    "noLiveData": "Нет данных мониторинга"
+    "noLiveData": "Нет данных мониторинга",
+    "replay": "Replay",
+    "replayLive": "В эфир",
+    "replayLoading": "Загрузка истории…",
+    "replayEmpty": "Нет записей за последние 24 часа",
+    "replayDemoNotice": "Replay доступен только в live-режиме",
+    "replayPlay": "Воспроизвести",
+    "replayPause": "Пауза",
+    "replayBack": "Назад на шаг",
+    "replayForward": "Вперёд на шаг",
+    "replayJumpStart": "К началу",
+    "replayJumpEnd": "К концу",
+    "replayStep": "Шаг",
+    "replayStep30s": "30 сек",
+    "replayStep1m": "1 мин",
+    "replayStep5m": "5 мин"
   },
   "dashboardPosts": {
     "title": "Дашборд постов",

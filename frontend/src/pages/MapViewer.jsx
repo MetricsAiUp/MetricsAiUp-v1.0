@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Stage, Layer, Rect, Circle, Text, Group, Line } from 'react-konva';
@@ -12,6 +12,7 @@ import {
   X, Car, Clock, Timer, User, FileText, AlertTriangle,
   ArrowRight, MapPin, Layers, Download, ChevronDown, ChevronUp, Image, FileDown,
   ZoomIn, ZoomOut, Maximize, Minimize, Wrench, Users, Shield, Eye, History, Bug,
+  Rewind,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
@@ -19,6 +20,7 @@ import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constan
 import { translateWorksDesc } from '../utils/translate';
 import { useCameraStatus } from '../hooks/useCameraStatus';
 import { PostHistoryModal } from './PostHistory';
+import ReplayPanel from '../components/ReplayPanel';
 
 const ALL_CAMERAS = [
   { num: '00', loc: { ru: 'Шлагбаум', en: 'Barrier' }, covers: { ru: 'Шлагбаум', en: 'Barrier' } },
@@ -435,6 +437,14 @@ export default function MapViewer() {
   const [historyPost, setHistoryPost] = useState(null); // { postNum, history[] } for modal
   const [historyZone, setHistoryZone] = useState(null); // { zoneName, history[] } for modal
   const [rawState, setRawState] = useState([]); // raw external API data for modals
+
+  // ─── Replay (история на слайдере) ───
+  const [replayMode, setReplayMode] = useState(false);
+  const [replayWindow, setReplayWindow] = useState(null); // { from, to, initial[], events[] }
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayCursor, setReplayCursor] = useState(0); // ms
+  const [replayPlaying, setReplayPlaying] = useState(false);
+  const [replayStepSec, setReplayStepSec] = useState(60);
   const cameraStatuses = useCameraStatus();
   const [stageSize, setStageSize] = useState({ width: 900, height: 500 });
   const [scale, setScale] = useState(1);
@@ -497,7 +507,38 @@ export default function MapViewer() {
   }, [api, isLive]);
 
   useEffect(() => { fetchRealtime(); }, [fetchRealtime]);
-  usePolling(fetchRealtime, isLive ? 10000 : 5000);
+  // Replay полностью замораживает состояние — поллинг не трогаем.
+  usePolling(fetchRealtime, replayMode ? null : (isLive ? 10000 : 5000));
+
+  // ─── Replay: подгрузка окна за последние 24ч при включении ───
+  useEffect(() => {
+    if (!replayMode) return;
+    let alive = true;
+    setReplayLoading(true);
+    const to = new Date();
+    const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);
+    api.get(`/api/replay/window?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`)
+      .then(({ data }) => {
+        if (!alive) return;
+        const fromDate = new Date(data.from);
+        const toDate = new Date(data.to);
+        setReplayWindow({
+          from: fromDate,
+          to: toDate,
+          initial: data.initial || [],
+          events: data.events || [],
+        });
+        setReplayCursor(toDate.getTime()); // стартуем с правого края — текущий момент
+        setReplayPlaying(false);
+        setReplayLoading(false);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setReplayWindow(null);
+        setReplayLoading(false);
+      });
+    return () => { alive = false; };
+  }, [replayMode, api]);
 
   // Real-time post status updates via Socket.IO
   useSocket('post:status_changed', (data) => {
@@ -670,16 +711,144 @@ export default function MapViewer() {
     navigate(`/posts-detail?post=post-${postNum}`);
   };
 
-  // Compute stats — use monitoring data in live mode, DB data in demo mode
+  // ─── Virtual rawState на момент replayCursor ───
+  // События отсортированы по возрастанию timestamp; идём слева направо и
+  // переписываем состояние зоны, пока не уходим за курсор.
+  // В monitoring_snapshots один и тот же физический пост/зона может фигурировать
+  // под разными zoneName (например "Пост 04" и "Пост 04 — легковое/грузовое",
+  // "Свободная зона 03" и "Свободная зона 03 — ожидание/ремонт"). Дедуплицируем
+  // по номеру (отдельно посты, отдельно свободные зоны), оставляя запись с самой
+  // свежей меткой времени.
+  const virtualRawState = useMemo(() => {
+    if (!replayMode || !replayWindow) return null;
+    const map = new Map();
+    for (const s of replayWindow.initial) map.set(s.zone, s);
+    for (const e of replayWindow.events) {
+      const ts = new Date(e.timestamp).getTime();
+      if (ts > replayCursor) break;
+      map.set(e.zone, e);
+    }
+    const postsByNum = new Map();
+    const zonesByNum = new Map();
+    const others = [];
+    for (const item of map.values()) {
+      const postM = item.zone?.match(/^Пост\s+(\d+)/);
+      const zoneM = item.zone?.match(/^Свободная зона\s+(\d+)/);
+      const ts = item.timestamp ? new Date(item.timestamp).getTime() : 0;
+      if (postM) {
+        const num = parseInt(postM[1], 10);
+        const existing = postsByNum.get(num);
+        const exTs = existing?.timestamp ? new Date(existing.timestamp).getTime() : -1;
+        if (!existing || ts >= exTs) postsByNum.set(num, item);
+      } else if (zoneM) {
+        const num = parseInt(zoneM[1], 10);
+        const existing = zonesByNum.get(num);
+        const exTs = existing?.timestamp ? new Date(existing.timestamp).getTime() : -1;
+        if (!existing || ts >= exTs) zonesByNum.set(num, item);
+      } else {
+        others.push(item);
+      }
+    }
+    return [...postsByNum.values(), ...zonesByNum.values(), ...others];
+  }, [replayMode, replayWindow, replayCursor]);
+
+  // Синтез monitoringData из virtual rawState — повторяет форму /api/dashboard/live,
+  // чтобы PostEl/ZoneEl находили данные тем же кодом. Маппинг статусов:
+  // posts → free / active_work / occupied (как в monitoringProxy.refreshCacheFromDb),
+  // zones → free / occupied (без active_work — ZoneEl сам решает по worksInProgress).
+  const virtualMonitoringData = useMemo(() => {
+    if (!virtualRawState) return null;
+    const posts = [];
+    const freeZones = [];
+    let working = 0, occupied = 0, free = 0;
+    let zonesOccupied = 0, zonesFree = 0;
+    const plates = new Set();
+    for (const item of virtualRawState) {
+      if (item.car?.plate) plates.add(item.car.plate);
+      const postM = item.zone?.match(/^Пост\s+(\d+)/);
+      const zoneM = item.zone?.match(/^Свободная зона\s+(\d+)/);
+      if (postM) {
+        const num = parseInt(postM[1], 10);
+        let status;
+        if (item.status === 'free') { status = 'free'; free++; }
+        else if (item.worksInProgress) { status = 'active_work'; working++; }
+        else { status = 'occupied'; occupied++; }
+        posts.push({
+          id: `post-${num}`,
+          name: `Пост ${String(num).padStart(2, '0')}`,
+          number: num,
+          zone: item.zone,
+          status,
+          plateNumber: item.car?.plate || null,
+          carMake: item.car?.make || null,
+          carModel: item.car?.model || null,
+          carColor: item.car?.color || null,
+          carBody: item.car?.body || null,
+          worksInProgress: !!item.worksInProgress,
+          worksDescription: item.worksDescription || null,
+          peopleCount: item.peopleCount || 0,
+          confidence: item.confidence || null,
+          openParts: item.openParts || [],
+          startTime: item.car?.firstSeen || null,
+          lastUpdate: item.timestamp || null,
+        });
+      } else if (zoneM) {
+        const num = parseInt(zoneM[1], 10);
+        const zStatus = item.status === 'free' ? 'free' : 'occupied';
+        if (zStatus === 'occupied') zonesOccupied++; else zonesFree++;
+        freeZones.push({
+          id: `zone-${num}`,
+          name: `Зона ${String(num).padStart(2, '0')}`,
+          externalName: item.zone,
+          status: zStatus,
+          plateNumber: item.car?.plate || null,
+          carMake: item.car?.make || null,
+          carModel: item.car?.model || null,
+          carColor: item.car?.color || null,
+          carBody: item.car?.body || null,
+          worksInProgress: !!item.worksInProgress,
+          worksDescription: item.worksDescription || null,
+          peopleCount: item.peopleCount || 0,
+          confidence: item.confidence || null,
+          openParts: item.openParts || [],
+          carFirstSeen: item.car?.firstSeen || null,
+          lastUpdate: item.timestamp || null,
+        });
+      }
+    }
+    posts.sort((a, b) => a.number - b.number);
+    freeZones.sort((a, b) => parseInt(a.name.match(/\d+/)?.[0] || 0, 10) - parseInt(b.name.match(/\d+/)?.[0] || 0, 10));
+    return {
+      mode: 'live',
+      posts,
+      freeZones,
+      summary: { working, occupied, free, idle: 0, zonesOccupied, zonesFree },
+      vehiclesOnSite: plates.size,
+      totalPosts: posts.length,
+    };
+  }, [virtualRawState]);
+
+  // Effective values: replay имеет приоритет над live.
+  const displayLive = replayMode || isLive;
+  const effectiveRawState = replayMode ? (virtualRawState || []) : rawState;
+  const effectiveMonitoringData = replayMode ? virtualMonitoringData : monitoringData;
+
+  // Compute stats — use monitoring data in live/replay mode, DB data in demo mode.
+  // Считаем и посты, и свободные зоны в одной куче — пользователь хочет видеть
+  // загрузку всего объекта, а не только постов.
   let totalPosts, freePosts, occupiedPosts, activeWork, idle, totalVehicles;
-  if (isLive && monitoringData) {
-    const s = monitoringData.summary || {};
-    totalPosts = s.working + s.occupied + s.free + s.idle || 10;
-    freePosts = s.free || 0;
-    occupiedPosts = (s.occupied || 0);
+  if (displayLive && effectiveMonitoringData) {
+    const s = effectiveMonitoringData.summary || {};
+    const postsTotal = (s.working || 0) + (s.occupied || 0) + (s.free || 0) + (s.idle || 0);
+    const zonesTotal = (s.zonesOccupied || 0) + (s.zonesFree || 0);
+    // Зоны учитываем как occupied/free; active_work для зон отдельно не выделяем
+    // (ZoneEl сам красит по worksInProgress, но в саммари не разделяет).
+    totalPosts = postsTotal + zonesTotal || 10;
+    freePosts = (s.free || 0) + (s.zonesFree || 0);
+    occupiedPosts = (s.occupied || 0) + (s.zonesOccupied || 0);
     activeWork = s.working || 0;
     idle = s.idle || 0;
-    totalVehicles = monitoringData.vehiclesOnSite || 0;
+    totalVehicles = effectiveMonitoringData.vehiclesOnSite || 0;
   } else {
     const allPosts = (zonesData || []).flatMap(z => z.posts || []);
     totalPosts = allPosts.length || 10;
@@ -766,6 +935,18 @@ export default function MapViewer() {
             </div>
           )}
         </div>
+        {isLive && (
+          <button onClick={() => setReplayMode(m => !m)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
+            style={{
+              background: replayMode ? 'var(--accent)' : 'var(--bg-glass)',
+              border: '1px solid var(--border-glass)',
+              color: replayMode ? '#fff' : 'var(--text-secondary)',
+            }}
+            title={replayMode ? t('mapView.replayLive') : t('mapView.replay')}>
+            <Rewind size={12} /> {replayMode ? t('mapView.replayLive') : t('mapView.replay')}
+          </button>
+        )}
         <button onClick={handleExportPng}
           className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
@@ -858,7 +1039,7 @@ export default function MapViewer() {
                   stroke={isDark ? '#94a3b8' : '#9ca3af'} strokeWidth={1.5} dash={[6, 3]} cornerRadius={4} />
               );
               if (el.type === 'wall') return <WallEl key={el.id} el={el} />;
-              if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} monitoringData={isLive ? monitoringData : null} rawState={isLive ? rawState : []} onClick={(zoneName) => isLive && setSelectedZone(zoneName)} />;
+              if (el.type === 'zone') return <ZoneEl key={el.id} el={el} isDark={isDark} zonesData={zonesData} monitoringData={displayLive ? effectiveMonitoringData : null} rawState={displayLive ? effectiveRawState : []} onClick={(zoneName) => displayLive && setSelectedZone(zoneName)} />;
               if (el.type === 'door') return <DoorEl key={el.id} el={el} isDark={isDark} />;
               if (el.type === 'label') return <LabelEl key={el.id} el={el} fill={mutedFill} />;
               if (el.type === 'post') {
@@ -866,13 +1047,13 @@ export default function MapViewer() {
                 if (!pn) return null;
                 // In live mode, use monitoring data; in demo, use DB data
                 let status, plate, dashPost;
-                if (isLive && monitoringData) {
-                  const mp = monitoringData.posts?.find(p => {
+                if (displayLive && effectiveMonitoringData) {
+                  const mp = effectiveMonitoringData.posts?.find(p => {
                     const num = parseInt(p.name?.match(/\d+/)?.[0], 10);
                     return num === pn;
                   });
                   // Also get raw data for full info
-                  const rawItem = rawState.find(r => {
+                  const rawItem = effectiveRawState.find(r => {
                     const m = r.zone?.match(/^Пост\s+(\d{2})/);
                     return m && parseInt(m[1], 10) === pn;
                   });
@@ -952,15 +1133,32 @@ export default function MapViewer() {
             <Maximize size={16} />
           </button>
         </div>
+
+        {/* Replay panel — overlay at bottom */}
+        {replayMode && (
+          <ReplayPanel
+            from={replayWindow?.from || new Date(Date.now() - 24 * 3600 * 1000)}
+            to={replayWindow?.to || new Date()}
+            cursor={replayCursor}
+            setCursor={setReplayCursor}
+            playing={replayPlaying}
+            setPlaying={setReplayPlaying}
+            stepSec={replayStepSec}
+            setStepSec={setReplayStepSec}
+            loading={replayLoading}
+            empty={!!replayWindow && replayWindow.events.length === 0 && replayWindow.initial.length === 0}
+            onClose={() => { setReplayMode(false); setReplayPlaying(false); }}
+          />
+        )}
       </div>
 
       {/* Post Modal */}
       {selectedPost && (
         <PostModal postNum={selectedPost} dashboardData={dashboardData}
-          monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
+          monitoringData={{ ...(effectiveMonitoringData || {}), rawState: effectiveRawState }} isLive={displayLive}
           onClose={() => setSelectedPost(null)} onGoToPost={handleGoToPost}
           onGoToHistory={() => {
-            const rawItems = rawState || [];
+            const rawItems = effectiveRawState || [];
             const liveItem = rawItems.find(item => {
               const m = item.zone?.match(/^Пост\s+(\d{2})/);
               return m && parseInt(m[1], 10) === selectedPost;
@@ -974,10 +1172,10 @@ export default function MapViewer() {
       {/* Zone Modal */}
       {selectedZone && (
         <ZoneModal zoneName={selectedZone}
-          monitoringData={{ ...monitoringData, rawState }} isLive={isLive}
+          monitoringData={{ ...(effectiveMonitoringData || {}), rawState: effectiveRawState }} isLive={displayLive}
           onClose={() => setSelectedZone(null)}
           onGoToHistory={() => {
-            const rawItems = rawState || [];
+            const rawItems = effectiveRawState || [];
             const liveItem = rawItems.find(item => item.zone === selectedZone);
             setHistoryZone({ zoneName: selectedZone, history: liveItem?.history || [] });
             setSelectedZone(null);

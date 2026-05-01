@@ -119,6 +119,7 @@ app.use('/api', postsDataRoutes);
 app.use('/api/system-health', healthRoutes);
 app.use('/api/workers', workersRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/replay', require('./routes/replay'));
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
 app.use('/api/monitoring', require('./routes/monitoring'));
