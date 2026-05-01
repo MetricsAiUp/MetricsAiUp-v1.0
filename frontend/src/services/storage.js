@@ -3,7 +3,6 @@
 const KEYS = {
   TOKEN: 'token',
   CURRENT_USER: 'currentUser',
-  USERS_DATA: 'usersData',
   LANGUAGE: 'language',
   THEME: 'theme',
   CAMERA_MAPPING: 'cameraMappingData',

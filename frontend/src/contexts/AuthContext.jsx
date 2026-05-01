@@ -3,17 +3,8 @@ import { connectSocket, disconnectSocket, getSocket } from '../hooks/useSocket';
 
 const AuthContext = createContext();
 
-const BASE = import.meta.env.BASE_URL || './';
-
 // API on same origin (Express serves both frontend and API)
 const API_BASE = '';
-
-// Fallback: load static JSON mock
-const fetchJson = async (path) => {
-  const res = await fetch(`${BASE}data/${path}.json?t=${Date.now()}`);
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-};
 
 // Registry of major page elements (widgets/sections) that can be hidden per user
 const PAGE_ELEMENTS = {
@@ -88,20 +79,6 @@ function buildPermissions(pages, role) {
     ['manage_roles', 'manage_users', 'manage_settings', 'manage_cameras', 'manage_work_orders', 'manage_zones', 'view_recommendations'].forEach(p => perms.add(p));
   }
   return [...perms];
-}
-
-// Map URL to JSON mock filename for fallback
-function urlToMockPath(url) {
-  let clean = url.replace(/^\/api\//, '');
-  const qIdx = clean.indexOf('?');
-  let suffix = '';
-  if (qIdx !== -1) {
-    const params = new URLSearchParams(clean.slice(qIdx));
-    clean = clean.slice(0, qIdx);
-    if (params.get('status') === 'completed') suffix = '-completed';
-    if (params.get('period')) suffix = `-${params.get('period')}`;
-  }
-  return clean.replace(/\//g, '-') + suffix;
 }
 
 function createApi(getToken, onTokenRefreshed, onAuthFailed) {
@@ -180,74 +157,35 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setToken(data.token);
-        const meRes = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${data.token}` },
-        });
-        let role = 'viewer', pages = [], permissions = [], hiddenElements = [];
-        if (meRes.ok) {
-          const me = await meRes.json();
-          role = me.role || me.roles?.[0] || 'viewer';
-          const backendPerms = me.permissions || [];
-          pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
-          hiddenElements = me.hiddenElements || [];
-          // Merge backend permissions with page-derived permissions
-          permissions = [...new Set([...backendPerms, ...buildPermissions(pages, role)])];
-        }
-        const userData = {
-          id: data.user.id, email: data.user.email,
-          firstName: data.user.firstName, lastName: data.user.lastName,
-          role, roles: [role], pages, hiddenElements, permissions,
-        };
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        setUser(userData);
-        return userData;
-      }
-      // Backend returned error (401, 429, etc.) — show the real error, don't fallback to mock
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error || errData.message || `Login failed (${res.status})`);
-    } catch (fetchErr) {
-      // Network error (backend unreachable) — fallback to mock login
-      if (fetchErr.name === 'TypeError' || fetchErr.message?.includes('fetch')) {
-        try {
-          return await mockLogin(email, password);
-        } catch { /* mock also failed */ }
-      }
-      throw fetchErr;
     }
-  };
-
-  // Fallback mock login (when backend is down)
-  const mockLogin = async (email, password) => {
-    let users = [];
-    const saved = localStorage.getItem('usersData');
-    if (saved) {
-      try { users = JSON.parse(saved).users || []; } catch { /* ignore */ }
+    const data = await res.json();
+    setToken(data.token);
+    const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${data.token}` },
+    });
+    let role = 'viewer', pages = [], permissions = [], hiddenElements = [];
+    if (meRes.ok) {
+      const me = await meRes.json();
+      role = me.role || me.roles?.[0] || 'viewer';
+      const backendPerms = me.permissions || [];
+      pages = me.pages || ROLE_DEFAULT_PAGES[role] || ['dashboard'];
+      hiddenElements = me.hiddenElements || [];
+      permissions = [...new Set([...backendPerms, ...buildPermissions(pages, role)])];
     }
-    if (!users.length) {
-      try { users = (await fetchJson('users')).users || []; } catch { /* ignore */ }
-    }
-    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!found) throw new Error('User not found');
-    if (!found.isActive) throw new Error('User is disabled');
-    if (found.password && found.password !== password) throw new Error('Wrong password');
-    const permissions = buildPermissions(found.pages, found.role);
     const userData = {
-      id: found.id, email: found.email, firstName: found.firstName, lastName: found.lastName,
-      roles: [found.role], role: found.role, pages: found.pages, hiddenElements: found.hiddenElements || [], permissions,
+      id: data.user.id, email: data.user.email,
+      firstName: data.user.firstName, lastName: data.user.lastName,
+      role, roles: [role], pages, hiddenElements, permissions,
     };
-    const fakeToken = btoa(JSON.stringify({ userId: found.id, ts: Date.now() }));
-    localStorage.setItem('token', fakeToken);
     localStorage.setItem('currentUser', JSON.stringify(userData));
-    setToken(fakeToken);
     setUser(userData);
     return userData;
   };

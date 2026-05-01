@@ -10,6 +10,12 @@ frontend/dist/
 assets/
 screenshot-*.png
 backend/prisma/dev.db
+backend/prisma/dev.db*
+backend/prisma/prisma/
 api.php
 hls-proxy.js
 stream-server.js
+logs/
+state.json
+*.bak
+*.bak-*

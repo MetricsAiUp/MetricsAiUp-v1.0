@@ -278,52 +278,11 @@ describe('AuthContext internals (observable via behavior)', () => {
     expect(perms).toContain('view_dashboard');
   });
 
-  it('ROLE_DEFAULT_PAGES maps 5 roles correctly (observable via mock login)', async () => {
-    // We test this by checking that the exported context uses role defaults
-    // when backend doesn't provide pages. We mock a network error to trigger mock login.
-    const mockUsers = {
-      users: [
-        { id: 1, email: 'admin@t.com', firstName: 'A', lastName: 'B', role: 'admin', isActive: true, pages: ['dashboard', 'users'], hiddenElements: [] },
-        { id: 2, email: 'mgr@t.com', firstName: 'M', lastName: 'G', role: 'manager', isActive: true, pages: ['dashboard', 'analytics'], hiddenElements: [] },
-        { id: 3, email: 'dir@t.com', firstName: 'D', lastName: 'R', role: 'director', isActive: true, pages: ['dashboard'], hiddenElements: [] },
-        { id: 4, email: 'mech@t.com', firstName: 'M', lastName: 'C', role: 'mechanic', isActive: true, pages: ['dashboard', 'my-post'], hiddenElements: [] },
-        { id: 5, email: 'view@t.com', firstName: 'V', lastName: 'W', role: 'viewer', isActive: true, pages: ['dashboard'], hiddenElements: [] },
-      ],
-    };
-    localStorage.setItem('usersData', JSON.stringify(mockUsers));
-
-    // Force network error so mock login is used
+  it('login throws on network error (no mock fallback)', async () => {
     globalThis.fetch.mockRejectedValueOnce(new TypeError('fetch failed'));
-    // Allow subsequent fetches (settings) to resolve
-    globalThis.fetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      json: () => Promise.resolve({}),
-    });
-
     const { result } = renderHook(() => useAuth(), { wrapper });
-
     await act(async () => {
-      const user = await result.current.login('admin@t.com', 'pass');
-      expect(user.role).toBe('admin');
+      await expect(result.current.login('admin@t.com', 'pass')).rejects.toThrow();
     });
-  });
-
-  it('urlToMockPath maps API URLs to JSON file paths correctly (via api.get fallback)', () => {
-    // urlToMockPath is not exported, but we can verify its logic by testing the
-    // expected transformations described in the code:
-    // /api/dashboard/metrics?period=24h -> dashboard-metrics-24h
-    // /api/posts -> posts
-    // /api/sessions?status=completed -> sessions-completed
-    // These are internal implementation details but the mapping logic is deterministic.
-    // We verify it by checking the source code patterns are consistent.
-    // Since we can't directly call urlToMockPath, we confirm its presence in PAGE_ELEMENTS test.
-    // This test serves as a documentation assertion.
-    expect(true).toBe(true); // placeholder — urlToMockPath is not exported
-
-    // Instead we verify the mapping logic through observable behavior:
-    // The clean URL /api/dashboard/metrics?period=24h becomes dashboard-metrics-24h
-    // This means fetch would look for data/dashboard-metrics-24h.json
-    // We confirm the function exists by verifying api.get works with fallback
   });
 });

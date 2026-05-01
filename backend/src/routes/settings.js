@@ -73,15 +73,17 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   const io = req.app.get('io');
   if (io) io.emit('settings:changed', current);
 
-  // Start/stop demo generator and monitoring proxy
+  // Start/stop demo generator and monitoring proxy.
+  // Wait for the previous mode's writers to drain before starting the new one
+  // so demo and live can't both write to the DB at the same time.
   const demoControl = req.app.get('demoControl');
   const monitoringControl = req.app.get('monitoringControl');
   if (current.mode === 'demo') {
-    if (monitoringControl) monitoringControl.stop();
-    if (demoControl) demoControl.start();
+    if (monitoringControl) await monitoringControl.stop();
+    if (demoControl) await demoControl.start();
   } else {
-    if (demoControl) demoControl.stop();
-    if (monitoringControl) monitoringControl.start();
+    if (demoControl) await demoControl.stop();
+    if (monitoringControl) await monitoringControl.start();
   }
 
   res.json(current);

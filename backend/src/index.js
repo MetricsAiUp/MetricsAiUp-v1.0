@@ -135,6 +135,47 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
+// ─── Demo / monitoring control (module-scope so shutdown handlers can reach them) ───
+let shuttingDown = false;
+let demoInterval = null;
+let demoRunning = false;
+
+const demoControl = {
+  async start() {
+    if (demoInterval || shuttingDown) return;
+    logger.info('Starting demo data generator');
+    const tick = async () => {
+      if (shuttingDown || demoRunning) return;
+      demoRunning = true;
+      try { await generateDemoData(); }
+      catch (e) { logger.error('DemoGen error', { error: e.message }); }
+      finally { demoRunning = false; }
+    };
+    tick();
+    demoInterval = setInterval(tick, 2 * 60 * 1000);
+  },
+  async stop() {
+    if (demoInterval) {
+      clearInterval(demoInterval);
+      demoInterval = null;
+      logger.info('Stopped demo data generator');
+    }
+    // Wait for any in-flight tick to finish so we don't kill mid-transaction.
+    const start = Date.now();
+    while (demoRunning && Date.now() - start < 10_000) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+  },
+};
+app.set('demoControl', demoControl);
+
+const monitoringControl = {
+  start() { if (!shuttingDown) monitoringProxy.start(io); },
+  stop() { monitoringProxy.stop(); },
+};
+app.set('monitoringControl', monitoringControl);
+app.set('monitoringProxy', monitoringProxy);
+
 server.listen(PORT, '0.0.0.0', () => {
   logger.info('HTTP server started', { port: PORT });
   logger.info('Socket.IO ready for connections');
@@ -142,35 +183,6 @@ server.listen(PORT, '0.0.0.0', () => {
   initTelegramBot();
   startCameraHealthCheck();
   startReportScheduler();
-
-  // Demo data auto-refresh: controlled by app mode setting
-  let demoInterval = null;
-  const demoControl = {
-    start() {
-      if (demoInterval) return;
-      logger.info('Starting demo data generator');
-      generateDemoData().catch(e => logger.error('DemoGen initial run error', { error: e.message }));
-      demoInterval = setInterval(() => {
-        generateDemoData().catch(e => logger.error('DemoGen refresh error', { error: e.message }));
-      }, 2 * 60 * 1000);
-    },
-    stop() {
-      if (demoInterval) {
-        clearInterval(demoInterval);
-        demoInterval = null;
-        logger.info('Stopped demo data generator');
-      }
-    },
-  };
-  app.set('demoControl', demoControl);
-
-  // Monitoring proxy control (for live mode)
-  const monitoringControl = {
-    start() { monitoringProxy.start(io); },
-    stop() { monitoringProxy.stop(); },
-  };
-  app.set('monitoringControl', monitoringControl);
-  app.set('monitoringProxy', monitoringProxy);
 
   // Start demo generator only if mode is 'demo', monitoring proxy if 'live'
   const appSettings = settingsRoutes.readSettings();
@@ -199,13 +211,33 @@ process.on('unhandledRejection', (err) => {
   logger.error('Unhandled rejection', { error: err?.message || err });
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  process.exit();
-});
+// ─── Graceful shutdown ───
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info(`Received ${signal}, shutting down gracefully`);
+  // Hard-kill timeout — don't hang forever
+  const killTimer = setTimeout(() => {
+    logger.error('Shutdown timeout exceeded, forcing exit');
+    process.exit(1);
+  }, 15_000);
+  killTimer.unref();
+  try {
+    await Promise.allSettled([
+      demoControl.stop(),
+      monitoringControl.stop(),
+    ]);
+    await new Promise(res => server.close(() => res()));
+    if (httpsServer) await new Promise(res => httpsServer.close(() => res()));
+    if (io) await new Promise(res => io.close(() => res()));
+    await prisma.$disconnect();
+    logger.info('Shutdown complete');
+  } catch (err) {
+    logger.error('Shutdown error', { error: err?.message || err });
+  } finally {
+    process.exit(0);
+  }
+}
 
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
-  process.exit();
-});
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
