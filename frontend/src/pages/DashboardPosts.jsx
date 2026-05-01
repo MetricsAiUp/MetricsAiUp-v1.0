@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   Clock, AlertTriangle, Settings, Save, Check,
   CircleDot, Timer, FileText, Calendar, ArrowRight, Car,
+  MapPin, HelpCircle,
 } from 'lucide-react';
 import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
 import GanttTimeline from '../components/dashboardPosts/GanttTimeline';
@@ -116,11 +117,12 @@ export default function DashboardPosts() {
 
   const posts = useMemo(() => {
     if (!data?.posts) return [];
-    return data.posts.slice(0, settings.postsCount);
-  }, [data, settings.postsCount]);
+    // Не режем по postsCount: API уже отдаёт активные посты + зоны.
+    return data.posts;
+  }, [data]);
 
-  // Conflict detection
-  const conflicts = useMemo(() => detectConflicts(posts), [posts]);
+  // Conflict detection — только посты, у зон таймлайна нет
+  const conflicts = useMemo(() => detectConflicts(posts.filter(p => p.kind !== 'zone')), [posts]);
   const conflictItemIds = useMemo(() => {
     const set = new Set();
     conflicts.forEach(c => c.items.forEach(id => set.add(id)));
@@ -276,17 +278,22 @@ export default function DashboardPosts() {
     setTimeout(() => setSaveStatus(null), 2000);
   }, [pendingChanges, api, data, snapshot]);
 
-  // Summary stats
+  // Summary stats — счётчики по постам и зонам считаем отдельно
   const stats = useMemo(() => {
     if (!posts.length) return {};
-    const occupied = posts.filter(p => p.status !== 'free').length;
-    const free = posts.length - occupied;
+    const onlyPosts = posts.filter(p => p.kind !== 'zone');
+    const onlyZones = posts.filter(p => p.kind === 'zone');
+    const occupied = onlyPosts.filter(p => p.status !== 'free' && p.status !== 'no_data').length;
+    const free = onlyPosts.filter(p => p.status === 'free').length;
+    const noData = onlyPosts.filter(p => p.status === 'no_data').length;
+    const zonesOccupied = onlyZones.filter(z => z.status !== 'free' && z.status !== 'no_data').length;
+    const zonesFree = onlyZones.filter(z => z.status === 'free').length;
     let completedWO = 0, totalNormHours = 0, totalActualHours = 0;
     let idleMinutes = 0, overdueMinutes = 0, savedMinutes = 0;
     const now = new Date();
     const { start: shiftStartMs } = getShiftBounds(todayShift.shiftStart, todayShift.shiftEnd);
 
-    posts.forEach(p => {
+    onlyPosts.forEach(p => {
       const tl = p.timeline.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
       tl.forEach(item => {
         if (item.status === 'completed') {
@@ -323,7 +330,7 @@ export default function DashboardPosts() {
 
     // Завершённые визиты CV — закрытые блоки (visitClosed=true), либо fallback по статусу
     // 'completed' для совместимости с demo-режимом, где timeline = ЗН.
-    const completedVisits = posts.reduce((s, p) =>
+    const completedVisits = onlyPosts.reduce((s, p) =>
       s + (p.timeline || []).filter(t => t.visitClosed === true || t.status === 'completed').length, 0);
 
     // В live-режиме timeline = визиты CV (≠ ЗН). Реальные ЗН (1С → WorkOrder в БД)
@@ -331,8 +338,8 @@ export default function DashboardPosts() {
     const woStats = data?.workOrdersStats;
     if (woStats) {
       return {
-        occupied,
-        free,
+        occupied, free, noData,
+        zonesOccupied, zonesFree,
         completedWO: woStats.completed || 0,
         completedVisits,
         totalNormHours: Math.round((woStats.totalNormHours || 0) * 10) / 10,
@@ -342,7 +349,7 @@ export default function DashboardPosts() {
       };
     }
 
-    return { occupied, free, completedWO, completedVisits, totalNormHours: Math.round(totalNormHours * 10) / 10, idleTime: fmtMin(idleMinutes), overdueTime: fmtMin(overdueMinutes), savedTime: fmtMin(savedMinutes) };
+    return { occupied, free, noData, zonesOccupied, zonesFree, completedWO, completedVisits, totalNormHours: Math.round(totalNormHours * 10) / 10, idleTime: fmtMin(idleMinutes), overdueTime: fmtMin(overdueMinutes), savedTime: fmtMin(savedMinutes) };
   }, [posts, todayShift.shiftStart, todayShift.shiftEnd, data?.workOrdersStats]);
 
   if (loading) {
@@ -450,10 +457,17 @@ export default function DashboardPosts() {
       {/* Summary stats */}
       {elVis('headerStats') && <div className="flex flex-wrap gap-2">
         {[
-          { label: isRu ? '\u0417\u0430\u043d\u044f\u0442\u043e' : 'Occupied', value: stats.occupied, color: 'var(--accent)', icon: CircleDot,
-            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u043f\u043e\u0441\u0442\u043e\u0432, \u043d\u0430 \u043a\u043e\u0442\u043e\u0440\u044b\u0445 \u0441\u0435\u0439\u0447\u0430\u0441 \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044c' : 'Number of posts currently occupied by a vehicle' },
-          { label: isRu ? '\u0421\u0432\u043e\u0431\u043e\u0434\u043d\u043e' : 'Free', value: stats.free, color: 'var(--warning)', icon: CircleDot,
-            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u044b\u0445 \u043f\u043e\u0441\u0442\u043e\u0432, \u0433\u043e\u0442\u043e\u0432\u044b\u0445 \u043f\u0440\u0438\u043d\u044f\u0442\u044c \u0430\u0432\u0442\u043e' : 'Number of free posts ready to accept a vehicle' },
+          { label: isRu ? 'Постов занято' : 'Posts occupied', value: stats.occupied, color: 'var(--accent)', icon: CircleDot,
+            tip: isRu ? 'Количество постов, на которых сейчас находится автомобиль' : 'Number of posts currently occupied by a vehicle' },
+          { label: isRu ? 'Постов свободно' : 'Posts free', value: stats.free, color: 'var(--warning)', icon: CircleDot,
+            tip: isRu ? 'Количество свободных постов, готовых принять авто' : 'Number of free posts ready to accept a vehicle' },
+          ...(stats.noData > 0 ? [{ label: isRu ? 'Нет данных' : 'No data', value: stats.noData, color: 'var(--text-muted)', icon: HelpCircle,
+            tip: isRu ? 'Посты, по которым CV-система не передаёт данные' : 'Posts with no data from the CV system' }] : []),
+          { sep: true },
+          { label: isRu ? 'Зон занято' : 'Zones occupied', value: stats.zonesOccupied, color: 'var(--accent)', icon: MapPin,
+            tip: isRu ? 'Количество свободных зон ожидания/парковки, в которых сейчас стоит авто' : 'Number of waiting/parking zones currently occupied' },
+          { label: isRu ? 'Зон свободно' : 'Zones free', value: stats.zonesFree, color: 'var(--warning)', icon: MapPin,
+            tip: isRu ? 'Количество свободных зон ожидания/парковки' : 'Number of free waiting/parking zones' },
           { sep: true },
           { label: isRu ? '\u0412\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043e \u0417\u041d' : 'Completed WO', value: stats.completedWO, color: 'var(--success)', icon: FileText,
             tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u0445 \u0437\u0430\u043a\u0430\u0437-\u043d\u0430\u0440\u044f\u0434\u043e\u0432 (\u0438\u0437 1\u0421) \u0437\u0430 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0441\u043c\u0435\u043d\u0443' : 'Number of completed work orders (from 1C) this shift' },

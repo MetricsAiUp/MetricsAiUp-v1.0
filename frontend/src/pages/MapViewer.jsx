@@ -5,7 +5,15 @@ import { Stage, Layer, Rect, Circle, Text, Group, Line } from 'react-konva';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePolling, useSocket } from '../hooks/useSocket';
-import { POST_STATUS_COLORS } from '../constants';
+import {
+  POST_STATUS_COLORS,
+  MAP_FONT_FAMILY,
+  MAP_FONT_MONO,
+  MAP_TEXT_COLORS,
+  MAP_LETTER_SPACING,
+  mapFontSizes,
+  toTitleCase,
+} from '../constants';
 import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
 import {
@@ -1076,7 +1084,7 @@ export default function MapViewer() {
                   dashPost = dashPostFromData(pn, dashboardData);
                 }
                 return (
-                  <PostEl key={el.id} el={el} isDark={isDark} textFill={textFill} mutedFill={mutedFill}
+                  <PostEl key={el.id} el={el} isDark={isDark}
                     status={status}
                     plate={plate}
                     statusLabel={t(`posts.${status}`)}
@@ -1229,13 +1237,17 @@ function estimateTextH(text, fontSize, availW) {
   return lines * (fontSize + 2);
 }
 
-function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, postLabel, dashPost, isRu, onClick }) {
+function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, isRu, onClick }) {
   const color = POST_STATUS_COLORS[status] || '#94a3b8';
   const fillBg = isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255,255,255,0.92)';
   const w = el.width || 120, h = el.height || 80;
   const pad = 5;
   const isFree = status === 'free';
   const isIdle = status === 'occupied_no_work';
+  // «Нет данных» — пост есть на карте, но CV ничего не сообщает.
+  // Показываем как свободный (прочерк), без мусорных счётчиков.
+  const isNoData = status === 'no_data';
+  const isEmptyView = isFree || isNoData;
 
   const currentWO = dashPost?.timeline?.find(i => i.status === 'in_progress');
   const currentVehicle = dashPost?.currentVehicle;
@@ -1249,8 +1261,9 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   const narrow = w < 90;
   const headerH = narrow ? 28 : 22;
   const innerW = w - pad * 2;
-  const fontSize = Math.max(7, Math.min(10, Math.round(w / 13)));
-  const smallFont = Math.max(7, fontSize - 1);
+
+  // Адаптивные размеры — единая формула из constants
+  const fs = mapFontSizes(w);
 
   // Live monitoring extra fields
   const peopleCount = dashPost?.peopleCount;
@@ -1258,44 +1271,48 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   const openParts = dashPost?.openParts;
   const worksInProgress = dashPost?.worksInProgress ?? (currentWO != null);
 
-  const infoFont = Math.max(7, fontSize - 1);
-  const accentColor = isDark ? '#a5b4fc' : '#6366f1';
+  const accentColor = isDark ? MAP_TEXT_COLORS.accent.dark : MAP_TEXT_COLORS.accent.light;
+  const primaryColor = isDark ? MAP_TEXT_COLORS.primary.dark : MAP_TEXT_COLORS.primary.light;
+  const mutedColor = isDark ? MAP_TEXT_COLORS.muted.dark : MAP_TEXT_COLORS.muted.light;
 
   // Build content items with estimated heights
   const items = [];
-  // Plate number
-  if (plate) items.push({ type: 'plate', text: plate, size: fontSize });
-  // Make + Model
+  // Plate number — uppercase mono
+  if (plate) items.push({ type: 'plate', text: String(plate).toUpperCase(), size: fs.plate });
+  // Make + Model — Title Case ("kia kia" → "Kia Kia")
   if (currentVehicle) {
-    const carLabel = `${currentVehicle.brand || ''} ${currentVehicle.model || ''}`.trim();
-    if (carLabel) items.push({ type: 'text', text: carLabel, size: infoFont, color: textFill, align: 'center' });
+    const brandRaw = `${currentVehicle.brand || ''} ${currentVehicle.model || ''}`.trim();
+    const carLabel = toTitleCase(brandRaw);
+    if (carLabel) items.push({ type: 'text', text: carLabel, size: fs.body, bold: true, color: primaryColor, align: 'center' });
   }
-  // Color + Body (compact line)
+  // Color + Body (compact line) — lowercase
   if (currentVehicle?.color || currentVehicle?.body) {
     const detail = [
       isRu ? trMap(COLOR_RU, currentVehicle.color) : currentVehicle.color,
       isRu ? trMap(BODY_RU, currentVehicle.body) : currentVehicle.body,
     ].filter(Boolean).join(' · ');
-    items.push({ type: 'text', text: detail, size: infoFont, color: mutedFill, align: 'center' });
+    items.push({ type: 'text', text: detail, size: fs.detail, color: mutedColor, align: 'center' });
   }
-  // Work type (demo) or work indicator (live)
+  // Work type (demo) or work indicator (live) — sentence case
   if (workType) {
-    items.push({ type: 'text', text: workType, size: infoFont, bold: true, color: accentColor, align: 'center' });
+    items.push({ type: 'text', text: workType, size: fs.detail, bold: true, color: accentColor, align: 'center' });
   } else if (worksInProgress && status !== 'free') {
-    items.push({ type: 'text', text: isRu ? 'Работы ведутся' : 'Work in progress', size: infoFont, bold: true, color: accentColor, align: 'center' });
+    items.push({ type: 'text', text: isRu ? 'Работы ведутся' : 'Work in progress', size: fs.detail, bold: true, color: accentColor, align: 'center' });
   }
   // Worker (demo mode)
-  if (shortWorker) items.push({ type: 'text', text: shortWorker, size: infoFont, color: mutedFill, align: 'center' });
+  if (shortWorker) items.push({ type: 'text', text: shortWorker, size: fs.detail, color: mutedColor, align: 'center' });
   // Time range (demo mode)
-  if (currentWO) items.push({ type: 'text', text: `${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`, size: infoFont, color: mutedFill, align: 'center' });
+  if (currentWO) items.push({ type: 'text', text: `${fmtTime(currentWO.startTime)} → ${fmtTime(currentWO.estimatedEnd)}`, size: fs.detail, color: mutedColor, align: 'center' });
   // People · Confidence (compact bottom line)
   {
     const parts = [];
     if (peopleCount != null) parts.push(`${peopleCount} ${isRu ? 'чел' : 'ppl'}`);
     if (confidence) parts.push(isRu ? (CONFIDENCE_RU[confidence] || confidence) : confidence);
     if (parts.length > 0) {
-      const confColor = confidence === 'HIGH' ? '#22c55e' : confidence === 'MEDIUM' ? '#f59e0b' : '#ef4444';
-      items.push({ type: 'text', text: parts.join(' · '), size: infoFont, color: confColor, align: 'center' });
+      const confColor = confidence === 'HIGH' ? MAP_TEXT_COLORS.conf.high
+        : confidence === 'MEDIUM' ? MAP_TEXT_COLORS.conf.medium
+        : MAP_TEXT_COLORS.conf.low;
+      items.push({ type: 'text', text: parts.join(' · '), size: fs.detail, color: confColor, align: 'center' });
     }
   }
 
@@ -1304,7 +1321,7 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
   const positioned = items.map(item => {
     const y = curY;
     if (item.type === 'plate') {
-      const plateH = Math.max(14, fontSize + 6);
+      const plateH = Math.max(14, fs.plate + 6);
       curY += plateH + 3;
       return { ...item, y, h: plateH };
     }
@@ -1329,28 +1346,36 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
       {narrow ? (<>
         <Text x={pad} y={2} text={postLabel}
           width={innerW} height={13}
-          fontSize={8} fontStyle="bold" fill="#fff"
-          fontFamily="system-ui, sans-serif" wrap="none" ellipsis={true} />
+          fontSize={fs.header} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+          fontFamily={MAP_FONT_FAMILY} letterSpacing={MAP_LETTER_SPACING.header}
+          wrap="none" ellipsis={true} />
         <Text x={pad} y={14} text={statusLabel}
           width={innerW} height={11}
-          fontSize={7} fill="rgba(255,255,255,0.85)"
-          fontFamily="system-ui, sans-serif" fontStyle="bold" wrap="none" ellipsis={true} />
+          fontSize={fs.status} fill={MAP_TEXT_COLORS.onColorMuted}
+          fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+          letterSpacing={MAP_LETTER_SPACING.header}
+          wrap="none" ellipsis={true} />
       </>) : (<>
         <Text x={pad} y={2} text={postLabel}
           width={w * 0.44} height={headerH - 2}
-          fontSize={9} fontStyle="bold" fill="#fff"
-          verticalAlign="middle" fontFamily="system-ui, sans-serif" wrap="none" ellipsis={true} />
+          fontSize={fs.header} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+          verticalAlign="middle" fontFamily={MAP_FONT_FAMILY}
+          letterSpacing={MAP_LETTER_SPACING.header}
+          wrap="none" ellipsis={true} />
         <Text x={w * 0.44} y={2} text={statusLabel}
           width={w * 0.56 - pad} height={headerH - 2}
-          fontSize={7} fill="rgba(255,255,255,0.85)"
+          fontSize={fs.status} fill={MAP_TEXT_COLORS.onColorMuted}
           align="right" verticalAlign="middle"
-          fontFamily="system-ui, sans-serif" fontStyle="bold" wrap="none" ellipsis={true} />
+          fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+          letterSpacing={MAP_LETTER_SPACING.header}
+          wrap="none" ellipsis={true} />
       </>)}
 
-      {isFree ? (
+      {isEmptyView ? (
         <Text x={pad} y={headerH} width={innerW} height={h - headerH}
           text="—" fontSize={16}
-          fill={isDark ? '#334155' : '#cbd5e1'}
+          fontFamily={MAP_FONT_FAMILY}
+          fill={isDark ? MAP_TEXT_COLORS.empty.dark : MAP_TEXT_COLORS.empty.light}
           align="center" verticalAlign="middle" />
       ) : (<>
         {positioned.map((item, i) => item.type === 'plate' ? (
@@ -1360,17 +1385,18 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
               cornerRadius={3} />
             <Text x={pad} y={item.y} width={innerW} height={item.h}
               text={item.text}
-              fontSize={item.size} fontStyle="bold" fontFamily="monospace"
-              fill={textFill} align="center" verticalAlign="middle"
+              fontSize={item.size} fontStyle="700" fontFamily={MAP_FONT_MONO}
+              letterSpacing={MAP_LETTER_SPACING.plate}
+              fill={primaryColor} align="center" verticalAlign="middle"
               wrap="none" ellipsis={true} />
           </Group>
         ) : (
           <Text key={i} x={pad} y={item.y} width={innerW} height={item.h}
             text={item.text}
             fontSize={item.size}
-            fontStyle={item.bold ? 'bold' : 'normal'}
-            fill={item.color || textFill}
-            fontFamily="system-ui, sans-serif"
+            fontStyle={item.bold ? '600' : '400'}
+            fill={item.color || primaryColor}
+            fontFamily={MAP_FONT_FAMILY}
             align={item.align || 'left'}
             wrap="word" ellipsis={true} />
         ))}
@@ -1382,7 +1408,9 @@ function PostEl({ el, isDark, textFill, mutedFill, status, plate, statusLabel, p
               cornerRadius={3} stroke="rgba(234,179,8,0.3)" strokeWidth={1} />
             <Text x={pad} y={h - 15} width={innerW} height={11}
               text={isRu ? 'Простой' : 'Idle'}
-              fontSize={8} fontStyle="bold" fill="#eab308"
+              fontSize={fs.detail} fontStyle="600" fill="#eab308"
+              fontFamily={MAP_FONT_FAMILY}
+              letterSpacing={MAP_LETTER_SPACING.header}
               align="center" verticalAlign="middle" />
           </Group>
         )}
@@ -1430,37 +1458,49 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
   // Unified status palette with PostEl: free / active_work / occupied
   const zoneStatus = !isOccupied ? 'free' : (zoneInfo?.worksInProgress ? 'active_work' : 'occupied');
   const occupiedStroke = POST_STATUS_COLORS[zoneStatus] || stroke;
-  const textColor = isDark ? '#94a3b8' : '#64748b';
-  const textPrimary = isDark ? '#e2e8f0' : '#1e293b';
+  const textColor = isDark ? MAP_TEXT_COLORS.muted.dark : MAP_TEXT_COLORS.muted.light;
+  const textPrimary = isDark ? MAP_TEXT_COLORS.primary.dark : MAP_TEXT_COLORS.primary.light;
   const w = el.width || 160, h = el.height || 100;
   const pad = 5;
-  const headerH = 16;
+  const headerH = 18;
   const innerW = w - pad * 2;
 
-  const accentColor = isDark ? '#a5b4fc' : '#6366f1';
+  // Адаптивные размеры — единая формула
+  const fs = mapFontSizes(w);
+
+  const accentColor = isDark ? MAP_TEXT_COLORS.accent.dark : MAP_TEXT_COLORS.accent.light;
   const isRuLang = /[а-яА-ЯёЁ]/.test(el.name || '');
+
+  // Статус-лейбл, как у постов
+  const statusLabel = zoneStatus === 'active_work'
+    ? (isRuLang ? 'Работы' : 'Active')
+    : isOccupied
+    ? (isRuLang ? 'Занята' : 'Occupied')
+    : (isRuLang ? 'Свободна' : 'Free');
 
   // Build info items when occupied (worksDescription only in modal)
   const items = [];
   if (zoneInfo && isOccupied) {
-    if (zoneInfo.plateNumber) items.push({ text: zoneInfo.plateNumber, bold: true, mono: true, size: 8, color: textPrimary, align: 'center' });
-    const carText = [zoneInfo.carMake, zoneInfo.carModel].filter(Boolean).join(' ');
-    if (carText) items.push({ text: carText, size: 7, color: textPrimary, align: 'center' });
+    if (zoneInfo.plateNumber) items.push({ text: String(zoneInfo.plateNumber).toUpperCase(), bold: true, mono: true, size: fs.plate, color: textPrimary, align: 'center' });
+    const carText = toTitleCase([zoneInfo.carMake, zoneInfo.carModel].filter(Boolean).join(' '));
+    if (carText) items.push({ text: carText, size: fs.body, bold: true, color: textPrimary, align: 'center' });
     const detail = [
       isRuLang ? trMap(COLOR_RU, zoneInfo.carColor) : zoneInfo.carColor,
       isRuLang ? trMap(BODY_RU, zoneInfo.carBody) : zoneInfo.carBody,
     ].filter(Boolean).join(' · ');
-    if (detail) items.push({ text: detail, size: 7, color: textColor, align: 'center' });
+    if (detail) items.push({ text: detail, size: fs.detail, color: textColor, align: 'center' });
     if (zoneInfo.worksInProgress) {
-      items.push({ text: isRuLang ? 'Работы' : 'Works', size: 7, bold: true, color: accentColor, align: 'center' });
+      items.push({ text: isRuLang ? 'Работы' : 'Works', size: fs.detail, bold: true, color: accentColor, align: 'center' });
     }
     // People · Confidence
     const parts = [];
     if (zoneInfo.peopleCount != null) parts.push(`${zoneInfo.peopleCount} ${isRuLang ? 'чел' : 'ppl'}`);
     if (zoneInfo.confidence) parts.push(isRuLang ? (CONFIDENCE_RU[zoneInfo.confidence] || zoneInfo.confidence) : zoneInfo.confidence);
     if (parts.length > 0) {
-      const confColor = zoneInfo.confidence === 'HIGH' ? '#22c55e' : zoneInfo.confidence === 'MEDIUM' ? '#f59e0b' : '#ef4444';
-      items.push({ text: parts.join(' · '), size: 7, color: confColor, align: 'center' });
+      const confColor = zoneInfo.confidence === 'HIGH' ? MAP_TEXT_COLORS.conf.high
+        : zoneInfo.confidence === 'MEDIUM' ? MAP_TEXT_COLORS.conf.medium
+        : MAP_TEXT_COLORS.conf.low;
+      items.push({ text: parts.join(' · '), size: fs.detail, color: confColor, align: 'center' });
     }
   }
 
@@ -1485,32 +1525,35 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
       {/* Header */}
       <Rect x={0} y={0} width={w} height={headerH} fill={occupiedStroke}
         cornerRadius={[3, 3, 0, 0]} opacity={isOccupied ? 0.7 : 0.4} />
-      <Text x={pad} y={1} text={el.name} fontSize={8} fill="#fff"
-        fontStyle="bold" fontFamily="system-ui, sans-serif"
-        width={isOccupied ? innerW - 18 : innerW} height={headerH - 1}
-        verticalAlign="middle" wrap="none" ellipsis={true} />
-      {isOccupied && (
-        <>
-          <Circle x={w - 10} y={headerH / 2} radius={6} fill="#fff" opacity={0.25} />
-          <Text x={w - 16} y={headerH / 2 - 5} text={String(vehicleCount)} fontSize={7}
-            fontStyle="bold" fill="#fff" width={12} align="center"
-            fontFamily="system-ui, sans-serif" />
-        </>
-      )}
+      <Text x={pad} y={1} text={el.name}
+        width={w * 0.5} height={headerH - 1}
+        fontSize={fs.header} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+        verticalAlign="middle" fontFamily={MAP_FONT_FAMILY}
+        letterSpacing={MAP_LETTER_SPACING.header}
+        wrap="none" ellipsis={true} />
+      <Text x={w * 0.5} y={1} text={statusLabel}
+        width={w * 0.5 - pad} height={headerH - 1}
+        fontSize={fs.status} fill={MAP_TEXT_COLORS.onColorMuted}
+        align="right" verticalAlign="middle"
+        fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+        letterSpacing={MAP_LETTER_SPACING.header}
+        wrap="none" ellipsis={true} />
 
       {/* Content */}
       {!isOccupied ? (
         <Text x={pad} y={headerH} width={innerW} height={h - headerH}
           text="—" fontSize={14}
-          fill={isDark ? '#334155' : '#cbd5e1'}
+          fontFamily={MAP_FONT_FAMILY}
+          fill={isDark ? MAP_TEXT_COLORS.empty.dark : MAP_TEXT_COLORS.empty.light}
           align="center" verticalAlign="middle" />
       ) : (
         positioned.map((item, i) => (
           <Text key={i} x={pad} y={item.y} width={innerW} height={item.h}
             text={item.text}
             fontSize={item.size}
-            fontStyle={item.bold ? 'bold' : 'normal'}
-            fontFamily={item.mono ? 'monospace' : 'system-ui, sans-serif'}
+            fontStyle={item.bold ? (item.mono ? '700' : '600') : '400'}
+            fontFamily={item.mono ? MAP_FONT_MONO : MAP_FONT_FAMILY}
+            letterSpacing={item.mono ? MAP_LETTER_SPACING.plate : 0}
             fill={item.color || textColor}
             align={item.align || 'left'}
             wrap="word" ellipsis={true} />
@@ -1550,8 +1593,9 @@ function CameraEl({ el, isDark, onClick, online }) {
       <Circle x={cx} y={cy} radius={1.5} fill="#fff" />
       {/* Label — counter-rotated so text is always horizontal */}
       <Group x={cx} y={cy} rotation={-rot}>
-        <Text x={8} y={-5} text={el.name || ''} fontSize={8}
-          fill={labelColor} fontStyle="bold" fontFamily="system-ui, sans-serif" />
+        <Text x={8} y={-5} text={el.name || ''} fontSize={9}
+          fill={labelColor} fontStyle="600" fontFamily={MAP_FONT_FAMILY}
+          letterSpacing={MAP_LETTER_SPACING.header} />
       </Group>
     </Group>
   );
@@ -1597,9 +1641,24 @@ function WallEl({ el }) {
 
 function LabelEl({ el, fill }) {
   return (
-    <Text x={el.x} y={el.y} text={el.name} fontSize={9} rotation={el.rotation || 0}
-      fill={fill} fontStyle="bold" opacity={0.6} fontFamily="system-ui, sans-serif" />
+    <Text x={el.x} y={el.y} text={el.name} fontSize={10} rotation={el.rotation || 0}
+      fill={fill} fontStyle="600" opacity={0.7}
+      fontFamily={MAP_FONT_FAMILY}
+      letterSpacing={MAP_LETTER_SPACING.header} />
   );
+}
+
+// Считаем только «реальные» элементы:
+// для post/camera/zone/door обязательно непустое имя — это отсекает «фантомы»
+// из старых импортов вида `{type:'post', name:undefined, x:0, y:0}`.
+// Размер не проверяем: камеры намеренно тонкие (h≈1.8px — иконка).
+function isRealMapElement(e) {
+  if (!e || !e.type) return false;
+  const namedTypes = ['post', 'camera', 'zone', 'door'];
+  if (namedTypes.includes(e.type)) {
+    if (!e.name || typeof e.name !== 'string' || !e.name.trim()) return false;
+  }
+  return true;
 }
 
 function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
@@ -1611,9 +1670,10 @@ function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
 
   const w = el.width || 200, h = el.height || 150;
 
-  // Count elements by type
+  // Count elements by type — только валидные (с именем, нормального размера)
   const counts = {};
   for (const e of (allElements || [])) {
+    if (!isRealMapElement(e)) continue;
     counts[e.type] = (counts[e.type] || 0) + 1;
   }
 
@@ -1644,7 +1704,9 @@ function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
 
       {/* Title */}
       <Text x={pad} y={pad} text={title} fontSize={titleFs}
-        fontStyle="bold" fill={accentColor} width={contentW} fontFamily="system-ui, sans-serif" />
+        fontStyle="700" fill={accentColor} width={contentW}
+        fontFamily={MAP_FONT_FAMILY}
+        letterSpacing={MAP_LETTER_SPACING.header} />
 
       {/* Separator */}
       <Rect x={pad} y={sepY} width={contentW} height={0.5} fill={accentColor} opacity={0.3} />
@@ -1657,10 +1719,10 @@ function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
           <Group key={i}>
             <Circle x={pad + dotR} y={ry + fs * 0.45} radius={dotR} fill={row.color} />
             <Text x={pad + dotR * 3} y={ry} text={row.label} fontSize={fs}
-              fill={mutedColor} fontFamily="system-ui, sans-serif" />
+              fill={mutedColor} fontFamily={MAP_FONT_FAMILY} fontStyle="500" />
             <Text x={pad} y={ry} text={String(row.value)} fontSize={fs}
-              fontStyle="bold" fill={textColor} width={contentW} align="right"
-              fontFamily="system-ui, sans-serif" />
+              fontStyle="700" fill={textColor} width={contentW} align="right"
+              fontFamily={MAP_FONT_FAMILY} />
           </Group>
         );
       })}

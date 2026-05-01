@@ -65,3 +65,66 @@ export const ZONE_TYPE_COLORS = {
   waiting: '#3b82f6',
   diagnostics: '#a855f7',
 };
+
+// ============================
+// Map typography — единый источник правды
+// для всех Konva-текстов на карте СТО
+// (MapViewer, MapEditor, STOMap)
+// ============================
+
+// Единый стек шрифтов — Inter (Google Fonts) + локальные fallback'и.
+// Inter подгружается в frontend/index.html через <link>.
+export const MAP_FONT_FAMILY =
+  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
+// Моно-стек для номерных знаков
+export const MAP_FONT_MONO =
+  "'JetBrains Mono', 'SF Mono', 'Fira Code', Menlo, Consolas, 'Roboto Mono', monospace";
+
+// Адаптивные размеры шрифта для карточек постов/зон.
+// Сохраняем масштабирование от ширины окна, но через одну формулу,
+// чтобы пропорции между header/body/plate были одинаковыми.
+// width — реальная ширина элемента в пикселях.
+export function mapFontSizes(width) {
+  // Базовый размер — растёт от 8px (узкий пост ~80px) до 11px (большой ~140px+)
+  const base = Math.max(8, Math.min(11, Math.round(width / 13)));
+  return {
+    header: base + 1,                  // «Пост 8», «Зона 07»
+    status: base,                      // «Свободен», «Активная работа»
+    plate:  base + 2,                  // номер машины
+    body:   base,                      // марка/модель
+    detail: base - 1,                  // цвет · кузов · уверенность
+    badge:  Math.max(7, base - 2),     // счётчик в углу зоны
+  };
+}
+
+// Унифицированная палитра текста для карты.
+// Каждое поле — { dark, light } для текущей темы.
+export const MAP_TEXT_COLORS = {
+  primary:       { dark: '#f1f5f9', light: '#1e293b' }, // основной — номер, бренд
+  secondary:     { dark: '#cbd5e1', light: '#334155' }, // второстепенный
+  muted:         { dark: '#94a3b8', light: '#64748b' }, // приглушённый — детали
+  accent:        { dark: '#a5b4fc', light: '#6366f1' }, // акцент — «Работы ведутся»
+  empty:         { dark: '#334155', light: '#cbd5e1' }, // плейсхолдер «—»
+  onColor:       '#ffffff',                              // текст поверх цветного хедера
+  onColorMuted:  'rgba(255,255,255,0.92)',               // приглушённый поверх хедера
+  conf: { high: '#22c55e', medium: '#f59e0b', low: '#ef4444' }, // уровни уверенности
+};
+
+// Лёгкий letter-spacing для заголовков — выравнивает кириллицу/латиницу
+export const MAP_LETTER_SPACING = {
+  header: 0.3,
+  plate:  1.0,
+  body:   0,
+};
+
+// Привести строку к Title Case ("kia kia" → "Kia Kia", "VOLVO" → "Volvo")
+// Для нормализации брендов/моделей, приходящих с CV в разном регистре.
+export function toTitleCase(str) {
+  if (!str || typeof str !== 'string') return str || '';
+  return str
+    .toLowerCase()
+    .split(/(\s+)/) // сохраняем пробелы как есть
+    .map((part) => (/^\s+$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+    .join('');
+}

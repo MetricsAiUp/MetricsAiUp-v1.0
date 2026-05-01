@@ -9,6 +9,7 @@ import {
   Magnet, Copy, Undo2, Redo2, PenTool, LayoutDashboard, Check, X,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import { MAP_FONT_FAMILY, MAP_LETTER_SPACING } from '../constants';
 
 const ELEMENT_DEFAULTS = {
   building: { width: 0, height: 0, color: '#22c55e', points: [] },
@@ -627,7 +628,9 @@ export default function MapEditor() {
             const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys);
             const fs = calcFontSize(bw || 100, bh || 60, 0.25, 11, 24);
             return <Text text={el.name} x={Math.min(...xs)} y={Math.min(...ys) - fs - 4}
-              fontSize={fs} fill={el.color} fontStyle="bold" />;
+              fontSize={fs} fill={el.color} fontStyle="600"
+              fontFamily={MAP_FONT_FAMILY}
+              letterSpacing={MAP_LETTER_SPACING.header} />;
           })()}
         </Group>
       );
@@ -650,7 +653,9 @@ export default function MapEditor() {
           <Text text={el.name} width={w} height={h}
             fontSize={calcFontSize(w, h, el.type === 'driveway' ? 0.55 : 0.3, 11, 28)}
             fill={el.type === 'building' || el.type === 'infozone' || el.type === 'driveway' ? el.color : '#fff'}
-            fontStyle={el.type === 'building' || el.type === 'infozone' || el.type === 'driveway' ? 'bold' : 'normal'}
+            fontStyle={el.type === 'building' || el.type === 'infozone' || el.type === 'driveway' ? '700' : '500'}
+            fontFamily={MAP_FONT_FAMILY}
+            letterSpacing={MAP_LETTER_SPACING.header}
             align="center" verticalAlign="middle" padding={4} />
         </Group>
       );
@@ -674,7 +679,9 @@ export default function MapEditor() {
           <Circle x={cx} y={cy} radius={el.width / 2} fill={el.color} opacity={0.9} stroke={isSelected ? '#fff' : '#000'} strokeWidth={isSelected ? 2 : 1} />
           <Circle x={cx} y={cy} radius={3} fill="#fff" />
           <Text text={el.name} x={cx} y={-Math.max(10, Math.round(el.width * 0.5)) - 4}
-            fontSize={Math.max(10, Math.round(el.width * 0.5))} fill={el.color} fontStyle="bold"
+            fontSize={Math.max(10, Math.round(el.width * 0.5))} fill={el.color} fontStyle="600"
+            fontFamily={MAP_FONT_FAMILY}
+            letterSpacing={MAP_LETTER_SPACING.header}
             rotation={-(el.rotation || 0)} offsetX={0} align="left" />
         </Group>
       );
@@ -686,7 +693,9 @@ export default function MapEditor() {
         <Group key={el.id} {...common}>
           <Rect width={el.width} height={el.height} fill="transparent" />
           <Text text={el.name} width={el.width} height={el.height}
-            fontSize={calcFontSize(el.width, el.height, 0.45, 12, 32)} fill={el.color} align="center" verticalAlign="middle" />
+            fontSize={calcFontSize(el.width, el.height, 0.45, 12, 32)} fill={el.color}
+            fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+            align="center" verticalAlign="middle" />
         </Group>
       );
     }
@@ -738,7 +747,9 @@ export default function MapEditor() {
         <Rect width={el.width} height={el.height} fill={el.color} opacity={0.75} stroke={isSelected ? '#fff' : el.color} strokeWidth={isSelected ? 2 : 1} />
         {el.type !== 'wall' && (
           <Text text={el.name} width={el.width} height={el.height}
-            fontSize={calcFontSize(el.width, el.height, 0.4, 10, 24)} fill="#fff" align="center" verticalAlign="middle" padding={2} />
+            fontSize={calcFontSize(el.width, el.height, 0.4, 10, 24)} fill="#fff"
+            fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+            align="center" verticalAlign="middle" padding={2} />
         )}
       </Group>
     );
@@ -1006,7 +1017,8 @@ export default function MapEditor() {
                   {Array.from({ length: drawingPolygon.points.length / 2 }, (_, i) => (
                     <Text key={`dpt${i}`}
                       x={drawingPolygon.points[i * 2] - 4} y={drawingPolygon.points[i * 2 + 1] - 5}
-                      text={String(i + 1)} fontSize={10} fontStyle="bold" fill="#fff" />
+                      text={String(i + 1)} fontSize={10} fontStyle="700" fill="#fff"
+                      fontFamily={MAP_FONT_FAMILY} />
                   ))}
                 </>
               )}

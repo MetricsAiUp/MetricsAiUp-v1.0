@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Text, Group, Line, Circle, Arrow } from 'react-konva';
 import { useTranslation } from 'react-i18next';
-import { POST_STATUS_COLORS } from '../constants';
+import { POST_STATUS_COLORS, MAP_FONT_FAMILY, MAP_FONT_MONO, MAP_TEXT_COLORS, MAP_LETTER_SPACING } from '../constants';
 import { getZoneColors, MAP_BG, GRID_STROKE, BUILDING_STROKE, CAMERA_FOV_OPACITY } from '../constants/mapTheme';
 import { usePostTimerText } from './PostTimer';
 
@@ -144,8 +144,10 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
         x={pad} y={8}
         text={postLabel.replace('\n', ' ')}
         fontSize={11}
-        fontStyle="bold"
-        fill={isDark ? '#e2e8f0' : '#1e293b'}
+        fontStyle="600"
+        fontFamily={MAP_FONT_FAMILY}
+        letterSpacing={MAP_LETTER_SPACING.header}
+        fill={isDark ? MAP_TEXT_COLORS.primary.dark : MAP_TEXT_COLORS.primary.light}
       />
       <Circle x={W - 12} y={14} radius={5} fill={color} />
       {/* Status text next to dot */}
@@ -155,7 +157,9 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
         text={STATUS_LABELS[status]?.[isRu ? 'ru' : 'en'] || status}
         fontSize={9}
         fill={color}
-        fontStyle="bold"
+        fontStyle="600"
+        fontFamily={MAP_FONT_FAMILY}
+        letterSpacing={MAP_LETTER_SPACING.header}
       />
 
       {/* ── Content area ── */}
@@ -166,7 +170,8 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
           width={W - pad * 2} height={H - 50}
           text="—"
           fontSize={16}
-          fill={isDark ? '#334155' : '#cbd5e1'}
+          fontFamily={MAP_FONT_FAMILY}
+          fill={isDark ? MAP_TEXT_COLORS.empty.dark : MAP_TEXT_COLORS.empty.light}
           align="center"
           verticalAlign="middle"
         />
@@ -190,10 +195,12 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
             <Text
               x={pad} y={37}
               width={W - pad * 2} height={18}
-              text={vehicle.plateNumber || '—'}
+              text={String(vehicle.plateNumber || '—').toUpperCase()}
               fontSize={11}
-              fontStyle="bold"
-              fill={isDark ? '#e2e8f0' : '#1e293b'}
+              fontStyle="700"
+              fontFamily={MAP_FONT_MONO}
+              letterSpacing={MAP_LETTER_SPACING.plate}
+              fill={isDark ? MAP_TEXT_COLORS.primary.dark : MAP_TEXT_COLORS.primary.light}
               align="center"
               verticalAlign="middle"
             />
@@ -205,9 +212,11 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
           <Text
             x={pad} y={58}
             width={W - pad * 2}
-            text={`${currentVehicle.brand} ${currentVehicle.model}`}
+            text={`${currentVehicle.brand || ''} ${currentVehicle.model || ''}`.trim().replace(/\b\w/g, c => c.toUpperCase())}
             fontSize={9}
-            fill={isDark ? '#64748b' : '#94a3b8'}
+            fontFamily={MAP_FONT_FAMILY}
+            fontStyle="500"
+            fill={isDark ? MAP_TEXT_COLORS.muted.dark : MAP_TEXT_COLORS.muted.light}
             ellipsis={true}
           />
         )}
@@ -219,8 +228,9 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
             width={W - pad * 2}
             text={workType}
             fontSize={9}
-            fontStyle="bold"
-            fill={isDark ? '#a5b4fc' : '#6366f1'}
+            fontStyle="600"
+            fontFamily={MAP_FONT_FAMILY}
+            fill={isDark ? MAP_TEXT_COLORS.accent.dark : MAP_TEXT_COLORS.accent.light}
             ellipsis={true}
           />
         )}
@@ -232,7 +242,8 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
             width={W - pad * 2}
             text={shortWorker}
             fontSize={9}
-            fill={isDark ? '#64748b' : '#94a3b8'}
+            fontFamily={MAP_FONT_FAMILY}
+            fill={isDark ? MAP_TEXT_COLORS.muted.dark : MAP_TEXT_COLORS.muted.light}
             ellipsis={true}
           />
         )}
@@ -244,7 +255,8 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
             width={W - pad * 2}
             text={`${fmtTime(post?.stays?.[0]?.startTime)} → ${fmtTime(currentWO?.estimatedEnd)}`}
             fontSize={9}
-            fill={isDark ? '#64748b' : '#94a3b8'}
+            fontFamily={MAP_FONT_FAMILY}
+            fill={isDark ? MAP_TEXT_COLORS.muted.dark : MAP_TEXT_COLORS.muted.light}
           />
         )}
 
@@ -260,7 +272,9 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
               x={pad} y={H - 19}
               width={W - pad * 2} height={14}
               text={timer.text}
-              fontSize={9} fontStyle="bold" fill="#fff"
+              fontSize={9} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+              fontFamily={MAP_FONT_FAMILY}
+              letterSpacing={MAP_LETTER_SPACING.header}
               align="center" verticalAlign="middle"
             />
           </Group>
@@ -281,7 +295,9 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
               x={pad} y={H - 19}
               width={W - pad * 2} height={14}
               text={isRu ? 'Простой' : 'Idle'}
-              fontSize={9} fontStyle="bold" fill="#eab308"
+              fontSize={9} fontStyle="600" fill="#eab308"
+              fontFamily={MAP_FONT_FAMILY}
+              letterSpacing={MAP_LETTER_SPACING.header}
               align="center" verticalAlign="middle"
             />
           </Group>
@@ -303,8 +319,11 @@ function CameraIcon({ cam, isDark, isRu, onClick, online }) {
         x={-20} y={10}
         width={40}
         text={label}
-        fontSize={8}
-        fill={isDark ? '#94a3b8' : '#718096'}
+        fontSize={9}
+        fontFamily={MAP_FONT_FAMILY}
+        fontStyle="600"
+        letterSpacing={MAP_LETTER_SPACING.header}
+        fill={isDark ? MAP_TEXT_COLORS.muted.dark : MAP_TEXT_COLORS.muted.light}
         align="center"
       />
       <Line
@@ -412,7 +431,9 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
                   x={zl.x + 8} y={zl.y + 6}
                   text={isRu ? zl.label : zl.labelEN}
                   fontSize={11}
-                  fontStyle="bold"
+                  fontStyle="600"
+                  fontFamily={MAP_FONT_FAMILY}
+                  letterSpacing={MAP_LETTER_SPACING.header}
                   fill={colors.stroke}
                   opacity={0.85}
                   lineHeight={1.2}
@@ -428,7 +449,10 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
                       x={zl.x + zl.w - 38} y={zl.y + 5}
                       width={30} height={18}
                       text={`${vehicleCount}`}
-                      fontSize={9} fill="white" align="center" verticalAlign="middle"
+                      fontSize={10} fontStyle="700"
+                      fontFamily={MAP_FONT_FAMILY}
+                      fill={MAP_TEXT_COLORS.onColor}
+                      align="center" verticalAlign="middle"
                     />
                   </Group>
                 )}
@@ -498,8 +522,10 @@ export default function STOMap({ zones = [], onPostClick, onCameraClick, isDark 
                     occupied_no_work: 'Idle',
                     active_work: 'Work',
                   }[status]}
-                  fontSize={8}
-                  fill={isDark ? '#cbd5e1' : '#4a5568'}
+                  fontSize={9}
+                  fontFamily={MAP_FONT_FAMILY}
+                  fontStyle="500"
+                  fill={isDark ? MAP_TEXT_COLORS.secondary.dark : MAP_TEXT_COLORS.secondary.light}
                 />
               </Group>
             ))}

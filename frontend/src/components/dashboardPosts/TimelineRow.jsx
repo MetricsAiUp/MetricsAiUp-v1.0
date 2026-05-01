@@ -1,18 +1,22 @@
 import { useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Car } from 'lucide-react';
+import { Car, MapPin } from 'lucide-react';
 import { POST_TYPE_ICONS, POST_STATUS_COLORS, STATUS_COLORS, getBlockStyle, getItemStatus } from './constants';
 
-// Single timeline row for a post — supports drag-and-drop
+// Single timeline row for a post or zone — supports drag-and-drop (для постов)
 export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, onDrop, dragOverPostId, conflictItemIds }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === 'ru';
+  const isZone = post.kind === 'zone';
   const timelineRef = useRef(null);
-  const PostIcon = POST_TYPE_ICONS[post.type] || Car;
+  const PostIcon = isZone ? MapPin : (POST_TYPE_ICONS[post.type] || Car);
   const postStatusColor = post.status === 'free'
     ? POST_STATUS_COLORS.free
-    : post.currentVehicle
-      ? POST_STATUS_COLORS.occupied
-      : POST_STATUS_COLORS.unknown;
+    : post.status === 'no_data'
+      ? POST_STATUS_COLORS.unknown
+      : post.currentVehicle
+        ? POST_STATUS_COLORS.occupied
+        : POST_STATUS_COLORS.unknown;
 
   const isDropTarget = dragOverPostId === post.id;
 
@@ -73,7 +77,9 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
           />
           <PostIcon size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
           <span className="font-semibold" style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
-            {(() => { const m = post.name?.match(/\d+/)?.[0]; const num = m ? parseInt(m, 10) : null; return num ? t(`posts.post${num}`) : post.name; })()}
+            {isZone
+              ? `${isRu ? 'Зона' : 'Zone'} ${String(post.number).padStart(2, '0')}`
+              : (() => { const m = post.name?.match(/\d+/)?.[0]; const num = m ? parseInt(m, 10) : null; return num ? t(`posts.post${num}`) : post.name; })()}
           </span>
           <span
             className="px-1.5 py-0.5 rounded"
@@ -83,7 +89,7 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
               fontSize: '9px',
             }}
           >
-            {t(`posts.${post.type}`) || post.type}
+            {isZone ? (isRu ? 'Зона' : 'Zone') : (t(`posts.${post.type}`) || post.type)}
           </span>
         </div>
         {post.currentVehicle ? (
@@ -97,7 +103,9 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
           </div>
         ) : (
           <div style={{ color: 'var(--text-muted)', marginLeft: 18, fontSize: '11px' }}>
-            {t('posts.free')}
+            {post.status === 'no_data'
+              ? (isRu ? 'Нет данных' : 'No data')
+              : t('posts.free')}
           </div>
         )}
       </div>
@@ -108,13 +116,13 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
         className="flex-1 relative overflow-hidden"
         style={{
           minHeight: 28,
-          outline: isDropTarget ? '2px dashed var(--accent)' : 'none',
+          outline: !isZone && isDropTarget ? '2px dashed var(--accent)' : 'none',
           outlineOffset: -1,
           borderRadius: 4,
           transition: 'outline 0.15s ease',
         }}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        onDragOver={isZone ? undefined : handleDragOver}
+        onDrop={isZone ? undefined : handleDrop}
       >
         {/* Background grid */}
         <div

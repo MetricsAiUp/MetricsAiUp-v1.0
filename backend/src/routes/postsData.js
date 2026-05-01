@@ -803,6 +803,7 @@ router.get('/dashboard-posts', async (req, res) => {
           displayName: dbPost.displayName || null,
           displayNameEn: dbPost.displayNameEn || null,
           type: dbPost.type || 'light',
+          kind: 'post',
           zone: dbPost.zone?.displayName || dbPost.zone?.name || '',
           status: 'no_data',
           currentVehicle: null,
@@ -816,6 +817,125 @@ router.get('/dashboard-posts', async (req, res) => {
         });
       }
       posts.sort((a, b) => a.number - b.number);
+      // Все посты помечаем kind='post' (если ещё не выставлено выше для no_data)
+      posts.forEach(p => { if (!p.kind) p.kind = 'post'; });
+
+      // ── Зоны: строим строки по тому же принципу, что и посты ──
+      // Источник: monitoringProxy.getFreeZones() — данные из CV-системы.
+      // Дополнительно добираем зоны из БД (isActive=true), которых нет в мониторинге → status=no_data.
+      const monZones = (typeof proxy.getFreeZones === 'function') ? proxy.getFreeZones() : [];
+      const zoneRows = monZones.map(mz => {
+        const allHistory = Array.isArray(mz.history) ? mz.history : [];
+        const inShift = allHistory.filter(h => {
+          const ts = new Date(h.timestamp).getTime();
+          return ts >= shiftBounds.shiftStart && ts <= shiftBounds.shiftEnd;
+        }).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        const timeline = [];
+        let visit = null;
+        for (const h of inShift) {
+          if (h.status !== 'free') {
+            if (!visit) {
+              visit = {
+                start: h.timestamp, end: h.timestamp,
+                plate: h.car?.plate || null,
+                brand: h.car?.make || null,
+                model: h.car?.model || null,
+                worksInProgress: !!h.worksInProgress,
+                worksDescription: h.worksDescription || null,
+                peopleCount: h.peopleCount || 0,
+                confidence: h.confidence,
+              };
+            } else {
+              visit.end = h.timestamp;
+              visit.worksInProgress = visit.worksInProgress || !!h.worksInProgress;
+              visit.peopleCount = Math.max(visit.peopleCount, h.peopleCount || 0);
+              if (h.worksDescription) visit.worksDescription = h.worksDescription;
+            }
+          } else if (visit) {
+            timeline.push({ ...visit, endTime: h.timestamp, completed: true });
+            visit = null;
+          }
+        }
+        if (visit) timeline.push({ ...visit, endTime: null, completed: false });
+
+        const tlBlocks = timeline.map((v, idx) => ({
+          id: `mon-zone-${mz.zoneNumber}-${idx}`,
+          workOrderNumber: null,
+          workOrderId: null,
+          plateNumber: v.plate,
+          brand: v.brand,
+          model: v.model,
+          workType: v.worksInProgress ? 'monitoring' : null,
+          status: v.worksInProgress ? 'in_progress' : 'scheduled',
+          startTime: v.start,
+          endTime: v.endTime,
+          normHours: null,
+          master: null, worker: null,
+          actualHours: null, estimatedEnd: null,
+          confidence: v.confidence,
+          peopleCount: v.peopleCount,
+          worksDescription: v.worksDescription,
+          visitClosed: v.completed,
+          hadWork: v.worksInProgress,
+        }));
+
+        const currentVehicle = mz.status !== 'free' && (mz.plateNumber || mz.carModel)
+          ? { plateNumber: mz.plateNumber, brand: mz.carMake, model: mz.carModel, color: mz.carColor }
+          : null;
+
+        return {
+          id: `zone-${mz.zoneNumber}`,
+          number: mz.zoneNumber,
+          name: `Зона ${String(mz.zoneNumber).padStart(2, '0')}`,
+          type: 'free',
+          kind: 'zone',
+          zone: mz.externalZoneName,
+          status: mz.status,
+          currentVehicle,
+          worksDescription: mz.worksDescription,
+          peopleCount: mz.peopleCount,
+          openParts: mz.openParts,
+          confidence: mz.confidence,
+          lastUpdate: mz.lastUpdate,
+          timeline: tlBlocks,
+          freeWorkOrders: [],
+        };
+      });
+
+      // Зоны из БД, не пришедшие в мониторинге → no_data
+      try {
+        const dbZones = await prisma.zone.findMany({
+          where: { isActive: true },
+          select: { id: true, name: true, displayName: true, type: true },
+        });
+        const seenZ = new Set(zoneRows.map(z => z.number));
+        for (const z of dbZones) {
+          // Только нумерованные «Зона N» — пропускаем «Ремонтная зона...» и т.п.
+          const m = z.name?.match(/^Зона\s+(\d+)$/);
+          const num = m ? parseInt(m[1], 10) : null;
+          if (!num || seenZ.has(num)) continue;
+          zoneRows.push({
+            id: `zone-${num}`,
+            number: num,
+            name: z.displayName || `Зона ${String(num).padStart(2, '0')}`,
+            type: z.type || 'free',
+            kind: 'zone',
+            zone: z.name,
+            status: 'no_data',
+            currentVehicle: null,
+            worksDescription: null,
+            peopleCount: 0,
+            openParts: [],
+            confidence: null,
+            lastUpdate: null,
+            timeline: [],
+            freeWorkOrders: [],
+          });
+        }
+      } catch {}
+      zoneRows.sort((a, b) => a.number - b.number);
+      posts.push(...zoneRows);
 
       // Реальные ЗН (1С → WorkOrder в БД) за текущую смену.
       // Визиты CV ≠ ЗН: визит — это машина на посту, ЗН — это документ из 1С.
@@ -908,6 +1028,7 @@ router.get('/dashboard-posts', async (req, res) => {
         displayName: dbPostForDash?.displayName || null,
         displayNameEn: dbPostForDash?.displayNameEn || null,
         type: postTypeOf(dbPostsMap, num),
+        kind: 'post',
         zone: postZoneOf(dbPostsMap, num),
         status,
         currentVehicle,
@@ -939,6 +1060,34 @@ router.get('/dashboard-posts', async (req, res) => {
         })) : [],
       });
     }
+
+    // ── Зоны (demo): только нумерованные «Зона N», без таймлайна ──
+    try {
+      const dbZones = await prisma.zone.findMany({
+        where: { isActive: true },
+        select: { name: true, displayName: true, type: true },
+      });
+      const zoneRows = [];
+      for (const z of dbZones) {
+        const m = z.name?.match(/^Зона\s+(\d+)$/);
+        const num = m ? parseInt(m[1], 10) : null;
+        if (!num) continue;
+        zoneRows.push({
+          id: `zone-${num}`,
+          number: num,
+          name: z.displayName || `Зона ${String(num).padStart(2, '0')}`,
+          type: z.type || 'free',
+          kind: 'zone',
+          zone: z.name,
+          status: 'free',
+          currentVehicle: null,
+          timeline: [],
+          freeWorkOrders: [],
+        });
+      }
+      zoneRows.sort((a, b) => a.number - b.number);
+      posts.push(...zoneRows);
+    } catch {}
 
     res.json({
       settings: { shiftStart: settings.shiftStart || '08:00', shiftEnd: settings.shiftEnd || '22:00', postsCount: settings.postsCount || dbPostsMap.size, weekSchedule: settings.weekSchedule, timezone: tzOf(settings), mode: 'db' },
