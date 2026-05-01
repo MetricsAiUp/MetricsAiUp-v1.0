@@ -30,6 +30,21 @@ vi.mock('../../constants', () => ({
     occupied_no_work: '#f59e0b',
     active_work: '#6366f1',
   },
+  MAP_FONT_FAMILY: 'sans-serif',
+  MAP_FONT_MONO: 'monospace',
+  MAP_TEXT_COLORS: {
+    primary: { dark: '#fff', light: '#000' },
+    secondary: { dark: '#ccc', light: '#333' },
+    muted: { dark: '#888', light: '#666' },
+    accent: { dark: '#a5b4fc', light: '#6366f1' },
+    empty: { dark: '#334155', light: '#cbd5e1' },
+    onColor: '#fff',
+    onColorMuted: 'rgba(255,255,255,0.92)',
+    conf: { high: '#22c55e', medium: '#f59e0b', low: '#ef4444' },
+  },
+  MAP_LETTER_SPACING: { header: 0.3, plate: 1.0, body: 0 },
+  mapFontSizes: () => ({ header: 11, status: 10, plate: 12, body: 10, detail: 9, badge: 8 }),
+  toTitleCase: (s) => s,
 }));
 
 vi.mock('../../constants/mapTheme', () => ({
