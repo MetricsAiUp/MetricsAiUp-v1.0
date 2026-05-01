@@ -19,3 +19,4 @@ logs/
 state.json
 *.bak
 *.bak-*
+backups/

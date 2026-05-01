@@ -11,7 +11,29 @@ const SETTINGS_FILE = path.join(__dirname, '../../data/app-settings.json');
 const DEFAULT_SETTINGS = {
   mode: 'demo', // 'demo' | 'live'
   timezone: 'Europe/Moscow', // IANA TZ для интерпретации shiftStart/shiftEnd и дневных границ
+  // Ретеншн исторических таблиц. 0 = таблица не чистится (хранить всё).
+  // Кулер запускается раз в сутки и удаляет записи старше N дней (для счётчика — сверх лимита).
+  retention: {
+    monitoringSnapshotDays: 0, // monitoring_snapshots по timestamp
+    auditLogDays: 0,           // audit_logs по createdAt
+    eventDays: 0,              // events по createdAt
+    syncLogCount: 0,           // sync_logs — оставлять последние N штук
+    recommendationDays: 0,     // recommendations со статусом resolved/acknowledged по updatedAt
+  },
 };
+
+// Жёсткие верхние границы, чтобы случайно не вписали миллионы.
+const RETENTION_LIMITS = {
+  monitoringSnapshotDays: 36500,
+  auditLogDays: 36500,
+  eventDays: 36500,
+  syncLogCount: 1_000_000,
+  recommendationDays: 36500,
+};
+
+function isNonNegInt(v) {
+  return Number.isInteger(v) && v >= 0;
+}
 
 // Проверка, что строка — валидная IANA-таймзона (поддерживается рантаймом).
 function isValidTimezone(tz) {
@@ -27,10 +49,14 @@ function isValidTimezone(tz) {
 function readSettings() {
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8')) };
+      const raw = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+      // Глубокий merge для retention (поверх дефолтов), всё остальное — shallow.
+      const merged = { ...DEFAULT_SETTINGS, ...raw };
+      merged.retention = { ...DEFAULT_SETTINGS.retention, ...(raw.retention || {}) };
+      return merged;
     }
   } catch { /* ignore */ }
-  return { ...DEFAULT_SETTINGS };
+  return { ...DEFAULT_SETTINGS, retention: { ...DEFAULT_SETTINGS.retention } };
 }
 
 function writeSettings(data) {
@@ -51,7 +77,7 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   }
 
   const current = readSettings();
-  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd, timezone } = req.body;
+  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd, timezone, retention } = req.body;
 
   if (mode && ['demo', 'live'].includes(mode)) {
     current.mode = mode;
@@ -65,6 +91,25 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
       return res.status(400).json({ error: `Invalid timezone: ${timezone}` });
     }
     current.timezone = timezone;
+  }
+  if (retention !== undefined) {
+    if (retention === null || typeof retention !== 'object' || Array.isArray(retention)) {
+      return res.status(400).json({ error: 'retention must be an object' });
+    }
+    const next = { ...current.retention };
+    for (const key of Object.keys(retention)) {
+      if (!(key in DEFAULT_SETTINGS.retention)) {
+        return res.status(400).json({ error: `Unknown retention key: ${key}` });
+      }
+      const v = retention[key];
+      if (!isNonNegInt(v) || v > RETENTION_LIMITS[key]) {
+        return res.status(400).json({
+          error: `retention.${key} must be integer in [0, ${RETENTION_LIMITS[key]}]`,
+        });
+      }
+      next[key] = v;
+    }
+    current.retention = next;
   }
 
   writeSettings(current);

@@ -35,11 +35,14 @@ const predictRoutes = require('./routes/predict');
 const postsDataRoutes = require('./routes/postsData');
 const healthRoutes = require('./routes/health');
 const workersRoutes = require('./routes/workers');
+const backupRoutes = require('./routes/backup');
 const { startFileWatcher } = require('./services/sync1C');
 const { initTelegramBot } = require('./services/telegramBot');
 const { generate: generateDemoData } = require('./generateDemoData');
 const { startCameraHealthCheck } = require('./services/cameraHealthCheck');
 const { startReportScheduler } = require('./services/reportScheduler');
+const backupScheduler = require('./services/backupScheduler');
+const retentionCleaner = require('./services/retentionCleaner');
 const monitoringProxy = require('./services/monitoringProxy');
 const settingsRoutes = require('./routes/settings');
 const cameraMappingRoutes = require('./routes/cameraMapping');
@@ -115,6 +118,7 @@ app.use('/api/predict', predictRoutes);
 app.use('/api', postsDataRoutes);
 app.use('/api/system-health', healthRoutes);
 app.use('/api/workers', workersRoutes);
+app.use('/api/backup', backupRoutes);
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
 app.use('/api/monitoring', require('./routes/monitoring'));
@@ -170,7 +174,7 @@ const demoControl = {
 app.set('demoControl', demoControl);
 
 const monitoringControl = {
-  start() { if (!shuttingDown) monitoringProxy.start(io); },
+  start() { if (!shuttingDown) return monitoringProxy.start(io); },
   stop() { monitoringProxy.stop(); },
 };
 app.set('monitoringControl', monitoringControl);
@@ -183,6 +187,8 @@ server.listen(PORT, '0.0.0.0', () => {
   initTelegramBot();
   startCameraHealthCheck();
   startReportScheduler();
+  backupScheduler.start();
+  retentionCleaner.start();
 
   // Start demo generator only if mode is 'demo', monitoring proxy if 'live'
   const appSettings = settingsRoutes.readSettings();
@@ -227,6 +233,8 @@ async function shutdown(signal) {
       demoControl.stop(),
       monitoringControl.stop(),
     ]);
+    backupScheduler.stop();
+    retentionCleaner.stop();
     await new Promise(res => server.close(() => res()));
     if (httpsServer) await new Promise(res => httpsServer.close(() => res()));
     if (io) await new Promise(res => io.close(() => res()));

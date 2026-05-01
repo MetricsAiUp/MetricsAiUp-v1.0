@@ -493,14 +493,46 @@ async function loadFullHistory() {
 let historyTimer = null;
 const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000; // refresh full history every 5 min
 
-function start(io) {
+async function start(io) {
   if (pollTimer) return;
   ioRef = io;
   logger.info('Monitoring proxy started', { interval: POLL_INTERVAL });
-  // Refresh active post/zone sets from DB, then load history & start polling
-  refreshActiveSets()
-    .then(() => loadFullHistory())
-    .then(() => poll());
+
+  // Hydrate from DB BEFORE any external fetches.
+  // Без этого после рестарта /api/monitoring/state отдаёт [] до первого
+  // успешного poll, который зависит от внешнего CV API.
+  await refreshActiveSets();
+  try {
+    const { posts, zones } = await refreshCacheFromDb();
+    cachedPosts = posts;
+    cachedZones = zones;
+
+    // Гидрация lastSavedState: чтобы первый poll после рестарта не писал
+    // дубликаты в MonitoringSnapshot, если внешнее состояние не изменилось.
+    const currentRows = await prisma.monitoringCurrent.findMany();
+    for (const row of currentRows) {
+      const dedupKey = JSON.stringify({
+        s: row.status,
+        p: row.plateNumber,
+        w: row.worksInProgress,
+        pc: row.peopleCount,
+        op: row.openParts,
+        c: row.confidence,
+      });
+      lastSavedState.set(row.zoneName, dedupKey);
+    }
+
+    logger.info('Monitoring cache hydrated from DB', {
+      posts: posts.length,
+      zones: zones.length,
+      dedupKeys: currentRows.length,
+    });
+  } catch (err) {
+    logger.error('Cache hydration failed', { error: err.message });
+  }
+
+  // Затем запускаем внешние fetch'и.
+  loadFullHistory().then(() => poll());
   pollTimer = setInterval(poll, POLL_INTERVAL);
   historyTimer = setInterval(loadFullHistory, HISTORY_REFRESH_INTERVAL);
   activeSetsRefreshTimer = setInterval(refreshActiveSets, ACTIVE_SETS_REFRESH_INTERVAL);
