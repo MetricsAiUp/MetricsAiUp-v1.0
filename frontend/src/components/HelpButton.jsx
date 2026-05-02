@@ -13,142 +13,206 @@ const HELP_CONTENT = {
   dashboard: {
     ru: {
       title: 'Дашборд — Главный экран',
-      intro: 'Центральная панель мониторинга СТО. Отображает ключевые показатели в реальном времени. Данные обновляются автоматически каждые 5 секунд в демо-режиме и через Socket.IO в live-режиме.',
+      intro: 'Стартовая страница системы. За 5 секунд даёт ответ на главный вопрос: «Всё ли в порядке на СТО прямо сейчас?». Сочетает KPI-карточки, живой обзор постов, ML-прогнозы и список рекомендаций. Обновляется каждые 5 секунд в демо и в реальном времени через Socket.IO в live.',
       sections: [
         {
-          heading: 'Карточки KPI (верхняя полоса)',
+          heading: 'Карта экрана (что и где)',
           items: [
-            '**Активные сессии** — количество автомобилей, находящихся на территории СТО прямо сейчас. Считается по открытым VehicleSession без exitTime.',
-            '**Свободные посты** — посты со статусом **free**, готовые к приёму автомобиля. Зелёный цвет — всё хорошо, красный — все посты заняты.',
-            '**Занятые посты** — посты со статусом **occupied** (машина есть, работа не ведётся) или **active_work** (идёт обслуживание). Синий цвет.',
-            '**Рекомендации** — активные уведомления от системы, требующие внимания менеджера. Оранжевый бейдж с числом.',
-            'Каждая карточка кликабельна — переход на соответствующую страницу детализации.',
-            'Дельта-бейдж (треугольник вверх/вниз) показывает изменение по сравнению с прошлым периодом.',
+            '**Верх** — 4 KPI-карточки в одну строку: активные сессии, свободные посты, занятые посты, рекомендации.',
+            '**Под KPI слева** — виджет LiveSTOWidget с компактной сеткой всех 10 постов.',
+            '**Под KPI справа** — PredictionWidget с ML-прогнозами (загрузка, длительность, освобождение).',
+            '**Средняя зона** — список активных рекомендаций (сворачивается, если их нет).',
+            '**Нижняя зона** — лента последних 10 событий с фильтром по категориям.',
+            '**Правый верхний угол** — переключатель периода метрик (24ч / 7д / 30д) и индикатор соединения.',
           ],
         },
         {
-          heading: 'Виджет реального времени (LiveSTOWidget)',
+          heading: 'KPI-карточки — как читать',
           items: [
-            'Показывает все **10 постов** с текущим статусом: свободен (зелёный), в работе (синий), занят без работы (серый), простой (жёлтый).',
-            'Для занятых постов отображается **госномер** автомобиля в формате плашки и **время на посту** (ЧЧ:ММ).',
-            'Статус **occupied_no_work** означает: авто стоит, но работа не ведётся — возможен простой.',
-            'Статус **active_work** означает: работник на месте, идёт обслуживание.',
-            'Обновляется автоматически — позволяет следить за СТО не переключаясь между экранами.',
-            'Виджет компактный — можно держать открытым на втором мониторе.',
+            '**Активные сессии** — авто, находящиеся на территории СТО прямо сейчас (открытые VehicleSession без exitTime). Цвет зависит от загрузки.',
+            '**Свободные посты** — посты со статусом **free**. **Зелёный** — есть свободные, **красный** — все 10 заняты, нужен резерв.',
+            '**Занятые посты** — посты в статусах **occupied** (авто стоит без работы) и **active_work** (идёт обслуживание). Высокое число = высокая загрузка.',
+            '**Рекомендации** — количество необработанных уведомлений. Оранжевый бейдж — требует внимания.',
+            'Любая карточка **кликабельна** — открывает соответствующую страницу детализации.',
+            '**Дельта-бейдж** (треугольник вверх/вниз с %) показывает рост или падение по сравнению с предыдущим равным периодом. Зелёный — улучшение, красный — ухудшение.',
+            'Цифра 0 без дельты — данных за прошлый период нет (например, начало учёта).',
           ],
         },
         {
-          heading: 'Прогнозы загрузки (ML)',
+          heading: 'Живой обзор постов (LiveSTOWidget)',
           items: [
-            '**PredictionWidget** показывает ML-прогноз загрузки СТО на ближайшие 4 часа.',
-            'Данные запрашиваются из **/api/predict/load** — модель анализирует исторические паттерны.',
-            'Прогноз освобождения постов (**/api/predict/free**) — когда какой пост станет свободным.',
-            'Прогноз длительности (**/api/predict/duration**) — оценка времени для типа работ.',
-            'В демо-режиме отображаются синтетические данные для демонстрации.',
-            'Помогает планировать приём автомобилей и распределение работников заранее.',
+            'Сетка из **10 постов** с цветовым статусом и ключевой информацией:',
+            '— **Зелёный** = free (свободен).',
+            '— **Синий** = active_work (идёт обслуживание, есть работник).',
+            '— **Серый** = occupied_no_work (авто стоит, но никто не работает — возможен простой).',
+            '— **Жёлтый** = occupied (предупреждение / неоднозначное состояние).',
+            'Для занятых постов на карточке: **госномер** в виде плашки и **время на посту** (ЧЧ:ММ).',
+            'Подходит для второго монитора — видно весь СТО без переключения экранов.',
+            'Клик по посту — переход на детальный экран поста (PostHistory или PostsDetail).',
           ],
         },
         {
-          heading: 'Рекомендации системы',
+          heading: 'ML-прогнозы (PredictionWidget)',
           items: [
-            '**Неявка (no_show)** — клиент не приехал на запланированное время. Красный бейдж. Триггер: ЗН со статусом scheduled, время прошло.',
-            '**Пост свободен (post_free)** — пост не используется более 30 минут, хотя есть незакреплённые ЗН. Зелёный.',
-            '**Есть мощности (capacity_available)** — на СТО есть свободные посты для дополнительных заказов. Синий.',
-            '**Превышение времени (work_overtime)** — работа идёт дольше 120% от нормочасов. Жёлтый.',
-            '**Простой авто (vehicle_idle)** — машина на посту более 15 минут, но работник отсутствует. Жёлтый.',
-            'Нажмите кнопку **«Принять»** чтобы подтвердить обработку рекомендации — она исчезнет из списка.',
-            'Подтверждённые рекомендации сохраняются в базе с отметкой acknowledgedAt.',
+            '**Прогноз загрузки** на ближайшие 4 часа — линейный график с почасовой динамикой. Источник: **/api/predict/load**.',
+            '**Прогноз освобождения постов** — таблица «Пост → ETA» (когда станет свободен). Источник: **/api/predict/free**.',
+            '**Прогноз длительности** — оценка времени по типу работ (ТО / ремонт / диагностика). Источник: **/api/predict/duration**.',
+            'В **демо-режиме** значения генерируются seeded random — для презентации.',
+            'В **live-режиме** модель анализирует исторические паттерны (день недели, час, тип работ).',
+            'Помогает мастеру-приёмщику принять заказ: «можно ли вписать машину в 14:30?»',
           ],
         },
         {
-          heading: 'Последние события',
+          heading: 'Рекомендации — 5 типов',
+          items: [
+            '**Неявка (no_show)** — красный — клиент не приехал на scheduled-ЗН. Триггер: время начала прошло, статус не изменился.',
+            '**Пост свободен (post_free)** — зелёный — пост простаивает более 30 минут, есть нераспределённые ЗН. Можно загрузить.',
+            '**Есть мощности (capacity_available)** — синий — более половины постов свободны. Можно принимать дополнительных клиентов.',
+            '**Превышение времени (work_overtime)** — жёлтый — фактическое время > 120% нормочасов. Возможна сложная работа или потерянное время.',
+            '**Простой авто (vehicle_idle)** — жёлтый — авто на посту > 15 минут без работника. Подскажите механику.',
+            'Кнопка **«Принять»** — подтверждает обработку, рекомендация исчезает (acknowledgedAt записывается в БД).',
+            'Если рекомендаций нет — секция не показывается (пустой экран = всё хорошо).',
+          ],
+        },
+        {
+          heading: 'Лента последних событий',
           items: [
             'Лента **10 последних** событий от системы компьютерного зрения (CV).',
-            'Фильтр по категориям: **Все**, **Авто** (въезд/выезд), **Пост** (занят/свободен), **Работник** (есть/нет), **Работа** (активность/простой).',
-            'Каждое событие показывает тип, зону/пост, камеру-источник и время.',
-            'Уровень уверенности CV: зелёный >= 90%, жёлтый 70-89%, красный < 70%.',
-            'Клик на событие открывает подробности с данными о камере.',
-            'Данные приходят из **/api/events** с сортировкой по createdAt desc.',
+            'Фильтр по категориям сверху: **Все** / **Авто** (въезд/выезд) / **Пост** (занят/свободен) / **Работник** (есть/нет) / **Работа** (активность/простой).',
+            'Карточка события: **тип** + **зона/пост** + **источники-камеры** (CAM 01, CAM 02…) + **время** (HH:MM:SS).',
+            'Цвет confidence-индикатора: **зелёный** ≥ 90%, **жёлтый** 70–89%, **красный** < 70%.',
+            'Низкий confidence = возможна ложная сработка, требуется ручная проверка.',
+            'Клик по событию — открывает модальное окно с данными о камере и raw-payload.',
           ],
         },
         {
-          heading: 'Обновление данных',
+          heading: 'Период метрик и сравнение',
           items: [
-            'В демо-режиме данные обновляются каждые **5 секунд** через polling (setInterval).',
-            'В live-режиме обновления приходят через **Socket.IO** в реальном времени.',
-            'При потере соединения отображается жёлтый индикатор в шапке.',
-            'Период метрик настраивается: **24 часа**, **7 дней**, **30 дней** через параметр ?period.',
+            'Переключатель **24 часа / 7 дней / 30 дней** в правом верхнем углу — определяет окно расчёта KPI.',
+            'Дельта-бейджи всегда сравнивают текущий период с предыдущим равным (24ч ↔ предыдущие 24ч, и т.д.).',
+            'Период **сохраняется** в URL (?period=24h|7d|30d) — можно делиться ссылкой.',
+            'Смена периода **не перезагружает** страницу — данные подтягиваются inline.',
+          ],
+        },
+        {
+          heading: 'Обновление данных и соединение',
+          items: [
+            'В **демо-режиме** — polling каждые **5 секунд** (setInterval).',
+            'В **live-режиме** — Socket.IO, обновление мгновенное при изменении.',
+            'При потере соединения — **жёлтый индикатор** в шапке + замораживание данных (отображается «остаточное» состояние).',
+            'При восстановлении соединения — автоматический re-sync, индикатор зелёный.',
+          ],
+        },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Утренний осмотр** — открыли страницу → проверили рекомендации (если есть — обработать) → перешли в Таймлайн постов для планирования смены.',
+            '**Контроль в течение дня** — оставили на втором мониторе LiveSTOWidget → видите, какой пост зависает в occupied_no_work — отправили мастера.',
+            '**Анализ всплеска** — заметили, что занято 9/10 постов → переключили период на 7д и сравнили с прошлой неделей через дельту.',
+            '**Реакция на неявку** — рекомендация no_show появилась → кликнули на «Принять» → переоформили слот в Таймлайне постов.',
           ],
         },
       ],
     },
     en: {
       title: 'Dashboard — Main Screen',
-      intro: 'Central STO monitoring panel. Displays key metrics in real-time. Data refreshes automatically every 5 seconds in demo mode and via Socket.IO in live mode.',
+      intro: 'Landing page of the system. Answers the main question in 5 seconds: "Is everything OK at the STO right now?". Combines KPI cards, live post overview, ML predictions, and recommendations. Auto-refreshes every 5 seconds in demo and in real-time via Socket.IO in live mode.',
       sections: [
         {
-          heading: 'KPI Cards (top bar)',
+          heading: 'Screen Map (where things are)',
           items: [
-            '**Active Sessions** — vehicles currently on STO premises. Counted by open VehicleSession records without exitTime.',
-            '**Free Posts** — posts with **free** status ready for new vehicles. Green = good, red = all posts occupied.',
-            '**Occupied Posts** — posts with **occupied** (car present, no work) or **active_work** (service in progress) status. Blue color.',
-            '**Recommendations** — active system notifications requiring manager attention. Orange badge with count.',
-            'Each card is clickable — navigates to the corresponding detail page.',
-            'Delta badge (up/down triangle) shows change compared to previous period.',
+            '**Top** — 4 KPI cards in a row: active sessions, free posts, occupied posts, recommendations.',
+            '**Left under KPI** — LiveSTOWidget with compact grid of all 10 posts.',
+            '**Right under KPI** — PredictionWidget with ML predictions (load, duration, availability).',
+            '**Middle area** — list of active recommendations (collapses if empty).',
+            '**Bottom area** — feed of last 10 events with category filter.',
+            '**Top right corner** — metrics period switcher (24h / 7d / 30d) and connection indicator.',
           ],
         },
         {
-          heading: 'Live Widget (LiveSTOWidget)',
+          heading: 'KPI Cards — How to Read',
           items: [
-            'Shows all **10 posts** with current status: free (green), active work (blue), occupied no work (gray), idle (yellow).',
-            'Occupied posts display vehicle **plate number** as a badge and **time on post** (HH:MM).',
-            'Status **occupied_no_work** means: car is there but no work is being done — potential idle.',
-            'Status **active_work** means: worker present, service in progress.',
-            'Auto-refreshes — monitor STO without switching screens.',
-            'Compact widget — can be kept open on a second monitor.',
+            '**Active Sessions** — vehicles currently on STO premises (open VehicleSession without exitTime). Color depends on load.',
+            '**Free Posts** — posts with **free** status. **Green** — there are free posts, **red** — all 10 are occupied, need to manage capacity.',
+            '**Occupied Posts** — posts in **occupied** (car waiting, no work) and **active_work** (service in progress) statuses. High number = high load.',
+            '**Recommendations** — count of unhandled notifications. Orange badge — needs attention.',
+            'Any card is **clickable** — opens the corresponding detail page.',
+            '**Delta badge** (up/down triangle with %) shows growth or decline vs the previous equivalent period. Green — improvement, red — degradation.',
+            'Number 0 without delta — no data for previous period (e.g., start of tracking).',
           ],
         },
         {
-          heading: 'Load Predictions (ML)',
+          heading: 'Live Posts Overview (LiveSTOWidget)',
           items: [
-            '**PredictionWidget** shows ML load forecast for the next 4 hours.',
-            'Data from **/api/predict/load** — model analyzes historical patterns.',
-            'Post availability prediction (**/api/predict/free**) — when each post becomes free.',
-            'Duration prediction (**/api/predict/duration**) — estimated time for work type.',
-            'In demo mode, synthetic data is displayed for demonstration purposes.',
-            'Helps plan vehicle intake and worker allocation in advance.',
+            'Grid of **10 posts** with color status and key info:',
+            '— **Green** = free.',
+            '— **Blue** = active_work (service in progress, worker present).',
+            '— **Gray** = occupied_no_work (car parked, no one working — possible idle).',
+            '— **Yellow** = occupied (warning / ambiguous state).',
+            'Occupied posts show: **plate** as badge and **time on post** (HH:MM).',
+            'Great for a second monitor — see the entire STO without switching screens.',
+            'Click a post — opens detailed post screen (PostHistory or PostsDetail).',
           ],
         },
         {
-          heading: 'System Recommendations',
+          heading: 'ML Predictions (PredictionWidget)',
           items: [
-            '**No-show (no_show)** — client did not arrive for scheduled time. Red badge. Trigger: WO with scheduled status, time passed.',
-            '**Post free (post_free)** — post unused for 30+ minutes while unassigned WOs exist. Green.',
-            '**Capacity available (capacity_available)** — free posts for additional orders. Blue.',
-            '**Work overtime (work_overtime)** — work exceeds 120% of norm hours. Yellow.',
-            '**Vehicle idle (vehicle_idle)** — car on post 15+ minutes but worker absent. Yellow.',
-            'Click **"Acknowledge"** to confirm the recommendation was handled — it will disappear.',
-            'Acknowledged recommendations are saved in database with acknowledgedAt timestamp.',
+            '**Load forecast** for the next 4 hours — line chart with hourly dynamics. Source: **/api/predict/load**.',
+            '**Post availability** — "Post → ETA" table (when becomes free). Source: **/api/predict/free**.',
+            '**Duration prediction** — time estimate by work type (Maintenance / Repair / Diagnostics). Source: **/api/predict/duration**.',
+            'In **demo mode** values are seeded random — for presentation.',
+            'In **live mode** the model analyzes historical patterns (day of week, hour, work type).',
+            'Helps service advisor decide: "Can I fit a car at 2:30 PM?"',
           ],
         },
         {
-          heading: 'Recent Events',
+          heading: 'Recommendations — 5 Types',
           items: [
-            'Feed of **10 latest** computer vision (CV) system events.',
-            'Filter by category: **All**, **Vehicle** (entry/exit), **Post** (occupied/vacated), **Worker** (present/absent), **Work** (activity/idle).',
-            'Each event shows type, zone/post, source camera, and timestamp.',
-            'CV confidence level: green >= 90%, yellow 70-89%, red < 70%.',
-            'Click event to open details with camera data.',
-            'Data from **/api/events** sorted by createdAt desc.',
+            '**No-show (no_show)** — red — client did not arrive for scheduled WO. Trigger: start time passed, status unchanged.',
+            '**Post free (post_free)** — green — post idle 30+ min, unassigned WOs exist. Can be loaded.',
+            '**Capacity available (capacity_available)** — blue — more than half of posts free. Can accept additional clients.',
+            '**Work overtime (work_overtime)** — yellow — actual time > 120% norm hours. Complex job or lost time.',
+            '**Vehicle idle (vehicle_idle)** — yellow — car on post > 15 min without worker. Notify the mechanic.',
+            '**"Acknowledge"** button — confirms handling, recommendation disappears (acknowledgedAt stored in DB).',
+            'No recommendations = section hidden (empty = everything good).',
           ],
         },
         {
-          heading: 'Data Refresh',
+          heading: 'Recent Events Feed',
           items: [
-            'In demo mode, data updates every **5 seconds** via polling (setInterval).',
-            'In live mode, updates arrive via **Socket.IO** in real-time.',
-            'Connection loss shows yellow indicator in header.',
-            'Metrics period configurable: **24 hours**, **7 days**, **30 days** via ?period parameter.',
+            'Feed of **10 latest** computer vision (CV) events.',
+            'Category filter: **All** / **Vehicle** (entry/exit) / **Post** (occupied/vacated) / **Worker** (present/absent) / **Work** (activity/idle).',
+            'Event card: **type** + **zone/post** + **source cameras** (CAM 01, CAM 02…) + **time** (HH:MM:SS).',
+            'Confidence indicator color: **green** ≥ 90%, **yellow** 70–89%, **red** < 70%.',
+            'Low confidence = possible false positive, manual check recommended.',
+            'Click event — opens modal with camera info and raw payload.',
+          ],
+        },
+        {
+          heading: 'Metrics Period and Comparison',
+          items: [
+            '**24h / 7d / 30d** switcher in top right corner — defines KPI calculation window.',
+            'Delta badges always compare current period to previous equivalent (24h ↔ previous 24h, etc.).',
+            'Period **persists** in URL (?period=24h|7d|30d) — shareable link.',
+            'Period change does **not reload** the page — data fetched inline.',
+          ],
+        },
+        {
+          heading: 'Data Refresh and Connection',
+          items: [
+            '**Demo mode** — polling every **5 seconds** (setInterval).',
+            '**Live mode** — Socket.IO, instant updates on changes.',
+            'On connection loss — **yellow indicator** in header + frozen data (shows last known state).',
+            'On reconnect — automatic re-sync, indicator turns green.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Morning check** — open page → review recommendations (handle if any) → switch to Posts Timeline for shift planning.',
+            '**Daytime monitoring** — keep LiveSTOWidget on second monitor → notice a post stuck in occupied_no_work — send a master.',
+            '**Spike analysis** — noticed 9/10 posts occupied → switch period to 7d and compare via delta with last week.',
+            '**No-show response** — no_show recommendation appeared → click "Acknowledge" → reschedule slot in Posts Timeline.',
           ],
         },
       ],
@@ -161,178 +225,228 @@ const HELP_CONTENT = {
   dashboardPosts: {
     ru: {
       title: 'Таймлайн постов — Gantt-диаграмма',
-      intro: 'Визуальное расписание заказ-нарядов по постам за текущую смену. Главный инструмент мастера-приёмщика для управления загрузкой СТО. Поддерживает drag-n-drop, конфликт-детекцию и версионирование.',
+      intro: 'Главный инструмент мастера-приёмщика. Визуальное расписание всех заказ-нарядов на смене по 10 постам. Перетаскивание (drag-n-drop) для перепланирования, мгновенная подсветка конфликтов, статистика смены сверху, нераспределённые ЗН снизу.',
       sections: [
         {
-          heading: 'Как читать таймлайн',
+          heading: 'Карта экрана (что и где)',
           items: [
-            'Горизонтальная ось — время смены (по умолчанию **08:00–20:00**, настраивается).',
-            'Каждая строка — один пост (от **Поста 1** до **Поста 10**).',
-            'Цветные блоки — заказ-наряды. **Длина блока = нормочасы** работы.',
-            '**Красная вертикальная линия** — текущее время. Обновляется каждые 60 секунд.',
-            'Блоки слева от красной линии — уже выполненные или текущие работы.',
-            'Блоки обрезаются по границам смены — не выходят за **shiftStart/shiftEnd**.',
-            'При наведении на блок появляется подсказка с номером ЗН, госномером и типом работ.',
+            '**Самый верх** — KPI-полоса смены: занятые/свободные посты, завершённые ЗН, нормочасы, простой, просрочки, «турбо».',
+            '**Шапка таймлайна** — горизонтальная шкала времени (часы 08:00–20:00 по умолчанию).',
+            '**Тело таймлайна** — 10 строк (по одной на каждый пост) с прямоугольниками-ЗН.',
+            '**Красная вертикальная линия** — текущее время. Двигается каждую минуту.',
+            '**Иконка шестерёнки** (вверху справа) — настройки смены (часы, количество постов).',
+            '**Кнопка «Текущая смена»** — прокрутить таймлайн к текущему времени.',
+            '**Таблица под таймлайном** — нераспределённые ЗН, готовые к назначению.',
+            '**Внизу страницы** — Легенда с расшифровкой цветов и паттернов.',
           ],
         },
         {
-          heading: 'Цвета блоков',
+          heading: 'Как читать блоки ЗН',
           items: [
-            '**Зелёный** — работа завершена (status: completed).',
-            '**Синий** — работа идёт прямо сейчас (status: in_progress).',
-            '**Жёлтый/серый** — запланировано, но ещё не начато (status: scheduled).',
-            '**Красная обводка** — работа просрочена: фактическое время превысило нормочасы.',
-            '**Полосатый** — конфликт: два ЗН пересекаются по времени на одном посту.',
-            '**Бледный/прозрачный** — отменённый заказ-наряд (status: cancelled).',
+            'Каждая **строка** — один пост, от **Поста 1** до **Поста 10**.',
+            '**Длина блока** = нормочасы (например, ТО 2ч → блок шириной 2 часа на шкале).',
+            '**Левый край блока** = scheduledTime (планируемое начало).',
+            '**Правый край** = scheduledTime + normHours.',
+            'Блоки **обрезаются** границами смены — не выходят за shiftStart/shiftEnd.',
+            'Наведение мыши — **тултип**: номер ЗН, госномер, тип работ, мастер.',
+            'Клик по блоку — **WorkOrderModal** с полной информацией и действиями.',
           ],
         },
         {
-          heading: 'Статистика смены (панель сверху)',
+          heading: 'Цвета и паттерны блоков',
           items: [
-            '**Занято/Свободно** — текущее соотношение постов.',
-            '**Завершённые ЗН** — количество выполненных заказ-нарядов за смену.',
-            '**Нормочасы** — суммарные нормочасы всех ЗН на сегодня.',
-            '**Время простоя** — сколько часов посты стояли пустыми (idleTime).',
-            '**Просроченные** — количество ЗН, вышедших за нормативное время (overdueTime).',
-            '**«Турбо»** — ЗН, завершённые быстрее нормы (savedTime). Хороший показатель эффективности.',
+            '**Зелёный** — completed (работа завершена).',
+            '**Синий** — in_progress (работа идёт прямо сейчас).',
+            '**Жёлтый/серый** — scheduled (запланировано, ещё не начато).',
+            '**Бледный/полупрозрачный** — cancelled (ЗН отменён).',
+            '**Красная обводка** — overdue (фактическое время превысило нормочасы).',
+            '**Полосатый паттерн** — конфликт: два ЗН пересекаются по времени на одном посту.',
+            '**Иконка молнии «Турбо»** — ЗН выполнен быстрее нормы (savedTime > 0).',
           ],
         },
         {
-          heading: 'Перетаскивание (drag-n-drop)',
+          heading: 'KPI-полоса смены — что считается',
           items: [
-            'Перетащите блок ЗН **горизонтально** — изменить время начала (шаг **15 минут**).',
-            'Перетащите **вертикально** — перенести на другой пост.',
-            'При конфликте блок подсвечивается красным с полосатым паттерном.',
-            'Нажмите **«Сохранить»** чтобы зафиксировать изменения на сервере.',
-            'Конфликты версий (ошибка **409**) — кто-то изменил расписание одновременно с вами. Обновите страницу.',
-            'Перетаскивание возможно только для ЗН со статусом **scheduled** — запущенные и завершённые нельзя двигать.',
+            '**Занято / Свободно** — мгновенный срез по статусу постов.',
+            '**Завершённые ЗН** — количество ЗН со статусом completed за смену.',
+            '**Нормочасы** — суммарные normHours всех ЗН смены (включая нераспределённые).',
+            '**Время простоя (idleTime)** — сколько часов посты простаивали (без авто или без работника).',
+            '**Просроченные (overdueTime)** — суммарное время превышения нормы по всем in_progress / completed ЗН.',
+            '**«Турбо» (savedTime)** — суммарное сэкономленное время (где факт < нормы). Чем больше — тем эффективнее смена.',
+          ],
+        },
+        {
+          heading: 'Drag-and-drop — перепланирование',
+          items: [
+            '**По горизонтали** — изменить время начала. Snap = **15 минут** (блок «прилипает» к четвертям часа).',
+            '**По вертикали** — перенести на другой пост. ЗН меняет postId.',
+            'При наведении на конфликтный слот блок **подсвечивается красным с полосами**.',
+            'Кнопка **«Сохранить»** в правом верхнем углу — отправить изменения на сервер.',
+            'При сохранении бэкенд проверяет **version** (optimistic locking). Если кто-то изменил параллельно → **HTTP 409** → обновите страницу.',
+            '**Двигать можно только scheduled** — in_progress и completed «приклеены» к своему слоту.',
+            'Кнопка **«Сбросить»** — откатить локальные изменения до последней сохранённой версии.',
           ],
         },
         {
           heading: 'Нераспределённые ЗН (таблица внизу)',
           items: [
-            'Список заказ-нарядов, которые **не назначены** на пост.',
-            'Отображает: номер ЗН, госномер, тип работ, нормочасы.',
-            'Перетащите из таблицы на таймлайн — назначит на конкретный пост и время.',
-            'ЗН сортируются по scheduledTime — самые срочные сверху.',
-            'Если таблица пуста — все ЗН распределены по постам.',
+            'ЗН без назначенного поста — ждут распределения.',
+            'Колонки: **№ ЗН**, **госномер**, **тип работ**, **нормочасы**, **scheduledTime**.',
+            'Сортировка по scheduledTime — самые срочные сверху.',
+            '**Перетащите строку из таблицы на таймлайн** — назначит на пост в выбранный момент.',
+            'Когда таблица **пустая** — все ЗН распределены, можно начинать смену.',
           ],
         },
         {
-          heading: 'Клик на блок (WorkOrderModal)',
+          heading: 'WorkOrderModal — действия по клику',
           items: [
-            'Открывает карточку ЗН: номер, госномер, марка/модель, тип работ.',
-            'Показывает работника, мастера, нормочасы, фактическое время.',
-            'Можно изменить статус: **Start**, **Pause**, **Resume**, **Complete**.',
-            'Можно переназначить на другой пост.',
-            'Видно историю изменений и версию документа.',
+            'Карточка ЗН: номер, госномер, марка/модель, тип работ, нормочасы, факт.',
+            'Видно работника, мастера и аудиторскую историю изменений.',
+            'Кнопки управления статусом: **Start**, **Pause**, **Resume**, **Complete**, **Cancel**.',
+            'Можно вручную сменить **post** или **scheduledTime** через поля формы (альтернатива drag-and-drop).',
+            'При сохранении из модалки — те же правила версионирования (409 при конфликте).',
           ],
         },
         {
-          heading: 'Настройки смены (ShiftSettings)',
+          heading: 'Настройки смены (иконка-шестерёнка)',
           items: [
-            'Открывается по иконке **шестерёнки** в правом верхнем углу.',
-            'Время начала смены (shiftStart) — от 00:00 до 23:00.',
-            'Время окончания смены (shiftEnd) — от 01:00 до 24:00.',
-            'Количество отображаемых постов (1-10).',
-            'Настройки сохраняются в **localStorage** (dashboardPostsSettings).',
+            '**Время начала** (shiftStart) — от 00:00 до 23:00. Граница левого края шкалы.',
+            '**Время окончания** (shiftEnd) — от 01:00 до 24:00. Граница правого края шкалы.',
+            '**Количество отображаемых постов** — 1–10. Скроет лишние строки.',
+            'Настройки сохраняются в **localStorage** (ключ `dashboardPostsSettings`) — у каждого пользователя свои.',
+            'Сменили часы — таймлайн перерисовывается мгновенно, ЗН перепозиционируются.',
           ],
         },
         {
-          heading: 'Легенда',
+          heading: 'Типичные сценарии',
           items: [
-            'Расположена внизу таймлайна — объясняет значение каждого цвета.',
-            'Также показывает значение полосатой заливки и красной обводки.',
-            'Ссылка **«Текущая смена»** прокручивает таймлайн к текущему времени.',
+            '**Утреннее планирование** — открыли страницу → перетащили все нераспределённые ЗН на свободные посты → нажали «Сохранить».',
+            '**Реакция на неявку** — ЗН в красной обводке + клиент не приехал → клик → Cancel → освободившийся слот заполнили из нераспределённых.',
+            '**Перенос между постами** — мастер заболел → перетащили все его ЗН на другой пост → сохранили.',
+            '**Экстренное окно** — клиент приехал без записи → перетащили его ЗН в свободный слот → выставили scheduledTime = сейчас → Start.',
+          ],
+        },
+        {
+          heading: 'Возможные проблемы',
+          items: [
+            '**Ошибка 409 при сохранении** — кто-то редактировал параллельно. Решение: обновите страницу (F5), внесите правки заново.',
+            '**Блок не двигается** — статус не scheduled (in_progress / completed нельзя перемещать).',
+            '**Блок «исчезает» при перетаскивании** — улетел за shiftEnd. Сначала расширьте смену через настройки.',
+            '**Полосатый блок** — конфликт по времени. Перетащите один из ЗН в свободный слот.',
           ],
         },
       ],
     },
     en: {
       title: 'Posts Timeline — Gantt Chart',
-      intro: 'Visual work order schedule per post for the current shift. Primary tool for service advisors to manage STO workload. Supports drag-n-drop, conflict detection, and versioning.',
+      intro: 'Primary tool for the service advisor. Visual schedule of all WOs across 10 posts for the shift. Drag-and-drop for replanning, instant conflict highlighting, shift KPI strip on top, unassigned WOs below.',
       sections: [
         {
-          heading: 'How to read the timeline',
+          heading: 'Screen Map (where things are)',
           items: [
-            'Horizontal axis — shift time (default **08:00–20:00**, configurable).',
-            'Each row — one post (**Post 1** through **Post 10**).',
-            'Colored blocks — work orders. **Block length = norm hours**.',
-            '**Red vertical line** — current time. Updates every 60 seconds.',
-            'Blocks left of red line — completed or ongoing work.',
-            'Blocks are clamped to shift boundaries — cannot overflow past **shiftStart/shiftEnd**.',
-            'Hover over a block to see tooltip with WO number, plate, and work type.',
+            '**Very top** — shift KPI strip: occupied/free posts, completed WOs, norm hours, idle time, overdue, "turbo".',
+            '**Timeline header** — horizontal time scale (default 08:00–20:00).',
+            '**Timeline body** — 10 rows (one per post) with WO rectangles.',
+            '**Red vertical line** — current time. Moves every minute.',
+            '**Gear icon** (top right) — shift settings (hours, post count).',
+            '**"Current shift"** button — scrolls timeline to current time.',
+            '**Table below timeline** — unassigned WOs ready to be slotted.',
+            '**Bottom of page** — Legend explaining colors and patterns.',
           ],
         },
         {
-          heading: 'Block colors',
+          heading: 'How to Read WO Blocks',
           items: [
-            '**Green** — work completed (status: completed).',
-            '**Blue** — work in progress right now (status: in_progress).',
-            '**Yellow/gray** — scheduled but not yet started (status: scheduled).',
-            '**Red outline** — overdue: actual time exceeded norm hours.',
-            '**Striped** — conflict: two WOs overlap in time on same post.',
-            '**Faded/transparent** — cancelled work order (status: cancelled).',
+            'Each **row** — one post, from **Post 1** to **Post 10**.',
+            '**Block length** = norm hours (e.g., 2h Maintenance → 2-hour-wide block).',
+            '**Block left edge** = scheduledTime (planned start).',
+            '**Right edge** = scheduledTime + normHours.',
+            'Blocks are **clamped** to shift boundaries — they do not overflow shiftStart/shiftEnd.',
+            'Hover — **tooltip**: WO number, plate, work type, master.',
+            'Click — **WorkOrderModal** with full info and actions.',
           ],
         },
         {
-          heading: 'Shift statistics (top panel)',
+          heading: 'Block Colors and Patterns',
           items: [
-            '**Occupied/Free** — current ratio of posts.',
-            '**Completed WOs** — number of finished work orders this shift.',
-            '**Norm Hours** — total norm hours of all WOs for today.',
-            '**Idle Time** — hours posts stood empty (idleTime).',
-            '**Overdue** — WOs exceeding norm time (overdueTime).',
-            '**"Turbo"** — WOs completed faster than norm (savedTime). Good efficiency indicator.',
+            '**Green** — completed.',
+            '**Blue** — in_progress (work happening now).',
+            '**Yellow/gray** — scheduled (not started yet).',
+            '**Faded/transparent** — cancelled.',
+            '**Red outline** — overdue (actual time exceeded norm hours).',
+            '**Striped pattern** — conflict: two WOs overlap on same post.',
+            '**"Turbo" lightning icon** — WO completed faster than norm (savedTime > 0).',
           ],
         },
         {
-          heading: 'Drag-and-drop',
+          heading: 'Shift KPI Strip — What Is Counted',
           items: [
-            'Drag WO block **horizontally** — change start time (**15 min** snap).',
-            'Drag **vertically** — move to different post.',
-            'Conflicts highlighted in red with striped pattern.',
-            'Click **"Save"** to persist changes to server.',
-            'Version conflicts (error **409**) — someone changed the schedule simultaneously. Refresh the page.',
-            'Only **scheduled** WOs can be dragged — in-progress and completed are locked.',
+            '**Occupied / Free** — instant snapshot of post statuses.',
+            '**Completed WOs** — number of WOs in completed status this shift.',
+            '**Norm Hours** — total normHours of all shift WOs (including unassigned).',
+            '**Idle Time** — hours posts were idle (no car or no worker).',
+            '**Overdue** — total norm-exceedance time across in_progress / completed WOs.',
+            '**"Turbo" (savedTime)** — total time saved (actual < norm). Higher = more efficient shift.',
           ],
         },
         {
-          heading: 'Unassigned WOs (bottom table)',
+          heading: 'Drag-and-Drop — Replanning',
           items: [
-            'Work orders **not assigned** to any post.',
-            'Shows: WO number, plate, work type, norm hours.',
-            'Drag from table onto timeline to assign to specific post and time.',
-            'WOs sorted by scheduledTime — most urgent at top.',
-            'If table is empty — all WOs are distributed across posts.',
+            '**Horizontal** — change start time. Snap = **15 minutes** (sticks to quarter-hours).',
+            '**Vertical** — move to another post. WO postId changes.',
+            'On hover over conflicting slot, block **highlights red with stripes**.',
+            '**"Save"** button (top right) — sends changes to server.',
+            'On save, backend checks **version** (optimistic locking). If someone edited concurrently → **HTTP 409** → refresh.',
+            '**Only scheduled WOs are draggable** — in_progress and completed are locked.',
+            '**"Reset"** button — discard local changes back to last saved.',
           ],
         },
         {
-          heading: 'Click a block (WorkOrderModal)',
+          heading: 'Unassigned WOs (Bottom Table)',
           items: [
-            'Opens WO card: number, plate, brand/model, work type.',
-            'Shows worker, master, norm hours, actual time.',
-            'Can change status: **Start**, **Pause**, **Resume**, **Complete**.',
-            'Can reassign to a different post.',
-            'Shows change history and document version.',
+            'WOs without an assigned post — waiting for distribution.',
+            'Columns: **WO #**, **plate**, **work type**, **norm hours**, **scheduledTime**.',
+            'Sort by scheduledTime — most urgent at top.',
+            '**Drag a row from the table onto the timeline** — assigns to that post and time.',
+            'Empty table = all WOs distributed, ready to start the shift.',
           ],
         },
         {
-          heading: 'Shift Settings (ShiftSettings)',
+          heading: 'WorkOrderModal — Click Actions',
           items: [
-            'Opens via **gear icon** in the top right corner.',
-            'Shift start time (shiftStart) — from 00:00 to 23:00.',
-            'Shift end time (shiftEnd) — from 01:00 to 24:00.',
-            'Number of visible posts (1-10).',
-            'Settings saved to **localStorage** (dashboardPostsSettings).',
+            'WO card: number, plate, brand/model, work type, norm hours, actual.',
+            'Shows worker, master and audit history of changes.',
+            'Status buttons: **Start**, **Pause**, **Resume**, **Complete**, **Cancel**.',
+            'Can manually change **post** or **scheduledTime** via form fields (alternative to drag).',
+            'Same versioning rules apply when saving from modal (409 on conflict).',
           ],
         },
         {
-          heading: 'Legend',
+          heading: 'Shift Settings (Gear Icon)',
           items: [
-            'Located below the timeline — explains what each color means.',
-            'Also shows meaning of striped fill and red outline.',
-            '**"Current shift"** link scrolls timeline to current time.',
+            '**Start time** (shiftStart) — from 00:00 to 23:00. Left edge of scale.',
+            '**End time** (shiftEnd) — from 01:00 to 24:00. Right edge of scale.',
+            '**Visible post count** — 1–10. Hides extra rows.',
+            'Settings saved to **localStorage** (`dashboardPostsSettings` key) — per user.',
+            'Change hours — timeline redraws instantly, blocks reposition.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Morning planning** — open page → drag all unassigned WOs onto free posts → click "Save".',
+            '**No-show response** — red-outlined WO + client absent → click → Cancel → fill freed slot from unassigned.',
+            '**Move between posts** — master sick → drag all his WOs to another post → save.',
+            '**Walk-in slot** — client arrived without appointment → drag WO into free slot → set scheduledTime = now → Start.',
+          ],
+        },
+        {
+          heading: 'Troubleshooting',
+          items: [
+            '**409 error on save** — someone edited concurrently. Solution: refresh (F5), redo your changes.',
+            '**Block does not move** — status is not scheduled (in_progress / completed cannot be moved).',
+            '**Block "disappears" while dragging** — went past shiftEnd. Extend shift in settings first.',
+            '**Striped block** — time conflict. Drag one of the WOs to a free slot.',
           ],
         },
       ],
@@ -345,8 +459,18 @@ const HELP_CONTENT = {
   postsDetail: {
     ru: {
       title: 'Детализация по постам',
-      intro: 'Подробная аналитика по каждому посту: загрузка, эффективность, история ЗН, работники. Используйте для анализа производительности и выявления узких мест.',
+      intro: 'Подробная аналитика по каждому посту: загрузка, эффективность, история ЗН, работники. Используйте для анализа производительности и выявления узких мест. Поддерживает периоды от одного дня до месяца, два режима просмотра и панель деталей с глубокой разбивкой.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх слева** — переключатель периода (Сегодня / Вчера / Неделя / Месяц / Произвольный).',
+            '**Верх справа** — переключатель режима отображения (Карточки / Таблица).',
+            '**Центр (основная зона)** — список 10 постов: либо сетка карточек, либо строки таблицы.',
+            '**Правая панель** — открывается при клике на пост: углублённая аналитика и графики.',
+            'При закрытой правой панели карточки занимают всю ширину; при открытой — сжимаются.',
+          ],
+        },
         {
           heading: 'Выбор периода',
           items: [
@@ -354,6 +478,7 @@ const HELP_CONTENT = {
             '**Произвольный диапазон дат** — два поля для точного указания периода анализа.',
             'Все метрики, графики и таблицы пересчитываются при смене периода.',
             'По умолчанию выбрано **«Сегодня»** при открытии страницы.',
+            'Период не сохраняется в URL — при перезагрузке страницы вернётся «Сегодня».',
           ],
         },
         {
@@ -374,6 +499,7 @@ const HELP_CONTENT = {
             '**Среднее время** — средняя продолжительность обслуживания одного авто.',
             'Цвет индикатора: **зелёный** > 70%, **жёлтый** 40-70%, **красный** < 40%.',
             'Номер поста отображается в левом верхнем углу карточки.',
+            'Бейдж типа поста (Грузовой / Легковой / Спец) — рядом с номером.',
           ],
         },
         {
@@ -385,6 +511,7 @@ const HELP_CONTENT = {
             '**Заказ-наряды** — список всех ЗН: номер, госномер, тип работ, нормочасы, статус.',
             '**Предупреждения** — отсутствие работника, простои, превышение нормы.',
             'Каждая секция сворачиваемая — кликните по заголовку для раскрытия/свёртывания.',
+            'Кнопка **«X»** в правом верхнем углу панели — закрыть и вернуться к полному списку.',
           ],
         },
         {
@@ -401,16 +528,36 @@ const HELP_CONTENT = {
           items: [
             'Колонки: **Пост**, **Загрузка%**, **Эффективность%**, **Авто**, **Ср. время**, **Работник**.',
             'Клик по заголовку колонки — сортировка (по возрастанию/убыванию).',
+            'Стрелка в заголовке показывает текущее направление сортировки.',
             'Клик по строке — открытие панели деталей для этого поста.',
             'Строки с низкой загрузкой подсвечиваются бледным фоном.',
+          ],
+        },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Поиск узких мест** — выбрали Неделю → отсортировали таблицу по загрузке (ASC) → нашли посты с < 40% → открыли детали → выяснили причину (нет работника / мало ЗН).',
+            '**Анализ работника** — открыли пост → раздел «Работники» → увидели, кто меньше всего часов отработал.',
+            '**Сравнение «вчера vs сегодня»** — Сегодня → запомнили цифры → Вчера → сравнили вручную.',
+            '**Подготовка к митингу** — Месяц → таблица → отсортировали по эффективности → сделали screenshot топ-3 / худшие 3.',
           ],
         },
       ],
     },
     en: {
       title: 'Posts Detail',
-      intro: 'Detailed analytics per post: occupancy, efficiency, WO history, workers. Use to analyze performance and identify bottlenecks.',
+      intro: 'Detailed analytics per post: occupancy, efficiency, WO history, workers. Use to analyze performance and identify bottlenecks. Supports periods from one day to a month, two view modes, and a deep-dive detail panel.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top left** — period switcher (Today / Yesterday / Week / Month / Custom).',
+            '**Top right** — view mode switcher (Cards / Table).',
+            '**Center (main area)** — list of 10 posts: either card grid or table rows.',
+            '**Right panel** — opens on post click: deep analytics and charts.',
+            'With panel closed, cards span full width; with panel open they shrink.',
+          ],
+        },
         {
           heading: 'Period Selection',
           items: [
@@ -418,6 +565,7 @@ const HELP_CONTENT = {
             '**Custom date range** — two fields for precise analysis period.',
             'All metrics, charts, and tables recalculate on period change.',
             'Default is **"Today"** when the page opens.',
+            'Period is not persisted in URL — page reload returns to Today.',
           ],
         },
         {
@@ -438,6 +586,7 @@ const HELP_CONTENT = {
             '**Avg Time** — average service duration per vehicle.',
             'Color indicator: **green** > 70%, **yellow** 40-70%, **red** < 40%.',
             'Post number displayed in top left corner of the card.',
+            'Post type badge (Truck / Light / Special) — next to the number.',
           ],
         },
         {
@@ -449,6 +598,7 @@ const HELP_CONTENT = {
             '**Work Orders** — full list: number, plate, work type, norm hours, status.',
             '**Alerts** — worker absence, idle time, norm exceedance.',
             'Each section is collapsible — click heading to expand/collapse.',
+            '**"X"** in panel top right corner — close and return to full list.',
           ],
         },
         {
@@ -465,8 +615,18 @@ const HELP_CONTENT = {
           items: [
             'Columns: **Post**, **Occupancy%**, **Efficiency%**, **Vehicles**, **Avg Time**, **Worker**.',
             'Click column header — sort ascending/descending.',
+            'Header arrow shows current sort direction.',
             'Click row — open detail panel for that post.',
             'Low-occupancy rows highlighted with faded background.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Bottleneck hunt** — pick Week → sort table by occupancy ASC → find posts < 40% → open details → identify cause (no worker / few WOs).',
+            '**Worker analysis** — open post → "Workers" section → see who logged the fewest hours.',
+            '**"Yesterday vs Today"** — Today → note numbers → Yesterday → manual compare.',
+            '**Meeting prep** — Month → table → sort by efficiency → screenshot top-3 / worst-3.',
           ],
         },
       ],
@@ -479,132 +639,218 @@ const HELP_CONTENT = {
   map: {
     ru: {
       title: 'Карта СТО — Живой обзор',
-      intro: 'Интерактивная карта станции техобслуживания на базе Konva (Canvas). Отображает все посты, зоны, камеры и автомобили в реальном времени.',
+      intro: 'Интерактивная карта станции на базе Konva (Canvas). Реальные пропорции СТО (46540×30690 мм). Показывает все посты, зоны, камеры и автомобили в реальном времени, с цветовой индикацией статусов и кликабельными элементами. Поддерживает режим воспроизведения (replay) для просмотра истории.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Центр** — холст карты с зданиями, постами, зонами и камерами.',
+            '**Правый верхний угол** — панель «Слои» (toggle для каждого типа элементов).',
+            '**Левый нижний угол** — кнопки масштаба (+/−), сброс, полный экран.',
+            '**Низ или боковая панель** — сводка по постам и счётчик авто.',
+            '**Полоса replay** (если включена) — слайдер времени для просмотра истории.',
+          ],
+        },
         {
           heading: 'Элементы на карте',
           items: [
             '**Здания (building)** — контуры строений СТО.',
-            '**Посты (post)** — рабочие места механиков. Цвет зависит от статуса: зелёный=свободен, синий=в работе, серый=занят, жёлтый=простой.',
+            '**Посты (post)** — рабочие места механиков. Цвет зависит от статуса: **зелёный** = свободен, **синий** = в работе, **серый** = занят без работы, **жёлтый** = простой.',
             '**Зоны (zone)** — области: ремонт, ожидание, въезд, парковка, свободная. Показывают количество авто.',
-            '**Камеры (camera)** — позиции камер с направлением обзора.',
+            '**Камеры (camera)** — позиции камер с направлением обзора (треугольный fov).',
             '**Двери (door)** — входы и выходы в здания.',
             '**Стены (wall)** — внутренние перегородки.',
             '**Проезды (driveway)** — пути движения автомобилей.',
             '**Метки (label)** — текстовые надписи на карте.',
             '**Инфозоны (infozone)** — области с дополнительной информацией.',
+            '**Авто (vehicles)** — иконки машин с госномерами, появляются в активных сессиях.',
           ],
         },
         {
-          heading: 'Управление видимостью слоёв',
+          heading: 'Цвет постов — расшифровка',
           items: [
-            'Панель **«Слои»** в правом верхнем углу — переключатели для каждого типа элементов.',
+            '**Зелёный** = free — пост свободен, готов к приёму.',
+            '**Синий** = active_work — идёт обслуживание, есть работник.',
+            '**Серый** = occupied_no_work — авто стоит, работа не ведётся.',
+            '**Жёлтый** = idle / occupied — простой или предупреждение.',
+            'У каждого поста — номер и иконка типа (грузовой / легковой / спец).',
+          ],
+        },
+        {
+          heading: 'Панель «Слои» (видимость элементов)',
+          items: [
+            'Открывается в правом верхнем углу — переключатели по типам.',
             'Можно скрыть/показать: здания, проезды, посты, зоны, камеры, двери, стены, метки, инфозоны.',
-            'Скрытие слоёв помогает уменьшить визуальный шум и сфокусироваться на нужном.',
-            'Состояние слоёв сбрасывается при перезагрузке страницы.',
+            'Скрытие лишних слоёв уменьшает визуальный шум — удобно при показе клиенту.',
+            'Состояние слоёв **сбрасывается** при перезагрузке страницы.',
           ],
         },
         {
-          heading: 'Навигация по карте',
+          heading: 'Навигация и масштаб',
           items: [
-            '**Колёсико мыши** — масштабирование (zoom in/out).',
+            '**Колёсико мыши** — zoom in/out с центром на курсоре.',
             '**Зажатая левая кнопка** — перетаскивание карты (pan).',
-            'Кнопки **+/-** — пошаговое масштабирование.',
-            'Кнопка **«На весь экран»** — развернуть карту на всё окно.',
+            'Кнопки **«+» / «−»** — пошаговое масштабирование.',
+            'Кнопка **«На весь экран»** — развернуть карту на всё окно (fullscreen).',
             'Кнопка **«Сбросить»** — вернуть начальный масштаб и позицию.',
-            'Карта имеет размер **46540x30690 мм** — реальные пропорции СТО.',
+            'Реальный размер: **46540×30690 мм** — соответствует пропорциям СТО.',
           ],
         },
         {
-          heading: 'Интерактивность',
+          heading: 'Интерактивность — клики',
           items: [
-            '**Клик на пост** — модальное окно с деталями: номер, статус, госномер авто, работник, время.',
-            '**Клик на зону** — информация о зоне: тип, количество авто, список госномеров.',
-            '**Клик на камеру** — открытие HLS-стрима в модальном окне (CameraStreamModal).',
-            'Все модальные окна закрываются по клику вне области или кнопке X.',
+            '**Клик на пост** — модальное окно: номер, статус, госномер авто, работник, время на посту.',
+            '**Клик на зону** — карточка зоны: тип, текущее количество авто, список госномеров.',
+            '**Клик на камеру** — модальное окно с HLS-стримом (CameraStreamModal).',
+            '**Клик на инфозону** — дополнительная информация (текст, статистика).',
+            'Все модалки закрываются кликом вне или кнопкой X.',
+          ],
+        },
+        {
+          heading: 'Replay — режим воспроизведения',
+          items: [
+            'Кнопка **«Replay»** включает режим истории — карта отображает состояние за прошлый момент.',
+            'Появляется **слайдер времени** — двигайте для перехода к нужному моменту.',
+            'Кнопки **Play / Pause** — автоматическое воспроизведение с заданной скоростью.',
+            'Полезно для разбора инцидентов: «что было в 14:23?»',
+            'Чтобы вернуться в реальное время — кнопка **«Сейчас»** или выключите Replay.',
           ],
         },
         {
           heading: 'Обновление данных',
           items: [
-            'В **live-режиме** данные обновляются каждые **10 секунд** через polling.',
-            'В **демо-режиме** обновление каждые **5 секунд**.',
+            'В **live-режиме** — каждые **10 секунд** через polling monitoringProxy.',
+            'В **демо-режиме** — каждые **5 секунд**.',
             'Статусы постов приходят из **/api/posts**, сессии из **/api/sessions/active**.',
-            'Карта загружается из **/api/map-layout** (последняя сохранённая версия).',
+            'Карта (геометрия) загружается из **/api/map-layout** (последняя сохранённая версия).',
+            'Геометрия меняется только при пересохранении в редакторе — обычно стабильна.',
           ],
         },
         {
-          heading: 'Панель статистики',
+          heading: 'Сводная панель',
           items: [
-            'Внизу или сбоку карты — сводка по постам: свободных, занятых, в работе.',
+            'Внизу или сбоку карты — счётчики: свободно/занято/в работе.',
             'Общее количество автомобилей на территории.',
-            'Цветовые индикаторы дублируют статусы на карте.',
+            'Цветовые индикаторы дублируют статусы постов на карте.',
+            'Помогает быстро увидеть нагрузку без подсчёта точек.',
+          ],
+        },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Контроль смены** — открыли карту на втором мониторе → видите все посты и движение авто в реальном времени.',
+            '**Поиск авто** — клиент звонит «где моя машина?» → нашли её на карте по госномеру.',
+            '**Проверка камеры** — заметили проблему на посту → клик на ближайшую камеру → смотрите видео.',
+            '**Разбор инцидента** — Replay → переместили слайдер на нужный момент → разобрались, что произошло.',
           ],
         },
       ],
     },
     en: {
       title: 'STO Map — Live Overview',
-      intro: 'Interactive service station map powered by Konva (Canvas). Displays all posts, zones, cameras, and vehicles in real-time.',
+      intro: 'Interactive STO map powered by Konva (Canvas). Real STO proportions (46540×30690 mm). Displays all posts, zones, cameras, and vehicles in real-time with color-coded statuses and clickable elements. Supports replay mode for browsing history.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Center** — map canvas with buildings, posts, zones, and cameras.',
+            '**Top right** — "Layers" panel (toggle per element type).',
+            '**Bottom left** — zoom buttons (+/−), reset, fullscreen.',
+            '**Bottom or side panel** — post summary and vehicle counter.',
+            '**Replay strip** (when enabled) — time slider for browsing history.',
+          ],
+        },
         {
           heading: 'Map Elements',
           items: [
             '**Buildings (building)** — outlines of STO structures.',
-            '**Posts (post)** — mechanic workstations. Color by status: green=free, blue=active work, gray=occupied, yellow=idle.',
+            '**Posts (post)** — mechanic workstations. Color by status: **green** = free, **blue** = active work, **gray** = occupied no work, **yellow** = idle.',
             '**Zones (zone)** — areas: repair, waiting, entry, parking, free. Show vehicle count.',
-            '**Cameras (camera)** — camera positions with viewing direction.',
+            '**Cameras (camera)** — camera positions with viewing direction (triangular FOV).',
             '**Doors (door)** — building entrances and exits.',
             '**Walls (wall)** — interior partitions.',
             '**Driveways (driveway)** — vehicle movement paths.',
             '**Labels (label)** — text annotations on the map.',
             '**Infozones (infozone)** — areas with additional information.',
+            '**Vehicles** — car icons with plates, appear in active sessions.',
           ],
         },
         {
-          heading: 'Layer Visibility Controls',
+          heading: 'Post Color Legend',
           items: [
-            '**"Layers"** panel in top right — toggles for each element type.',
+            '**Green** = free — post available.',
+            '**Blue** = active_work — service in progress, worker present.',
+            '**Gray** = occupied_no_work — car parked, no work happening.',
+            '**Yellow** = idle / occupied — idle or warning state.',
+            'Each post shows number and type icon (truck / light / special).',
+          ],
+        },
+        {
+          heading: '"Layers" Panel (Element Visibility)',
+          items: [
+            'Top right corner — toggles per type.',
             'Can hide/show: buildings, driveways, posts, zones, cameras, doors, walls, labels, infozones.',
-            'Hiding layers reduces visual clutter and helps focus on what matters.',
-            'Layer state resets on page reload.',
+            'Hiding noise layers helps focus on what matters — useful for client demos.',
+            'Layer state **resets** on page reload.',
           ],
         },
         {
-          heading: 'Map Navigation',
+          heading: 'Navigation and Zoom',
           items: [
-            '**Mouse wheel** — zoom in/out.',
+            '**Mouse wheel** — zoom in/out, centered on cursor.',
             '**Left button hold** — drag/pan the map.',
-            '**+/-** buttons — step zoom.',
+            '**"+" / "−"** buttons — step zoom.',
             '**"Fullscreen"** button — expand map to fill window.',
             '**"Reset"** button — return to initial zoom and position.',
-            'Map size is **46540x30690 mm** — real STO proportions.',
+            'Real size: **46540×30690 mm** — matches STO proportions.',
           ],
         },
         {
-          heading: 'Interactivity',
+          heading: 'Interactivity — Clicks',
           items: [
-            '**Click post** — modal with details: number, status, plate, worker, time.',
-            '**Click zone** — zone info: type, vehicle count, plate list.',
-            '**Click camera** — opens HLS stream in modal (CameraStreamModal).',
+            '**Click post** — modal: number, status, plate, worker, time on post.',
+            '**Click zone** — zone card: type, current vehicle count, plate list.',
+            '**Click camera** — modal with HLS stream (CameraStreamModal).',
+            '**Click infozone** — additional information (text, stats).',
             'All modals close on outside click or X button.',
+          ],
+        },
+        {
+          heading: 'Replay Mode',
+          items: [
+            '**"Replay"** button enables history mode — map shows past state.',
+            '**Time slider** appears — drag to jump to any moment.',
+            '**Play / Pause** buttons — auto-replay at chosen speed.',
+            'Useful for incident review: "what was the state at 14:23?"',
+            'To return to real-time — **"Now"** button or disable Replay.',
           ],
         },
         {
           heading: 'Data Updates',
           items: [
-            'In **live mode**, data updates every **10 seconds** via polling.',
-            'In **demo mode**, updates every **5 seconds**.',
+            'In **live mode** — every **10 seconds** via monitoringProxy polling.',
+            'In **demo mode** — every **5 seconds**.',
             'Post statuses from **/api/posts**, sessions from **/api/sessions/active**.',
-            'Map layout loaded from **/api/map-layout** (latest saved version).',
+            'Map (geometry) loaded from **/api/map-layout** (latest saved version).',
+            'Geometry only changes when re-saved in editor — usually stable.',
           ],
         },
         {
           heading: 'Statistics Panel',
           items: [
-            'Below or beside the map — post summary: free, occupied, active work.',
+            'Below or beside the map — counters: free/occupied/active work.',
             'Total vehicles on premises.',
             'Color indicators mirror map post statuses.',
+            'Quick load assessment without counting points.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Shift monitoring** — open map on second monitor → watch all posts and vehicle movement live.',
+            '**Find a vehicle** — client calls "where is my car?" → locate it on the map by plate.',
+            '**Camera check** — spotted an issue at a post → click nearest camera → watch live feed.',
+            '**Incident review** — Replay → move slider to the moment → understand what happened.',
           ],
         },
       ],
@@ -617,8 +863,18 @@ const HELP_CONTENT = {
   mapEditor: {
     ru: {
       title: 'Редактор карты СТО',
-      intro: 'Полнофункциональный визуальный редактор планировки СТО. Позволяет размещать здания, посты, зоны, камеры и другие элементы с помощью drag-n-drop. Поддерживает отмену, версионирование и экспорт.',
+      intro: 'Полнофункциональный визуальный редактор планировки СТО. 10 типов элементов, drag-n-drop, рисование полигонов, фоновое изображение для трассировки. Поддерживает отмену (Undo до 50 шагов), версионирование (история) и экспорт в JSON. Изменения становятся видны на странице «Карта» после сохранения.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Левая панель** — панель инструментов (10 типов элементов + Select).',
+            '**Центр** — холст редактора (canvas Konva с реальными пропорциями СТО).',
+            '**Правая панель** — свойства выделенного элемента (название, координаты, тип).',
+            '**Верх** — кнопки: Сохранить, Сбросить, История, Экспорт/Импорт JSON, Загрузить фон.',
+            '**Низ или угол** — управление масштабом (+, −, %), переключатель сетки.',
+          ],
+        },
         {
           heading: 'Панель инструментов',
           items: [
@@ -703,12 +959,42 @@ const HELP_CONTENT = {
             'При большом масштабе видны мелкие детали для точной расстановки.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Создание новой карты с нуля** — Загрузить фон (PDF/PNG плана) → нарисовать здания (Building tool) → добавить зоны (Zone) → расставить посты (Post) → разместить камеры (Camera) → Сохранить.',
+            '**Корректировка существующей** — открыли редактор → нашли элемент → выделили → исправили координаты в правой панели → Сохранить.',
+            '**Откат к старой версии** — История → выбрали нужную версию → Восстановить.',
+            '**Перенос на другой сервер** — Экспорт JSON → загрузили на другом сервере → Импорт JSON → Сохранить.',
+            '**Дублирование поста** — выделили пост → Ctrl+D → переместили клон → исправили номер в правой панели.',
+          ],
+        },
+        {
+          heading: 'Возможные проблемы',
+          items: [
+            '**Полигон не замыкается** — нужно минимум 3 точки и двойной клик в конце.',
+            '**Стена идёт под углом** — для стен/дверей/проездов работает ограничение 90°. Нажмите Escape и нарисуйте заново.',
+            '**Изменения не видны на «Карте»** — проверьте, нажали ли «Сохранить». Перезагрузите страницу карты.',
+            '**Ctrl+Z не работает** — сначала кликните на холст, чтобы фокус перешёл к редактору.',
+            '**Фон растянут** — при загрузке подгоняется под размер холста. Используйте план в правильных пропорциях.',
+          ],
+        },
       ],
     },
     en: {
       title: 'STO Map Editor',
-      intro: 'Full-featured visual layout editor for the STO. Place buildings, posts, zones, cameras and other elements via drag-n-drop. Supports undo, versioning, and export.',
+      intro: 'Full-featured visual layout editor for the STO. 10 element types, drag-and-drop, polygon drawing, background image for tracing. Supports undo (up to 50 steps), versioning (history), and JSON export. Changes appear on the Map page after saving.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Left panel** — toolbar (10 element types + Select).',
+            '**Center** — editor canvas (Konva canvas with real STO proportions).',
+            '**Right panel** — properties of selected element (name, coords, type).',
+            '**Top** — buttons: Save, Reset, History, Export/Import JSON, Load Background.',
+            '**Bottom or corner** — zoom controls (+, −, %), grid toggle.',
+          ],
+        },
         {
           heading: 'Toolbar',
           items: [
@@ -793,6 +1079,26 @@ const HELP_CONTENT = {
             'High zoom reveals fine details for precise placement.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Build a new map from scratch** — Load background (PDF/PNG plan) → draw buildings (Building tool) → add zones (Zone) → place posts (Post) → place cameras (Camera) → Save.',
+            '**Adjust existing map** — open editor → find element → select → fix coordinates in right panel → Save.',
+            '**Roll back to an old version** — History → pick a version → Restore.',
+            '**Migrate to another server** — Export JSON → upload to other server → Import JSON → Save.',
+            '**Duplicate a post** — select post → Ctrl+D → move the clone → change post number in right panel.',
+          ],
+        },
+        {
+          heading: 'Troubleshooting',
+          items: [
+            '**Polygon does not close** — need at least 3 points and a double-click to finish.',
+            '**Wall is at an angle** — walls/doors/driveways have 90° constraint. Press Escape and redraw.',
+            '**Changes not visible on Map page** — check that you clicked Save. Reload the map page.',
+            '**Ctrl+Z does not work** — click on canvas first so focus moves to editor.',
+            '**Background stretched** — fits to canvas size on load. Use a plan in correct proportions.',
+          ],
+        },
       ],
     },
   },
@@ -803,8 +1109,18 @@ const HELP_CONTENT = {
   sessions: {
     ru: {
       title: 'Сессии автомобилей',
-      intro: 'Управление сессиями автомобилей на территории СТО. Сессия начинается при въезде авто (камера фиксирует госномер) и завершается при выезде. Отключена в live-режиме.',
+      intro: 'Журнал визитов автомобилей на СТО. Сессия = одно посещение: открывается на въезде (CV-камера зафиксировала госномер) и закрывается на выезде. Внутри сессии — маршрут по зонам (ZoneStay) и пребывание на постах (PostStay). Отключена в live-режиме (там сессии управляются автоматически внешней системой).',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — две вкладки: Активные / Завершённые.',
+            '**Над таблицей** — фильтр по посту, поиск по госномеру.',
+            '**Центр** — таблица сессий с пагинацией.',
+            '**Низ** — переключатель страниц (по 20 записей).',
+            '**Модальное окно** (по клику на строку) — детали сессии: маршрут, посты, QR.',
+          ],
+        },
         {
           heading: 'Вкладки',
           items: [
@@ -858,12 +1174,31 @@ const HELP_CONTENT = {
             'Данные в демо-режиме генерируются автоматически для демонстрации.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Поиск конкретного авто** — поле поиска → ввели госномер → увидели все его визиты (Активные + Завершённые).',
+            '**Анализ задержек** — Завершённые → отсортировали по длительности → нашли «зависшие» сессии и причины.',
+            '**Сверка с 1С** — открыли деталь сессии → нашли привязанный ЗН → проверили совпадение по госномеру и времени.',
+            '**Поделиться QR** — деталь сессии → отсканировали QR → быстрый доступ с мобильного.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Vehicle Sessions',
-      intro: 'Manage vehicle sessions on STO premises. A session starts when a car enters (camera captures plate) and ends when it exits. Disabled in live mode.',
+      intro: 'Log of vehicle visits to STO. A session = one visit: opens at entry (CV camera captures plate) and closes at exit. Inside a session — zone route (ZoneStay) and post stays (PostStay). Disabled in live mode (sessions are managed automatically by the external system).',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — two tabs: Active / Completed.',
+            '**Above table** — post filter, plate search.',
+            '**Center** — sessions table with pagination.',
+            '**Bottom** — page switcher (20 records per page).',
+            '**Modal** (on row click) — session details: route, posts, QR.',
+          ],
+        },
         {
           heading: 'Tabs',
           items: [
@@ -917,6 +1252,15 @@ const HELP_CONTENT = {
             'Demo mode data is auto-generated for demonstration.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Find a specific car** — search field → enter plate → see all visits (Active + Completed).',
+            '**Analyze delays** — Completed → sort by duration → find "stuck" sessions and root causes.',
+            '**Reconcile with 1C** — open session detail → find linked WO → verify plate and time match.',
+            '**Share QR** — session detail → scan QR → quick mobile access.',
+          ],
+        },
       ],
     },
   },
@@ -927,8 +1271,18 @@ const HELP_CONTENT = {
   workOrders: {
     ru: {
       title: 'Заказ-наряды',
-      intro: 'Управление заказ-нарядами (ЗН) — основными документами работы СТО. Поддерживает поиск, фильтрацию, CSV-импорт и управление жизненным циклом. Отключена в live-режиме.',
+      intro: 'Реестр всех ЗН — основных документов работы СТО. Здесь можно создать, импортировать (CSV), отфильтровать и управлять жизненным циклом ЗН (start/pause/resume/complete/cancel). Версионирование защищает от параллельных правок (HTTP 409). Отключена в live-режиме (там ЗН управляются через 1С).',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верхняя строка** — поиск (по № ЗН, госномеру, типу работ) и DateRangePicker.',
+            '**Под поиском** — кнопки-фильтры по статусу с счётчиками (например: «scheduled (12)»).',
+            '**Кнопка «Импорт CSV»** — справа сверху.',
+            '**Центр** — таблица ЗН со всеми колонками и сортировкой.',
+            '**Низ** — пагинация.',
+          ],
+        },
         {
           heading: 'Статусы заказ-нарядов',
           items: [
@@ -990,12 +1344,31 @@ const HELP_CONTENT = {
             'Версионирование: при конфликте (одновременное редактирование) — ошибка 409.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Массовый импорт расписания** — кнопка Импорт CSV → выбрали файл → проверили ошибки → ЗН созданы со статусом scheduled → перешли в Таймлайн постов для распределения.',
+            '**Отмена неявки** — фильтр по scheduled → нашли клиента, который не приехал → клик → Cancel → статус no_show.',
+            '**Поиск долгих ремонтов** — фильтр по in_progress + диапазон дат «вчера» → отсортировали по нормочасам → нашли затянувшиеся.',
+            '**Закрытие смены** — фильтр completed + сегодня → проверили, что фактическое время заполнено для всех.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Work Orders',
-      intro: 'Manage work orders (WOs) — the core STO work documents. Supports search, filtering, CSV import, and lifecycle management. Disabled in live mode.',
+      intro: 'Registry of all WOs — the core STO work documents. Create, import (CSV), filter, and manage WO lifecycle (start/pause/resume/complete/cancel). Versioning protects against concurrent edits (HTTP 409). Disabled in live mode (WOs managed via 1C there).',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top row** — search (by WO #, plate, work type) and DateRangePicker.',
+            '**Under search** — status filter buttons with counts (e.g., "scheduled (12)").',
+            '**"Import CSV"** button — top right.',
+            '**Center** — WO table with all columns and sorting.',
+            '**Bottom** — pagination.',
+          ],
+        },
         {
           heading: 'Work Order Statuses',
           items: [
@@ -1057,6 +1430,15 @@ const HELP_CONTENT = {
             'Versioning: concurrent edit conflicts result in 409 error.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Bulk schedule import** — Import CSV button → choose file → check errors → WOs created with scheduled status → go to Posts Timeline to distribute.',
+            '**Cancel a no-show** — filter by scheduled → find absent client → click → Cancel → status becomes no_show.',
+            '**Find long repairs** — filter in_progress + date range "yesterday" → sort by norm hours → find dragging jobs.',
+            '**Shift close-out** — filter completed + today → verify actual time is filled for every WO.',
+          ],
+        },
       ],
     },
   },
@@ -1067,8 +1449,18 @@ const HELP_CONTENT = {
   events: {
     ru: {
       title: 'Журнал событий',
-      intro: 'Лента всех событий от системы компьютерного зрения (CV). Камеры фиксируют движение автомобилей, присутствие работников и активность на постах. Каждое событие имеет уровень уверенности (confidence).',
+      intro: 'Лента всех событий от системы компьютерного зрения (CV). 10 типов, 4 группы. Каждое событие — снимок состояния, зафиксированный одной или несколькими камерами с уровнем уверенности (confidence). Поддерживает фильтры, текстовый поиск и автообновление.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — фильтры в один ряд: Группа, Тип, Зона, Пост, Поиск.',
+            '**Правый верхний угол** — переключатель автообновления и сортировки.',
+            '**Центр** — таблица событий с цветными индикаторами и тегами камер.',
+            '**Низ** — пагинация (25 / 50 / 100 на страницу).',
+            '**Модальное окно** (клик по событию) — raw-данные и информация о камере.',
+          ],
+        },
         {
           heading: 'Типы событий (10 типов)',
           items: [
@@ -1131,14 +1523,34 @@ const HELP_CONTENT = {
             'Сортировка: по времени (новые сверху/снизу).',
             'Пагинация: **25**, **50** или **100** записей на страницу.',
             'При включённом автообновлении новые события появляются вверху списка.',
+            'Если включить автообновление и уйти со страницы — оно остановится при возврате его нужно включить заново.',
+          ],
+        },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Расследование инцидента** — выбрали зону + диапазон времени → нашли цепочку событий → проверили confidence → восстановили хронологию.',
+            '**Калибровка камеры** — фильтр по конкретной зоне → много событий с confidence < 70% → проверьте угол и освещённость камеры.',
+            '**Поиск конкретного авто** — поиск по госномеру → видите весь маршрут авто внутри СТО.',
+            '**Контроль работника** — фильтр Тип = worker_absent + Пост = X → нашли периоды отсутствия работника.',
           ],
         },
       ],
     },
     en: {
       title: 'Event Log',
-      intro: 'Feed of all computer vision (CV) system events. Cameras track vehicle movement, worker presence, and post activity. Each event has a confidence level.',
+      intro: 'Feed of all computer vision (CV) events. 10 types, 4 groups. Each event = snapshot of state captured by one or more cameras with confidence. Supports filters, text search, and auto-refresh.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — filters in a row: Group, Type, Zone, Post, Search.',
+            '**Top right corner** — auto-refresh and sort toggles.',
+            '**Center** — event table with color indicators and camera tags.',
+            '**Bottom** — pagination (25 / 50 / 100 per page).',
+            '**Modal** (on event click) — raw data and camera info.',
+          ],
+        },
         {
           heading: 'Event Types (10 types)',
           items: [
@@ -1201,6 +1613,16 @@ const HELP_CONTENT = {
             'Sort: by time (newest first / oldest first).',
             'Pagination: **25**, **50**, or **100** records per page.',
             'With auto-refresh on, new events appear at top of list.',
+            'If you enable auto-refresh and leave the page — it stops; re-enable on return.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Incident investigation** — pick zone + time range → find event chain → check confidence → reconstruct timeline.',
+            '**Camera calibration** — filter by a specific zone → many events with confidence < 70% → check camera angle and lighting.',
+            '**Find a specific car** — plate search → see the entire vehicle path inside the STO.',
+            '**Worker oversight** — filter Type = worker_absent + Post = X → find absence periods.',
           ],
         },
       ],
@@ -1213,8 +1635,18 @@ const HELP_CONTENT = {
   analytics: {
     ru: {
       title: 'Аналитика',
-      intro: 'Комплексная аналитика работы СТО с 8 типами графиков, сравнением периодов и экспортом в XLSX/PDF/PNG. Период анализа: сегодня, 7 дней или 30 дней.',
+      intro: 'Комплексная аналитика СТО: 6 KPI-карточек, 8 типов графиков и таблица постов. Поддерживает сравнение с прошлым равным периодом (DeltaBadge) и экспорт всего в XLSX, PDF или отдельных графиков в PNG. Главный инструмент для отчётов руководству.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — переключатель периода (Сегодня / 7д / 30д) и переключатель режима сравнения.',
+            '**Под переключателями** — 6 KPI-карточек с дельтами.',
+            '**Дальше вниз** — 8 графиков (Recharts): pie, bar, line, scatter, heatmap.',
+            '**Внизу страницы** — сводная таблица по 10 постам.',
+            '**Кнопки экспорта** (правый верхний угол) — XLSX, PDF, PNG (контекстное меню по графику).',
+          ],
+        },
         {
           heading: 'Период и сравнение',
           items: [
@@ -1274,12 +1706,31 @@ const HELP_CONTENT = {
             'При отсутствии данных за период — графики показывают нулевые значения.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Месячный отчёт руководству** — 30 дней + Сравнение → проверили все KPI → Экспорт PDF → отправили директору.',
+            '**Поиск часов перегрузки** — Heatmap «Почасовая нагрузка» → нашли часы 100% → решили о доп. постах или переносе ЗН.',
+            '**Сравнение недель** — 7д с включённым Сравнением → дельта показала рост или падение.',
+            '**График в презентацию** — правый клик на график → «Сохранить как PNG» → вставили в слайд.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Analytics',
-      intro: 'Comprehensive STO analytics with 8 chart types, period comparison, and XLSX/PDF/PNG export. Analysis period: today, 7 days, or 30 days.',
+      intro: 'Comprehensive STO analytics: 6 KPI cards, 8 chart types, and per-post table. Supports comparison with previous equivalent period (DeltaBadge) and export to XLSX, PDF, or individual charts as PNG. Main tool for management reporting.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — period switcher (Today / 7d / 30d) and Compare mode toggle.',
+            '**Under switches** — 6 KPI cards with deltas.',
+            '**Further down** — 8 charts (Recharts): pie, bar, line, scatter, heatmap.',
+            '**Bottom of page** — per-post summary table.',
+            '**Export buttons** (top right) — XLSX, PDF, PNG (chart context menu).',
+          ],
+        },
         {
           heading: 'Period and Comparison',
           items: [
@@ -1339,6 +1790,15 @@ const HELP_CONTENT = {
             'If no data for period — charts show zero values.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Monthly management report** — 30 days + Compare → review all KPIs → Export PDF → send to director.',
+            '**Find overload hours** — Hourly Heatmap → spot 100% hours → decide about extra posts or rescheduling.',
+            '**Week-over-week comparison** — 7d with Compare on → delta shows growth or decline.',
+            '**Chart for presentation** — right-click chart → "Save as PNG" → paste into slide.',
+          ],
+        },
       ],
     },
   },
@@ -1349,8 +1809,17 @@ const HELP_CONTENT = {
   cameras: {
     ru: {
       title: 'Камеры видеонаблюдения',
-      intro: 'Управление и просмотр камер видеонаблюдения СТО. 16 камер (CAM 00-15) с HLS-стримингом, группировкой по зонам и отслеживанием статуса online/offline. Отключена в live-режиме.',
+      intro: 'Управление и просмотр камер СТО. 16 камер (CAM 00–15), HLS-стриминг через :8181 (FFmpeg конвертирует RTSP → HLS). Группировка по зонам, статусы online/offline, превью кадров. Отключена в live-режиме (стримы отдаёт внешняя система).',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — вкладки: «Камеры по зонам» / «Все камеры».',
+            '**Под вкладками** — фильтр по зонам (Все, Въезд/Выезд, Подъёмники, Парковка, Склад).',
+            '**Центр** — сетка карточек камер (превью, статус, приоритет).',
+            '**Модальное окно** (CameraStreamModal) — открывается по клику для просмотра HLS-потока.',
+          ],
+        },
         {
           heading: 'Режимы просмотра',
           items: [
@@ -1408,12 +1877,29 @@ const HELP_CONTENT = {
             'Максимум 4 одновременных стрима для снижения нагрузки на сервер.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Проверка камер утром** — открыли страницу → пробежались по сетке → красные кружки = надо срочно чинить.',
+            '**Просмотр инцидента** — знаете зону → фильтр по зоне → клик на нужную камеру → стрим в модалке.',
+            '**Проверка приоритетов** — переключились в «Все камеры» → проверили P-бейджи → если важная зона на P3 → перейти в «Маппинг камер по зонам» и поднять.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Surveillance Cameras',
-      intro: 'Manage and view STO surveillance cameras. 16 cameras (CAM 00-15) with HLS streaming, zone grouping, and online/offline status tracking. Disabled in live mode.',
+      intro: 'Manage and view STO cameras. 16 cameras (CAM 00–15), HLS streaming via :8181 (FFmpeg converts RTSP → HLS). Zone grouping, online/offline status, frame previews. Disabled in live mode (streams provided by external system).',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — tabs: "Cameras by Zone" / "All Cameras".',
+            '**Under tabs** — zone filter (All, Entry/Exit, Lifts, Parking, Warehouse).',
+            '**Center** — grid of camera cards (preview, status, priority).',
+            '**Modal** (CameraStreamModal) — opens on click to view HLS stream.',
+          ],
+        },
         {
           heading: 'View Modes',
           items: [
@@ -1471,6 +1957,14 @@ const HELP_CONTENT = {
             'Maximum 4 simultaneous streams to reduce server load.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Morning camera check** — open page → scan the grid → red dots = needs immediate fix.',
+            '**Incident review** — know the zone → filter by zone → click camera → stream in modal.',
+            '**Priority audit** — switch to "All Cameras" → check P badges → if a critical zone shows P3 → go to "Camera Zone Mapping" and raise it.',
+          ],
+        },
       ],
     },
   },
@@ -1481,8 +1975,17 @@ const HELP_CONTENT = {
   cameraMapping: {
     ru: {
       title: 'Маппинг камер по зонам',
-      intro: 'Настройка привязки камер к зонам с указанием приоритетов. Определяет, какие камеры мониторят какие зоны и в каком порядке. 21 зона, 16 камер.',
+      intro: 'Настройка покрытия зон СТО камерами с приоритетами P1–P10. Определяет, какие камеры мониторят какие зоны и в каком порядке используются для подтверждения CV-событий. 21 зона × 16 камер. Корректный маппинг прямо влияет на confidence событий и точность распознавания.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Левая панель** — список 21 зоны со счётчиками привязанных камер.',
+            '**Правая панель** — редактор: 16 камер для выбранной зоны с тогглами и P-приоритетом.',
+            '**Внизу или в отдельной вкладке** — матрица «Зоны × Камеры» (визуальное покрытие).',
+            '**Сверху справа** — кнопки «Сохранить» / «Сбросить».',
+          ],
+        },
         {
           heading: 'Список зон (левая панель)',
           items: [
@@ -1529,12 +2032,29 @@ const HELP_CONTENT = {
             'При добавлении новой камеры — не забудьте обновить маппинг.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Поиск слепых зон** — посмотрели в матрицу покрытия → нашли зоны с пустыми ячейками → добавили камеру или переориентировали существующую.',
+            '**Повышение точности** — постоянные ложные сработки в зоне → проверили приоритеты → подняли основную камеру до P10.',
+            '**Замена камеры** — снимаем CAM 03 на ремонт → сняли её со всех зон → подняли приоритеты резервных камер.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Camera Zone Mapping',
-      intro: 'Configure camera-to-zone assignments with priorities. Determines which cameras monitor which zones and in what order. 21 zones, 16 cameras.',
+      intro: 'Configure zone coverage by cameras with P1–P10 priorities. Determines which cameras monitor which zones and the order they are used to confirm CV events. 21 zones × 16 cameras. Correct mapping directly affects event confidence and recognition accuracy.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Left panel** — list of 21 zones with assigned-camera counters.',
+            '**Right panel** — editor: 16 cameras for the selected zone with toggles and P priority.',
+            '**Bottom or separate tab** — "Zones × Cameras" matrix (visual coverage).',
+            '**Top right** — Save / Reset buttons.',
+          ],
+        },
         {
           heading: 'Zone List (left panel)',
           items: [
@@ -1581,6 +2101,14 @@ const HELP_CONTENT = {
             'When adding a new camera — remember to update the mapping.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Find blind spots** — review coverage matrix → find zones with empty cells → add a camera or re-aim an existing one.',
+            '**Boost accuracy** — constant false events in a zone → check priorities → raise the main camera to P10.',
+            '**Camera replacement** — taking CAM 03 down for repair → unassign from all zones → raise priorities of backup cameras.',
+          ],
+        },
       ],
     },
   },
@@ -1591,8 +2119,17 @@ const HELP_CONTENT = {
   data1c: {
     ru: {
       title: 'Данные 1С — Импорт и аналитика',
-      intro: 'Интеграция с системой 1С через импорт Excel-файлов. Три раздела: статистика, планирование, работники. Автоматическое определение типа данных по заголовкам. Поддержка форматов XLSX, XLS, CSV.',
+      intro: 'Интеграция с 1С через Excel/CSV. Автодетекция типа файла по заголовкам столбцов. Три вкладки: Статистика (KPI и графики), Планирование (16 колонок реестра), Работники (15 колонок). Автоматический watcher следит за папкой /data/1c-import/ и подхватывает новые файлы каждые 5 минут.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Сверху** — три вкладки: Статистика / Планирование / Работники.',
+            '**Над контентом каждой вкладки** — область drag-and-drop для загрузки файла.',
+            '**Центр** — содержимое вкладки (графики или таблицы с фильтрами).',
+            '**Снизу страницы** — лог истории синхронизации (SyncLog).',
+          ],
+        },
         {
           heading: 'Загрузка файлов',
           items: [
@@ -1653,12 +2190,30 @@ const HELP_CONTENT = {
             'Поддержка формата: стандартные выгрузки из 1С:Предприятие.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Утренняя загрузка плана** — выгрузили из 1С → drag-and-drop в область → проверили вкладку Планирование → ЗН видны на странице Заказ-наряды.',
+            '**Поиск работника по VIN** — Работники → поиск по VIN или госномеру → нашли все ЗН.',
+            '**Сверка с системой** — Статистика → сравнили выручку 1С и количество ЗН в системе → расхождение видно в SyncLog.',
+            '**Восстановление при сбое** — посмотрели SyncLog → нашли ошибки → перезагрузили проблемный файл.',
+          ],
+        },
       ],
     },
     en: {
       title: '1C Data — Import and Analytics',
-      intro: 'Integration with 1C system via Excel file import. Three sections: statistics, planning, workers. Auto-detection of data type by column headers. Supports XLSX, XLS, CSV formats.',
+      intro: 'Integration with 1C via Excel/CSV. File type auto-detected from column headers. Three tabs: Statistics (KPIs and charts), Planning (16-column register), Workers (15 columns). Automatic watcher watches /data/1c-import/ and picks up new files every 5 minutes.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — three tabs: Statistics / Planning / Workers.',
+            '**Above each tab content** — drag-and-drop area for file upload.',
+            '**Center** — tab content (charts or tables with filters).',
+            '**Bottom of page** — sync history log (SyncLog).',
+          ],
+        },
         {
           heading: 'File Upload',
           items: [
@@ -1719,6 +2274,15 @@ const HELP_CONTENT = {
             'Format support: standard 1C:Enterprise exports.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Morning plan upload** — export from 1C → drag-and-drop into the upload area → check Planning tab → WOs appear on Work Orders page.',
+            '**Find worker by VIN** — Workers → search by VIN or plate → see all WOs.',
+            '**System reconciliation** — Statistics → compare 1C revenue with system WO count → discrepancies visible in SyncLog.',
+            '**Recovery from failure** — review SyncLog → find errors → re-upload the problematic file.',
+          ],
+        },
       ],
     },
   },
@@ -1729,8 +2293,17 @@ const HELP_CONTENT = {
   users: {
     ru: {
       title: 'Управление пользователями',
-      intro: 'CRUD-управление пользователями системы. Назначение ролей, настройка доступа к страницам и элементам интерфейса. Только для администраторов.',
+      intro: 'Полное управление учётными записями: CRUD, роли (5 типов), доступ к страницам (21 страница), точечное скрытие элементов интерфейса. Все мутации записываются в Аудит-лог. Доступно только пользователям с ролью admin (защита от случайного блокирования системы).',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — поле поиска и кнопка «Добавить».',
+            '**Центр** — таблица пользователей: имя, email, роль (бейдж), активность, кол-во страниц.',
+            '**Модальное окно редактирования** — открывается по клику на строку: вкладки «Основное», «Страницы», «Элементы».',
+            '**Нижняя строка модалки** — кнопки «Сохранить» / «Отмена» / «Удалить».',
+          ],
+        },
         {
           heading: 'Роли пользователей',
           items: [
@@ -1789,12 +2362,30 @@ const HELP_CONTENT = {
             'Неактивные пользователи отображаются бледным цветом.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Создать менеджера** — Добавить → email, имя, роль = manager → выбрать страницы (Dashboard, Posts, WO, Shifts) → Сохранить.',
+            '**Перевести в директора** — клик по строке → роль = director → автоматически сменился набор разрешений.',
+            '**Скрыть пункт меню** — открыли пользователя → вкладка «Страницы» → сняли галку → пункт пропал из его сайдбара.',
+            '**Деактивация на отпуск** — клик → toggle isActive = off → пользователь не сможет войти, но данные сохранены.',
+          ],
+        },
       ],
     },
     en: {
       title: 'User Management',
-      intro: 'CRUD user management. Role assignment, page access, and UI element visibility configuration. Admin only.',
+      intro: 'Full account management: CRUD, roles (5 types), page access (21 pages), fine-grained UI element hiding. All mutations are recorded in Audit Log. Available only to users with admin role (protects against accidental system lockout).',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — search field and "Add" button.',
+            '**Center** — users table: name, email, role (badge), active, page count.',
+            '**Edit modal** — opens on row click: tabs "General", "Pages", "Elements".',
+            '**Modal bottom row** — "Save" / "Cancel" / "Delete" buttons.',
+          ],
+        },
         {
           heading: 'User Roles',
           items: [
@@ -1853,6 +2444,15 @@ const HELP_CONTENT = {
             'Inactive users displayed with faded color.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Create a manager** — Add → email, name, role = manager → pick pages (Dashboard, Posts, WO, Shifts) → Save.',
+            '**Promote to director** — click row → role = director → permission set updates automatically.',
+            '**Hide a menu item** — open user → "Pages" tab → uncheck → item disappears from their sidebar.',
+            '**Vacation deactivation** — click → toggle isActive = off → user cannot log in but data is preserved.',
+          ],
+        },
       ],
     },
   },
@@ -1863,8 +2463,18 @@ const HELP_CONTENT = {
   shifts: {
     ru: {
       title: 'Управление сменами',
-      intro: 'Планирование и управление рабочими сменами. Недельный календарь с назначением работников на посты. Контроль конфликтов и формирование актов приёма-передачи.',
+      intro: 'Календарь рабочих смен. 7-дневный обзор с цветной индикацией статусов (planned/active/completed). Назначение работников трёх ролей (mechanic / master / diagnostician) на посты. Автоматическая проверка конфликтов: один работник не может быть в двух сменах одновременно. Завершение смены формирует акт приёма-передачи.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — заголовок текущей недели и стрелки навигации (← Предыдущая / Следующая →).',
+            '**Центр** — 7 колонок (по дням недели), внутри каждой — карточки смен.',
+            '**На каждой карточке** — название смены, время, цвет статуса, кнопки.',
+            '**Кнопка «+»** — на каждой колонке для быстрого добавления смены в этот день.',
+            '**Модальная форма** — открывается для создания/редактирования с разделом «Работники».',
+          ],
+        },
         {
           heading: 'Недельный календарь',
           items: [
@@ -1920,12 +2530,31 @@ const HELP_CONTENT = {
             'Завершённую смену нельзя редактировать.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Планирование недели** — стрелка вперёд → нажали «+» на каждом дне → добавили смены и работников → сохранили.',
+            '**Замена работника** — открыли смену → удалили заболевшего → добавили замену → проверили, что нет конфликта.',
+            '**Закрытие смены вечером** — нашли активную (зелёную) → «Завершить» → акт сохранён.',
+            '**Копирование расписания** — переключились на следующую неделю → пока надо вручную, копирования между неделями нет.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Shift Management',
-      intro: 'Plan and manage work shifts. Weekly calendar with worker-to-post assignment. Conflict detection and handover act generation.',
+      intro: 'Work shift calendar. 7-day view with color-coded statuses (planned/active/completed). Assign workers of three roles (mechanic / master / diagnostician) to posts. Automatic conflict detection: one worker cannot be in two shifts simultaneously. Shift completion generates a handover act.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — current week heading and navigation arrows (← Previous / Next →).',
+            '**Center** — 7 columns (days of week), each with shift cards.',
+            '**Each card** — shift name, time, status color, buttons.',
+            '**"+" button** — on each column for quick adding a shift to that day.',
+            '**Modal form** — opens for create/edit with "Workers" section.',
+          ],
+        },
         {
           heading: 'Weekly Calendar',
           items: [
@@ -1981,6 +2610,15 @@ const HELP_CONTENT = {
             'Completed shifts cannot be edited.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Week planning** — arrow forward → click "+" on each day → add shifts and workers → save.',
+            '**Worker swap** — open shift → remove sick worker → add replacement → check there is no conflict.',
+            '**Evening shift close** — find active (green) shift → "Complete" → act is saved.',
+            '**Schedule copy** — switch to next week → manual entry only for now (no week-to-week copy).',
+          ],
+        },
       ],
     },
   },
@@ -1991,8 +2629,17 @@ const HELP_CONTENT = {
   audit: {
     ru: {
       title: 'Аудит-лог',
-      intro: 'Журнал всех действий пользователей в системе: создание, изменение и удаление записей. Хранит «до» и «после» для каждого изменения. Только для администраторов.',
+      intro: 'Полный журнал всех мутаций (POST/PUT/PATCH/DELETE) в системе. Каждая запись хранит автора, IP, тип объекта, действие и diff между «до» и «после». Хранение бессрочное. Поддержка фильтров и CSV-экспорта для отчётов и расследований. Только для администраторов.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — фильтры: текстовый поиск, действие, сущность, диапазон дат + кнопка «Экспорт CSV».',
+            '**Центр** — таблица записей с цветными бейджами действий.',
+            '**Развёртываемая строка** (клик на запись) — показывает JSON-diff: «до» vs «после».',
+            '**Низ** — пагинация (25 / 50 / 100 на страницу).',
+          ],
+        },
         {
           heading: 'Фильтры',
           items: [
@@ -2051,12 +2698,30 @@ const HELP_CONTENT = {
             'Хранение бессрочное — старые записи не удаляются.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Кто удалил пользователя?** — фильтр Действие = delete + Сущность = user → нашли запись → видно автора и IP.',
+            '**Что менялось вчера?** — диапазон дат «вчера» → CSV-экспорт → передали в отчёт.',
+            '**Расследование инцидента** — поиск по конкретному ID → нашли все правки и хронологию.',
+            '**Контроль администраторов** — фильтр по имени admin-пользователя → проверка корректности действий.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Audit Log',
-      intro: 'Log of all user actions in the system: creates, updates, and deletes. Stores "before" and "after" for each change. Admin only.',
+      intro: 'Complete log of all mutations (POST/PUT/PATCH/DELETE) in the system. Each record stores actor, IP, entity type, action, and diff between "before" and "after". Indefinite storage. Filters and CSV export for reports and investigations. Admin only.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — filters: text search, action, entity, date range + "Export CSV" button.',
+            '**Center** — records table with colored action badges.',
+            '**Expandable row** (click on record) — shows JSON diff: "before" vs "after".',
+            '**Bottom** — pagination (25 / 50 / 100 per page).',
+          ],
+        },
         {
           heading: 'Filters',
           items: [
@@ -2115,6 +2780,15 @@ const HELP_CONTENT = {
             'Stored indefinitely — old records are not deleted.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Who deleted a user?** — filter Action = delete + Entity = user → find the record → see actor and IP.',
+            '**What changed yesterday?** — date range "yesterday" → CSV export → attach to report.',
+            '**Incident investigation** — search by specific ID → find all edits and timeline.',
+            '**Admin oversight** — filter by an admin user name → verify their actions.',
+          ],
+        },
       ],
     },
   },
@@ -2125,8 +2799,18 @@ const HELP_CONTENT = {
   myPost: {
     ru: {
       title: 'Мой пост — Рабочий экран механика',
-      intro: 'Персональный экран для механика. Показывает назначенный пост, текущий заказ-наряд, таймер работы и крупные кнопки управления. Оптимизирован для сенсорных экранов. Отключён в live-режиме.',
+      intro: 'Простой и понятный экран для механика. Видно текущий ЗН, крупный таймер с прогресс-баром, обратный отсчёт до дедлайна и большие сенсорные кнопки управления (Start / Pause / Resume / Finish). Цвет таймера меняется по мере приближения и превышения нормы. Отключён в live-режиме (там механик использует внешние терминалы).',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — заголовок: «Пост N» и имя механика.',
+            '**Центр** — карточка ЗН: номер, госномер крупно, марка/модель, тип работ, нормочасы.',
+            '**Под карточкой** — большой таймер ЧЧ:ММ:СС и прогресс-бар.',
+            '**Под таймером** — обратный отсчёт «Осталось / Просрочено».',
+            '**Внизу** — крупные сенсорные кнопки управления (одна-две активны в зависимости от статуса).',
+          ],
+        },
         {
           heading: 'Информация о заказ-наряде',
           items: [
@@ -2187,12 +2871,31 @@ const HELP_CONTENT = {
             'Один механик — один пост — один ЗН одновременно.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Начало рабочего дня** — открыли страницу → видим ЗН → нажали «Начать» → таймер пошёл.',
+            '**Перерыв** — «Пауза» → таймер замер → после возврата «Продолжить».',
+            '**Завершение работы** — кнопка «Завершить» → ЗН перешёл в completed → автоматически подгружается следующий ЗН (если есть).',
+            '**Сложная работа** — таймер стал жёлтым (80%) → если не успеваете, оповестите мастера → продолжайте, при overtime цвет станет красным.',
+          ],
+        },
       ],
     },
     en: {
       title: 'My Post — Mechanic Screen',
-      intro: 'Personal screen for mechanics. Shows assigned post, current work order, work timer, and large control buttons. Optimized for touch screens. Disabled in live mode.',
+      intro: 'Simple and clear screen for mechanics. Shows current WO, large timer with progress bar, deadline countdown, and big touch-friendly control buttons (Start / Pause / Resume / Finish). Timer color changes as deadline approaches and is exceeded. Disabled in live mode (mechanics use external terminals there).',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — heading: "Post N" and mechanic name.',
+            '**Center** — WO card: number, plate (large), brand/model, work type, norm hours.',
+            '**Below card** — large HH:MM:SS timer and progress bar.',
+            '**Below timer** — countdown "Remaining / Overdue".',
+            '**Bottom** — large touch buttons (one or two active depending on status).',
+          ],
+        },
         {
           heading: 'Work Order Information',
           items: [
@@ -2253,6 +2956,15 @@ const HELP_CONTENT = {
             'One mechanic — one post — one WO at a time.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Start of workday** — open page → see WO → click "Start" → timer starts.',
+            '**Break** — "Pause" → timer freezes → on return "Resume".',
+            '**Finishing work** — "Finish" button → WO moves to completed → next WO auto-loads (if any).',
+            '**Tough job** — timer turns yellow (80%) → if you cannot make it, notify master → continue; on overtime color turns red.',
+          ],
+        },
       ],
     },
   },
@@ -2263,8 +2975,17 @@ const HELP_CONTENT = {
   health: {
     ru: {
       title: 'Здоровье системы',
-      intro: 'Мониторинг состояния всех компонентов системы: сервер, база данных, синхронизация 1С, диск, камеры. Автообновление каждые 30 секунд. Только для администраторов.',
+      intro: 'Технический мониторинг всех компонентов: Node.js-сервер, SQLite, синхронизация 1С, дисковое пространство, статус камер. Зелёный/жёлтый/красный индикатор для каждого блока. Автообновление каждые 30 секунд. Только для администраторов.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Верх** — крупный общий статус системы (зелёный/жёлтый/красный) и uptime.',
+            '**6 секций-карточек**: Сервер, База данных, Синхронизация 1С, Диск, Камеры, Дополнительно.',
+            'Каждая секция со своим цветным индикатором.',
+            '**Автообновление** работает в фоне, индикатор обновления — в углу.',
+          ],
+        },
         {
           heading: 'Общий статус',
           items: [
@@ -2321,12 +3042,30 @@ const HELP_CONTENT = {
             'При offline > 5 минут — рекомендация администратору.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Утренний чек-ап** — открыли страницу → пробежались по 6 блокам → все зелёные = можно работать.',
+            '**Реакция на проблему** — Heap > 85% → перезапустить сервер; Disk > 80% — почистить логи и старые файлы.',
+            '**1С отвалилась** — последняя синхронизация > 24ч → проверьте папку /data/1c-import/ и логи sync1C.',
+            '**Камеры оффлайн** — посмотрели на этой странице сводку → перешли на «Камеры» для деталей.',
+          ],
+        },
       ],
     },
     en: {
       title: 'System Health',
-      intro: 'Monitor all system component status: server, database, 1C sync, disk, cameras. Auto-refresh every 30 seconds. Admin only.',
+      intro: 'Technical monitoring of all components: Node.js server, SQLite, 1C sync, disk space, camera status. Green/yellow/red indicator per block. Auto-refresh every 30 seconds. Admin only.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Top** — large overall system status (green/yellow/red) and uptime.',
+            '**6 section cards**: Server, Database, 1C Sync, Disk, Cameras, Extras.',
+            'Each section has its own color indicator.',
+            '**Auto-refresh** runs in background, refresh indicator in corner.',
+          ],
+        },
         {
           heading: 'Overall Status',
           items: [
@@ -2393,8 +3132,17 @@ const HELP_CONTENT = {
   reportSchedule: {
     ru: {
       title: 'Расписание автоотчётов',
-      intro: 'Настройка автоматической генерации и отправки отчётов. Отчёты формируются по расписанию (ежедневно/еженедельно), экспортируются в XLSX и отправляются в Telegram.',
+      intro: 'Автоматическая генерация и отправка отчётов по расписанию. Отчёты формируются ежедневно/еженедельно, экспортируются в XLSX и доставляются в Telegram-чат — руководителю, в группу или в канал. Один раз настроили — каждое утро отчёт лежит у вас в чате.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Шапка** — кнопка **«Добавить расписание»** (сверху справа).',
+            '**Список расписаний** — карточки с названием, частотой, временем, статусом (активно/выключено), Chat ID и временем последнего запуска.',
+            '**На каждой карточке:** кнопки **«Запустить сейчас»**, **«Редактировать»**, **«Удалить»** и переключатель активности.',
+            '**Форма создания/редактирования** — модальное окно с полями: название, частота, день недели (для weekly), час, минуты, Chat ID.',
+          ],
+        },
         {
           heading: 'Создание расписания',
           items: [
@@ -2450,12 +3198,31 @@ const HELP_CONTENT = {
             'Cron-выражения формируются автоматически из настроек.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Ежедневный отчёт директору:** Добавить → daily → 08:00 → Chat ID директора → Сохранить. Каждое утро отчёт за вчера приходит в Telegram.',
+            '**Еженедельная сводка в группу:** weekly → понедельник → 09:00 → Chat ID группы → отчёт за неделю каждый понедельник.',
+            '**Проверить настройки перед запуском по плану:** «Запустить сейчас» → проверить XLSX в браузере → если ок, оставить расписание включённым.',
+            '**Временно отключить отчёты (отпуск, переезд):** переключатель **isActive** → off. Расписание сохранится, авто-запуск остановится.',
+            '**Узнать ID чата для бота:** добавить бота в чат → отправить любое сообщение → посмотреть ID через @userinfobot или API getUpdates.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Report Schedule',
-      intro: 'Configure automatic report generation and delivery. Reports generated on schedule (daily/weekly), exported as XLSX, and sent to Telegram.',
+      intro: 'Automatic report generation and delivery on schedule. Reports built daily/weekly, exported to XLSX, and delivered to a Telegram chat — to a manager, group, or channel. Set it up once — every morning the report is waiting in your chat.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Header** — **"Add schedule"** button (top right).',
+            '**Schedules list** — cards with name, frequency, time, status (active/disabled), Chat ID, and last-run timestamp.',
+            '**On each card:** **"Run now"**, **"Edit"**, **"Delete"** buttons and active toggle.',
+            '**Create/Edit form** — modal with fields: name, frequency, day of week (for weekly), hour, minutes, Chat ID.',
+          ],
+        },
         {
           heading: 'Create Schedule',
           items: [
@@ -2511,6 +3278,16 @@ const HELP_CONTENT = {
             'Cron expressions generated automatically from settings.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Daily report to director:** Add → daily → 08:00 → director\'s Chat ID → Save. Every morning yesterday\'s report arrives on Telegram.',
+            '**Weekly summary to group:** weekly → Monday → 09:00 → group Chat ID → weekly report every Monday.',
+            '**Verify settings before scheduled run:** "Run now" → check XLSX in browser → if ok, keep schedule enabled.',
+            '**Temporarily disable reports (vacation, move):** **isActive** toggle → off. Schedule preserved, auto-run stops.',
+            '**Find chat ID for the bot:** add bot to chat → send any message → check ID via @userinfobot or getUpdates API.',
+          ],
+        },
       ],
     },
   },
@@ -2521,8 +3298,18 @@ const HELP_CONTENT = {
   workerStats: {
     ru: {
       title: 'Статистика работника',
-      intro: 'Персональная аналитика по конкретному работнику. Доступ через URL с параметром workerName. Показывает KPI, графики выработки, распределение по видам работ и последние ЗН.',
+      intro: 'Персональная аналитика по конкретному механику: сколько работал, что делал, насколько эффективен. Используется руководителем для оценки персонала, начисления премий, разбора нагрузки. Открывается из списка работников или дашборда — URL с параметром workerName.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Шапка** — имя работника, кнопка возврата, выбор периода (две даты).',
+            '**KPI-полоса (4 карточки):** Всего ЗН | Нормочасы | Эффективность | Завершено.',
+            '**Левый блок графиков:** Дневная выработка (столбцы план vs факт по дням).',
+            '**Правый блок графиков:** Типы ремонта (pie) + Топ марок авто (bars).',
+            '**Низ страницы:** таблица последних ЗН со статусами и временем.',
+          ],
+        },
         {
           heading: 'Выбор периода',
           items: [
@@ -2576,12 +3363,32 @@ const HELP_CONTENT = {
             'URL формат: **#/worker-stats?worker=ИмяФамилия**.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Оценить эффективность за месяц:** период = текущий месяц → смотреть карточку «Эффективность» → если ниже 70% — разбираться (мало ЗН? медленный ремонт?).',
+            '**Найти специализацию:** круговая диаграмма «Типы ремонта» → понять, на чём механик быстрее всего работает.',
+            '**Сверить выручку с 1С:** если интеграция 1С активна — карточка «Выручка» показывает реальную сумму по ЗН за период.',
+            '**Разбор инцидента:** период = неделя инцидента → таблица последних ЗН → найти конкретные ЗН и их фактическое время.',
+            '**Сравнить двух механиков:** открыть страницу для каждого в отдельной вкладке → визуально сравнить KPI и графики.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Worker Statistics',
-      intro: 'Personal analytics for a specific worker. Accessed via URL with workerName parameter. Shows KPI, output charts, work type distribution, and recent WOs.',
+      intro: 'Personal analytics for a specific mechanic: how much they worked, what they did, how efficient they are. Used by managers to evaluate staff, calculate bonuses, analyze workload. Opened from worker list or dashboard — URL with workerName param.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Header** — worker name, back button, period selector (two dates).',
+            '**KPI strip (4 cards):** Total WOs | Norm Hours | Efficiency | Completed.',
+            '**Left chart block:** Daily Output (bars: plan vs actual per day).',
+            '**Right chart block:** Repair Types (pie) + Top Car Brands (bars).',
+            '**Bottom of page:** recent WOs table with statuses and times.',
+          ],
+        },
         {
           heading: 'Period Selection',
           items: [
@@ -2635,6 +3442,16 @@ const HELP_CONTENT = {
             'URL format: **#/worker-stats?worker=FirstLastName**.',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Evaluate monthly efficiency:** period = current month → look at "Efficiency" card → if below 70% — investigate (few WOs? slow repairs?).',
+            '**Find specialization:** "Repair Types" pie chart → understand what the mechanic does fastest.',
+            '**Reconcile revenue with 1C:** if 1C integration is active — "Revenue" card shows real WO revenue for the period.',
+            '**Incident debrief:** period = incident week → recent WOs table → find specific WOs and their actual time.',
+            '**Compare two mechanics:** open page for each in separate tab → visually compare KPIs and charts.',
+          ],
+        },
       ],
     },
   },
@@ -2645,8 +3462,17 @@ const HELP_CONTENT = {
   liveDebug: {
     ru: {
       title: 'Live Debug — Отладка мониторинга',
-      intro: 'Отладочная страница для live-режима. Показывает сырые данные от внешней CV-системы, состояния постов и зон, статусы камер и полную историю событий. Доступна только в live-режиме (красный стиль в сайдбаре).',
+      intro: 'Окно «под капот» live-режима для админов и интеграторов. Видны сырые данные от CV-системы без обработки — что именно прислало распознавание, в каком порядке и с какими задержками. Используется при настройке камер, калибровке зон, разборе расхождений между дашбордом и реальностью. Только в live-режиме (красный пункт в сайдбаре).',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Шапка** — индикатор подключения к CV-сервису (зелёный/красный) + ping в мс.',
+            '**Левая колонка:** raw-состояния постов (JSON) + состояния зон (JSON).',
+            '**Правая колонка:** список камер с их статусами и HLS-ссылками.',
+            '**Низ страницы:** прокручивающийся лог событий с миллисекундными timestamp.',
+          ],
+        },
         {
           heading: 'Назначение',
           items: [
@@ -2703,12 +3529,31 @@ const HELP_CONTENT = {
             'Данные на этой странице могут отличаться от дашборда — это нормально (разные уровни обработки).',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**На дашборде «не то» состояние поста:** сравнить статус в БД (Dashboard) с raw-данными CV здесь → если в CV статус правильный, проблема в eventProcessor; если в CV неверно — проблема в распознавании/камере.',
+            '**Камера «не видит» машину:** найти камеру в списке → проверить, что online → открыть HLS-ссылку → визуально сверить ракурс/перекрытия.',
+            '**Машина зашла в зону, но не привязалась к посту:** в логе событий найти timestamp въезда → проверить ZoneStay/PostStay в этот момент → если CV не прислало post:occupied — проблема CV.',
+            '**Внешний CV отвалился:** красный индикатор в шапке → проверить ping → известить интегратора → temporarily переключиться в demo-режим, чтобы пользователи продолжали работать.',
+            '**Калибровка границ зон:** сравнить координаты события (камера, confidence) с реальной разметкой → передать данные команде CV.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Live Debug — Monitoring Debug',
-      intro: 'Debug page for live mode. Shows raw data from external CV system, post/zone states, camera statuses, and full event history. Available only in live mode (red style in sidebar).',
+      intro: 'An "under the hood" view of live mode for admins and integrators. Shows raw data from the CV system without processing — exactly what recognition sent, in what order, with what delays. Used when configuring cameras, calibrating zones, debugging discrepancies between dashboard and reality. Live mode only (red sidebar item).',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Header** — CV connection indicator (green/red) + ping in ms.',
+            '**Left column:** raw post states (JSON) + zone states (JSON).',
+            '**Right column:** camera list with statuses and HLS links.',
+            '**Bottom of page:** scrolling event log with millisecond timestamps.',
+          ],
+        },
         {
           heading: 'Purpose',
           items: [
@@ -2765,6 +3610,16 @@ const HELP_CONTENT = {
             'Data on this page may differ from dashboard — this is normal (different processing levels).',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Dashboard shows "wrong" post state:** compare DB status (Dashboard) with raw CV data here → if CV is correct, the issue is in eventProcessor; if CV is wrong — issue is in recognition/camera.',
+            '**Camera "does not see" a car:** find camera in list → check online → open HLS link → visually verify angle/occlusions.',
+            '**Car entered zone but didn\'t bind to post:** find entry timestamp in event log → check ZoneStay/PostStay at that moment → if CV didn\'t send post:occupied — CV issue.',
+            '**External CV down:** red indicator in header → check ping → notify integrator → temporarily switch to demo mode so users can keep working.',
+            '**Calibrate zone boundaries:** compare event coordinates (camera, confidence) with real layout → pass data to CV team.',
+          ],
+        },
       ],
     },
   },
@@ -2775,8 +3630,17 @@ const HELP_CONTENT = {
   techDocs: {
     ru: {
       title: 'Техническая документация',
-      intro: 'Встроенная документация системы MetricsAiUp. 23 раздела технических описаний с оглавлением, поиском, экспортом в PDF и печатью. Двуязычная (RU/EN).',
+      intro: 'Полное техническое описание системы MetricsAiUp в одном месте: архитектура, API, БД, RBAC, фоновые сервисы, описание страниц. Используйте для онбординга разработчиков, передачи знаний интегратору, как референс при настройке. 23 раздела, поиск, экспорт PDF, печать, RU/EN.',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Шапка** — переключатель языка RU/EN, кнопки **«PDF»** и **«Печать»**.',
+            '**Левая панель (sticky)** — оглавление со всеми 23 разделами и поле поиска сверху.',
+            '**Центральная область** — содержимое разделов, прокручиваемое последовательно.',
+            '**Sticky-индикатор** — активный раздел подсвечивается в оглавлении при скролле.',
+          ],
+        },
         {
           heading: 'Навигация',
           items: [
@@ -2832,12 +3696,31 @@ const HELP_CONTENT = {
             'Не содержит чувствительных данных (пароли, ключи).',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Онбординг нового разработчика:** дать ссылку на techDocs → пусть пройдёт по разделам сверху вниз → вопросы — потом.',
+            '**Найти эндпоинт API:** поиск → ввести часть пути (`/work-orders`) → перейти к разделу с описанием.',
+            '**Передать документацию интегратору:** **«PDF»** → отправить файл → у внешней команды офлайн-копия.',
+            '**Сверить схему БД:** раздел «База данных» → найти модель → проверить поля и связи перед миграцией.',
+            '**Понять, как работает страница:** раздел «Страницы интерфейса» → найти нужную → прочитать описание её состояний и потоков данных.',
+          ],
+        },
       ],
     },
     en: {
       title: 'Technical Documentation',
-      intro: 'Built-in MetricsAiUp system documentation. 23 technical sections with table of contents, search, PDF export, and printing. Bilingual (RU/EN).',
+      intro: 'Complete technical description of MetricsAiUp in one place: architecture, API, DB, RBAC, background services, page descriptions. Use it for onboarding developers, knowledge transfer to integrators, as reference during setup. 23 sections, search, PDF export, print, RU/EN.',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Header** — RU/EN language toggle, **"PDF"** and **"Print"** buttons.',
+            '**Left panel (sticky)** — table of contents with all 23 sections and search field on top.',
+            '**Central area** — section contents, scrolled sequentially.',
+            '**Sticky indicator** — active section highlighted in TOC while scrolling.',
+          ],
+        },
         {
           heading: 'Navigation',
           items: [
@@ -2893,6 +3776,16 @@ const HELP_CONTENT = {
             'Does not contain sensitive data (passwords, keys).',
           ],
         },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Onboard a new developer:** send the techDocs link → walk through sections top to bottom → questions later.',
+            '**Find an API endpoint:** search → type part of the path (`/work-orders`) → jump to its description.',
+            '**Hand off documentation to an integrator:** **"PDF"** → send the file → external team has offline copy.',
+            '**Verify DB schema:** "Database" section → find model → check fields and relations before migration.',
+            '**Understand how a page works:** "UI Pages" section → find the page → read its states and data flows.',
+          ],
+        },
       ],
     },
   },
@@ -2903,8 +3796,18 @@ const HELP_CONTENT = {
   postHistory: {
     ru: {
       title: 'История поста',
-      intro: 'Подробная хронология событий на конкретном посту: смены статусов, автомобили, работы, присутствие работников. Данные обновляются автоматически.',
+      intro: 'Подробная хронология одного поста: каждый въезд, выезд, работа, простой, человек на посту — с временем до секунды. Используется для разбора инцидентов, проверки заявленных часов работы, аудита и обучения новых работников. Период от «сегодня» до «всё время».',
       sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Шапка** — название поста и быстрые пресеты периода (Сегодня/Вчера/3д/7д/30д/Всё/Произвольный).',
+            '**KPI-полоса (5 карточек):** Всего | Свободен | Занят | В работе | Авто.',
+            '**Панель фильтров:** статус (Все/Свободен/Занят/В работе) + поисковая строка по госномерам и описаниям.',
+            '**Таблица событий** — Время, Статус (цветной), Госномер, Детали, Люди, Точность CV. Заголовки сортируемы.',
+            '**Модалка с карты** — компактная версия таблицы с кнопкой «Полная страница».',
+          ],
+        },
         {
           heading: 'Выбор периода',
           items: [
@@ -2959,12 +3862,32 @@ const HELP_CONTENT = {
             'Кнопка «Полная страница» — переход на отдельную страницу с полным функционалом.',
           ],
         },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '**Спор по фактическим часам:** период = день инцидента → фильтр «В работе» → найти все интервалы → сложить продолжительность.',
+            '**Найти, когда машина уехала:** поиск по госномеру → отсортировать по времени → последняя запись со статусом «Занят» → дальше «Свободен» = время выезда.',
+            '**Проверить простой:** статус-фильтр → если есть длинные «Занят» без «В работе» → возможно простой → разбираться с механиком.',
+            '**Низкая точность CV (LOW):** колонка «Точность» → если много LOW — проблемы с камерой/освещением → передать интегратору.',
+            '**Открыть из карты быстро:** клик на пост → кнопка «История» → модалка → если нужно глубже, нажать «Полная страница».',
+          ],
+        },
       ],
     },
     en: {
       title: 'Post History',
-      intro: 'Detailed event timeline for a specific post: status changes, vehicles, work activities, worker presence. Auto-refreshing data.',
+      intro: 'Detailed timeline for a single post: every entry, exit, work episode, idle moment, person present — accurate to the second. Used for incident debriefs, verifying claimed hours, audit, and training new staff. Period from "today" to "all time".',
       sections: [
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Header** — post name and quick period presets (Today/Yesterday/3d/7d/30d/All/Custom).',
+            '**KPI strip (5 cards):** Total | Free | Occupied | Active | Vehicles.',
+            '**Filter bar:** status (All/Free/Occupied/Active) + text search by plate and details.',
+            '**Events table** — Time, Status (color), Plate, Details, People, CV Confidence. Headers sortable.',
+            '**Modal from map** — compact version of the table with "Full page" button.',
+          ],
+        },
         {
           heading: 'Period Selection',
           items: [
@@ -3017,6 +3940,16 @@ const HELP_CONTENT = {
             'Opens from the history button on post card on the map.',
             'Compact view: event list with sorting and filtering.',
             '"Full page" button — navigate to dedicated page with full features.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '**Dispute over actual hours:** period = incident day → filter "Active" → find all intervals → sum the duration.',
+            '**Find when a car left:** search by plate → sort by time → last "Occupied" row → next "Free" = exit time.',
+            '**Investigate idle:** status filter → if there are long "Occupied" without "Active" → possibly idle → discuss with mechanic.',
+            '**Low CV confidence (LOW):** "Confidence" column → many LOW rows → camera/lighting issue → notify integrator.',
+            '**Quick open from the map:** click post → "History" button → modal → if you need more, press "Full page".',
           ],
         },
       ],
