@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Car, Truck, Wrench, ChevronRight } from 'lucide-react';
+import { POST_STATUS_COLORS } from '../../constants';
 
 const POST_TYPE_ICONS = { light: Car, heavy: Truck, diagnostics: Wrench, zone: Wrench, special: Wrench };
 
@@ -43,13 +44,13 @@ export default function PostCardsView({ posts, navigate }) {
             {/* Card header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                {/* Дот = текущий статус (free → green, active_work/occupied → red, no_data → grey).
+                {/* Дот = текущий статус, единая палитра карты СТО:
+                    free=зелёный, occupied=оранжевый, active_work=индиго,
+                    occupied_no_work=красный, no_data=серый.
                     Если статус не передан (старые ответы API), fallback на loadPercent. */}
                 <div className="w-2.5 h-2.5 rounded-full" style={{
-                  background: post.status === 'free' ? 'var(--success)'
-                    : (post.status === 'active_work' || post.status === 'occupied') ? 'var(--danger)'
-                    : post.status === 'no_data' ? 'var(--text-muted)'
-                    : (d.loadPercent > 50 ? 'var(--success)' : d.loadPercent > 0 ? 'var(--warning)' : 'var(--text-muted)')
+                  background: POST_STATUS_COLORS[post.status]
+                    || (d.loadPercent > 50 ? POST_STATUS_COLORS.free : d.loadPercent > 0 ? POST_STATUS_COLORS.occupied : POST_STATUS_COLORS.no_data)
                 }} />
                 <Icon size={14} style={{ color: 'var(--text-secondary)' }} />
                 <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{translatePostName(post.name, t, post.type)}</span>

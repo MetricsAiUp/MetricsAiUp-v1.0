@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HelpCircle, X, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  HelpCircle, X, ChevronDown, ChevronRight,
+  CheckCircle2, AlertTriangle, XCircle, Info, Lightbulb, ArrowRight, Zap, Eye, MousePointer2,
+} from 'lucide-react';
 
 // ═══════════════════════════════════════════════
 // HELP CONTENT — Подробная справка по всем страницам
@@ -30,11 +33,11 @@ const HELP_CONTENT = {
           heading: 'KPI-карточки — как читать',
           items: [
             '**Активные сессии** — авто, находящиеся на территории СТО прямо сейчас (открытые VehicleSession без exitTime). Цвет зависит от загрузки.',
-            '**Свободные посты** — посты со статусом **free**. **Зелёный** — есть свободные, **красный** — все 10 заняты, нужен резерв.',
+            '**Свободные посты** — посты со статусом **free**. [●green]{green:зелёный} — есть свободные, [●red]{red:красный} — все 10 заняты, нужен резерв.',
             '**Занятые посты** — посты в статусах **occupied** (авто стоит без работы) и **active_work** (идёт обслуживание). Высокое число = высокая загрузка.',
-            '**Рекомендации** — количество необработанных уведомлений. Оранжевый бейдж — требует внимания.',
-            'Любая карточка **кликабельна** — открывает соответствующую страницу детализации.',
-            '**Дельта-бейдж** (треугольник вверх/вниз с %) показывает рост или падение по сравнению с предыдущим равным периодом. Зелёный — улучшение, красный — ухудшение.',
+            '**Рекомендации** — количество необработанных уведомлений. [●orange]{orange:оранжевый} бейдж — требует внимания.',
+            '[click] Любая карточка **кликабельна** — открывает соответствующую страницу детализации.',
+            '**Дельта-бейдж** (треугольник вверх/вниз с %) показывает рост или падение по сравнению с предыдущим равным периодом. [●green]{green:Зелёный} — улучшение, [●red]{red:красный} — ухудшение.',
             'Цифра 0 без дельты — данных за прошлый период нет (например, начало учёта).',
           ],
         },
@@ -42,10 +45,11 @@ const HELP_CONTENT = {
           heading: 'Живой обзор постов (LiveSTOWidget)',
           items: [
             'Сетка из **10 постов** с цветовым статусом и ключевой информацией:',
-            '— **Зелёный** = free (свободен).',
-            '— **Синий** = active_work (идёт обслуживание, есть работник).',
-            '— **Серый** = occupied_no_work (авто стоит, но никто не работает — возможен простой).',
-            '— **Жёлтый** = occupied (предупреждение / неоднозначное состояние).',
+            '[●green]{green:Зелёный} = free (свободен).',
+            '[●purple]{purple:Фиолетовый} = active_work (идёт обслуживание, есть работник).',
+            '[●red]{red:Красный} = occupied_no_work (авто стоит, но никто не работает — возможен простой).',
+            '[●orange]{orange:Оранжевый} = occupied (предупреждение / переходное состояние).',
+            '[●gray]{gray:Серый} = no_data (нет данных от CV — пост не репортится).',
             'Для занятых постов на карточке: **госномер** в виде плашки и **время на посту** (ЧЧ:ММ).',
             'Подходит для второго монитора — видно весь СТО без переключения экранов.',
             'Клик по посту — переход на детальный экран поста (PostHistory или PostsDetail).',
@@ -65,11 +69,11 @@ const HELP_CONTENT = {
         {
           heading: 'Рекомендации — 5 типов',
           items: [
-            '**Неявка (no_show)** — красный — клиент не приехал на scheduled-ЗН. Триггер: время начала прошло, статус не изменился.',
-            '**Пост свободен (post_free)** — зелёный — пост простаивает более 30 минут, есть нераспределённые ЗН. Можно загрузить.',
-            '**Есть мощности (capacity_available)** — синий — более половины постов свободны. Можно принимать дополнительных клиентов.',
-            '**Превышение времени (work_overtime)** — жёлтый — фактическое время > 120% нормочасов. Возможна сложная работа или потерянное время.',
-            '**Простой авто (vehicle_idle)** — жёлтый — авто на посту > 15 минут без работника. Подскажите механику.',
+            '[●red]**Неявка (no_show)** — клиент не приехал на scheduled-ЗН. Триггер: время начала прошло, статус не изменился.',
+            '[●green]**Пост свободен (post_free)** — пост простаивает более 30 минут, есть нераспределённые ЗН. Можно загрузить.',
+            '[●blue]**Есть мощности (capacity_available)** — более половины постов свободны. Можно принимать дополнительных клиентов.',
+            '[●yellow]**Превышение времени (work_overtime)** — фактическое время > 120% нормочасов. Возможна сложная работа или потерянное время.',
+            '[●yellow]**Простой авто (vehicle_idle)** — авто на посту > 15 минут без работника. Подскажите механику.',
             'Кнопка **«Принять»** — подтверждает обработку, рекомендация исчезает (acknowledgedAt записывается в БД).',
             'Если рекомендаций нет — секция не показывается (пустой экран = всё хорошо).',
           ],
@@ -80,7 +84,7 @@ const HELP_CONTENT = {
             'Лента **10 последних** событий от системы компьютерного зрения (CV).',
             'Фильтр по категориям сверху: **Все** / **Авто** (въезд/выезд) / **Пост** (занят/свободен) / **Работник** (есть/нет) / **Работа** (активность/простой).',
             'Карточка события: **тип** + **зона/пост** + **источники-камеры** (CAM 01, CAM 02…) + **время** (HH:MM:SS).',
-            'Цвет confidence-индикатора: **зелёный** ≥ 90%, **жёлтый** 70–89%, **красный** < 70%.',
+            'Цвет confidence-индикатора: [●green]{green:зелёный} ≥ 90%, [●yellow]{yellow:жёлтый} 70–89%, [●red]{red:красный} < 70%.',
             'Низкий confidence = возможна ложная сработка, требуется ручная проверка.',
             'Клик по событию — открывает модальное окно с данными о камере и raw-payload.',
           ],
@@ -106,10 +110,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Утренний осмотр** — открыли страницу → проверили рекомендации (если есть — обработать) → перешли в Таймлайн постов для планирования смены.',
-            '**Контроль в течение дня** — оставили на втором мониторе LiveSTOWidget → видите, какой пост зависает в occupied_no_work — отправили мастера.',
-            '**Анализ всплеска** — заметили, что занято 9/10 постов → переключили период на 7д и сравнили с прошлой неделей через дельту.',
-            '**Реакция на неявку** — рекомендация no_show появилась → кликнули на «Принять» → переоформили слот в Таймлайне постов.',
+            '[ok] **Утренний осмотр** — открыли страницу → проверили рекомендации (если есть — обработать) → перешли в Таймлайн постов для планирования смены.',
+            '[ok] **Контроль в течение дня** — оставили на втором мониторе LiveSTOWidget → видите, какой пост зависает в occupied_no_work — отправили мастера.',
+            '[ok] **Анализ всплеска** — заметили, что занято 9/10 постов → переключили период на 7д и сравнили с прошлой неделей через дельту.',
+            '[ok] **Реакция на неявку** — рекомендация no_show появилась → кликнули на «Принять» → переоформили слот в Таймлайне постов.',
           ],
         },
       ],
@@ -133,11 +137,11 @@ const HELP_CONTENT = {
           heading: 'KPI Cards — How to Read',
           items: [
             '**Active Sessions** — vehicles currently on STO premises (open VehicleSession without exitTime). Color depends on load.',
-            '**Free Posts** — posts with **free** status. **Green** — there are free posts, **red** — all 10 are occupied, need to manage capacity.',
+            '**Free Posts** — posts with **free** status. [●green]{green:Green} — there are free posts, [●red]{red:red} — all 10 are occupied, need to manage capacity.',
             '**Occupied Posts** — posts in **occupied** (car waiting, no work) and **active_work** (service in progress) statuses. High number = high load.',
-            '**Recommendations** — count of unhandled notifications. Orange badge — needs attention.',
-            'Any card is **clickable** — opens the corresponding detail page.',
-            '**Delta badge** (up/down triangle with %) shows growth or decline vs the previous equivalent period. Green — improvement, red — degradation.',
+            '**Recommendations** — count of unhandled notifications. [●orange]{orange:Orange} badge — needs attention.',
+            '[click] Any card is **clickable** — opens the corresponding detail page.',
+            '**Delta badge** (up/down triangle with %) shows growth or decline vs the previous equivalent period. [●green]{green:Green} — improvement, [●red]{red:red} — degradation.',
             'Number 0 without delta — no data for previous period (e.g., start of tracking).',
           ],
         },
@@ -145,10 +149,11 @@ const HELP_CONTENT = {
           heading: 'Live Posts Overview (LiveSTOWidget)',
           items: [
             'Grid of **10 posts** with color status and key info:',
-            '— **Green** = free.',
-            '— **Blue** = active_work (service in progress, worker present).',
-            '— **Gray** = occupied_no_work (car parked, no one working — possible idle).',
-            '— **Yellow** = occupied (warning / ambiguous state).',
+            '[●green]{green:Green} = free.',
+            '[●purple]{purple:Purple} = active_work (service in progress, worker present).',
+            '[●red]{red:Red} = occupied_no_work (car parked, no one working — possible idle).',
+            '[●orange]{orange:Orange} = occupied (warning / transitional state).',
+            '[●gray]{gray:Gray} = no_data (CV not reporting this post).',
             'Occupied posts show: **plate** as badge and **time on post** (HH:MM).',
             'Great for a second monitor — see the entire STO without switching screens.',
             'Click a post — opens detailed post screen (PostHistory or PostsDetail).',
@@ -168,11 +173,11 @@ const HELP_CONTENT = {
         {
           heading: 'Recommendations — 5 Types',
           items: [
-            '**No-show (no_show)** — red — client did not arrive for scheduled WO. Trigger: start time passed, status unchanged.',
-            '**Post free (post_free)** — green — post idle 30+ min, unassigned WOs exist. Can be loaded.',
-            '**Capacity available (capacity_available)** — blue — more than half of posts free. Can accept additional clients.',
-            '**Work overtime (work_overtime)** — yellow — actual time > 120% norm hours. Complex job or lost time.',
-            '**Vehicle idle (vehicle_idle)** — yellow — car on post > 15 min without worker. Notify the mechanic.',
+            '[●red]**No-show (no_show)** — client did not arrive for scheduled WO. Trigger: start time passed, status unchanged.',
+            '[●green]**Post free (post_free)** — post idle 30+ min, unassigned WOs exist. Can be loaded.',
+            '[●blue]**Capacity available (capacity_available)** — more than half of posts free. Can accept additional clients.',
+            '[●yellow]**Work overtime (work_overtime)** — actual time > 120% norm hours. Complex job or lost time.',
+            '[●yellow]**Vehicle idle (vehicle_idle)** — car on post > 15 min without worker. Notify the mechanic.',
             '**"Acknowledge"** button — confirms handling, recommendation disappears (acknowledgedAt stored in DB).',
             'No recommendations = section hidden (empty = everything good).',
           ],
@@ -183,7 +188,7 @@ const HELP_CONTENT = {
             'Feed of **10 latest** computer vision (CV) events.',
             'Category filter: **All** / **Vehicle** (entry/exit) / **Post** (occupied/vacated) / **Worker** (present/absent) / **Work** (activity/idle).',
             'Event card: **type** + **zone/post** + **source cameras** (CAM 01, CAM 02…) + **time** (HH:MM:SS).',
-            'Confidence indicator color: **green** ≥ 90%, **yellow** 70–89%, **red** < 70%.',
+            'Confidence indicator color: [●green]{green:green} ≥ 90%, [●yellow]{yellow:yellow} 70–89%, [●red]{red:red} < 70%.',
             'Low confidence = possible false positive, manual check recommended.',
             'Click event — opens modal with camera info and raw payload.',
           ],
@@ -209,10 +214,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Morning check** — open page → review recommendations (handle if any) → switch to Posts Timeline for shift planning.',
-            '**Daytime monitoring** — keep LiveSTOWidget on second monitor → notice a post stuck in occupied_no_work — send a master.',
-            '**Spike analysis** — noticed 9/10 posts occupied → switch period to 7d and compare via delta with last week.',
-            '**No-show response** — no_show recommendation appeared → click "Acknowledge" → reschedule slot in Posts Timeline.',
+            '[ok] **Morning check** — open page → review recommendations (handle if any) → switch to Posts Timeline for shift planning.',
+            '[ok] **Daytime monitoring** — keep LiveSTOWidget on second monitor → notice a post stuck in occupied_no_work — send a master.',
+            '[ok] **Spike analysis** — noticed 9/10 posts occupied → switch period to 7d and compare via delta with last week.',
+            '[ok] **No-show response** — no_show recommendation appeared → click "Acknowledge" → reschedule slot in Posts Timeline.',
           ],
         },
       ],
@@ -253,15 +258,26 @@ const HELP_CONTENT = {
           ],
         },
         {
-          heading: 'Цвета и паттерны блоков',
+          heading: 'Цвета и паттерны блоков ЗН',
           items: [
-            '**Зелёный** — completed (работа завершена).',
-            '**Синий** — in_progress (работа идёт прямо сейчас).',
-            '**Жёлтый/серый** — scheduled (запланировано, ещё не начато).',
-            '**Бледный/полупрозрачный** — cancelled (ЗН отменён).',
-            '**Красная обводка** — overdue (фактическое время превысило нормочасы).',
-            '**Полосатый паттерн** — конфликт: два ЗН пересекаются по времени на одном посту.',
-            '**Иконка молнии «Турбо»** — ЗН выполнен быстрее нормы (savedTime > 0).',
+            '[●green]{green:Зелёный} — completed (работа завершена).',
+            '[●purple]{purple:Фиолетовый} — in_progress (работа идёт прямо сейчас).',
+            '[●gray]{gray:Серый} — scheduled (запланировано, ещё не начато).',
+            '[●gray]**Бледный/полупрозрачный** — cancelled (ЗН отменён).',
+            '[●red]{red:Красная обводка} — overdue (фактическое время превысило нормочасы).',
+            '[warn] **Полосатый паттерн** — конфликт: два ЗН пересекаются по времени на одном посту.',
+            '[bolt] **«Турбо»** — ЗН выполнен быстрее нормы (savedTime > 0).',
+          ],
+        },
+        {
+          heading: 'Индикатор точки поста (слева)',
+          items: [
+            'Использует **единую палитру карты СТО** — те же цвета, что на STOMap:',
+            '[●green]{green:Зелёный} = free.',
+            '[●purple]{purple:Фиолетовый} = active_work.',
+            '[●red]{red:Красный} = occupied_no_work.',
+            '[●orange]{orange:Оранжевый} = occupied.',
+            '[●gray]{gray:Серый} = no_data.',
           ],
         },
         {
@@ -320,10 +336,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Утреннее планирование** — открыли страницу → перетащили все нераспределённые ЗН на свободные посты → нажали «Сохранить».',
-            '**Реакция на неявку** — ЗН в красной обводке + клиент не приехал → клик → Cancel → освободившийся слот заполнили из нераспределённых.',
-            '**Перенос между постами** — мастер заболел → перетащили все его ЗН на другой пост → сохранили.',
-            '**Экстренное окно** — клиент приехал без записи → перетащили его ЗН в свободный слот → выставили scheduledTime = сейчас → Start.',
+            '[ok] **Утреннее планирование** — открыли страницу → перетащили все нераспределённые ЗН на свободные посты → нажали «Сохранить».',
+            '[ok] **Реакция на неявку** — ЗН в красной обводке + клиент не приехал → клик → Cancel → освободившийся слот заполнили из нераспределённых.',
+            '[ok] **Перенос между постами** — мастер заболел → перетащили все его ЗН на другой пост → сохранили.',
+            '[ok] **Экстренное окно** — клиент приехал без записи → перетащили его ЗН в свободный слот → выставили scheduledTime = сейчас → Start.',
           ],
         },
         {
@@ -367,15 +383,26 @@ const HELP_CONTENT = {
           ],
         },
         {
-          heading: 'Block Colors and Patterns',
+          heading: 'WO Block Colors and Patterns',
           items: [
-            '**Green** — completed.',
-            '**Blue** — in_progress (work happening now).',
-            '**Yellow/gray** — scheduled (not started yet).',
-            '**Faded/transparent** — cancelled.',
-            '**Red outline** — overdue (actual time exceeded norm hours).',
-            '**Striped pattern** — conflict: two WOs overlap on same post.',
-            '**"Turbo" lightning icon** — WO completed faster than norm (savedTime > 0).',
+            '[●green]{green:Green} — completed.',
+            '[●purple]{purple:Purple} — in_progress (work happening now).',
+            '[●gray]{gray:Gray} — scheduled (not started yet).',
+            '[●gray]**Faded/transparent** — cancelled.',
+            '[●red]{red:Red outline} — overdue (actual time exceeded norm hours).',
+            '[warn] **Striped pattern** — conflict: two WOs overlap on same post.',
+            '[bolt] **"Turbo"** — WO completed faster than norm (savedTime > 0).',
+          ],
+        },
+        {
+          heading: 'Post Dot Indicator (left)',
+          items: [
+            'Uses the **single STO map palette** — same colors as on STOMap:',
+            '[●green]{green:Green} = free.',
+            '[●purple]{purple:Purple} = active_work.',
+            '[●red]{red:Red} = occupied_no_work.',
+            '[●orange]{orange:Orange} = occupied.',
+            '[●gray]{gray:Gray} = no_data.',
           ],
         },
         {
@@ -434,10 +461,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Morning planning** — open page → drag all unassigned WOs onto free posts → click "Save".',
-            '**No-show response** — red-outlined WO + client absent → click → Cancel → fill freed slot from unassigned.',
-            '**Move between posts** — master sick → drag all his WOs to another post → save.',
-            '**Walk-in slot** — client arrived without appointment → drag WO into free slot → set scheduledTime = now → Start.',
+            '[ok] **Morning planning** — open page → drag all unassigned WOs onto free posts → click "Save".',
+            '[ok] **No-show response** — red-outlined WO + client absent → click → Cancel → fill freed slot from unassigned.',
+            '[ok] **Move between posts** — master sick → drag all his WOs to another post → save.',
+            '[ok] **Walk-in slot** — client arrived without appointment → drag WO into free slot → set scheduledTime = now → Start.',
           ],
         },
         {
@@ -464,10 +491,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх слева** — переключатель периода (Сегодня / Вчера / Неделя / Месяц / Произвольный).',
-            '**Верх справа** — переключатель режима отображения (Карточки / Таблица).',
-            '**Центр (основная зона)** — список 10 постов: либо сетка карточек, либо строки таблицы.',
-            '**Правая панель** — открывается при клике на пост: углублённая аналитика и графики.',
+            '[eye] **Верх слева** — переключатель периода (Сегодня / Вчера / Неделя / Месяц / Произвольный).',
+            '[eye] **Верх справа** — переключатель режима отображения (Карточки / Таблица).',
+            '[eye] **Центр (основная зона)** — список 10 постов: либо сетка карточек, либо строки таблицы.',
+            '[eye] **Правая панель** — открывается при клике на пост: углублённая аналитика и графики.',
             'При закрытой правой панели карточки занимают всю ширину; при открытой — сжимаются.',
           ],
         },
@@ -536,10 +563,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Поиск узких мест** — выбрали Неделю → отсортировали таблицу по загрузке (ASC) → нашли посты с < 40% → открыли детали → выяснили причину (нет работника / мало ЗН).',
-            '**Анализ работника** — открыли пост → раздел «Работники» → увидели, кто меньше всего часов отработал.',
-            '**Сравнение «вчера vs сегодня»** — Сегодня → запомнили цифры → Вчера → сравнили вручную.',
-            '**Подготовка к митингу** — Месяц → таблица → отсортировали по эффективности → сделали screenshot топ-3 / худшие 3.',
+            '[ok] **Поиск узких мест** — выбрали Неделю → отсортировали таблицу по загрузке (ASC) → нашли посты с < 40% → открыли детали → выяснили причину (нет работника / мало ЗН).',
+            '[ok] **Анализ работника** — открыли пост → раздел «Работники» → увидели, кто меньше всего часов отработал.',
+            '[ok] **Сравнение «вчера vs сегодня»** — Сегодня → запомнили цифры → Вчера → сравнили вручную.',
+            '[ok] **Подготовка к митингу** — Месяц → таблица → отсортировали по эффективности → сделали screenshot топ-3 / худшие 3.',
           ],
         },
       ],
@@ -551,10 +578,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top left** — period switcher (Today / Yesterday / Week / Month / Custom).',
-            '**Top right** — view mode switcher (Cards / Table).',
-            '**Center (main area)** — list of 10 posts: either card grid or table rows.',
-            '**Right panel** — opens on post click: deep analytics and charts.',
+            '[eye] **Top left** — period switcher (Today / Yesterday / Week / Month / Custom).',
+            '[eye] **Top right** — view mode switcher (Cards / Table).',
+            '[eye] **Center (main area)** — list of 10 posts: either card grid or table rows.',
+            '[eye] **Right panel** — opens on post click: deep analytics and charts.',
             'With panel closed, cards span full width; with panel open they shrink.',
           ],
         },
@@ -623,10 +650,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Bottleneck hunt** — pick Week → sort table by occupancy ASC → find posts < 40% → open details → identify cause (no worker / few WOs).',
-            '**Worker analysis** — open post → "Workers" section → see who logged the fewest hours.',
-            '**"Yesterday vs Today"** — Today → note numbers → Yesterday → manual compare.',
-            '**Meeting prep** — Month → table → sort by efficiency → screenshot top-3 / worst-3.',
+            '[ok] **Bottleneck hunt** — pick Week → sort table by occupancy ASC → find posts < 40% → open details → identify cause (no worker / few WOs).',
+            '[ok] **Worker analysis** — open post → "Workers" section → see who logged the fewest hours.',
+            '[ok] **"Yesterday vs Today"** — Today → note numbers → Yesterday → manual compare.',
+            '[ok] **Meeting prep** — Month → table → sort by efficiency → screenshot top-3 / worst-3.',
           ],
         },
       ],
@@ -644,18 +671,18 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Центр** — холст карты с зданиями, постами, зонами и камерами.',
-            '**Правый верхний угол** — панель «Слои» (toggle для каждого типа элементов).',
-            '**Левый нижний угол** — кнопки масштаба (+/−), сброс, полный экран.',
-            '**Низ или боковая панель** — сводка по постам и счётчик авто.',
-            '**Полоса replay** (если включена) — слайдер времени для просмотра истории.',
+            '[eye] **Центр** — холст карты с зданиями, постами, зонами и камерами.',
+            '[eye] **Правый верхний угол** — панель «Слои» (toggle для каждого типа элементов).',
+            '[eye] **Левый нижний угол** — кнопки масштаба (+/−), сброс, полный экран.',
+            '[eye] **Низ или боковая панель** — сводка по постам и счётчик авто.',
+            '[eye] **Полоса replay** (если включена) — слайдер времени для просмотра истории.',
           ],
         },
         {
           heading: 'Элементы на карте',
           items: [
             '**Здания (building)** — контуры строений СТО.',
-            '**Посты (post)** — рабочие места механиков. Цвет зависит от статуса: **зелёный** = свободен, **синий** = в работе, **серый** = занят без работы, **жёлтый** = простой.',
+            '**Посты (post)** — рабочие места механиков. Цвет зависит от статуса: [●green]{green:зелёный} = свободен, [●purple]{purple:фиолетовый} = идёт работа, [●red]{red:красный} = занят без работы, [●orange]{orange:оранжевый} = занят/предупреждение, [●gray]{gray:серый} = нет данных.',
             '**Зоны (zone)** — области: ремонт, ожидание, въезд, парковка, свободная. Показывают количество авто.',
             '**Камеры (camera)** — позиции камер с направлением обзора (треугольный fov).',
             '**Двери (door)** — входы и выходы в здания.',
@@ -669,11 +696,12 @@ const HELP_CONTENT = {
         {
           heading: 'Цвет постов — расшифровка',
           items: [
-            '**Зелёный** = free — пост свободен, готов к приёму.',
-            '**Синий** = active_work — идёт обслуживание, есть работник.',
-            '**Серый** = occupied_no_work — авто стоит, работа не ведётся.',
-            '**Жёлтый** = idle / occupied — простой или предупреждение.',
-            'У каждого поста — номер и иконка типа (грузовой / легковой / спец).',
+            '[●green]{green:Зелёный} = free — пост свободен, готов к приёму.',
+            '[●purple]{purple:Фиолетовый} = active_work — идёт обслуживание, есть работник.',
+            '[●red]{red:Красный} = occupied_no_work — авто стоит, работа не ведётся.',
+            '[●orange]{orange:Оранжевый} = occupied — занят (предупреждение, переходное состояние).',
+            '[●gray]{gray:Серый} = no_data — пост есть в БД, но CV не присылает данные.',
+            '[info] У каждого поста — номер и иконка типа (грузовой / легковой / спец).',
           ],
         },
         {
@@ -738,10 +766,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Контроль смены** — открыли карту на втором мониторе → видите все посты и движение авто в реальном времени.',
-            '**Поиск авто** — клиент звонит «где моя машина?» → нашли её на карте по госномеру.',
-            '**Проверка камеры** — заметили проблему на посту → клик на ближайшую камеру → смотрите видео.',
-            '**Разбор инцидента** — Replay → переместили слайдер на нужный момент → разобрались, что произошло.',
+            '[ok] **Контроль смены** — открыли карту на втором мониторе → видите все посты и движение авто в реальном времени.',
+            '[ok] **Поиск авто** — клиент звонит «где моя машина?» → нашли её на карте по госномеру.',
+            '[ok] **Проверка камеры** — заметили проблему на посту → клик на ближайшую камеру → смотрите видео.',
+            '[ok] **Разбор инцидента** — Replay → переместили слайдер на нужный момент → разобрались, что произошло.',
           ],
         },
       ],
@@ -753,18 +781,18 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Center** — map canvas with buildings, posts, zones, and cameras.',
-            '**Top right** — "Layers" panel (toggle per element type).',
-            '**Bottom left** — zoom buttons (+/−), reset, fullscreen.',
-            '**Bottom or side panel** — post summary and vehicle counter.',
-            '**Replay strip** (when enabled) — time slider for browsing history.',
+            '[eye] **Center** — map canvas with buildings, posts, zones, and cameras.',
+            '[eye] **Top right** — "Layers" panel (toggle per element type).',
+            '[eye] **Bottom left** — zoom buttons (+/−), reset, fullscreen.',
+            '[eye] **Bottom or side panel** — post summary and vehicle counter.',
+            '[eye] **Replay strip** (when enabled) — time slider for browsing history.',
           ],
         },
         {
           heading: 'Map Elements',
           items: [
             '**Buildings (building)** — outlines of STO structures.',
-            '**Posts (post)** — mechanic workstations. Color by status: **green** = free, **blue** = active work, **gray** = occupied no work, **yellow** = idle.',
+            '**Posts (post)** — mechanic workstations. Color by status: [●green]{green:green} = free, [●purple]{purple:purple} = active work, [●red]{red:red} = occupied no work, [●orange]{orange:orange} = occupied/warning, [●gray]{gray:gray} = no data.',
             '**Zones (zone)** — areas: repair, waiting, entry, parking, free. Show vehicle count.',
             '**Cameras (camera)** — camera positions with viewing direction (triangular FOV).',
             '**Doors (door)** — building entrances and exits.',
@@ -778,11 +806,12 @@ const HELP_CONTENT = {
         {
           heading: 'Post Color Legend',
           items: [
-            '**Green** = free — post available.',
-            '**Blue** = active_work — service in progress, worker present.',
-            '**Gray** = occupied_no_work — car parked, no work happening.',
-            '**Yellow** = idle / occupied — idle or warning state.',
-            'Each post shows number and type icon (truck / light / special).',
+            '[●green]{green:Green} = free — post available.',
+            '[●purple]{purple:Purple} = active_work — service in progress, worker present.',
+            '[●red]{red:Red} = occupied_no_work — car parked, no work happening.',
+            '[●orange]{orange:Orange} = occupied — busy (warning, transitional state).',
+            '[●gray]{gray:Gray} = no_data — post exists in DB but CV is not reporting.',
+            '[info] Each post shows number and type icon (truck / light / special).',
           ],
         },
         {
@@ -847,10 +876,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Shift monitoring** — open map on second monitor → watch all posts and vehicle movement live.',
-            '**Find a vehicle** — client calls "where is my car?" → locate it on the map by plate.',
-            '**Camera check** — spotted an issue at a post → click nearest camera → watch live feed.',
-            '**Incident review** — Replay → move slider to the moment → understand what happened.',
+            '[ok] **Shift monitoring** — open map on second monitor → watch all posts and vehicle movement live.',
+            '[ok] **Find a vehicle** — client calls "where is my car?" → locate it on the map by plate.',
+            '[ok] **Camera check** — spotted an issue at a post → click nearest camera → watch live feed.',
+            '[ok] **Incident review** — Replay → move slider to the moment → understand what happened.',
           ],
         },
       ],
@@ -868,11 +897,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Левая панель** — панель инструментов (10 типов элементов + Select).',
-            '**Центр** — холст редактора (canvas Konva с реальными пропорциями СТО).',
-            '**Правая панель** — свойства выделенного элемента (название, координаты, тип).',
-            '**Верх** — кнопки: Сохранить, Сбросить, История, Экспорт/Импорт JSON, Загрузить фон.',
-            '**Низ или угол** — управление масштабом (+, −, %), переключатель сетки.',
+            '[eye] **Левая панель** — панель инструментов (10 типов элементов + Select).',
+            '[eye] **Центр** — холст редактора (canvas Konva с реальными пропорциями СТО).',
+            '[eye] **Правая панель** — свойства выделенного элемента (название, координаты, тип).',
+            '[eye] **Верх** — кнопки: Сохранить, Сбросить, История, Экспорт/Импорт JSON, Загрузить фон.',
+            '[eye] **Низ или угол** — управление масштабом (+, −, %), переключатель сетки.',
           ],
         },
         {
@@ -962,11 +991,11 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Создание новой карты с нуля** — Загрузить фон (PDF/PNG плана) → нарисовать здания (Building tool) → добавить зоны (Zone) → расставить посты (Post) → разместить камеры (Camera) → Сохранить.',
-            '**Корректировка существующей** — открыли редактор → нашли элемент → выделили → исправили координаты в правой панели → Сохранить.',
-            '**Откат к старой версии** — История → выбрали нужную версию → Восстановить.',
-            '**Перенос на другой сервер** — Экспорт JSON → загрузили на другом сервере → Импорт JSON → Сохранить.',
-            '**Дублирование поста** — выделили пост → Ctrl+D → переместили клон → исправили номер в правой панели.',
+            '[ok] **Создание новой карты с нуля** — Загрузить фон (PDF/PNG плана) → нарисовать здания (Building tool) → добавить зоны (Zone) → расставить посты (Post) → разместить камеры (Camera) → Сохранить.',
+            '[ok] **Корректировка существующей** — открыли редактор → нашли элемент → выделили → исправили координаты в правой панели → Сохранить.',
+            '[ok] **Откат к старой версии** — История → выбрали нужную версию → Восстановить.',
+            '[ok] **Перенос на другой сервер** — Экспорт JSON → загрузили на другом сервере → Импорт JSON → Сохранить.',
+            '[ok] **Дублирование поста** — выделили пост → Ctrl+D → переместили клон → исправили номер в правой панели.',
           ],
         },
         {
@@ -988,11 +1017,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Left panel** — toolbar (10 element types + Select).',
-            '**Center** — editor canvas (Konva canvas with real STO proportions).',
-            '**Right panel** — properties of selected element (name, coords, type).',
-            '**Top** — buttons: Save, Reset, History, Export/Import JSON, Load Background.',
-            '**Bottom or corner** — zoom controls (+, −, %), grid toggle.',
+            '[eye] **Left panel** — toolbar (10 element types + Select).',
+            '[eye] **Center** — editor canvas (Konva canvas with real STO proportions).',
+            '[eye] **Right panel** — properties of selected element (name, coords, type).',
+            '[eye] **Top** — buttons: Save, Reset, History, Export/Import JSON, Load Background.',
+            '[eye] **Bottom or corner** — zoom controls (+, −, %), grid toggle.',
           ],
         },
         {
@@ -1082,11 +1111,11 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Build a new map from scratch** — Load background (PDF/PNG plan) → draw buildings (Building tool) → add zones (Zone) → place posts (Post) → place cameras (Camera) → Save.',
-            '**Adjust existing map** — open editor → find element → select → fix coordinates in right panel → Save.',
-            '**Roll back to an old version** — History → pick a version → Restore.',
-            '**Migrate to another server** — Export JSON → upload to other server → Import JSON → Save.',
-            '**Duplicate a post** — select post → Ctrl+D → move the clone → change post number in right panel.',
+            '[ok] **Build a new map from scratch** — Load background (PDF/PNG plan) → draw buildings (Building tool) → add zones (Zone) → place posts (Post) → place cameras (Camera) → Save.',
+            '[ok] **Adjust existing map** — open editor → find element → select → fix coordinates in right panel → Save.',
+            '[ok] **Roll back to an old version** — History → pick a version → Restore.',
+            '[ok] **Migrate to another server** — Export JSON → upload to other server → Import JSON → Save.',
+            '[ok] **Duplicate a post** — select post → Ctrl+D → move the clone → change post number in right panel.',
           ],
         },
         {
@@ -1114,11 +1143,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — две вкладки: Активные / Завершённые.',
-            '**Над таблицей** — фильтр по посту, поиск по госномеру.',
-            '**Центр** — таблица сессий с пагинацией.',
-            '**Низ** — переключатель страниц (по 20 записей).',
-            '**Модальное окно** (по клику на строку) — детали сессии: маршрут, посты, QR.',
+            '[eye] **Верх** — две вкладки: Активные / Завершённые.',
+            '[eye] **Над таблицей** — фильтр по посту, поиск по госномеру.',
+            '[eye] **Центр** — таблица сессий с пагинацией.',
+            '[eye] **Низ** — переключатель страниц (по 20 записей).',
+            '[eye] **Модальное окно** (по клику на строку) — детали сессии: маршрут, посты, QR.',
           ],
         },
         {
@@ -1177,10 +1206,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Поиск конкретного авто** — поле поиска → ввели госномер → увидели все его визиты (Активные + Завершённые).',
-            '**Анализ задержек** — Завершённые → отсортировали по длительности → нашли «зависшие» сессии и причины.',
-            '**Сверка с 1С** — открыли деталь сессии → нашли привязанный ЗН → проверили совпадение по госномеру и времени.',
-            '**Поделиться QR** — деталь сессии → отсканировали QR → быстрый доступ с мобильного.',
+            '[ok] **Поиск конкретного авто** — поле поиска → ввели госномер → увидели все его визиты (Активные + Завершённые).',
+            '[ok] **Анализ задержек** — Завершённые → отсортировали по длительности → нашли «зависшие» сессии и причины.',
+            '[ok] **Сверка с 1С** — открыли деталь сессии → нашли привязанный ЗН → проверили совпадение по госномеру и времени.',
+            '[ok] **Поделиться QR** — деталь сессии → отсканировали QR → быстрый доступ с мобильного.',
           ],
         },
       ],
@@ -1192,11 +1221,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — two tabs: Active / Completed.',
-            '**Above table** — post filter, plate search.',
-            '**Center** — sessions table with pagination.',
-            '**Bottom** — page switcher (20 records per page).',
-            '**Modal** (on row click) — session details: route, posts, QR.',
+            '[eye] **Top** — two tabs: Active / Completed.',
+            '[eye] **Above table** — post filter, plate search.',
+            '[eye] **Center** — sessions table with pagination.',
+            '[eye] **Bottom** — page switcher (20 records per page).',
+            '[eye] **Modal** (on row click) — session details: route, posts, QR.',
           ],
         },
         {
@@ -1255,10 +1284,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Find a specific car** — search field → enter plate → see all visits (Active + Completed).',
-            '**Analyze delays** — Completed → sort by duration → find "stuck" sessions and root causes.',
-            '**Reconcile with 1C** — open session detail → find linked WO → verify plate and time match.',
-            '**Share QR** — session detail → scan QR → quick mobile access.',
+            '[ok] **Find a specific car** — search field → enter plate → see all visits (Active + Completed).',
+            '[ok] **Analyze delays** — Completed → sort by duration → find "stuck" sessions and root causes.',
+            '[ok] **Reconcile with 1C** — open session detail → find linked WO → verify plate and time match.',
+            '[ok] **Share QR** — session detail → scan QR → quick mobile access.',
           ],
         },
       ],
@@ -1276,11 +1305,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верхняя строка** — поиск (по № ЗН, госномеру, типу работ) и DateRangePicker.',
-            '**Под поиском** — кнопки-фильтры по статусу с счётчиками (например: «scheduled (12)»).',
-            '**Кнопка «Импорт CSV»** — справа сверху.',
-            '**Центр** — таблица ЗН со всеми колонками и сортировкой.',
-            '**Низ** — пагинация.',
+            '[eye] **Верхняя строка** — поиск (по № ЗН, госномеру, типу работ) и DateRangePicker.',
+            '[eye] **Под поиском** — кнопки-фильтры по статусу с счётчиками (например: «scheduled (12)»).',
+            '[eye] **Кнопка «Импорт CSV»** — справа сверху.',
+            '[eye] **Центр** — таблица ЗН со всеми колонками и сортировкой.',
+            '[eye] **Низ** — пагинация.',
           ],
         },
         {
@@ -1347,10 +1376,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Массовый импорт расписания** — кнопка Импорт CSV → выбрали файл → проверили ошибки → ЗН созданы со статусом scheduled → перешли в Таймлайн постов для распределения.',
-            '**Отмена неявки** — фильтр по scheduled → нашли клиента, который не приехал → клик → Cancel → статус no_show.',
-            '**Поиск долгих ремонтов** — фильтр по in_progress + диапазон дат «вчера» → отсортировали по нормочасам → нашли затянувшиеся.',
-            '**Закрытие смены** — фильтр completed + сегодня → проверили, что фактическое время заполнено для всех.',
+            '[ok] **Массовый импорт расписания** — кнопка Импорт CSV → выбрали файл → проверили ошибки → ЗН созданы со статусом scheduled → перешли в Таймлайн постов для распределения.',
+            '[ok] **Отмена неявки** — фильтр по scheduled → нашли клиента, который не приехал → клик → Cancel → статус no_show.',
+            '[ok] **Поиск долгих ремонтов** — фильтр по in_progress + диапазон дат «вчера» → отсортировали по нормочасам → нашли затянувшиеся.',
+            '[ok] **Закрытие смены** — фильтр completed + сегодня → проверили, что фактическое время заполнено для всех.',
           ],
         },
       ],
@@ -1362,11 +1391,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top row** — search (by WO #, plate, work type) and DateRangePicker.',
-            '**Under search** — status filter buttons with counts (e.g., "scheduled (12)").',
-            '**"Import CSV"** button — top right.',
-            '**Center** — WO table with all columns and sorting.',
-            '**Bottom** — pagination.',
+            '[eye] **Top row** — search (by WO #, plate, work type) and DateRangePicker.',
+            '[eye] **Under search** — status filter buttons with counts (e.g., "scheduled (12)").',
+            '[eye] **"Import CSV"** button — top right.',
+            '[eye] **Center** — WO table with all columns and sorting.',
+            '[eye] **Bottom** — pagination.',
           ],
         },
         {
@@ -1433,10 +1462,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Bulk schedule import** — Import CSV button → choose file → check errors → WOs created with scheduled status → go to Posts Timeline to distribute.',
-            '**Cancel a no-show** — filter by scheduled → find absent client → click → Cancel → status becomes no_show.',
-            '**Find long repairs** — filter in_progress + date range "yesterday" → sort by norm hours → find dragging jobs.',
-            '**Shift close-out** — filter completed + today → verify actual time is filled for every WO.',
+            '[ok] **Bulk schedule import** — Import CSV button → choose file → check errors → WOs created with scheduled status → go to Posts Timeline to distribute.',
+            '[ok] **Cancel a no-show** — filter by scheduled → find absent client → click → Cancel → status becomes no_show.',
+            '[ok] **Find long repairs** — filter in_progress + date range "yesterday" → sort by norm hours → find dragging jobs.',
+            '[ok] **Shift close-out** — filter completed + today → verify actual time is filled for every WO.',
           ],
         },
       ],
@@ -1454,11 +1483,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — фильтры в один ряд: Группа, Тип, Зона, Пост, Поиск.',
-            '**Правый верхний угол** — переключатель автообновления и сортировки.',
-            '**Центр** — таблица событий с цветными индикаторами и тегами камер.',
-            '**Низ** — пагинация (25 / 50 / 100 на страницу).',
-            '**Модальное окно** (клик по событию) — raw-данные и информация о камере.',
+            '[eye] **Верх** — фильтры в один ряд: Группа, Тип, Зона, Пост, Поиск.',
+            '[eye] **Правый верхний угол** — переключатель автообновления и сортировки.',
+            '[eye] **Центр** — таблица событий с цветными индикаторами и тегами камер.',
+            '[eye] **Низ** — пагинация (25 / 50 / 100 на страницу).',
+            '[eye] **Модальное окно** (клик по событию) — raw-данные и информация о камере.',
           ],
         },
         {
@@ -1529,10 +1558,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Расследование инцидента** — выбрали зону + диапазон времени → нашли цепочку событий → проверили confidence → восстановили хронологию.',
-            '**Калибровка камеры** — фильтр по конкретной зоне → много событий с confidence < 70% → проверьте угол и освещённость камеры.',
-            '**Поиск конкретного авто** — поиск по госномеру → видите весь маршрут авто внутри СТО.',
-            '**Контроль работника** — фильтр Тип = worker_absent + Пост = X → нашли периоды отсутствия работника.',
+            '[ok] **Расследование инцидента** — выбрали зону + диапазон времени → нашли цепочку событий → проверили confidence → восстановили хронологию.',
+            '[ok] **Калибровка камеры** — фильтр по конкретной зоне → много событий с confidence < 70% → проверьте угол и освещённость камеры.',
+            '[ok] **Поиск конкретного авто** — поиск по госномеру → видите весь маршрут авто внутри СТО.',
+            '[ok] **Контроль работника** — фильтр Тип = worker_absent + Пост = X → нашли периоды отсутствия работника.',
           ],
         },
       ],
@@ -1544,11 +1573,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — filters in a row: Group, Type, Zone, Post, Search.',
-            '**Top right corner** — auto-refresh and sort toggles.',
-            '**Center** — event table with color indicators and camera tags.',
-            '**Bottom** — pagination (25 / 50 / 100 per page).',
-            '**Modal** (on event click) — raw data and camera info.',
+            '[eye] **Top** — filters in a row: Group, Type, Zone, Post, Search.',
+            '[eye] **Top right corner** — auto-refresh and sort toggles.',
+            '[eye] **Center** — event table with color indicators and camera tags.',
+            '[eye] **Bottom** — pagination (25 / 50 / 100 per page).',
+            '[eye] **Modal** (on event click) — raw data and camera info.',
           ],
         },
         {
@@ -1619,10 +1648,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Incident investigation** — pick zone + time range → find event chain → check confidence → reconstruct timeline.',
-            '**Camera calibration** — filter by a specific zone → many events with confidence < 70% → check camera angle and lighting.',
-            '**Find a specific car** — plate search → see the entire vehicle path inside the STO.',
-            '**Worker oversight** — filter Type = worker_absent + Post = X → find absence periods.',
+            '[ok] **Incident investigation** — pick zone + time range → find event chain → check confidence → reconstruct timeline.',
+            '[ok] **Camera calibration** — filter by a specific zone → many events with confidence < 70% → check camera angle and lighting.',
+            '[ok] **Find a specific car** — plate search → see the entire vehicle path inside the STO.',
+            '[ok] **Worker oversight** — filter Type = worker_absent + Post = X → find absence periods.',
           ],
         },
       ],
@@ -1640,11 +1669,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — переключатель периода (Сегодня / 7д / 30д) и переключатель режима сравнения.',
-            '**Под переключателями** — 6 KPI-карточек с дельтами.',
-            '**Дальше вниз** — 8 графиков (Recharts): pie, bar, line, scatter, heatmap.',
-            '**Внизу страницы** — сводная таблица по 10 постам.',
-            '**Кнопки экспорта** (правый верхний угол) — XLSX, PDF, PNG (контекстное меню по графику).',
+            '[eye] **Верх** — переключатель периода (Сегодня / 7д / 30д) и переключатель режима сравнения.',
+            '[eye] **Под переключателями** — 6 KPI-карточек с дельтами.',
+            '[eye] **Дальше вниз** — 8 графиков (Recharts): pie, bar, line, scatter, heatmap.',
+            '[eye] **Внизу страницы** — сводная таблица по 10 постам.',
+            '[eye] **Кнопки экспорта** (правый верхний угол) — XLSX, PDF, PNG (контекстное меню по графику).',
           ],
         },
         {
@@ -1709,10 +1738,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Месячный отчёт руководству** — 30 дней + Сравнение → проверили все KPI → Экспорт PDF → отправили директору.',
-            '**Поиск часов перегрузки** — Heatmap «Почасовая нагрузка» → нашли часы 100% → решили о доп. постах или переносе ЗН.',
-            '**Сравнение недель** — 7д с включённым Сравнением → дельта показала рост или падение.',
-            '**График в презентацию** — правый клик на график → «Сохранить как PNG» → вставили в слайд.',
+            '[ok] **Месячный отчёт руководству** — 30 дней + Сравнение → проверили все KPI → Экспорт PDF → отправили директору.',
+            '[ok] **Поиск часов перегрузки** — Heatmap «Почасовая нагрузка» → нашли часы 100% → решили о доп. постах или переносе ЗН.',
+            '[ok] **Сравнение недель** — 7д с включённым Сравнением → дельта показала рост или падение.',
+            '[ok] **График в презентацию** — правый клик на график → «Сохранить как PNG» → вставили в слайд.',
           ],
         },
       ],
@@ -1724,11 +1753,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — period switcher (Today / 7d / 30d) and Compare mode toggle.',
-            '**Under switches** — 6 KPI cards with deltas.',
-            '**Further down** — 8 charts (Recharts): pie, bar, line, scatter, heatmap.',
-            '**Bottom of page** — per-post summary table.',
-            '**Export buttons** (top right) — XLSX, PDF, PNG (chart context menu).',
+            '[eye] **Top** — period switcher (Today / 7d / 30d) and Compare mode toggle.',
+            '[eye] **Under switches** — 6 KPI cards with deltas.',
+            '[eye] **Further down** — 8 charts (Recharts): pie, bar, line, scatter, heatmap.',
+            '[eye] **Bottom of page** — per-post summary table.',
+            '[eye] **Export buttons** (top right) — XLSX, PDF, PNG (chart context menu).',
           ],
         },
         {
@@ -1793,10 +1822,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Monthly management report** — 30 days + Compare → review all KPIs → Export PDF → send to director.',
-            '**Find overload hours** — Hourly Heatmap → spot 100% hours → decide about extra posts or rescheduling.',
-            '**Week-over-week comparison** — 7d with Compare on → delta shows growth or decline.',
-            '**Chart for presentation** — right-click chart → "Save as PNG" → paste into slide.',
+            '[ok] **Monthly management report** — 30 days + Compare → review all KPIs → Export PDF → send to director.',
+            '[ok] **Find overload hours** — Hourly Heatmap → spot 100% hours → decide about extra posts or rescheduling.',
+            '[ok] **Week-over-week comparison** — 7d with Compare on → delta shows growth or decline.',
+            '[ok] **Chart for presentation** — right-click chart → "Save as PNG" → paste into slide.',
           ],
         },
       ],
@@ -1814,10 +1843,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — вкладки: «Камеры по зонам» / «Все камеры».',
-            '**Под вкладками** — фильтр по зонам (Все, Въезд/Выезд, Подъёмники, Парковка, Склад).',
-            '**Центр** — сетка карточек камер (превью, статус, приоритет).',
-            '**Модальное окно** (CameraStreamModal) — открывается по клику для просмотра HLS-потока.',
+            '[eye] **Верх** — вкладки: «Камеры по зонам» / «Все камеры».',
+            '[eye] **Под вкладками** — фильтр по зонам (Все, Въезд/Выезд, Подъёмники, Парковка, Склад).',
+            '[eye] **Центр** — сетка карточек камер (превью, статус, приоритет).',
+            '[eye] **Модальное окно** (CameraStreamModal) — открывается по клику для просмотра HLS-потока.',
           ],
         },
         {
@@ -1880,9 +1909,9 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Проверка камер утром** — открыли страницу → пробежались по сетке → красные кружки = надо срочно чинить.',
-            '**Просмотр инцидента** — знаете зону → фильтр по зоне → клик на нужную камеру → стрим в модалке.',
-            '**Проверка приоритетов** — переключились в «Все камеры» → проверили P-бейджи → если важная зона на P3 → перейти в «Маппинг камер по зонам» и поднять.',
+            '[ok] **Проверка камер утром** — открыли страницу → пробежались по сетке → красные кружки = надо срочно чинить.',
+            '[ok] **Просмотр инцидента** — знаете зону → фильтр по зоне → клик на нужную камеру → стрим в модалке.',
+            '[ok] **Проверка приоритетов** — переключились в «Все камеры» → проверили P-бейджи → если важная зона на P3 → перейти в «Маппинг камер по зонам» и поднять.',
           ],
         },
       ],
@@ -1894,10 +1923,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — tabs: "Cameras by Zone" / "All Cameras".',
-            '**Under tabs** — zone filter (All, Entry/Exit, Lifts, Parking, Warehouse).',
-            '**Center** — grid of camera cards (preview, status, priority).',
-            '**Modal** (CameraStreamModal) — opens on click to view HLS stream.',
+            '[eye] **Top** — tabs: "Cameras by Zone" / "All Cameras".',
+            '[eye] **Under tabs** — zone filter (All, Entry/Exit, Lifts, Parking, Warehouse).',
+            '[eye] **Center** — grid of camera cards (preview, status, priority).',
+            '[eye] **Modal** (CameraStreamModal) — opens on click to view HLS stream.',
           ],
         },
         {
@@ -1960,9 +1989,9 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Morning camera check** — open page → scan the grid → red dots = needs immediate fix.',
-            '**Incident review** — know the zone → filter by zone → click camera → stream in modal.',
-            '**Priority audit** — switch to "All Cameras" → check P badges → if a critical zone shows P3 → go to "Camera Zone Mapping" and raise it.',
+            '[ok] **Morning camera check** — open page → scan the grid → red dots = needs immediate fix.',
+            '[ok] **Incident review** — know the zone → filter by zone → click camera → stream in modal.',
+            '[ok] **Priority audit** — switch to "All Cameras" → check P badges → if a critical zone shows P3 → go to "Camera Zone Mapping" and raise it.',
           ],
         },
       ],
@@ -1980,10 +2009,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Левая панель** — список 21 зоны со счётчиками привязанных камер.',
-            '**Правая панель** — редактор: 16 камер для выбранной зоны с тогглами и P-приоритетом.',
-            '**Внизу или в отдельной вкладке** — матрица «Зоны × Камеры» (визуальное покрытие).',
-            '**Сверху справа** — кнопки «Сохранить» / «Сбросить».',
+            '[eye] **Левая панель** — список 21 зоны со счётчиками привязанных камер.',
+            '[eye] **Правая панель** — редактор: 16 камер для выбранной зоны с тогглами и P-приоритетом.',
+            '[eye] **Внизу или в отдельной вкладке** — матрица «Зоны × Камеры» (визуальное покрытие).',
+            '[eye] **Сверху справа** — кнопки «Сохранить» / «Сбросить».',
           ],
         },
         {
@@ -2035,9 +2064,9 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Поиск слепых зон** — посмотрели в матрицу покрытия → нашли зоны с пустыми ячейками → добавили камеру или переориентировали существующую.',
-            '**Повышение точности** — постоянные ложные сработки в зоне → проверили приоритеты → подняли основную камеру до P10.',
-            '**Замена камеры** — снимаем CAM 03 на ремонт → сняли её со всех зон → подняли приоритеты резервных камер.',
+            '[ok] **Поиск слепых зон** — посмотрели в матрицу покрытия → нашли зоны с пустыми ячейками → добавили камеру или переориентировали существующую.',
+            '[ok] **Повышение точности** — постоянные ложные сработки в зоне → проверили приоритеты → подняли основную камеру до P10.',
+            '[ok] **Замена камеры** — снимаем CAM 03 на ремонт → сняли её со всех зон → подняли приоритеты резервных камер.',
           ],
         },
       ],
@@ -2049,10 +2078,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Left panel** — list of 21 zones with assigned-camera counters.',
-            '**Right panel** — editor: 16 cameras for the selected zone with toggles and P priority.',
-            '**Bottom or separate tab** — "Zones × Cameras" matrix (visual coverage).',
-            '**Top right** — Save / Reset buttons.',
+            '[eye] **Left panel** — list of 21 zones with assigned-camera counters.',
+            '[eye] **Right panel** — editor: 16 cameras for the selected zone with toggles and P priority.',
+            '[eye] **Bottom or separate tab** — "Zones × Cameras" matrix (visual coverage).',
+            '[eye] **Top right** — Save / Reset buttons.',
           ],
         },
         {
@@ -2104,9 +2133,9 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Find blind spots** — review coverage matrix → find zones with empty cells → add a camera or re-aim an existing one.',
-            '**Boost accuracy** — constant false events in a zone → check priorities → raise the main camera to P10.',
-            '**Camera replacement** — taking CAM 03 down for repair → unassign from all zones → raise priorities of backup cameras.',
+            '[ok] **Find blind spots** — review coverage matrix → find zones with empty cells → add a camera or re-aim an existing one.',
+            '[ok] **Boost accuracy** — constant false events in a zone → check priorities → raise the main camera to P10.',
+            '[ok] **Camera replacement** — taking CAM 03 down for repair → unassign from all zones → raise priorities of backup cameras.',
           ],
         },
       ],
@@ -2124,10 +2153,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Сверху** — три вкладки: Статистика / Планирование / Работники.',
-            '**Над контентом каждой вкладки** — область drag-and-drop для загрузки файла.',
-            '**Центр** — содержимое вкладки (графики или таблицы с фильтрами).',
-            '**Снизу страницы** — лог истории синхронизации (SyncLog).',
+            '[eye] **Сверху** — три вкладки: Статистика / Планирование / Работники.',
+            '[eye] **Над контентом каждой вкладки** — область drag-and-drop для загрузки файла.',
+            '[eye] **Центр** — содержимое вкладки (графики или таблицы с фильтрами).',
+            '[eye] **Снизу страницы** — лог истории синхронизации (SyncLog).',
           ],
         },
         {
@@ -2193,10 +2222,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Утренняя загрузка плана** — выгрузили из 1С → drag-and-drop в область → проверили вкладку Планирование → ЗН видны на странице Заказ-наряды.',
-            '**Поиск работника по VIN** — Работники → поиск по VIN или госномеру → нашли все ЗН.',
-            '**Сверка с системой** — Статистика → сравнили выручку 1С и количество ЗН в системе → расхождение видно в SyncLog.',
-            '**Восстановление при сбое** — посмотрели SyncLog → нашли ошибки → перезагрузили проблемный файл.',
+            '[ok] **Утренняя загрузка плана** — выгрузили из 1С → drag-and-drop в область → проверили вкладку Планирование → ЗН видны на странице Заказ-наряды.',
+            '[ok] **Поиск работника по VIN** — Работники → поиск по VIN или госномеру → нашли все ЗН.',
+            '[ok] **Сверка с системой** — Статистика → сравнили выручку 1С и количество ЗН в системе → расхождение видно в SyncLog.',
+            '[ok] **Восстановление при сбое** — посмотрели SyncLog → нашли ошибки → перезагрузили проблемный файл.',
           ],
         },
       ],
@@ -2208,10 +2237,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — three tabs: Statistics / Planning / Workers.',
-            '**Above each tab content** — drag-and-drop area for file upload.',
-            '**Center** — tab content (charts or tables with filters).',
-            '**Bottom of page** — sync history log (SyncLog).',
+            '[eye] **Top** — three tabs: Statistics / Planning / Workers.',
+            '[eye] **Above each tab content** — drag-and-drop area for file upload.',
+            '[eye] **Center** — tab content (charts or tables with filters).',
+            '[eye] **Bottom of page** — sync history log (SyncLog).',
           ],
         },
         {
@@ -2277,10 +2306,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Morning plan upload** — export from 1C → drag-and-drop into the upload area → check Planning tab → WOs appear on Work Orders page.',
-            '**Find worker by VIN** — Workers → search by VIN or plate → see all WOs.',
-            '**System reconciliation** — Statistics → compare 1C revenue with system WO count → discrepancies visible in SyncLog.',
-            '**Recovery from failure** — review SyncLog → find errors → re-upload the problematic file.',
+            '[ok] **Morning plan upload** — export from 1C → drag-and-drop into the upload area → check Planning tab → WOs appear on Work Orders page.',
+            '[ok] **Find worker by VIN** — Workers → search by VIN or plate → see all WOs.',
+            '[ok] **System reconciliation** — Statistics → compare 1C revenue with system WO count → discrepancies visible in SyncLog.',
+            '[ok] **Recovery from failure** — review SyncLog → find errors → re-upload the problematic file.',
           ],
         },
       ],
@@ -2298,10 +2327,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — поле поиска и кнопка «Добавить».',
-            '**Центр** — таблица пользователей: имя, email, роль (бейдж), активность, кол-во страниц.',
-            '**Модальное окно редактирования** — открывается по клику на строку: вкладки «Основное», «Страницы», «Элементы».',
-            '**Нижняя строка модалки** — кнопки «Сохранить» / «Отмена» / «Удалить».',
+            '[eye] **Верх** — поле поиска и кнопка «Добавить».',
+            '[eye] **Центр** — таблица пользователей: имя, email, роль (бейдж), активность, кол-во страниц.',
+            '[eye] **Модальное окно редактирования** — открывается по клику на строку: вкладки «Основное», «Страницы», «Элементы».',
+            '[eye] **Нижняя строка модалки** — кнопки «Сохранить» / «Отмена» / «Удалить».',
           ],
         },
         {
@@ -2365,10 +2394,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Создать менеджера** — Добавить → email, имя, роль = manager → выбрать страницы (Dashboard, Posts, WO, Shifts) → Сохранить.',
-            '**Перевести в директора** — клик по строке → роль = director → автоматически сменился набор разрешений.',
-            '**Скрыть пункт меню** — открыли пользователя → вкладка «Страницы» → сняли галку → пункт пропал из его сайдбара.',
-            '**Деактивация на отпуск** — клик → toggle isActive = off → пользователь не сможет войти, но данные сохранены.',
+            '[ok] **Создать менеджера** — Добавить → email, имя, роль = manager → выбрать страницы (Dashboard, Posts, WO, Shifts) → Сохранить.',
+            '[ok] **Перевести в директора** — клик по строке → роль = director → автоматически сменился набор разрешений.',
+            '[ok] **Скрыть пункт меню** — открыли пользователя → вкладка «Страницы» → сняли галку → пункт пропал из его сайдбара.',
+            '[ok] **Деактивация на отпуск** — клик → toggle isActive = off → пользователь не сможет войти, но данные сохранены.',
           ],
         },
       ],
@@ -2380,10 +2409,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — search field and "Add" button.',
-            '**Center** — users table: name, email, role (badge), active, page count.',
-            '**Edit modal** — opens on row click: tabs "General", "Pages", "Elements".',
-            '**Modal bottom row** — "Save" / "Cancel" / "Delete" buttons.',
+            '[eye] **Top** — search field and "Add" button.',
+            '[eye] **Center** — users table: name, email, role (badge), active, page count.',
+            '[eye] **Edit modal** — opens on row click: tabs "General", "Pages", "Elements".',
+            '[eye] **Modal bottom row** — "Save" / "Cancel" / "Delete" buttons.',
           ],
         },
         {
@@ -2447,10 +2476,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Create a manager** — Add → email, name, role = manager → pick pages (Dashboard, Posts, WO, Shifts) → Save.',
-            '**Promote to director** — click row → role = director → permission set updates automatically.',
-            '**Hide a menu item** — open user → "Pages" tab → uncheck → item disappears from their sidebar.',
-            '**Vacation deactivation** — click → toggle isActive = off → user cannot log in but data is preserved.',
+            '[ok] **Create a manager** — Add → email, name, role = manager → pick pages (Dashboard, Posts, WO, Shifts) → Save.',
+            '[ok] **Promote to director** — click row → role = director → permission set updates automatically.',
+            '[ok] **Hide a menu item** — open user → "Pages" tab → uncheck → item disappears from their sidebar.',
+            '[ok] **Vacation deactivation** — click → toggle isActive = off → user cannot log in but data is preserved.',
           ],
         },
       ],
@@ -2468,11 +2497,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — заголовок текущей недели и стрелки навигации (← Предыдущая / Следующая →).',
-            '**Центр** — 7 колонок (по дням недели), внутри каждой — карточки смен.',
-            '**На каждой карточке** — название смены, время, цвет статуса, кнопки.',
-            '**Кнопка «+»** — на каждой колонке для быстрого добавления смены в этот день.',
-            '**Модальная форма** — открывается для создания/редактирования с разделом «Работники».',
+            '[eye] **Верх** — заголовок текущей недели и стрелки навигации (← Предыдущая / Следующая →).',
+            '[eye] **Центр** — 7 колонок (по дням недели), внутри каждой — карточки смен.',
+            '[eye] **На каждой карточке** — название смены, время, цвет статуса, кнопки.',
+            '[eye] **Кнопка «+»** — на каждой колонке для быстрого добавления смены в этот день.',
+            '[eye] **Модальная форма** — открывается для создания/редактирования с разделом «Работники».',
           ],
         },
         {
@@ -2487,9 +2516,9 @@ const HELP_CONTENT = {
         {
           heading: 'Цвета карточек смен',
           items: [
-            '**Синий** — запланированная смена (planned).',
-            '**Зелёный** — активная смена (active) — идёт прямо сейчас.',
-            '**Серый** — завершённая смена (completed).',
+            '[●blue]{blue:Синий} — запланированная смена (planned).',
+            '[●green]{green:Зелёный} — активная смена (active) — идёт прямо сейчас.',
+            '[●gray]{gray:Серый} — завершённая смена (completed).',
             'Цвет помогает быстро оценить состояние смен на неделю.',
           ],
         },
@@ -2533,10 +2562,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Планирование недели** — стрелка вперёд → нажали «+» на каждом дне → добавили смены и работников → сохранили.',
-            '**Замена работника** — открыли смену → удалили заболевшего → добавили замену → проверили, что нет конфликта.',
-            '**Закрытие смены вечером** — нашли активную (зелёную) → «Завершить» → акт сохранён.',
-            '**Копирование расписания** — переключились на следующую неделю → пока надо вручную, копирования между неделями нет.',
+            '[ok] **Планирование недели** — стрелка вперёд → нажали «+» на каждом дне → добавили смены и работников → сохранили.',
+            '[ok] **Замена работника** — открыли смену → удалили заболевшего → добавили замену → проверили, что нет конфликта.',
+            '[ok] **Закрытие смены вечером** — нашли активную (зелёную) → «Завершить» → акт сохранён.',
+            '[ok] **Копирование расписания** — переключились на следующую неделю → пока надо вручную, копирования между неделями нет.',
           ],
         },
       ],
@@ -2548,11 +2577,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — current week heading and navigation arrows (← Previous / Next →).',
-            '**Center** — 7 columns (days of week), each with shift cards.',
-            '**Each card** — shift name, time, status color, buttons.',
-            '**"+" button** — on each column for quick adding a shift to that day.',
-            '**Modal form** — opens for create/edit with "Workers" section.',
+            '[eye] **Top** — current week heading and navigation arrows (← Previous / Next →).',
+            '[eye] **Center** — 7 columns (days of week), each with shift cards.',
+            '[eye] **Each card** — shift name, time, status color, buttons.',
+            '[eye] **"+" button** — on each column for quick adding a shift to that day.',
+            '[eye] **Modal form** — opens for create/edit with "Workers" section.',
           ],
         },
         {
@@ -2567,9 +2596,9 @@ const HELP_CONTENT = {
         {
           heading: 'Shift Card Colors',
           items: [
-            '**Blue** — planned shift.',
-            '**Green** — active shift — happening right now.',
-            '**Gray** — completed shift.',
+            '[●blue]{blue:Blue} — planned shift.',
+            '[●green]{green:Green} — active shift — happening right now.',
+            '[●gray]{gray:Gray} — completed shift.',
             'Color helps quickly assess week shift status.',
           ],
         },
@@ -2613,10 +2642,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Week planning** — arrow forward → click "+" on each day → add shifts and workers → save.',
-            '**Worker swap** — open shift → remove sick worker → add replacement → check there is no conflict.',
-            '**Evening shift close** — find active (green) shift → "Complete" → act is saved.',
-            '**Schedule copy** — switch to next week → manual entry only for now (no week-to-week copy).',
+            '[ok] **Week planning** — arrow forward → click "+" on each day → add shifts and workers → save.',
+            '[ok] **Worker swap** — open shift → remove sick worker → add replacement → check there is no conflict.',
+            '[ok] **Evening shift close** — find active (green) shift → "Complete" → act is saved.',
+            '[ok] **Schedule copy** — switch to next week → manual entry only for now (no week-to-week copy).',
           ],
         },
       ],
@@ -2634,10 +2663,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — фильтры: текстовый поиск, действие, сущность, диапазон дат + кнопка «Экспорт CSV».',
-            '**Центр** — таблица записей с цветными бейджами действий.',
-            '**Развёртываемая строка** (клик на запись) — показывает JSON-diff: «до» vs «после».',
-            '**Низ** — пагинация (25 / 50 / 100 на страницу).',
+            '[eye] **Верх** — фильтры: текстовый поиск, действие, сущность, диапазон дат + кнопка «Экспорт CSV».',
+            '[eye] **Центр** — таблица записей с цветными бейджами действий.',
+            '[eye] **Развёртываемая строка** (клик на запись) — показывает JSON-diff: «до» vs «после».',
+            '[eye] **Низ** — пагинация (25 / 50 / 100 на страницу).',
           ],
         },
         {
@@ -2701,10 +2730,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Кто удалил пользователя?** — фильтр Действие = delete + Сущность = user → нашли запись → видно автора и IP.',
-            '**Что менялось вчера?** — диапазон дат «вчера» → CSV-экспорт → передали в отчёт.',
-            '**Расследование инцидента** — поиск по конкретному ID → нашли все правки и хронологию.',
-            '**Контроль администраторов** — фильтр по имени admin-пользователя → проверка корректности действий.',
+            '[ok] **Кто удалил пользователя?** — фильтр Действие = delete + Сущность = user → нашли запись → видно автора и IP.',
+            '[ok] **Что менялось вчера?** — диапазон дат «вчера» → CSV-экспорт → передали в отчёт.',
+            '[ok] **Расследование инцидента** — поиск по конкретному ID → нашли все правки и хронологию.',
+            '[ok] **Контроль администраторов** — фильтр по имени admin-пользователя → проверка корректности действий.',
           ],
         },
       ],
@@ -2716,10 +2745,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — filters: text search, action, entity, date range + "Export CSV" button.',
-            '**Center** — records table with colored action badges.',
-            '**Expandable row** (click on record) — shows JSON diff: "before" vs "after".',
-            '**Bottom** — pagination (25 / 50 / 100 per page).',
+            '[eye] **Top** — filters: text search, action, entity, date range + "Export CSV" button.',
+            '[eye] **Center** — records table with colored action badges.',
+            '[eye] **Expandable row** (click on record) — shows JSON diff: "before" vs "after".',
+            '[eye] **Bottom** — pagination (25 / 50 / 100 per page).',
           ],
         },
         {
@@ -2783,10 +2812,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Who deleted a user?** — filter Action = delete + Entity = user → find the record → see actor and IP.',
-            '**What changed yesterday?** — date range "yesterday" → CSV export → attach to report.',
-            '**Incident investigation** — search by specific ID → find all edits and timeline.',
-            '**Admin oversight** — filter by an admin user name → verify their actions.',
+            '[ok] **Who deleted a user?** — filter Action = delete + Entity = user → find the record → see actor and IP.',
+            '[ok] **What changed yesterday?** — date range "yesterday" → CSV export → attach to report.',
+            '[ok] **Incident investigation** — search by specific ID → find all edits and timeline.',
+            '[ok] **Admin oversight** — filter by an admin user name → verify their actions.',
           ],
         },
       ],
@@ -2804,11 +2833,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — заголовок: «Пост N» и имя механика.',
-            '**Центр** — карточка ЗН: номер, госномер крупно, марка/модель, тип работ, нормочасы.',
-            '**Под карточкой** — большой таймер ЧЧ:ММ:СС и прогресс-бар.',
-            '**Под таймером** — обратный отсчёт «Осталось / Просрочено».',
-            '**Внизу** — крупные сенсорные кнопки управления (одна-две активны в зависимости от статуса).',
+            '[eye] **Верх** — заголовок: «Пост N» и имя механика.',
+            '[eye] **Центр** — карточка ЗН: номер, госномер крупно, марка/модель, тип работ, нормочасы.',
+            '[eye] **Под карточкой** — большой таймер ЧЧ:ММ:СС и прогресс-бар.',
+            '[eye] **Под таймером** — обратный отсчёт «Осталось / Просрочено».',
+            '[eye] **Внизу** — крупные сенсорные кнопки управления (одна-две активны в зависимости от статуса).',
           ],
         },
         {
@@ -2874,10 +2903,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Начало рабочего дня** — открыли страницу → видим ЗН → нажали «Начать» → таймер пошёл.',
-            '**Перерыв** — «Пауза» → таймер замер → после возврата «Продолжить».',
-            '**Завершение работы** — кнопка «Завершить» → ЗН перешёл в completed → автоматически подгружается следующий ЗН (если есть).',
-            '**Сложная работа** — таймер стал жёлтым (80%) → если не успеваете, оповестите мастера → продолжайте, при overtime цвет станет красным.',
+            '[ok] **Начало рабочего дня** — открыли страницу → видим ЗН → нажали «Начать» → таймер пошёл.',
+            '[ok] **Перерыв** — «Пауза» → таймер замер → после возврата «Продолжить».',
+            '[ok] **Завершение работы** — кнопка «Завершить» → ЗН перешёл в completed → автоматически подгружается следующий ЗН (если есть).',
+            '[ok] **Сложная работа** — таймер стал жёлтым (80%) → если не успеваете, оповестите мастера → продолжайте, при overtime цвет станет красным.',
           ],
         },
       ],
@@ -2889,11 +2918,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — heading: "Post N" and mechanic name.',
-            '**Center** — WO card: number, plate (large), brand/model, work type, norm hours.',
-            '**Below card** — large HH:MM:SS timer and progress bar.',
-            '**Below timer** — countdown "Remaining / Overdue".',
-            '**Bottom** — large touch buttons (one or two active depending on status).',
+            '[eye] **Top** — heading: "Post N" and mechanic name.',
+            '[eye] **Center** — WO card: number, plate (large), brand/model, work type, norm hours.',
+            '[eye] **Below card** — large HH:MM:SS timer and progress bar.',
+            '[eye] **Below timer** — countdown "Remaining / Overdue".',
+            '[eye] **Bottom** — large touch buttons (one or two active depending on status).',
           ],
         },
         {
@@ -2959,10 +2988,10 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Start of workday** — open page → see WO → click "Start" → timer starts.',
-            '**Break** — "Pause" → timer freezes → on return "Resume".',
-            '**Finishing work** — "Finish" button → WO moves to completed → next WO auto-loads (if any).',
-            '**Tough job** — timer turns yellow (80%) → if you cannot make it, notify master → continue; on overtime color turns red.',
+            '[ok] **Start of workday** — open page → see WO → click "Start" → timer starts.',
+            '[ok] **Break** — "Pause" → timer freezes → on return "Resume".',
+            '[ok] **Finishing work** — "Finish" button → WO moves to completed → next WO auto-loads (if any).',
+            '[ok] **Tough job** — timer turns yellow (80%) → if you cannot make it, notify master → continue; on overtime color turns red.',
           ],
         },
       ],
@@ -2980,18 +3009,18 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Верх** — крупный общий статус системы (зелёный/жёлтый/красный) и uptime.',
-            '**6 секций-карточек**: Сервер, База данных, Синхронизация 1С, Диск, Камеры, Дополнительно.',
+            '[eye] **Верх** — крупный общий статус системы (зелёный/жёлтый/красный) и uptime.',
+            '[eye] **6 секций-карточек**: Сервер, База данных, Синхронизация 1С, Диск, Камеры, Дополнительно.',
             'Каждая секция со своим цветным индикатором.',
-            '**Автообновление** работает в фоне, индикатор обновления — в углу.',
+            '[eye] **Автообновление** работает в фоне, индикатор обновления — в углу.',
           ],
         },
         {
           heading: 'Общий статус',
           items: [
-            '**Зелёный** — все компоненты работают нормально.',
-            '**Красный** — есть проблемы в одном или нескольких компонентах.',
-            '**Жёлтый** — предупреждения (например, мало места на диске).',
+            '[●green]{green:Зелёный} — все компоненты работают нормально.',
+            '[●red]{red:Красный} — есть проблемы в одном или нескольких компонентах.',
+            '[●yellow]{yellow:Жёлтый} — предупреждения (например, мало места на диске).',
             'Общий статус — наихудший из всех компонентов.',
           ],
         },
@@ -3036,8 +3065,8 @@ const HELP_CONTENT = {
           heading: 'Камеры',
           items: [
             'Сетка из **10 камер** со статусами.',
-            '**Зелёный** — камера online, стрим доступен.',
-            '**Красный** — камера offline.',
+            '[●green]{green:Зелёный} — камера online, стрим доступен.',
+            '[●red]{red:Красный} — камера offline.',
             'Проверка каждые **30 секунд** через cameraHealthCheck.',
             'При offline > 5 минут — рекомендация администратору.',
           ],
@@ -3045,10 +3074,10 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Утренний чек-ап** — открыли страницу → пробежались по 6 блокам → все зелёные = можно работать.',
-            '**Реакция на проблему** — Heap > 85% → перезапустить сервер; Disk > 80% — почистить логи и старые файлы.',
-            '**1С отвалилась** — последняя синхронизация > 24ч → проверьте папку /data/1c-import/ и логи sync1C.',
-            '**Камеры оффлайн** — посмотрели на этой странице сводку → перешли на «Камеры» для деталей.',
+            '[ok] **Утренний чек-ап** — открыли страницу → пробежались по 6 блокам → все зелёные = можно работать.',
+            '[ok] **Реакция на проблему** — Heap > 85% → перезапустить сервер; Disk > 80% — почистить логи и старые файлы.',
+            '[ok] **1С отвалилась** — последняя синхронизация > 24ч → проверьте папку /data/1c-import/ и логи sync1C.',
+            '[ok] **Камеры оффлайн** — посмотрели на этой странице сводку → перешли на «Камеры» для деталей.',
           ],
         },
       ],
@@ -3060,18 +3089,18 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Top** — large overall system status (green/yellow/red) and uptime.',
-            '**6 section cards**: Server, Database, 1C Sync, Disk, Cameras, Extras.',
+            '[eye] **Top** — large overall system status (green/yellow/red) and uptime.',
+            '[eye] **6 section cards**: Server, Database, 1C Sync, Disk, Cameras, Extras.',
             'Each section has its own color indicator.',
-            '**Auto-refresh** runs in background, refresh indicator in corner.',
+            '[eye] **Auto-refresh** runs in background, refresh indicator in corner.',
           ],
         },
         {
           heading: 'Overall Status',
           items: [
-            '**Green** — all components running normally.',
-            '**Red** — issues in one or more components.',
-            '**Yellow** — warnings (e.g., low disk space).',
+            '[●green]{green:Green} — all components running normally.',
+            '[●red]{red:Red} — issues in one or more components.',
+            '[●yellow]{yellow:Yellow} — warnings (e.g., low disk space).',
             'Overall status = worst of all components.',
           ],
         },
@@ -3116,8 +3145,8 @@ const HELP_CONTENT = {
           heading: 'Cameras',
           items: [
             'Grid of **10 cameras** with statuses.',
-            '**Green** — camera online, stream available.',
-            '**Red** — camera offline.',
+            '[●green]{green:Green} — camera online, stream available.',
+            '[●red]{red:Red} — camera offline.',
             'Checked every **30 seconds** via cameraHealthCheck.',
             'Offline > 5 minutes — recommendation to admin.',
           ],
@@ -3137,10 +3166,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Шапка** — кнопка **«Добавить расписание»** (сверху справа).',
-            '**Список расписаний** — карточки с названием, частотой, временем, статусом (активно/выключено), Chat ID и временем последнего запуска.',
-            '**На каждой карточке:** кнопки **«Запустить сейчас»**, **«Редактировать»**, **«Удалить»** и переключатель активности.',
-            '**Форма создания/редактирования** — модальное окно с полями: название, частота, день недели (для weekly), час, минуты, Chat ID.',
+            '[eye] **Шапка** — кнопка **«Добавить расписание»** (сверху справа).',
+            '[eye] **Список расписаний** — карточки с названием, частотой, временем, статусом (активно/выключено), Chat ID и временем последнего запуска.',
+            '[eye] **На каждой карточке:** кнопки **«Запустить сейчас»**, **«Редактировать»**, **«Удалить»** и переключатель активности.',
+            '[eye] **Форма создания/редактирования** — модальное окно с полями: название, частота, день недели (для weekly), час, минуты, Chat ID.',
           ],
         },
         {
@@ -3201,11 +3230,11 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Ежедневный отчёт директору:** Добавить → daily → 08:00 → Chat ID директора → Сохранить. Каждое утро отчёт за вчера приходит в Telegram.',
-            '**Еженедельная сводка в группу:** weekly → понедельник → 09:00 → Chat ID группы → отчёт за неделю каждый понедельник.',
-            '**Проверить настройки перед запуском по плану:** «Запустить сейчас» → проверить XLSX в браузере → если ок, оставить расписание включённым.',
-            '**Временно отключить отчёты (отпуск, переезд):** переключатель **isActive** → off. Расписание сохранится, авто-запуск остановится.',
-            '**Узнать ID чата для бота:** добавить бота в чат → отправить любое сообщение → посмотреть ID через @userinfobot или API getUpdates.',
+            '[ok] **Ежедневный отчёт директору:** Добавить → daily → 08:00 → Chat ID директора → Сохранить. Каждое утро отчёт за вчера приходит в Telegram.',
+            '[ok] **Еженедельная сводка в группу:** weekly → понедельник → 09:00 → Chat ID группы → отчёт за неделю каждый понедельник.',
+            '[ok] **Проверить настройки перед запуском по плану:** «Запустить сейчас» → проверить XLSX в браузере → если ок, оставить расписание включённым.',
+            '[ok] **Временно отключить отчёты (отпуск, переезд):** переключатель **isActive** → off. Расписание сохранится, авто-запуск остановится.',
+            '[ok] **Узнать ID чата для бота:** добавить бота в чат → отправить любое сообщение → посмотреть ID через @userinfobot или API getUpdates.',
           ],
         },
       ],
@@ -3217,10 +3246,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Header** — **"Add schedule"** button (top right).',
-            '**Schedules list** — cards with name, frequency, time, status (active/disabled), Chat ID, and last-run timestamp.',
-            '**On each card:** **"Run now"**, **"Edit"**, **"Delete"** buttons and active toggle.',
-            '**Create/Edit form** — modal with fields: name, frequency, day of week (for weekly), hour, minutes, Chat ID.',
+            '[eye] **Header** — **"Add schedule"** button (top right).',
+            '[eye] **Schedules list** — cards with name, frequency, time, status (active/disabled), Chat ID, and last-run timestamp.',
+            '[eye] **On each card:** **"Run now"**, **"Edit"**, **"Delete"** buttons and active toggle.',
+            '[eye] **Create/Edit form** — modal with fields: name, frequency, day of week (for weekly), hour, minutes, Chat ID.',
           ],
         },
         {
@@ -3281,11 +3310,11 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Daily report to director:** Add → daily → 08:00 → director\'s Chat ID → Save. Every morning yesterday\'s report arrives on Telegram.',
-            '**Weekly summary to group:** weekly → Monday → 09:00 → group Chat ID → weekly report every Monday.',
-            '**Verify settings before scheduled run:** "Run now" → check XLSX in browser → if ok, keep schedule enabled.',
-            '**Temporarily disable reports (vacation, move):** **isActive** toggle → off. Schedule preserved, auto-run stops.',
-            '**Find chat ID for the bot:** add bot to chat → send any message → check ID via @userinfobot or getUpdates API.',
+            '[ok] **Daily report to director:** Add → daily → 08:00 → director\'s Chat ID → Save. Every morning yesterday\'s report arrives on Telegram.',
+            '[ok] **Weekly summary to group:** weekly → Monday → 09:00 → group Chat ID → weekly report every Monday.',
+            '[ok] **Verify settings before scheduled run:** "Run now" → check XLSX in browser → if ok, keep schedule enabled.',
+            '[ok] **Temporarily disable reports (vacation, move):** **isActive** toggle → off. Schedule preserved, auto-run stops.',
+            '[ok] **Find chat ID for the bot:** add bot to chat → send any message → check ID via @userinfobot or getUpdates API.',
           ],
         },
       ],
@@ -3303,11 +3332,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Шапка** — имя работника, кнопка возврата, выбор периода (две даты).',
-            '**KPI-полоса (4 карточки):** Всего ЗН | Нормочасы | Эффективность | Завершено.',
-            '**Левый блок графиков:** Дневная выработка (столбцы план vs факт по дням).',
-            '**Правый блок графиков:** Типы ремонта (pie) + Топ марок авто (bars).',
-            '**Низ страницы:** таблица последних ЗН со статусами и временем.',
+            '[eye] **Шапка** — имя работника, кнопка возврата, выбор периода (две даты).',
+            '[eye] **KPI-полоса (4 карточки):** Всего ЗН | Нормочасы | Эффективность | Завершено.',
+            '[eye] **Левый блок графиков:** Дневная выработка (столбцы план vs факт по дням).',
+            '[eye] **Правый блок графиков:** Типы ремонта (pie) + Топ марок авто (bars).',
+            '[eye] **Низ страницы:** таблица последних ЗН со статусами и временем.',
           ],
         },
         {
@@ -3366,11 +3395,11 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Оценить эффективность за месяц:** период = текущий месяц → смотреть карточку «Эффективность» → если ниже 70% — разбираться (мало ЗН? медленный ремонт?).',
-            '**Найти специализацию:** круговая диаграмма «Типы ремонта» → понять, на чём механик быстрее всего работает.',
-            '**Сверить выручку с 1С:** если интеграция 1С активна — карточка «Выручка» показывает реальную сумму по ЗН за период.',
-            '**Разбор инцидента:** период = неделя инцидента → таблица последних ЗН → найти конкретные ЗН и их фактическое время.',
-            '**Сравнить двух механиков:** открыть страницу для каждого в отдельной вкладке → визуально сравнить KPI и графики.',
+            '[ok] **Оценить эффективность за месяц:** период = текущий месяц → смотреть карточку «Эффективность» → если ниже 70% — разбираться (мало ЗН? медленный ремонт?).',
+            '[ok] **Найти специализацию:** круговая диаграмма «Типы ремонта» → понять, на чём механик быстрее всего работает.',
+            '[ok] **Сверить выручку с 1С:** если интеграция 1С активна — карточка «Выручка» показывает реальную сумму по ЗН за период.',
+            '[ok] **Разбор инцидента:** период = неделя инцидента → таблица последних ЗН → найти конкретные ЗН и их фактическое время.',
+            '[ok] **Сравнить двух механиков:** открыть страницу для каждого в отдельной вкладке → визуально сравнить KPI и графики.',
           ],
         },
       ],
@@ -3382,11 +3411,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Header** — worker name, back button, period selector (two dates).',
-            '**KPI strip (4 cards):** Total WOs | Norm Hours | Efficiency | Completed.',
-            '**Left chart block:** Daily Output (bars: plan vs actual per day).',
-            '**Right chart block:** Repair Types (pie) + Top Car Brands (bars).',
-            '**Bottom of page:** recent WOs table with statuses and times.',
+            '[eye] **Header** — worker name, back button, period selector (two dates).',
+            '[eye] **KPI strip (4 cards):** Total WOs | Norm Hours | Efficiency | Completed.',
+            '[eye] **Left chart block:** Daily Output (bars: plan vs actual per day).',
+            '[eye] **Right chart block:** Repair Types (pie) + Top Car Brands (bars).',
+            '[eye] **Bottom of page:** recent WOs table with statuses and times.',
           ],
         },
         {
@@ -3445,11 +3474,11 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Evaluate monthly efficiency:** period = current month → look at "Efficiency" card → if below 70% — investigate (few WOs? slow repairs?).',
-            '**Find specialization:** "Repair Types" pie chart → understand what the mechanic does fastest.',
-            '**Reconcile revenue with 1C:** if 1C integration is active — "Revenue" card shows real WO revenue for the period.',
-            '**Incident debrief:** period = incident week → recent WOs table → find specific WOs and their actual time.',
-            '**Compare two mechanics:** open page for each in separate tab → visually compare KPIs and charts.',
+            '[ok] **Evaluate monthly efficiency:** period = current month → look at "Efficiency" card → if below 70% — investigate (few WOs? slow repairs?).',
+            '[ok] **Find specialization:** "Repair Types" pie chart → understand what the mechanic does fastest.',
+            '[ok] **Reconcile revenue with 1C:** if 1C integration is active — "Revenue" card shows real WO revenue for the period.',
+            '[ok] **Incident debrief:** period = incident week → recent WOs table → find specific WOs and their actual time.',
+            '[ok] **Compare two mechanics:** open page for each in separate tab → visually compare KPIs and charts.',
           ],
         },
       ],
@@ -3467,10 +3496,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Шапка** — индикатор подключения к CV-сервису (зелёный/красный) + ping в мс.',
-            '**Левая колонка:** raw-состояния постов (JSON) + состояния зон (JSON).',
-            '**Правая колонка:** список камер с их статусами и HLS-ссылками.',
-            '**Низ страницы:** прокручивающийся лог событий с миллисекундными timestamp.',
+            '[eye] **Шапка** — индикатор подключения к CV-сервису (зелёный/красный) + ping в мс.',
+            '[eye] **Левая колонка:** raw-состояния постов (JSON) + состояния зон (JSON).',
+            '[eye] **Правая колонка:** список камер с их статусами и HLS-ссылками.',
+            '[eye] **Низ страницы:** прокручивающийся лог событий с миллисекундными timestamp.',
           ],
         },
         {
@@ -3532,11 +3561,11 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**На дашборде «не то» состояние поста:** сравнить статус в БД (Dashboard) с raw-данными CV здесь → если в CV статус правильный, проблема в eventProcessor; если в CV неверно — проблема в распознавании/камере.',
-            '**Камера «не видит» машину:** найти камеру в списке → проверить, что online → открыть HLS-ссылку → визуально сверить ракурс/перекрытия.',
-            '**Машина зашла в зону, но не привязалась к посту:** в логе событий найти timestamp въезда → проверить ZoneStay/PostStay в этот момент → если CV не прислало post:occupied — проблема CV.',
-            '**Внешний CV отвалился:** красный индикатор в шапке → проверить ping → известить интегратора → temporarily переключиться в demo-режим, чтобы пользователи продолжали работать.',
-            '**Калибровка границ зон:** сравнить координаты события (камера, confidence) с реальной разметкой → передать данные команде CV.',
+            '[ok] **На дашборде «не то» состояние поста:** сравнить статус в БД (Dashboard) с raw-данными CV здесь → если в CV статус правильный, проблема в eventProcessor; если в CV неверно — проблема в распознавании/камере.',
+            '[ok] **Камера «не видит» машину:** найти камеру в списке → проверить, что online → открыть HLS-ссылку → визуально сверить ракурс/перекрытия.',
+            '[ok] **Машина зашла в зону, но не привязалась к посту:** в логе событий найти timestamp въезда → проверить ZoneStay/PostStay в этот момент → если CV не прислало post:occupied — проблема CV.',
+            '[ok] **Внешний CV отвалился:** красный индикатор в шапке → проверить ping → известить интегратора → temporarily переключиться в demo-режим, чтобы пользователи продолжали работать.',
+            '[ok] **Калибровка границ зон:** сравнить координаты события (камера, confidence) с реальной разметкой → передать данные команде CV.',
           ],
         },
       ],
@@ -3548,10 +3577,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Header** — CV connection indicator (green/red) + ping in ms.',
-            '**Left column:** raw post states (JSON) + zone states (JSON).',
-            '**Right column:** camera list with statuses and HLS links.',
-            '**Bottom of page:** scrolling event log with millisecond timestamps.',
+            '[eye] **Header** — CV connection indicator (green/red) + ping in ms.',
+            '[eye] **Left column:** raw post states (JSON) + zone states (JSON).',
+            '[eye] **Right column:** camera list with statuses and HLS links.',
+            '[eye] **Bottom of page:** scrolling event log with millisecond timestamps.',
           ],
         },
         {
@@ -3613,11 +3642,11 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Dashboard shows "wrong" post state:** compare DB status (Dashboard) with raw CV data here → if CV is correct, the issue is in eventProcessor; if CV is wrong — issue is in recognition/camera.',
-            '**Camera "does not see" a car:** find camera in list → check online → open HLS link → visually verify angle/occlusions.',
-            '**Car entered zone but didn\'t bind to post:** find entry timestamp in event log → check ZoneStay/PostStay at that moment → if CV didn\'t send post:occupied — CV issue.',
-            '**External CV down:** red indicator in header → check ping → notify integrator → temporarily switch to demo mode so users can keep working.',
-            '**Calibrate zone boundaries:** compare event coordinates (camera, confidence) with real layout → pass data to CV team.',
+            '[ok] **Dashboard shows "wrong" post state:** compare DB status (Dashboard) with raw CV data here → if CV is correct, the issue is in eventProcessor; if CV is wrong — issue is in recognition/camera.',
+            '[ok] **Camera "does not see" a car:** find camera in list → check online → open HLS link → visually verify angle/occlusions.',
+            '[ok] **Car entered zone but didn\'t bind to post:** find entry timestamp in event log → check ZoneStay/PostStay at that moment → if CV didn\'t send post:occupied — CV issue.',
+            '[ok] **External CV down:** red indicator in header → check ping → notify integrator → temporarily switch to demo mode so users can keep working.',
+            '[ok] **Calibrate zone boundaries:** compare event coordinates (camera, confidence) with real layout → pass data to CV team.',
           ],
         },
       ],
@@ -3635,10 +3664,10 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Шапка** — переключатель языка RU/EN, кнопки **«PDF»** и **«Печать»**.',
-            '**Левая панель (sticky)** — оглавление со всеми 23 разделами и поле поиска сверху.',
-            '**Центральная область** — содержимое разделов, прокручиваемое последовательно.',
-            '**Sticky-индикатор** — активный раздел подсвечивается в оглавлении при скролле.',
+            '[eye] **Шапка** — переключатель языка RU/EN, кнопки **«PDF»** и **«Печать»**.',
+            '[eye] **Левая панель (sticky)** — оглавление со всеми 23 разделами и поле поиска сверху.',
+            '[eye] **Центральная область** — содержимое разделов, прокручиваемое последовательно.',
+            '[eye] **Sticky-индикатор** — активный раздел подсвечивается в оглавлении при скролле.',
           ],
         },
         {
@@ -3699,11 +3728,11 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Онбординг нового разработчика:** дать ссылку на techDocs → пусть пройдёт по разделам сверху вниз → вопросы — потом.',
-            '**Найти эндпоинт API:** поиск → ввести часть пути (`/work-orders`) → перейти к разделу с описанием.',
-            '**Передать документацию интегратору:** **«PDF»** → отправить файл → у внешней команды офлайн-копия.',
-            '**Сверить схему БД:** раздел «База данных» → найти модель → проверить поля и связи перед миграцией.',
-            '**Понять, как работает страница:** раздел «Страницы интерфейса» → найти нужную → прочитать описание её состояний и потоков данных.',
+            '[ok] **Онбординг нового разработчика:** дать ссылку на techDocs → пусть пройдёт по разделам сверху вниз → вопросы — потом.',
+            '[ok] **Найти эндпоинт API:** поиск → ввести часть пути (`/work-orders`) → перейти к разделу с описанием.',
+            '[ok] **Передать документацию интегратору:** **«PDF»** → отправить файл → у внешней команды офлайн-копия.',
+            '[ok] **Сверить схему БД:** раздел «База данных» → найти модель → проверить поля и связи перед миграцией.',
+            '[ok] **Понять, как работает страница:** раздел «Страницы интерфейса» → найти нужную → прочитать описание её состояний и потоков данных.',
           ],
         },
       ],
@@ -3715,10 +3744,10 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Header** — RU/EN language toggle, **"PDF"** and **"Print"** buttons.',
-            '**Left panel (sticky)** — table of contents with all 23 sections and search field on top.',
-            '**Central area** — section contents, scrolled sequentially.',
-            '**Sticky indicator** — active section highlighted in TOC while scrolling.',
+            '[eye] **Header** — RU/EN language toggle, **"PDF"** and **"Print"** buttons.',
+            '[eye] **Left panel (sticky)** — table of contents with all 23 sections and search field on top.',
+            '[eye] **Central area** — section contents, scrolled sequentially.',
+            '[eye] **Sticky indicator** — active section highlighted in TOC while scrolling.',
           ],
         },
         {
@@ -3779,11 +3808,11 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Onboard a new developer:** send the techDocs link → walk through sections top to bottom → questions later.',
-            '**Find an API endpoint:** search → type part of the path (`/work-orders`) → jump to its description.',
-            '**Hand off documentation to an integrator:** **"PDF"** → send the file → external team has offline copy.',
-            '**Verify DB schema:** "Database" section → find model → check fields and relations before migration.',
-            '**Understand how a page works:** "UI Pages" section → find the page → read its states and data flows.',
+            '[ok] **Onboard a new developer:** send the techDocs link → walk through sections top to bottom → questions later.',
+            '[ok] **Find an API endpoint:** search → type part of the path (`/work-orders`) → jump to its description.',
+            '[ok] **Hand off documentation to an integrator:** **"PDF"** → send the file → external team has offline copy.',
+            '[ok] **Verify DB schema:** "Database" section → find model → check fields and relations before migration.',
+            '[ok] **Understand how a page works:** "UI Pages" section → find the page → read its states and data flows.',
           ],
         },
       ],
@@ -3801,11 +3830,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Шапка** — название поста и быстрые пресеты периода (Сегодня/Вчера/3д/7д/30д/Всё/Произвольный).',
-            '**KPI-полоса (5 карточек):** Всего | Свободен | Занят | В работе | Авто.',
-            '**Панель фильтров:** статус (Все/Свободен/Занят/В работе) + поисковая строка по госномерам и описаниям.',
-            '**Таблица событий** — Время, Статус (цветной), Госномер, Детали, Люди, Точность CV. Заголовки сортируемы.',
-            '**Модалка с карты** — компактная версия таблицы с кнопкой «Полная страница».',
+            '[eye] **Шапка** — название поста и быстрые пресеты периода (Сегодня/Вчера/3д/7д/30д/Всё/Произвольный).',
+            '[eye] **KPI-полоса (5 карточек):** Всего | Свободен | Занят | В работе | Авто.',
+            '[eye] **Панель фильтров:** статус (Все/Свободен/Занят/В работе) + поисковая строка по госномерам и описаниям.',
+            '[eye] **Таблица событий** — Время, Статус (цветной), Госномер, Детали, Люди, Точность CV. Заголовки сортируемы.',
+            '[eye] **Модалка с карты** — компактная версия таблицы с кнопкой «Полная страница».',
           ],
         },
         {
@@ -3839,7 +3868,7 @@ const HELP_CONTENT = {
           heading: 'Таблица событий',
           items: [
             '**Время** — точное время фиксации события (дата, часы, минуты, секунды).',
-            '**Статус** — цветной индикатор: зелёный (свободен), жёлтый (занят), фиолетовый (в работе), красный (простой).',
+            '**Статус** — цветной индикатор (единая палитра карты СТО): [●green]{green:зелёный} (свободен), [●orange]{orange:оранжевый} (занят), [●purple]{purple:фиолетовый} (активная работа), [●red]{red:красный} (занят без работы), [●gray]{gray:серый} (нет данных).',
             '**Госномер** — номер автомобиля (если есть), с подсветкой.',
             '**Детали** — описание работ или открытые детали (капот, двери и т.д.).',
             '**Люди** — количество людей, зафиксированных на посту.',
@@ -3865,11 +3894,11 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '**Спор по фактическим часам:** период = день инцидента → фильтр «В работе» → найти все интервалы → сложить продолжительность.',
-            '**Найти, когда машина уехала:** поиск по госномеру → отсортировать по времени → последняя запись со статусом «Занят» → дальше «Свободен» = время выезда.',
-            '**Проверить простой:** статус-фильтр → если есть длинные «Занят» без «В работе» → возможно простой → разбираться с механиком.',
-            '**Низкая точность CV (LOW):** колонка «Точность» → если много LOW — проблемы с камерой/освещением → передать интегратору.',
-            '**Открыть из карты быстро:** клик на пост → кнопка «История» → модалка → если нужно глубже, нажать «Полная страница».',
+            '[ok] **Спор по фактическим часам:** период = день инцидента → фильтр «В работе» → найти все интервалы → сложить продолжительность.',
+            '[ok] **Найти, когда машина уехала:** поиск по госномеру → отсортировать по времени → последняя запись со статусом «Занят» → дальше «Свободен» = время выезда.',
+            '[ok] **Проверить простой:** статус-фильтр → если есть длинные «Занят» без «В работе» → возможно простой → разбираться с механиком.',
+            '[ok] **Низкая точность CV (LOW):** колонка «Точность» → если много LOW — проблемы с камерой/освещением → передать интегратору.',
+            '[ok] **Открыть из карты быстро:** клик на пост → кнопка «История» → модалка → если нужно глубже, нажать «Полная страница».',
           ],
         },
       ],
@@ -3881,11 +3910,11 @@ const HELP_CONTENT = {
         {
           heading: 'Screen Map',
           items: [
-            '**Header** — post name and quick period presets (Today/Yesterday/3d/7d/30d/All/Custom).',
-            '**KPI strip (5 cards):** Total | Free | Occupied | Active | Vehicles.',
-            '**Filter bar:** status (All/Free/Occupied/Active) + text search by plate and details.',
-            '**Events table** — Time, Status (color), Plate, Details, People, CV Confidence. Headers sortable.',
-            '**Modal from map** — compact version of the table with "Full page" button.',
+            '[eye] **Header** — post name and quick period presets (Today/Yesterday/3d/7d/30d/All/Custom).',
+            '[eye] **KPI strip (5 cards):** Total | Free | Occupied | Active | Vehicles.',
+            '[eye] **Filter bar:** status (All/Free/Occupied/Active) + text search by plate and details.',
+            '[eye] **Events table** — Time, Status (color), Plate, Details, People, CV Confidence. Headers sortable.',
+            '[eye] **Modal from map** — compact version of the table with "Full page" button.',
           ],
         },
         {
@@ -3919,7 +3948,7 @@ const HELP_CONTENT = {
           heading: 'Events Table',
           items: [
             '**Time** — exact event timestamp (date, hours, minutes, seconds).',
-            '**Status** — color indicator: green (free), yellow (occupied), purple (active work), red (idle).',
+            '**Status** — color indicator (single STO map palette): [●green]{green:green} (free), [●orange]{orange:orange} (occupied), [●purple]{purple:purple} (active work), [●red]{red:red} (occupied_no_work), [●gray]{gray:gray} (no_data).',
             '**Plate** — vehicle plate number (if available), highlighted.',
             '**Details** — work description or open parts (hood, doors, etc.).',
             '**People** — number of people detected on post.',
@@ -3945,11 +3974,11 @@ const HELP_CONTENT = {
         {
           heading: 'Common Workflows',
           items: [
-            '**Dispute over actual hours:** period = incident day → filter "Active" → find all intervals → sum the duration.',
-            '**Find when a car left:** search by plate → sort by time → last "Occupied" row → next "Free" = exit time.',
-            '**Investigate idle:** status filter → if there are long "Occupied" without "Active" → possibly idle → discuss with mechanic.',
-            '**Low CV confidence (LOW):** "Confidence" column → many LOW rows → camera/lighting issue → notify integrator.',
-            '**Quick open from the map:** click post → "History" button → modal → if you need more, press "Full page".',
+            '[ok] **Dispute over actual hours:** period = incident day → filter "Active" → find all intervals → sum the duration.',
+            '[ok] **Find when a car left:** search by plate → sort by time → last "Occupied" row → next "Free" = exit time.',
+            '[ok] **Investigate idle:** status filter → if there are long "Occupied" without "Active" → possibly idle → discuss with mechanic.',
+            '[ok] **Low CV confidence (LOW):** "Confidence" column → many LOW rows → camera/lighting issue → notify integrator.',
+            '[ok] **Quick open from the map:** click post → "History" button → modal → if you need more, press "Full page".',
           ],
         },
       ],
@@ -4044,7 +4073,7 @@ function HelpSection({ section }) {
             <li key={j} className="text-xs leading-relaxed flex gap-1.5"
               style={{ color: 'var(--text-secondary)' }}>
               <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'var(--text-muted)' }} />
-              <span dangerouslySetInnerHTML={{ __html: formatBold(item) }} />
+              <span>{renderInline(item)}</span>
             </li>
           ))}
         </ul>
@@ -4053,7 +4082,74 @@ function HelpSection({ section }) {
   );
 }
 
-// Format **bold** text
-function formatBold(text) {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-primary)">$1</strong>');
+// ═══════════════════════════════════════════════
+// INLINE RENDERER — supports **bold**, [icon], [●color], {color:text}
+// ═══════════════════════════════════════════════
+
+const ICON_TOKENS = {
+  ok: { Cmp: CheckCircle2, color: '#10b981' },
+  check: { Cmp: CheckCircle2, color: '#10b981' },
+  warn: { Cmp: AlertTriangle, color: '#f59e0b' },
+  err: { Cmp: XCircle, color: '#ef4444' },
+  no: { Cmp: XCircle, color: '#ef4444' },
+  info: { Cmp: Info, color: '#3b82f6' },
+  tip: { Cmp: Lightbulb, color: '#facc15' },
+  arrow: { Cmp: ArrowRight, color: 'currentColor' },
+  bolt: { Cmp: Zap, color: '#a855f7' },
+  eye: { Cmp: Eye, color: '#3b82f6' },
+  click: { Cmp: MousePointer2, color: '#3b82f6' },
+};
+
+// Палитра соответствует карте СТО (см. constants/index.js):
+// purple = active_work (#6366f1), orange = occupied (#f59e0b), gray = no_data (#64748b)
+const SWATCH_COLORS = {
+  green: '#10b981',
+  yellow: '#facc15',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  gray: '#64748b',
+  purple: '#6366f1',
+  orange: '#f59e0b',
+};
+
+const INLINE_RE = /\*\*([^*]+)\*\*|\[(ok|check|warn|err|no|info|tip|arrow|bolt|eye|click)\]|\[●(green|yellow|red|blue|gray|purple|orange)\]|\{(green|yellow|red|blue|gray|purple|orange):([^}]+)\}/g;
+
+function renderInline(text) {
+  if (!text) return null;
+  const nodes = [];
+  let lastIdx = 0;
+  let key = 0;
+  let m;
+  INLINE_RE.lastIndex = 0;
+  while ((m = INLINE_RE.exec(text)) !== null) {
+    if (m.index > lastIdx) nodes.push(text.slice(lastIdx, m.index));
+    if (m[1]) {
+      nodes.push(<strong key={key++} style={{ color: 'var(--text-primary)' }}>{m[1]}</strong>);
+    } else if (m[2]) {
+      const cfg = ICON_TOKENS[m[2]];
+      const Ic = cfg.Cmp;
+      nodes.push(
+        <Ic key={key++} size={12} style={{
+          color: cfg.color, display: 'inline-block',
+          verticalAlign: '-2px', marginRight: 2, marginLeft: 1,
+        }} />
+      );
+    } else if (m[3]) {
+      nodes.push(
+        <span key={key++} style={{
+          display: 'inline-block', width: 8, height: 8,
+          borderRadius: '50%', background: SWATCH_COLORS[m[3]],
+          marginRight: 4, verticalAlign: 'middle',
+          boxShadow: `0 0 0 1px ${SWATCH_COLORS[m[3]]}40`,
+        }} />
+      );
+    } else if (m[4] && m[5]) {
+      nodes.push(
+        <span key={key++} style={{ color: SWATCH_COLORS[m[4]], fontWeight: 600 }}>{m[5]}</span>
+      );
+    }
+    lastIdx = INLINE_RE.lastIndex;
+  }
+  if (lastIdx < text.length) nodes.push(text.slice(lastIdx));
+  return nodes;
 }

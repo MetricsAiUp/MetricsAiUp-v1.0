@@ -283,19 +283,20 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
         {/* Idle indicator (no timer but occupied) */}
         {isIdle && !timer.text && (
           <Group>
+            {/* «Простой» = occupied_no_work = красный (#ef4444) — единая палитра карты СТО */}
             <Rect
               x={pad} y={H - 20}
               width={W - pad * 2} height={16}
-              fill={isDark ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.1)'}
+              fill={isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)'}
               cornerRadius={4}
-              stroke="rgba(234,179,8,0.3)"
+              stroke="rgba(239,68,68,0.3)"
               strokeWidth={1}
             />
             <Text
               x={pad} y={H - 19}
               width={W - pad * 2} height={14}
               text={isRu ? 'Простой' : 'Idle'}
-              fontSize={9} fontStyle="600" fill="#eab308"
+              fontSize={9} fontStyle="600" fill="#ef4444"
               fontFamily={MAP_FONT_FAMILY}
               letterSpacing={MAP_LETTER_SPACING.header}
               align="center" verticalAlign="middle"

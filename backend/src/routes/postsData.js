@@ -736,6 +736,27 @@ router.get('/dashboard-posts', async (req, res) => {
         // Открытый визит на момент конца смены/сейчас → in_progress / scheduled
         if (visit) {
           timeline.push({ ...visit, endTime: null, completed: false });
+        } else if (mp.status && mp.status !== 'free' && mp.status !== 'no_data') {
+          // Sync-fallback: текущее состояние = занят, но в истории последний кадр
+          // оказался 'free' (расхождение CV/полла). Стартом считаем последний
+          // close из таймлайна (если есть) или mp.lastUpdate, чтобы блок был виден.
+          const lastClosed = timeline[timeline.length - 1];
+          const fallbackStart = lastClosed?.endTime
+            || mp.lastUpdate
+            || new Date(Date.now() - 60_000).toISOString();
+          timeline.push({
+            start: fallbackStart,
+            end: new Date().toISOString(),
+            plate: mp.plateNumber || null,
+            brand: mp.carMake || null,
+            model: mp.carModel || null,
+            worksInProgress: !!mp.worksInProgress,
+            worksDescription: mp.worksDescription || null,
+            peopleCount: mp.peopleCount || 0,
+            confidence: mp.confidence,
+            endTime: null,
+            completed: false,
+          });
         }
 
         // Маппинг визитов в формат таймлайна.
@@ -752,7 +773,14 @@ router.get('/dashboard-posts', async (req, res) => {
           brand: v.brand,
           model: v.model,
           workType: v.worksInProgress ? 'monitoring' : null,
-          status: v.worksInProgress ? 'in_progress' : 'scheduled',
+          // Палитра карты СТО (constants/index.js):
+          //   completed (зелёный)   — визит закрыт, работы были
+          //   active_work (индиго)  — визит идёт, работы идут
+          //   occupied (оранжевый)  — визит идёт, работ нет (просто стоит)
+          //   scheduled (серый)     — визит закрыт без работ (стоял мимоходом)
+          status: v.completed
+            ? (v.worksInProgress ? 'completed' : 'scheduled')
+            : (v.worksInProgress ? 'active_work' : 'occupied'),
           startTime: v.start,
           endTime: v.endTime,
           normHours: null,
@@ -857,7 +885,29 @@ router.get('/dashboard-posts', async (req, res) => {
             visit = null;
           }
         }
-        if (visit) timeline.push({ ...visit, endTime: null, completed: false });
+        if (visit) {
+          timeline.push({ ...visit, endTime: null, completed: false });
+        } else if (mz.status && mz.status !== 'free' && mz.status !== 'no_data') {
+          // Sync-fallback (см. посты выше): зона занята «сейчас», но в истории нет
+          // открытого визита.
+          const lastClosed = timeline[timeline.length - 1];
+          const fallbackStart = lastClosed?.endTime
+            || mz.lastUpdate
+            || new Date(Date.now() - 60_000).toISOString();
+          timeline.push({
+            start: fallbackStart,
+            end: new Date().toISOString(),
+            plate: mz.plateNumber || null,
+            brand: mz.carMake || null,
+            model: mz.carModel || null,
+            worksInProgress: !!mz.worksInProgress,
+            worksDescription: mz.worksDescription || null,
+            peopleCount: mz.peopleCount || 0,
+            confidence: mz.confidence,
+            endTime: null,
+            completed: false,
+          });
+        }
 
         const tlBlocks = timeline.map((v, idx) => ({
           id: `mon-zone-${mz.zoneNumber}-${idx}`,
@@ -867,7 +917,10 @@ router.get('/dashboard-posts', async (req, res) => {
           brand: v.brand,
           model: v.model,
           workType: v.worksInProgress ? 'monitoring' : null,
-          status: v.worksInProgress ? 'in_progress' : 'scheduled',
+          // Палитра карты СТО (см. посты выше).
+          status: v.completed
+            ? (v.worksInProgress ? 'completed' : 'scheduled')
+            : (v.worksInProgress ? 'active_work' : 'occupied'),
           startTime: v.start,
           endTime: v.endTime,
           normHours: null,
@@ -891,7 +944,10 @@ router.get('/dashboard-posts', async (req, res) => {
           type: 'free',
           kind: 'zone',
           zone: mz.externalZoneName,
-          status: mz.status,
+          // Единая палитра карты СТО: зона с работами → active_work (индиго),
+          // просто занята → occupied (оранжевый), свободна → free (зелёный).
+          status: mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : (mz.status || 'free'),
+          worksInProgress: !!mz.worksInProgress,
           currentVehicle,
           worksDescription: mz.worksDescription,
           peopleCount: mz.peopleCount,

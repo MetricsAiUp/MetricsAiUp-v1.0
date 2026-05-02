@@ -10,13 +10,11 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
   const isZone = post.kind === 'zone';
   const timelineRef = useRef(null);
   const PostIcon = isZone ? MapPin : (POST_TYPE_ICONS[post.type] || Car);
-  const postStatusColor = post.status === 'free'
-    ? POST_STATUS_COLORS.free
-    : post.status === 'no_data'
-      ? POST_STATUS_COLORS.unknown
-      : post.currentVehicle
-        ? POST_STATUS_COLORS.occupied
-        : POST_STATUS_COLORS.unknown;
+  // Цвет точки-индикатора — единая палитра карты СТО:
+  // free/active_work/occupied_no_work/occupied/no_data
+  const postStatusColor =
+    POST_STATUS_COLORS[post.status]
+    || (post.currentVehicle ? POST_STATUS_COLORS.occupied : POST_STATUS_COLORS.unknown);
 
   const isDropTarget = dragOverPostId === post.id;
 

@@ -4,9 +4,20 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   Clock, AlertTriangle, Settings, Save, Check,
   CircleDot, Timer, FileText, Calendar, ArrowRight, Car,
-  MapPin, HelpCircle,
+  MapPin, HelpCircle, CheckCircle2, Square, Zap, Wrench,
 } from 'lucide-react';
 import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
+import { POST_STATUS_COLORS } from '../constants';
+
+// hex → rgba для цветных подложек KPI-плиток
+function hexA(hex, a) {
+  if (!hex || !hex.startsWith('#')) return hex;
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
 import GanttTimeline from '../components/dashboardPosts/GanttTimeline';
 import ShiftSettings, { getTodayShift } from '../components/dashboardPosts/ShiftSettings';
 import WorkOrderModal from '../components/dashboardPosts/WorkOrderModal';
@@ -454,48 +465,56 @@ export default function DashboardPosts() {
         </Link>
       )}
 
-      {/* Summary stats */}
+      {/* Summary stats — единая палитра карты СТО:
+          occupied (Занято)=оранжевый, free (Свободно)=зелёный,
+          no_data=серый, completed=зелёный, overdue=красный, turbo=индиго. */}
       {elVis('headerStats') && <div className="flex flex-wrap gap-2">
         {[
-          { label: isRu ? 'Постов занято' : 'Posts occupied', value: stats.occupied, color: 'var(--accent)', icon: CircleDot,
+          { label: isRu ? 'Постов занято' : 'Posts occupied', value: stats.occupied, color: POST_STATUS_COLORS.occupied, icon: Square, tinted: true,
             tip: isRu ? 'Количество постов, на которых сейчас находится автомобиль' : 'Number of posts currently occupied by a vehicle' },
-          { label: isRu ? 'Постов свободно' : 'Posts free', value: stats.free, color: 'var(--warning)', icon: CircleDot,
+          { label: isRu ? 'Постов свободно' : 'Posts free', value: stats.free, color: POST_STATUS_COLORS.free, icon: CheckCircle2, tinted: true,
             tip: isRu ? 'Количество свободных постов, готовых принять авто' : 'Number of free posts ready to accept a vehicle' },
-          ...(stats.noData > 0 ? [{ label: isRu ? 'Нет данных' : 'No data', value: stats.noData, color: 'var(--text-muted)', icon: HelpCircle,
+          ...(stats.noData > 0 ? [{ label: isRu ? 'Нет данных' : 'No data', value: stats.noData, color: POST_STATUS_COLORS.no_data, icon: HelpCircle, tinted: true,
             tip: isRu ? 'Посты, по которым CV-система не передаёт данные' : 'Posts with no data from the CV system' }] : []),
           { sep: true },
-          { label: isRu ? 'Зон занято' : 'Zones occupied', value: stats.zonesOccupied, color: 'var(--accent)', icon: MapPin,
+          { label: isRu ? 'Зон занято' : 'Zones occupied', value: stats.zonesOccupied, color: POST_STATUS_COLORS.occupied, icon: MapPin, tinted: true,
             tip: isRu ? 'Количество свободных зон ожидания/парковки, в которых сейчас стоит авто' : 'Number of waiting/parking zones currently occupied' },
-          { label: isRu ? 'Зон свободно' : 'Zones free', value: stats.zonesFree, color: 'var(--warning)', icon: MapPin,
+          { label: isRu ? 'Зон свободно' : 'Zones free', value: stats.zonesFree, color: POST_STATUS_COLORS.free, icon: MapPin, tinted: true,
             tip: isRu ? 'Количество свободных зон ожидания/парковки' : 'Number of free waiting/parking zones' },
           { sep: true },
-          { label: isRu ? '\u0412\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043e \u0417\u041d' : 'Completed WO', value: stats.completedWO, color: 'var(--success)', icon: FileText,
-            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u0445 \u0437\u0430\u043a\u0430\u0437-\u043d\u0430\u0440\u044f\u0434\u043e\u0432 (\u0438\u0437 1\u0421) \u0437\u0430 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0441\u043c\u0435\u043d\u0443' : 'Number of completed work orders (from 1C) this shift' },
-          ...(isLive ? [{ label: isRu ? '\u0417\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e \u0432\u0438\u0437\u0438\u0442\u043e\u0432' : 'Completed visits', value: stats.completedVisits, color: 'var(--accent)', icon: Car,
-            tip: isRu ? '\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0437\u0430\u043a\u0440\u044b\u0442\u044b\u0445 \u0432\u0438\u0437\u0438\u0442\u043e\u0432 \u043f\u043e \u0434\u0430\u043d\u043d\u044b\u043c CV-\u0441\u0438\u0441\u0442\u0435\u043c\u044b (\u0430\u0432\u0442\u043e \u043f\u0440\u0438\u0435\u0445\u0430\u043b\u043e \u2192 \u0443\u0435\u0445\u0430\u043b\u043e). \u041d\u0435 \u043f\u0443\u0442\u0430\u0442\u044c \u0441 \u0417\u041d \u2014 \u044d\u0442\u043e \u0440\u0430\u0437\u043d\u044b\u0435 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438' : 'Number of closed visits per CV system (vehicle arrived \u2192 left). Not the same as work orders' }] : []),
-          { label: isRu ? '\u041d\u043e\u0440\u043c\u043e-\u0447\u0430\u0441\u044b' : 'Norm hours', value: stats.totalNormHours, color: 'var(--text-primary)', icon: Clock,
-            tip: isRu ? '\u0421\u0443\u043c\u043c\u0430 \u043d\u043e\u0440\u043c\u043e-\u0447\u0430\u0441\u043e\u0432 \u043f\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u043c \u0437\u0430\u043a\u0430\u0437-\u043d\u0430\u0440\u044f\u0434\u0430\u043c' : 'Total norm hours from completed work orders' },
-          { label: isRu ? '\u041f\u0440\u043e\u0441\u0442\u043e\u0439' : 'Idle time', value: stats.idleTime, color: 'var(--text-muted)', icon: Timer,
-            tip: isRu ? '\u0421\u0443\u043c\u043c\u0430\u0440\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f, \u043a\u043e\u0433\u0434\u0430 \u043f\u043e\u0441\u0442\u044b \u0431\u044b\u043b\u0438 \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u044b \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0435 \u0441\u043c\u0435\u043d\u044b' : 'Total time posts were idle during the shift' },
+          { label: isRu ? 'Выполнено ЗН' : 'Completed WO', value: stats.completedWO, color: POST_STATUS_COLORS.free, icon: FileText, tinted: true,
+            tip: isRu ? 'Количество завершённых заказ-нарядов (из 1С) за текущую смену' : 'Number of completed work orders (from 1C) this shift' },
+          ...(isLive ? [{ label: isRu ? 'Завершено визитов' : 'Completed visits', value: stats.completedVisits, color: POST_STATUS_COLORS.active_work, icon: Car, tinted: true,
+            tip: isRu ? 'Количество закрытых визитов по данным CV-системы (авто приехало → уехало). Не путать с ЗН — это разные сущности' : 'Number of closed visits per CV system (vehicle arrived → left). Not the same as work orders' }] : []),
+          { label: isRu ? 'Нормо-часы' : 'Norm hours', value: stats.totalNormHours, color: 'var(--text-primary)', icon: Clock,
+            tip: isRu ? 'Сумма нормо-часов по завершённым заказ-нарядам' : 'Total norm hours from completed work orders' },
+          { label: isRu ? 'Простой' : 'Idle time', value: stats.idleTime, color: POST_STATUS_COLORS.occupied_no_work, icon: Timer, tinted: true,
+            tip: isRu ? 'Суммарное время, когда посты были свободны в течение смены' : 'Total time posts were idle during the shift' },
           // «Просрочка» считается из estimatedEnd ЗН. В live-режиме у визитов нет
           // estimatedEnd → всегда 0м, поэтому скрываем.
-          ...(isLive ? [] : [{ label: isRu ? '\u041f\u0440\u043e\u0441\u0440\u043e\u0447\u043a\u0430' : 'Overdue', value: stats.overdueTime, color: 'var(--danger)', icon: AlertTriangle,
-            tip: isRu ? '\u0421\u0443\u043c\u043c\u0430\u0440\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f \u0437\u0430\u0434\u0435\u0440\u0436\u043a\u0438 \u2014 \u0440\u0430\u0431\u043e\u0442\u044b \u0438\u0434\u0443\u0442 \u0434\u043e\u043b\u044c\u0448\u0435 \u0437\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0433\u043e' : 'Total overdue time \u2014 work taking longer than planned' }]),
-          { label: isRu ? '\u0422\u0443\u0440\u0431\u043e' : 'Turbo', value: stats.savedTime, color: 'var(--success)', icon: ArrowRight,
-            tip: isRu ? '\u0421\u044d\u043a\u043e\u043d\u043e\u043c\u043b\u0435\u043d\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f \u2014 \u0440\u0430\u0431\u043e\u0442\u044b \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u044b \u0431\u044b\u0441\u0442\u0440\u0435\u0435 \u043d\u043e\u0440\u043c\u043e-\u0447\u0430\u0441\u043e\u0432' : 'Saved time \u2014 work completed faster than norm hours' },
+          ...(isLive ? [] : [{ label: isRu ? 'Просрочка' : 'Overdue', value: stats.overdueTime, color: POST_STATUS_COLORS.occupied_no_work, icon: AlertTriangle, tinted: true,
+            tip: isRu ? 'Суммарное время задержки — работы идут дольше запланированного' : 'Total overdue time — work taking longer than planned' }]),
+          { label: isRu ? 'Турбо' : 'Turbo', value: stats.savedTime, color: POST_STATUS_COLORS.free, icon: Zap, tinted: true,
+            tip: isRu ? 'Сэкономленное время — работы выполнены быстрее нормо-часов' : 'Saved time — work completed faster than norm hours' },
         ].map((card, i) => card.sep ? (
-          <div key={i} style={{ width: 1, background: 'var(--border-glass)', alignSelf: 'stretch' }} />
+          <div key={i} style={{ width: 1, background: 'var(--border-glass)', alignSelf: 'stretch', margin: '0 4px' }} />
         ) : (
           <div
             key={i}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg relative group"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg relative group transition-all hover:translate-y-[-1px]"
+            style={card.tinted && card.color?.startsWith('#') ? {
+              background: hexA(card.color, 0.10),
+              border: `1px solid ${hexA(card.color, 0.28)}`,
+            } : {
+              background: 'var(--bg-glass)',
+              border: '1px solid var(--border-glass)',
+            }}
           >
             <div className="absolute top-full left-0 mt-1 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg"
               style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 220, fontSize: '12px', lineHeight: 1.4 }}>
               {card.tip}
             </div>
-            <card.icon size={11} style={{ color: card.color }} />
+            <card.icon size={12} strokeWidth={2.5} style={{ color: card.color, flexShrink: 0 }} />
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{card.label}</span>
             <span className="text-sm font-bold" style={{ color: card.color }}>{card.value}</span>
           </div>

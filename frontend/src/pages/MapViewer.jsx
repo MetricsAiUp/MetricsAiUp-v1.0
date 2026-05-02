@@ -868,12 +868,14 @@ export default function MapViewer() {
   }
   const loadPct = totalPosts > 0 ? Math.round((occupiedPosts / totalPosts) * 100) : 0;
 
+  // Цвета KPI — единая палитра карты СТО (POST_STATUS_COLORS):
+  // free=зелёный, occupied=оранжевый, active_work=индиго, occupied_no_work=красный
   const stats = [
     { label: isRu ? 'Всего' : 'Total', value: totalPosts, color: 'var(--text-primary)' },
-    { label: isRu ? 'Занято' : 'Occupied', value: occupiedPosts, color: 'var(--danger)' },
-    { label: isRu ? 'Свободно' : 'Free', value: freePosts, color: 'var(--success)' },
-    { label: isRu ? 'В работе' : 'Active', value: activeWork, color: 'var(--accent)' },
-    { label: isRu ? 'Простой' : 'Idle', value: idle, color: 'var(--warning)' },
+    { label: isRu ? 'Занято' : 'Occupied', value: occupiedPosts, color: POST_STATUS_COLORS.occupied },
+    { label: isRu ? 'Свободно' : 'Free', value: freePosts, color: POST_STATUS_COLORS.free },
+    { label: isRu ? 'В работе' : 'Active', value: activeWork, color: POST_STATUS_COLORS.active_work },
+    { label: isRu ? 'Простой' : 'Idle', value: idle, color: POST_STATUS_COLORS.occupied_no_work },
     { label: isRu ? 'Авто' : 'Cars', value: totalVehicles, color: 'var(--info)' },
     { label: isRu ? 'Загрузка' : 'Load', value: `${loadPct}%`, color: loadPct >= 70 ? 'var(--success)' : loadPct >= 30 ? 'var(--warning)' : 'var(--danger)' },
   ];
@@ -1403,12 +1405,13 @@ function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, i
 
         {isIdle && (
           <Group>
+            {/* «Простой» = occupied_no_work = красный (#ef4444) — единая палитра карты СТО */}
             <Rect x={pad} y={h - 16} width={innerW} height={13}
-              fill={isDark ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.1)'}
-              cornerRadius={3} stroke="rgba(234,179,8,0.3)" strokeWidth={1} />
+              fill={isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)'}
+              cornerRadius={3} stroke="rgba(239,68,68,0.3)" strokeWidth={1} />
             <Text x={pad} y={h - 15} width={innerW} height={11}
               text={isRu ? 'Простой' : 'Idle'}
-              fontSize={fs.detail} fontStyle="600" fill="#eab308"
+              fontSize={fs.detail} fontStyle="600" fill="#ef4444"
               fontFamily={MAP_FONT_FAMILY}
               letterSpacing={MAP_LETTER_SPACING.header}
               align="center" verticalAlign="middle" />

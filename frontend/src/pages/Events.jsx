@@ -16,7 +16,7 @@ const EVENT_META = {
   vehicle_left_zone: { ru: 'Выезд из зоны', en: 'Left zone', color: '#f59e0b', icon: LogOut, group: 'vehicle' },
   vehicle_moving: { ru: 'Движение', en: 'Moving', color: '#3b82f6', icon: Move, group: 'vehicle' },
   vehicle_waiting: { ru: 'Ожидание', en: 'Waiting', color: '#8b5cf6', icon: Clock, group: 'vehicle' },
-  post_occupied: { ru: 'Пост занят', en: 'Post occupied', color: '#ef4444', icon: Square, group: 'post' },
+  post_occupied: { ru: 'Пост занят', en: 'Post occupied', color: '#f59e0b', icon: Square, group: 'post' },
   post_vacated: { ru: 'Пост свободен', en: 'Post free', color: '#10b981', icon: SquareCheck, group: 'post' },
   worker_present: { ru: 'Работник пришёл', en: 'Worker present', color: '#14b8a6', icon: UserCheck, group: 'worker' },
   worker_absent: { ru: 'Работник ушёл', en: 'Worker absent', color: '#f97316', icon: UserX, group: 'worker' },

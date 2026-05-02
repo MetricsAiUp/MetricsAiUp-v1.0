@@ -10,19 +10,13 @@ import {
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import { translateWorksDesc } from '../utils/translate';
+import { POST_STATUS_COLORS } from '../constants';
 
 // ── Status helpers ──────────────────────────────────────────────────
-const STATUS_COLORS = {
-  free: '#10b981',
-  occupied: '#f59e0b',
-  active_work: '#6366f1',
-  occupied_no_work: '#ef4444',
-};
-
 const CONFIDENCE_COLORS = { HIGH: '#10b981', MEDIUM: '#f59e0b', LOW: '#ef4444' };
 
 function StatusDot({ status }) {
-  return <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: STATUS_COLORS[status] || '#94a3b8' }} />;
+  return <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: POST_STATUS_COLORS[status] || POST_STATUS_COLORS.no_data }} />;
 }
 
 function ConfidenceBadge({ confidence }) {
@@ -362,9 +356,9 @@ export default function PostHistory() {
 
   const STATUS_OPTIONS = [
     { key: 'all', label: isRu ? 'Все' : 'All' },
-    { key: 'free', label: isRu ? 'Свободен' : 'Free', color: STATUS_COLORS.free },
-    { key: 'occupied', label: isRu ? 'Занят' : 'Occupied', color: STATUS_COLORS.occupied },
-    { key: 'active_work', label: isRu ? 'В работе' : 'Active', color: STATUS_COLORS.active_work },
+    { key: 'free', label: isRu ? 'Свободен' : 'Free', color: POST_STATUS_COLORS.free },
+    { key: 'occupied', label: isRu ? 'Занят' : 'Occupied', color: POST_STATUS_COLORS.occupied },
+    { key: 'active_work', label: isRu ? 'В работе' : 'Active', color: POST_STATUS_COLORS.active_work },
   ];
 
   // ── Render ────────────────────────────────────────────────────
@@ -418,9 +412,9 @@ export default function PostHistory() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: isRu ? 'Всего' : 'Total', value: stats.total, color: 'var(--accent)' },
-          { label: isRu ? 'Свободен' : 'Free', value: stats.free, color: STATUS_COLORS.free },
-          { label: isRu ? 'Занят' : 'Occupied', value: stats.occupied, color: STATUS_COLORS.occupied },
-          { label: isRu ? 'В работе' : 'Active', value: stats.activeWork, color: STATUS_COLORS.active_work },
+          { label: isRu ? 'Свободен' : 'Free', value: stats.free, color: POST_STATUS_COLORS.free },
+          { label: isRu ? 'Занят' : 'Occupied', value: stats.occupied, color: POST_STATUS_COLORS.occupied },
+          { label: isRu ? 'В работе' : 'Active', value: stats.activeWork, color: POST_STATUS_COLORS.active_work },
           { label: isRu ? 'Авто' : 'Vehicles', value: stats.uniquePlates, color: 'var(--info)' },
         ].map((s, i) => (
           <div key={i} className="glass-static rounded-xl p-3 text-center">
@@ -548,7 +542,7 @@ export default function PostHistory() {
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         <StatusDot status={resolvedStatus} />
-                        <span style={{ color: STATUS_COLORS[resolvedStatus] || 'var(--text-secondary)' }}>
+                        <span style={{ color: POST_STATUS_COLORS[resolvedStatus] || 'var(--text-secondary)' }}>
                           {statusLabel(resolvedStatus, item.eventType)}
                         </span>
                       </div>
@@ -791,8 +785,8 @@ export function ZoneHistory() {
 
   const STATUS_OPTIONS = [
     { key: 'all', label: isRu ? 'Все' : 'All' },
-    { key: 'free', label: isRu ? 'Свободен' : 'Free', color: STATUS_COLORS.free },
-    { key: 'occupied', label: isRu ? 'Занят' : 'Occupied', color: STATUS_COLORS.occupied },
+    { key: 'free', label: isRu ? 'Свободен' : 'Free', color: POST_STATUS_COLORS.free },
+    { key: 'occupied', label: isRu ? 'Занят' : 'Occupied', color: POST_STATUS_COLORS.occupied },
   ];
 
   return (
@@ -834,9 +828,9 @@ export function ZoneHistory() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: isRu ? 'Всего' : 'Total', value: stats.total, color: 'var(--accent)' },
-          { label: isRu ? 'Свободен' : 'Free', value: stats.free, color: STATUS_COLORS.free },
-          { label: isRu ? 'Занят' : 'Occupied', value: stats.occupied, color: STATUS_COLORS.occupied },
-          { label: isRu ? 'В работе' : 'Active', value: stats.activeWork, color: STATUS_COLORS.active_work },
+          { label: isRu ? 'Свободен' : 'Free', value: stats.free, color: POST_STATUS_COLORS.free },
+          { label: isRu ? 'Занят' : 'Occupied', value: stats.occupied, color: POST_STATUS_COLORS.occupied },
+          { label: isRu ? 'В работе' : 'Active', value: stats.activeWork, color: POST_STATUS_COLORS.active_work },
           { label: isRu ? 'Авто' : 'Vehicles', value: stats.uniquePlates, color: 'var(--info)' },
         ].map((s, i) => (
           <div key={i} className="glass-static rounded-xl p-3 text-center">
@@ -929,7 +923,7 @@ export function ZoneHistory() {
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         <StatusDot status={resolvedStatus} />
-                        <span style={{ color: STATUS_COLORS[resolvedStatus] || 'var(--text-secondary)' }}>{statusLabel(resolvedStatus)}</span>
+                        <span style={{ color: POST_STATUS_COLORS[resolvedStatus] || 'var(--text-secondary)' }}>{statusLabel(resolvedStatus)}</span>
                       </div>
                     </td>
                     <td className="px-3 py-2">
@@ -1052,9 +1046,9 @@ export function PostHistoryModal({ postNumber, historyData, onClose, onOpenFullP
           </button>
           {[
             { key: 'all', label: isRu ? 'Все' : 'All' },
-            { key: 'free', label: isRu ? 'Свободен' : 'Free', color: STATUS_COLORS.free },
-            { key: 'occupied', label: isRu ? 'Занят' : 'Occupied', color: STATUS_COLORS.occupied },
-            { key: 'active_work', label: isRu ? 'Работа' : 'Work', color: STATUS_COLORS.active_work },
+            { key: 'free', label: isRu ? 'Свободен' : 'Free', color: POST_STATUS_COLORS.free },
+            { key: 'occupied', label: isRu ? 'Занят' : 'Occupied', color: POST_STATUS_COLORS.occupied },
+            { key: 'active_work', label: isRu ? 'Работа' : 'Work', color: POST_STATUS_COLORS.active_work },
           ].map(opt => (
             <button key={opt.key}
               onClick={() => setStatusFilter(opt.key)}
@@ -1093,7 +1087,7 @@ export function PostHistoryModal({ postNumber, historyData, onClose, onOpenFullP
                 <span className="text-xs font-mono whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
                   {formatTime(item.timestamp)}
                 </span>
-                <span className="text-xs font-medium" style={{ color: STATUS_COLORS[status] || 'var(--text-secondary)' }}>
+                <span className="text-xs font-medium" style={{ color: POST_STATUS_COLORS[status] || 'var(--text-secondary)' }}>
                   {status === 'free' ? (isRu ? 'Свободен' : 'Free')
                     : status === 'active_work' ? (isRu ? 'В работе' : 'Active')
                     : (isRu ? 'Занят' : 'Occupied')}

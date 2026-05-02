@@ -8,6 +8,7 @@ import {
   ChevronDown, Users, PenTool, MapPin, Clock, Shield, Wrench, Activity,
   FileSpreadsheet, BookOpen, Bug,
 } from 'lucide-react';
+import { POST_STATUS_COLORS } from '../constants';
 
 
 const navItems = [
@@ -178,12 +179,15 @@ export default function Sidebar() {
                       });
                       const status = livePost?.status ?? post.status;
                       const isNoData = status === 'no_data';
-                      // Canonical scheme: free → green, occupied/active_work → red, no_data → dashed
+                      // Единая палитра карты СТО (POST_STATUS_COLORS):
+                      // free=зелёный, occupied=оранжевый, active_work=индиго,
+                      // occupied_no_work=красный, no_data=пунктир.
                       // В demo-режиме fallback на "был ли сегодня загружен" (loadPercent > 0).
-                      const isOccupied = !isNoData && (livePost
-                        ? livePost.status !== 'free'
-                        : post.today?.loadPercent > 0);
-                      const isFree = !isNoData && !isOccupied;
+                      const fallbackOccupied = !livePost && (post.today?.loadPercent > 0);
+                      const dotColor = isNoData
+                        ? null
+                        : (POST_STATUS_COLORS[status]
+                          || (fallbackOccupied ? POST_STATUS_COLORS.occupied : POST_STATUS_COLORS.free));
                       const noDataTitle = isRu
                         ? 'Нет данных от CV-системы. Пост существует в БД и на карте, но не репортится.'
                         : 'No data from CV system. Post exists in DB and map but is not reported.';
@@ -206,7 +210,7 @@ export default function Sidebar() {
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                             style={isNoData
                               ? { background: 'transparent', border: '1px dashed var(--text-muted)' }
-                              : { background: isOccupied ? 'var(--danger)' : isFree ? 'var(--success)' : 'var(--text-muted)' }
+                              : { background: dotColor }
                             }
                           />
                           <span className="truncate">{(() => {
@@ -224,7 +228,9 @@ export default function Sidebar() {
                     })}
                     {/* Separator */}
                     <div className="my-1 mx-2 border-t" style={{ borderColor: 'var(--border-glass)' }} />
-                    {/* Zones */}
+                    {/* Zones — палитра как на карте СТО:
+                        free=зелёный, occupied (Занята)=оранжевый,
+                        worksInProgress (Работы)=индиго (active_work). */}
                     {ZONE_ITEMS.map(zone => {
                       const isSelected = location.search.includes(zone.id);
                       const liveZone = liveData?.freeZones?.find(z => {
@@ -232,6 +238,10 @@ export default function Sidebar() {
                         return n === zone.number;
                       });
                       const isOccupied = liveZone ? liveZone.status === 'occupied' : false;
+                      const hasWork = !!liveZone?.worksInProgress;
+                      const zoneDotColor = !isOccupied
+                        ? POST_STATUS_COLORS.free
+                        : hasWork ? POST_STATUS_COLORS.active_work : POST_STATUS_COLORS.occupied;
                       return (
                         <button
                           key={zone.id}
@@ -246,7 +256,7 @@ export default function Sidebar() {
                         >
                           <div
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: isOccupied ? 'var(--danger)' : 'var(--success)' }}
+                            style={{ background: zoneDotColor }}
                           />
                           <span className="truncate">{isRu ? `Зона ${String(zone.number).padStart(2, '0')}` : `Zone ${String(zone.number).padStart(2, '0')}`}</span>
                         </button>
