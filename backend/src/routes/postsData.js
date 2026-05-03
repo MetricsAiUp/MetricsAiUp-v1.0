@@ -102,6 +102,21 @@ function postTypeOf(postsMap, number) {
   return postsMap.get(number)?.type || 'light';
 }
 
+// Источник истины для типа поста в live-режиме — внешняя CV-разметка
+// (externalZoneName: «Пост 01 — легковое», «Пост 06 — шиномонтаж» и т.д.).
+// БД seed-ит heavy/light/special по номерам, что расходится с реальностью СТО,
+// поэтому в live-ветках бейдж типа выводим из CV-имени, а БД — fallback.
+function deriveTypeFromZoneName(externalZoneName, fallback = 'light') {
+  if (!externalZoneName) return fallback;
+  const s = String(externalZoneName).toLowerCase();
+  if (s.includes('шиномонтаж') || s.includes('развал') || s.includes('оклей') || s.includes('стекл')) {
+    return 'special';
+  }
+  if (s.includes('грузово')) return 'heavy';   // включая «легковое/грузовое»
+  if (s.includes('легково')) return 'light';
+  return fallback;
+}
+
 // Резолв имени зоны (отображаемого) для поста.
 function postZoneOf(postsMap, number) {
   const p = postsMap.get(number);
@@ -406,7 +421,7 @@ router.get('/posts-analytics', async (req, res) => {
           name: postDisplayName(postsMap, mp.postNumber),
           displayName: dbPost?.displayName || null,
           displayNameEn: dbPost?.displayNameEn || null,
-          type: postTypeOf(postsMap, mp.postNumber),
+          type: deriveTypeFromZoneName(mp.externalZoneName, postTypeOf(postsMap, mp.postNumber)),
           zone: mp.externalZoneName,
           status: effectiveStatus,
           maxCapacityHours: shiftBounds.maxH,
@@ -918,7 +933,7 @@ router.get('/dashboard-posts', async (req, res) => {
           name: postDisplayName(postsMap, mp.postNumber),
           displayName: dbPost?.displayName || null,
           displayNameEn: dbPost?.displayNameEn || null,
-          type: postTypeOf(postsMap, mp.postNumber),
+          type: deriveTypeFromZoneName(mp.externalZoneName, postTypeOf(postsMap, mp.postNumber)),
           zone: mp.externalZoneName,
           status: effectiveStatus,
           currentVehicle,
