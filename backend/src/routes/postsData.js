@@ -833,25 +833,38 @@ router.get('/dashboard-posts', async (req, res) => {
           }
         } else if (!freshness.stale && mp.status && mp.status !== 'free' && mp.status !== 'no_data') {
           // Sync-fallback: текущее состояние = занят, но в истории последний кадр
-          // оказался 'free' (расхождение CV/полла). Используем только когда данные
-          // свежие — иначе мы рисуем призрак на момент часовой давности.
-          const lastClosed = timeline[timeline.length - 1];
-          const fallbackStart = lastClosed?.endTime
-            || mp.lastUpdate
-            || new Date(timelineNowMs - 60_000).toISOString();
-          timeline.push({
-            start: fallbackStart,
-            end: timelineNowIso,
-            plate: mp.plateNumber || null,
-            brand: mp.carMake || null,
-            model: mp.carModel || null,
-            worksInProgress: !!mp.worksInProgress,
-            worksDescription: mp.worksDescription || null,
-            peopleCount: mp.peopleCount || 0,
-            confidence: mp.confidence,
-            endTime: null,
-            completed: false,
-          });
+          // оказался 'free' (расхождение CV/полла). Используем только когда:
+          //   1) глобальные данные свежие;
+          //   2) mp.lastUpdate попадает в текущую смену (иначе мы рисуем
+          //      «призрак» от утра до вечера, когда CV-событие случилось вне
+          //      smen'ы — например после 22:00, при shift 08:00–22:00);
+          //   3) lastUpdate свежее GAP_THRESHOLD относительно «сейчас».
+          const lastUpdMs = mp.lastUpdate ? new Date(mp.lastUpdate).getTime() : 0;
+          const inShift = lastUpdMs >= shiftBounds.shiftStart && lastUpdMs <= shiftBounds.shiftEnd;
+          const lastUpdFresh = lastUpdMs > 0 && (Date.now() - lastUpdMs) <= GAP_THRESHOLD_MS;
+          if (inShift && lastUpdFresh) {
+            const lastClosed = timeline[timeline.length - 1];
+            const lastClosedEnd = lastClosed?.endTime ? new Date(lastClosed.endTime).getTime() : 0;
+            // fallbackStart — не раньше lastUpdate (избегаем «протяжки» от утра),
+            // но не раньше последнего closed-визита.
+            const fbStartMs = Math.max(lastUpdMs, lastClosedEnd);
+            const fbEndMs = Math.min(timelineNowMs, shiftBounds.shiftEnd);
+            if (fbEndMs > fbStartMs) {
+              timeline.push({
+                start: new Date(fbStartMs).toISOString(),
+                end: new Date(fbEndMs).toISOString(),
+                plate: mp.plateNumber || null,
+                brand: mp.carMake || null,
+                model: mp.carModel || null,
+                worksInProgress: !!mp.worksInProgress,
+                worksDescription: mp.worksDescription || null,
+                peopleCount: mp.peopleCount || 0,
+                confidence: mp.confidence,
+                endTime: null,
+                completed: false,
+              });
+            }
+          }
         }
 
         // Маппинг визитов в формат таймлайна.
@@ -999,25 +1012,32 @@ router.get('/dashboard-posts', async (req, res) => {
             timeline.push({ ...visit, endTime: new Date(prevTs).toISOString(), completed: true });
           }
         } else if (!freshness.stale && mz.status && mz.status !== 'free' && mz.status !== 'no_data') {
-          // Sync-fallback (см. посты выше): зона занята «сейчас», но в истории нет
-          // открытого визита. Только при свежих данных.
-          const lastClosed = timeline[timeline.length - 1];
-          const fallbackStart = lastClosed?.endTime
-            || mz.lastUpdate
-            || new Date(timelineNowMs - 60_000).toISOString();
-          timeline.push({
-            start: fallbackStart,
-            end: timelineNowIso,
-            plate: mz.plateNumber || null,
-            brand: mz.carMake || null,
-            model: mz.carModel || null,
-            worksInProgress: !!mz.worksInProgress,
-            worksDescription: mz.worksDescription || null,
-            peopleCount: mz.peopleCount || 0,
-            confidence: mz.confidence,
-            endTime: null,
-            completed: false,
-          });
+          // Sync-fallback (см. посты выше): рисуем только если lastUpdate
+          // попадает в текущую смену И свежее GAP_THRESHOLD относительно «сейчас».
+          const lastUpdMs = mz.lastUpdate ? new Date(mz.lastUpdate).getTime() : 0;
+          const inShift = lastUpdMs >= shiftBounds.shiftStart && lastUpdMs <= shiftBounds.shiftEnd;
+          const lastUpdFresh = lastUpdMs > 0 && (Date.now() - lastUpdMs) <= GAP_THRESHOLD_MS;
+          if (inShift && lastUpdFresh) {
+            const lastClosed = timeline[timeline.length - 1];
+            const lastClosedEnd = lastClosed?.endTime ? new Date(lastClosed.endTime).getTime() : 0;
+            const fbStartMs = Math.max(lastUpdMs, lastClosedEnd);
+            const fbEndMs = Math.min(timelineNowMs, shiftBounds.shiftEnd);
+            if (fbEndMs > fbStartMs) {
+              timeline.push({
+                start: new Date(fbStartMs).toISOString(),
+                end: new Date(fbEndMs).toISOString(),
+                plate: mz.plateNumber || null,
+                brand: mz.carMake || null,
+                model: mz.carModel || null,
+                worksInProgress: !!mz.worksInProgress,
+                worksDescription: mz.worksDescription || null,
+                peopleCount: mz.peopleCount || 0,
+                confidence: mz.confidence,
+                endTime: null,
+                completed: false,
+              });
+            }
+          }
         }
 
         const tlBlocks = timeline.map((v, idx) => ({
