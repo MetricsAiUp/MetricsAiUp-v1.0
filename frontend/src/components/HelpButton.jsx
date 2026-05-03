@@ -108,6 +108,16 @@ const HELP_CONTENT = {
           ],
         },
         {
+          heading: 'Устаревшие данные (stale)',
+          items: [
+            '[●red]{red:Красный} баннер **StaleDataBanner** появляется, если последний апдейт от внешнего CV старше **1 часа**. KPI и графики продолжают рендериться, но снабжены пометкой «данные устарели Xч Yмин назад».',
+            '[warn] Появление баннера = **сигнал инженеру**: проверить статус MonitoringProxy на странице LiveDebug.',
+            '[●orange]{orange:Оранжевый} **gap-разрыв ≥ 5 мин** в таймлайне поста закрывает текущий «визит» — пустые часы НЕ дорисовываются как продолжение последнего состояния.',
+            '[●green]{green:Зелёный} = свежие данные (< 5 мин с lastUpdate) — дорисовка sync-fallback активна, текущий визит виден до момента «сейчас».',
+            'Подробнее — раздел 24 «Мониторинг и Live-режим» в TechDocs.',
+          ],
+        },
+        {
           heading: 'Типичные сценарии',
           items: [
             '[ok] **Утренний осмотр** — открыли страницу → проверили рекомендации (если есть — обработать) → перешли в Таймлайн постов для планирования смены.',
@@ -209,6 +219,16 @@ const HELP_CONTENT = {
             '**Live mode** — Socket.IO, instant updates on changes.',
             'On connection loss — **yellow indicator** in header + frozen data (shows last known state).',
             'On reconnect — automatic re-sync, indicator turns green.',
+          ],
+        },
+        {
+          heading: 'Stale Data',
+          items: [
+            '[●red]{red:Red} **StaleDataBanner** appears if the last external CV update is older than **1 hour**. KPIs and charts keep rendering but are tagged "data is stale Xh Ymin ago".',
+            '[warn] Banner shown = **signal to engineer**: check MonitoringProxy status on LiveDebug page.',
+            '[●orange]{orange:Orange} **gap ≥ 5 min** in a post timeline closes the current "visit" — empty hours are NOT extended as continuation of the last state.',
+            '[●green]{green:Green} = fresh data (< 5 min since lastUpdate) — sync-fallback drawing is active, current visit visible up to "now".',
+            'See section 24 "Monitoring & Live Mode" in TechDocs for details.',
           ],
         },
         {
@@ -331,6 +351,15 @@ const HELP_CONTENT = {
             '**Количество отображаемых постов** — 1–10. Скроет лишние строки.',
             'Настройки сохраняются в **localStorage** (ключ `dashboardPostsSettings`) — у каждого пользователя свои.',
             'Сменили часы — таймлайн перерисовывается мгновенно, ЗН перепозиционируются.',
+          ],
+        },
+        {
+          heading: 'Свежесть live-данных и stale-баннер',
+          items: [
+            '[●red]{red:Красный} баннер сверху — последний апдейт CV старше **1 часа** (порог STALE_DATA_MS). Таймлайн рендерится, но цифры могут отставать.',
+            '[●orange]{orange:Оранжевый} **разрыв ≥ 5 мин** в сегменте — текущий «визит» закрывается. Без свежих апдейтов не дорисовывается «фантомная» полоса до конца смены.',
+            '[●green]{green:Зелёный} = sync-fallback активен (lastUpdate в bounds смены и < 5 мин назад) — сегмент дотягивается до момента «сейчас».',
+            '[info] Тип поста (light / heavy / special) и его цветовой ярлычок берутся из имени зоны во внешней CV-разметке (deriveTypeFromZoneName) — это гарантирует, что подпись зоны и цвет всегда совпадают.',
           ],
         },
         {
@@ -459,6 +488,15 @@ const HELP_CONTENT = {
           ],
         },
         {
+          heading: 'Live Data Freshness and Stale Banner',
+          items: [
+            '[●red]{red:Red} top banner — last CV update older than **1 hour** (STALE_DATA_MS threshold). Timeline still renders but numbers may lag.',
+            '[●orange]{orange:Orange} **gap ≥ 5 min** in a segment — current "visit" is closed. Without fresh updates, no "ghost" bar is drawn until end of shift.',
+            '[●green]{green:Green} = sync-fallback active (lastUpdate within shift bounds and < 5 min ago) — the segment extends up to "now".',
+            '[info] Post type (light / heavy / special) and its color badge come from the external CV zone name (deriveTypeFromZoneName) — guarantees that zone label and color always match.',
+          ],
+        },
+        {
           heading: 'Common Workflows',
           items: [
             '[ok] **Morning planning** — open page → drag all unassigned WOs onto free posts → click "Save".',
@@ -524,9 +562,9 @@ const HELP_CONTENT = {
             '**Эффективность (%)** — соотношение фактического времени работы к нормативному. >100% = отлично.',
             '**Авто** — количество обслуженных автомобилей за период.',
             '**Среднее время** — средняя продолжительность обслуживания одного авто.',
-            'Цвет индикатора: **зелёный** > 70%, **жёлтый** 40-70%, **красный** < 40%.',
+            'Цвет индикатора: [●green]{green:зелёный} > 70%, [●yellow]{yellow:жёлтый} 40-70%, [●red]{red:красный} < 40%.',
             'Номер поста отображается в левом верхнем углу карточки.',
-            'Бейдж типа поста (Грузовой / Легковой / Спец) — рядом с номером.',
+            'Бейдж типа поста — [●blue]{blue:Легковой} / [●orange]{orange:Грузовой} / [●purple]{purple:Спец} — берётся из имени зоны во внешней CV-разметке (deriveTypeFromZoneName), а не из БД-сидов. Если CV не отдаёт зону — fallback из Post.type.',
           ],
         },
         {
@@ -558,6 +596,15 @@ const HELP_CONTENT = {
             'Стрелка в заголовке показывает текущее направление сортировки.',
             'Клик по строке — открытие панели деталей для этого поста.',
             'Строки с низкой загрузкой подсвечиваются бледным фоном.',
+          ],
+        },
+        {
+          heading: 'Свежесть live-данных и stale-баннер',
+          items: [
+            '[●red]{red:Красный} баннер сверху — последний апдейт CV старше **1 часа**. Метрики могут отражать «застывшее» состояние.',
+            '[●orange]{orange:Оранжевый} **разрыв ≥ 5 мин** между событиями = закрытие текущего «визита». Простой не докручивается до конца смены искусственно.',
+            '[warn] Если в timeline поста виден большой пустой хвост — это НЕ ошибка отображения, это разрыв в потоке CV-данных.',
+            '[info] Карточка поста и панель деталей не делают «sync-fallback»-дорисовку, если lastUpdate вне границ смены — этим решается длинная фантомная полоса по посту после конца смены.',
           ],
         },
         {
@@ -611,9 +658,9 @@ const HELP_CONTENT = {
             '**Efficiency (%)** — ratio of actual work time to norm time. >100% = excellent.',
             '**Vehicles** — number of serviced vehicles in the period.',
             '**Avg Time** — average service duration per vehicle.',
-            'Color indicator: **green** > 70%, **yellow** 40-70%, **red** < 40%.',
+            'Color indicator: [●green]{green:green} > 70%, [●yellow]{yellow:yellow} 40-70%, [●red]{red:red} < 40%.',
             'Post number displayed in top left corner of the card.',
-            'Post type badge (Truck / Light / Special) — next to the number.',
+            'Post type badge — [●blue]{blue:Light} / [●orange]{orange:Truck} / [●purple]{purple:Special} — comes from the external CV zone name (deriveTypeFromZoneName), not DB seeds. If CV does not provide zone name, falls back to Post.type.',
           ],
         },
         {
@@ -645,6 +692,15 @@ const HELP_CONTENT = {
             'Header arrow shows current sort direction.',
             'Click row — open detail panel for that post.',
             'Low-occupancy rows highlighted with faded background.',
+          ],
+        },
+        {
+          heading: 'Live Data Freshness and Stale Banner',
+          items: [
+            '[●red]{red:Red} top banner — last CV update older than **1 hour**. Metrics may reflect a "frozen" state.',
+            '[●orange]{orange:Orange} **gap ≥ 5 min** between events = closure of the current "visit". Idle time is not artificially extended to the end of shift.',
+            '[warn] If a long empty tail is visible in a post timeline — this is NOT a render bug, this is a gap in the CV data stream.',
+            '[info] Card and detail panel skip "sync-fallback" drawing when lastUpdate is outside shift bounds — this fixes the long ghost bar on a post after end of shift.',
           ],
         },
         {

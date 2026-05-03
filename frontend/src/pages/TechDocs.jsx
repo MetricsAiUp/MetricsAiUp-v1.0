@@ -7,12 +7,12 @@ const SECTIONS = [
   { id: 'architecture', titleRu: '2. Архитектура', titleEn: '2. Architecture' },
   { id: 'infrastructure', titleRu: '3. Инфраструктура и деплой', titleEn: '3. Infrastructure & Deploy' },
   { id: 'database', titleRu: '4. База данных (29 моделей)', titleEn: '4. Database (29 models)' },
-  { id: 'api', titleRu: '5. Backend API (27 модулей, 80+ эндпоинтов)', titleEn: '5. Backend API (27 modules, 80+ endpoints)' },
-  { id: 'services', titleRu: '6. Backend Services (11 сервисов)', titleEn: '6. Backend Services (11 services)' },
+  { id: 'api', titleRu: '5. Backend API (26 модулей, 80+ эндпоинтов)', titleEn: '5. Backend API (26 modules, 80+ endpoints)' },
+  { id: 'services', titleRu: '6. Backend Services (12 сервисов)', titleEn: '6. Backend Services (12 services)' },
   { id: 'middleware', titleRu: '7. Middleware', titleEn: '7. Middleware' },
   { id: 'socketio', titleRu: '8. Socket.IO', titleEn: '8. Socket.IO' },
-  { id: 'pages', titleRu: '9. Frontend — Страницы (23)', titleEn: '9. Frontend — Pages (23)' },
-  { id: 'components', titleRu: '10. Frontend — Компоненты (33)', titleEn: '10. Frontend — Components (33)' },
+  { id: 'pages', titleRu: '9. Frontend — Страницы (22)', titleEn: '9. Frontend — Pages (22)' },
+  { id: 'components', titleRu: '10. Frontend — Компоненты (34)', titleEn: '10. Frontend — Components (34)' },
   { id: 'contexts', titleRu: '11. Контексты (Auth, Theme, Toast)', titleEn: '11. Contexts (Auth, Theme, Toast)' },
   { id: 'hooks', titleRu: '12. Хуки', titleEn: '12. Hooks' },
   { id: 'utils', titleRu: '13. Утилиты', titleEn: '13. Utilities' },
@@ -353,8 +353,8 @@ export default function TechDocs() {
         <Table
           headers={[isRu ? 'Слой' : 'Layer', isRu ? 'Технологии' : 'Technologies', isRu ? 'Назначение' : 'Purpose']}
           rows={[
-            ['Frontend', 'React 19.2, Vite 8, Tailwind CSS 4, Recharts 3, Konva 10, react-konva 19, react-i18next, Socket.IO Client 4.8, HLS.js 1.6, jsPDF 4.2, xlsx 0.18, Lucide React 0.577', isRu ? 'SPA с 23 страницами, 33 компонентами, real-time обновления, PWA' : 'SPA with 23 pages, 33 components, real-time updates, PWA'],
-            ['Backend', 'Express 4.21, Prisma 5.20, SQLite (WAL), Socket.IO 4.8, Zod 4.3, node-cron 4.2, web-push 3.6, node-telegram-bot-api 0.67, Winston 3.x, Helmet 7.1', isRu ? '27 модулей API (80+ эндпоинтов), 11 фоновых сервисов, JWT auth, бэкапы БД, ретеншн, Swagger UI' : '27 API modules (80+ endpoints), 11 background services, JWT auth, DB backups, retention, Swagger UI'],
+            ['Frontend', 'React 19.2, Vite 8, Tailwind CSS 4, Recharts 3, Konva 10, react-konva 19, react-i18next, Socket.IO Client 4.8, HLS.js 1.6, jsPDF 4.2, xlsx 0.18, Lucide React 0.577', isRu ? 'SPA с 22 страницами, 34 компонентами, real-time обновления, PWA' : 'SPA with 22 pages, 34 components, real-time updates, PWA'],
+            ['Backend', 'Express 4.21, Prisma 5.20, SQLite (WAL), Socket.IO 4.8, Zod 4.3, node-cron 4.2, web-push 3.6, node-telegram-bot-api 0.67, Winston 3.x, Helmet 7.1', isRu ? '26 модулей API (80+ эндпоинтов), 12 фоновых сервисов, JWT auth, бэкапы БД, ретеншн, Swagger UI' : '26 API modules (80+ endpoints), 12 background services, JWT auth, DB backups, retention, Swagger UI'],
             [isRu ? 'Стриминг' : 'Streaming', 'FFmpeg (RTSP -> HLS), Node.js HTTPS :8181', isRu ? '10 камер, 2с сегменты, 6 в плейлисте (~12с задержка), автоперезапуск' : '10 cameras, 2s segments, 6 in playlist (~12s delay), auto-restart'],
             [isRu ? 'Инфраструктура' : 'Infrastructure', 'Docker, Express HTTPS :443 (Let\'s Encrypt), WireGuard VPN', isRu ? 'Express раздаёт фронт+API напрямую, БЕЗ reverse proxy. Порты 80-65535 1:1 на VPS' : 'Express serves frontend+API directly, NO reverse proxy. Ports 80-65535 1:1 to VPS'],
             [isRu ? 'Тестирование' : 'Testing', 'Vitest, React Testing Library, jsdom', isRu ? 'Backend: 35 файлов, 506 тестов. Frontend: 45 файлов, 361 тест' : 'Backend: 35 files, 506 tests. Frontend: 45 files, 361 tests'],
@@ -373,9 +373,9 @@ export default function TechDocs() {
 
         <Sub>{isRu ? 'Структура файлов' : 'File Structure'}</Sub>
         <Code>{`/project
-\u251c\u2500\u2500 frontend/src/           # React 19, 23 pages, 33 components, 3 contexts, 4 hooks
-\u2502   \u251c\u2500\u2500 pages/              # 23 lazy-loaded pages (Dashboard, Analytics, MapEditor, TechDocs, PostHistory, etc.)
-\u2502   \u251c\u2500\u2500 components/         # 20 shared + dashboardPosts/ (9 files) + postsDetail/ (4 files) + __tests__/
+\u251c\u2500\u2500 frontend/src/           # React 19, 22 pages, 34 components, 3 contexts, 4 hooks
+\u2502   \u251c\u2500\u2500 pages/              # 22 lazy-loaded pages (Dashboard, Analytics, MapEditor, TechDocs, PostHistory, etc.)
+\u2502   \u251c\u2500\u2500 components/         # 21 shared + dashboardPosts/ (9 files) + postsDetail/ (4 files) + __tests__/
 \u2502   \u2502   \u251c\u2500\u2500 dashboardPosts/ # GanttTimeline, TimelineRow, TimelineHeader, WorkOrderModal, ConflictModal,
 \u2502   \u2502   \u2502                   # FreeWorkOrdersTable, ShiftSettings, Legend, constants.js
 \u2502   \u2502   \u2514\u2500\u2500 postsDetail/    # PostDetailPanel, PostCardsView, PostTableView, CollapsibleSection
@@ -383,8 +383,8 @@ export default function TechDocs() {
 \u2502   \u251c\u2500\u2500 hooks/              # useSocket, useWorkOrderTimer, useCameraStatus, useAsync
 \u2502   \u251c\u2500\u2500 utils/              # translate.js, export.js
 \u2502   \u2514\u2500\u2500 i18n/               # ru.json (613 lines), en.json (613 lines), ~512 keys
-\u251c\u2500\u2500 backend/src/            # Express 4, 27 route modules, 11 background services
-\u2502   \u251c\u2500\u2500 routes/             # 27 modules: auth, dashboard, posts, zones, events, cameras, sessions,
+\u251c\u2500\u2500 backend/src/            # Express 4, 26 route modules, 12 background services
+\u2502   \u251c\u2500\u2500 routes/             # 26 modules: auth, dashboard, posts, zones, events, cameras, sessions,
 \u2502   \u2502                       # workOrders, recommendations, users, shifts, data1c, mapLayout, auditLog,
 \u2502   \u2502                       # predict, postsData, workers, health, push, photos, locations,
 \u2502   \u2502                       # reportSchedule, monitoring, settings, backup, replay
@@ -904,10 +904,10 @@ const io = new Server(httpServer, {
         {/* ============================================================ */}
         {/* Section 9 — Frontend Pages */}
         {/* ============================================================ */}
-        <SectionTitle id="pages">{isRu ? '9. Frontend -- Страницы (23)' : '9. Frontend -- Pages (23)'}</SectionTitle>
+        <SectionTitle id="pages">{isRu ? '9. Frontend -- Страницы (22)' : '9. Frontend -- Pages (22)'}</SectionTitle>
         <P>{isRu
-          ? 'Все 23 страницы загружаются лениво через React.lazy() и Suspense. Каждая страница -- отдельный файл в frontend/src/pages/. Маршрутизация через HashRouter (React Router v7). Доступ к страницам определяется массивом user.pages[] и проверяется через ProtectedRoute. Файл PostHistory.jsx экспортирует две страницы (default = PostHistory, именованный экспорт ZoneHistory) -- удобный приём чтобы переиспользовать общую логику истории между ракурсами "по посту" и "по зоне" без дублирования кода.'
-          : 'All 23 pages are lazy-loaded via React.lazy() and Suspense. Each page is a separate file in frontend/src/pages/. Routing via HashRouter (React Router v7). Page access is determined by user.pages[] array and checked via ProtectedRoute. PostHistory.jsx exports two pages (default = PostHistory, named export ZoneHistory) -- a convenient pattern to reuse common history logic between "by-post" and "by-zone" perspectives without duplicating code.'
+          ? 'Все 22 страницы загружаются лениво через React.lazy() и Suspense. Каждая страница -- отдельный файл в frontend/src/pages/. Маршрутизация через HashRouter (React Router v7). Доступ к страницам определяется массивом user.pages[] и проверяется через ProtectedRoute. Файл PostHistory.jsx экспортирует две страницы (default = PostHistory, именованный экспорт ZoneHistory) -- удобный приём чтобы переиспользовать общую логику истории между ракурсами "по посту" и "по зоне" без дублирования кода.'
+          : 'All 22 pages are lazy-loaded via React.lazy() and Suspense. Each page is a separate file in frontend/src/pages/. Routing via HashRouter (React Router v7). Page access is determined by user.pages[] array and checked via ProtectedRoute. PostHistory.jsx exports two pages (default = PostHistory, named export ZoneHistory) -- a convenient pattern to reuse common history logic between "by-post" and "by-zone" perspectives without duplicating code.'
         }</P>
         <Table
           headers={[isRu ? 'Страница' : 'Page', isRu ? 'Файл' : 'File', 'LOC', isRu ? 'Маршрут' : 'Route', isRu ? 'Описание' : 'Description', isRu ? 'Источники данных' : 'Data Sources']}
@@ -941,13 +941,13 @@ const io = new Server(httpServer, {
         {/* ============================================================ */}
         {/* Section 10 — Frontend Components */}
         {/* ============================================================ */}
-        <SectionTitle id="components">{isRu ? '10. Frontend -- Компоненты (33)' : '10. Frontend -- Components (33)'}</SectionTitle>
+        <SectionTitle id="components">{isRu ? '10. Frontend -- Компоненты (34)' : '10. Frontend -- Components (34)'}</SectionTitle>
         <P>{isRu
-          ? '33 компонента разделены на три группы: 20 общих компонентов в components/, 9 файлов в dashboardPosts/ (специфичны для Gantt-таймлайна), и 4 файла в postsDetail/ (специфичны для аналитики постов).'
-          : '33 components are split into three groups: 20 shared components in components/, 9 files in dashboardPosts/ (specific to Gantt timeline), and 4 files in postsDetail/ (specific to post analytics).'
+          ? '34 компонента разделены на три группы: 21 общий компонент в components/, 9 файлов в dashboardPosts/ (специфичны для Gantt-таймлайна), и 4 файла в postsDetail/ (специфичны для аналитики постов). К общим относится StaleDataBanner -- индикатор устаревания live-данных (см. раздел 24).'
+          : '34 components are split into three groups: 21 shared components in components/, 9 files in dashboardPosts/ (specific to Gantt timeline), and 4 files in postsDetail/ (specific to post analytics). Shared includes StaleDataBanner -- live data staleness indicator (see section 24).'
         }</P>
 
-        <Sub>{isRu ? 'Общие компоненты (20)' : 'Shared Components (20)'}</Sub>
+        <Sub>{isRu ? 'Общие компоненты (21)' : 'Shared Components (21)'}</Sub>
         <Table
           headers={[isRu ? 'Компонент' : 'Component', 'LOC', isRu ? 'Описание' : 'Description', isRu ? 'Используется в' : 'Used In']}
           rows={[
@@ -1539,7 +1539,7 @@ test: {
         <Table
           headers={['Email', isRu ? 'Пароль' : 'Password', isRu ? 'Роль' : 'Role', isRu ? 'Имя' : 'Name', isRu ? 'Активен' : 'Active', isRu ? 'Описание' : 'Description']}
           rows={[
-            ['admin@metricsai.up', 'admin123', 'admin', 'Admin MetricsAI', isRu ? 'Да' : 'Yes', isRu ? 'Полный доступ, все 23 страницы, все разрешения' : 'Full access, all 23 pages, all permissions'],
+            ['admin@metricsai.up', 'admin123', 'admin', 'Admin MetricsAI', isRu ? 'Да' : 'Yes', isRu ? 'Полный доступ, все 22 страницы, все разрешения' : 'Full access, all 22 pages, all permissions'],
             ['demo@metricsai.up', 'demo12345', 'manager', isRu ? 'Генри Форд' : 'Henry Ford', isRu ? 'Да' : 'Yes', isRu ? 'Демо-аккаунт для презентаций, расширенный набор страниц' : 'Demo account for presentations, expanded page set'],
             ['manager@metricsai.up', 'demo123', 'manager', isRu ? 'Сергей Петров' : 'Sergey Petrov', isRu ? 'Да' : 'Yes', isRu ? 'Рабочий аккаунт менеджера, стандартный набор страниц' : 'Working manager account, standard page set'],
             ['mechanic@metricsai.up', 'demo123', 'mechanic', isRu ? 'Иван Козлов' : 'Ivan Kozlov', isRu ? 'Нет' : 'No', isRu ? 'Неактивный аккаунт механика (для тестов деактивации)' : 'Inactive mechanic account (for deactivation testing)'],
@@ -1636,6 +1636,46 @@ test: {
           ? 'Replay-режим позволяет "перемотать" состояние СТО на произвольный момент в прошлом и проиграть события в ускоренном темпе. Архитектурно это работает так: (1) MonitoringProxy постоянно пишет MonitoringSnapshot через каждые 10с в live-режиме; (2) ReplayPanel на MapViewer запрашивает GET /api/replay/range и узнаёт доступный диапазон; (3) при выборе диапазона делается GET /api/replay/window с from/to/step -- бэкенд отдаёт массив агрегированных снапшотов; (4) MapViewer рендерит карту по выбранному снапшоту вместо текущего состояния, цвета постов и счётчики обновляются как при live-режиме, но из истории. Когда replay активен, Socket.IO события игнорируются (карта в read-only состоянии).'
           : 'Replay mode allows "rewinding" STO state to any past moment and playing events at accelerated pace. Architecturally: (1) MonitoringProxy continuously writes MonitoringSnapshot every 10s in live mode; (2) ReplayPanel on MapViewer queries GET /api/replay/range and gets available range; (3) when range is selected, GET /api/replay/window is called with from/to/step -- backend returns aggregated snapshot array; (4) MapViewer renders the map by selected snapshot instead of current state, post colors and counters update as in live mode but from history. When replay is active, Socket.IO events are ignored (map in read-only state).'
         }</P>
+
+        <Sub>{isRu ? 'Защита от устаревших данных (stale-data)' : 'Stale Data Protection'}</Sub>
+        <P>{isRu
+          ? 'Внешний CV-источник может прерваться (отключение оборудования, сбой сети, конец смены). Чтобы аналитика не "достраивала" пустые часы как продолжение последнего состояния, в backend/src/routes/postsData.js действуют две защиты с разными порогами:'
+          : 'The external CV source can stop (hardware outage, network failure, end of shift). To prevent analytics from "extending" empty hours as continuation of the last state, two safeguards with different thresholds are active in backend/src/routes/postsData.js:'
+        }</P>
+        <Table
+          headers={[isRu ? 'Параметр' : 'Parameter', isRu ? 'Значение' : 'Value', isRu ? 'Где применяется' : 'Where Applied', isRu ? 'Эффект' : 'Effect']}
+          rows={[
+            ['STALE_DATA_MS', '60 * 60 * 1000 (1 ч)', isRu ? 'Глобальная свежесть live-данных' : 'Global live data freshness', isRu ? 'Если последний апдейт MonitoringProxy старше 1 часа -- ответ помечается флагом stale, фронт показывает баннер StaleDataBanner' : 'If last MonitoringProxy update older than 1 hour -- response is flagged stale, frontend shows StaleDataBanner'],
+            ['GAP_THRESHOLD_MS', '5 * 60 * 1000 (5 мин)', isRu ? 'Длина одного сегмента в timeline' : 'Single timeline segment length', isRu ? 'Любой сегмент сессии ограничивается 5 минутами от последнего апдейта -- разрыв ≥ 5 мин закрывает текущий "визит" и не превращается в призрачный блок' : 'Any session segment is capped at 5 minutes from last update -- a gap ≥ 5 min closes the current "visit" and is not turned into a ghost block'],
+          ]}
+        />
+        <P>{isRu ? 'Палитра состояний баннера и сегментов:' : 'State palette for banner and segments:'}</P>
+        <div className="flex flex-wrap gap-2 my-2">
+          <Badge color="#ef4444">{isRu ? 'stale > 1 ч (баннер)' : 'stale > 1 h (banner)'}</Badge>
+          <Badge color="#f59e0b">{isRu ? 'gap ≥ 5 мин (закрытый визит)' : 'gap ≥ 5 min (closed visit)'}</Badge>
+          <Badge color="#10b981">{isRu ? 'свежие данные (< 5 мин)' : 'fresh data (< 5 min)'}</Badge>
+        </div>
+
+        <Sub>{isRu ? 'Sync-fallback и границы смены' : 'Sync-fallback and Shift Bounds'}</Sub>
+        <P>{isRu
+          ? 'Чтобы текущее состояние постов было видно в timeline даже без свежего движения, существует sync-fallback: если последний закрытый визит окончился раньше "сейчас", остаток дорисовывается от lastUpdate до текущего момента. Это поведение жёстко ограничено двумя условиями: (1) lastUpdate должен попадать внутрь bounds текущей смены (parseInTz, локальная таймзона); (2) lastUpdate не старше GAP_THRESHOLD_MS. Без обоих условий fallback отключается -- именно так был исправлен баг с длинной фиолетовой полосой по Посту 7 после конца смены.'
+          : 'To keep current post state visible in the timeline without fresh movement, sync-fallback exists: if the last closed visit ended earlier than "now", the remainder is drawn from lastUpdate to the current moment. This is strictly gated by: (1) lastUpdate must fall within current shift bounds (parseInTz, local TZ); (2) lastUpdate not older than GAP_THRESHOLD_MS. Without both conditions, the fallback is disabled -- this is exactly how the long purple ghost bar on Post 7 after end of shift was fixed.'
+        }</P>
+
+        <Sub>{isRu ? 'deriveTypeFromZoneName -- тип поста из CV' : 'deriveTypeFromZoneName -- Post Type from CV'}</Sub>
+        <P>{isRu
+          ? 'Тип поста (light / heavy / special) выводится не из БД-сидов, а из имени зоны во внешнем CV (externalZoneName). Это гарантирует, что цветовой ярлычок и подпись зоны всегда совпадают. БД-значение остаётся fallback на случай отсутствия CV-маркировки.'
+          : 'Post type (light / heavy / special) is derived from the external CV zone name (externalZoneName), not from DB seeds. This guarantees that the color badge and zone label always match. The DB value is a fallback when CV markup is missing.'
+        }</P>
+        <Table
+          headers={[isRu ? 'Подстрока в externalZoneName' : 'Substring in externalZoneName', isRu ? 'Тип' : 'Type', isRu ? 'Цвет' : 'Color']}
+          rows={[
+            [isRu ? 'легково*' : 'legkovo* (light)', 'light', <Badge color="#3b82f6">light</Badge>],
+            [isRu ? 'грузово*' : 'gruzovo* (heavy)', 'heavy', <Badge color="#f59e0b">heavy</Badge>],
+            [isRu ? 'шиномонтаж / развал / оклей* / стекл*' : 'shinomontazh / razval / okley* / stekl*', 'special', <Badge color="#a855f7">special</Badge>],
+            [isRu ? '— (нет совпадения)' : '— (no match)', isRu ? 'fallback из БД (Post.type)' : 'DB fallback (Post.type)', <Badge color="#64748b">fallback</Badge>],
+          ]}
+        />
 
 
         {/* ============================================================ */}
