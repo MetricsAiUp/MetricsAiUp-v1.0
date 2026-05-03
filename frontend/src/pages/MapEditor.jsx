@@ -6,7 +6,7 @@ import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer, Image as Ko
 import {
   MousePointer2, Square, Hexagon, Camera, DoorOpen, Type, Minus, Maximize2, ArrowRightLeft,
   Upload, Save, Download, Trash2, Grid3X3, RotateCcw, ZoomIn, ZoomOut, RefreshCw,
-  Magnet, Copy, Undo2, Redo2, PenTool, LayoutDashboard, Check, X,
+  Magnet, Copy, Undo2, Redo2, PenTool, LayoutDashboard, Check, X, Edit2,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import { MAP_FONT_FAMILY, MAP_LETTER_SPACING } from '../constants';
@@ -67,6 +67,7 @@ export default function MapEditor() {
 
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [tool, setTool] = useState('select');
   const [bgImage, setBgImage] = useState(null);
   const [bgDataUrl, setBgDataUrl] = useState(null);
@@ -90,6 +91,14 @@ export default function MapEditor() {
   const trRef = useRef(null);
   const fileInputRef = useRef(null);
   const pageRef = useRef(null);
+
+  // Закрываем редактор при смене выделения / инструмента / удалении элемента
+  useEffect(() => {
+    if (editingId && editingId !== selectedId) setEditingId(null);
+  }, [selectedId, editingId]);
+  useEffect(() => {
+    if (tool !== 'select') setEditingId(null);
+  }, [tool]);
 
   // Undo/Redo history
   const historyRef = useRef([]);
@@ -578,6 +587,12 @@ export default function MapEditor() {
       draggable: tool === 'select',
       onClick: () => { if (tool === 'select') setSelectedId(el.id); },
       onTap: () => { if (tool === 'select') setSelectedId(el.id); },
+      onContextMenu: (e) => {
+        e.evt.preventDefault();
+        if (tool !== 'select') return;
+        setSelectedId(el.id);
+        setEditingId(el.id);
+      },
       onDragEnd: (e) => handleDragEnd(el.id, e),
       onTransformEnd: (e) => handleTransformEnd(el.id, e),
     };
@@ -621,7 +636,7 @@ export default function MapEditor() {
               shadowBlur={6} shadowColor={vertexColor} shadowOpacity={0.6}
               draggable
               onDragEnd={(e) => handleVertexDrag(el.id, i, e)}
-              onContextMenu={(e) => { e.evt.preventDefault(); removeVertex(el.id, i); }} />
+              onContextMenu={(e) => { e.evt.preventDefault(); e.cancelBubble = true; removeVertex(el.id, i); }} />
           ))}
           {(() => {
             const xs = pts.filter((_, i) => i % 2 === 0), ys = pts.filter((_, i) => i % 2 === 1);
@@ -735,7 +750,7 @@ export default function MapEditor() {
               shadowBlur={4} shadowColor={vertexColor} shadowOpacity={0.6}
               draggable
               onDragEnd={(e) => handleVertexDrag(el.id, i, e)}
-              onContextMenu={(e) => { e.evt.preventDefault(); removeVertex(el.id, i); }} />
+              onContextMenu={(e) => { e.evt.preventDefault(); e.cancelBubble = true; removeVertex(el.id, i); }} />
           ))}
         </Group>
       );
@@ -1030,8 +1045,13 @@ export default function MapEditor() {
         {/* Right Properties Panel */}
         <div className="glass-static flex flex-col p-2 flex-shrink-0 overflow-y-auto" style={{ width: 160, borderLeft: '1px solid var(--border-glass)', minHeight: 0 }}>
           <h3 className="text-xs font-semibold mb-3" style={{ color: 'var(--accent)' }}>{t('mapEditor.properties')}</h3>
-          {selected ? (
+          {selected ? (editingId === selected.id ? (
             <div className="space-y-2">
+              <button onClick={() => setEditingId(null)}
+                className="w-full flex items-center justify-center gap-1 px-2 py-1 rounded text-xs mb-1 hover:opacity-80 transition-opacity"
+                style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+                <X size={12} /> {i18n.language === 'ru' ? 'Свернуть' : 'Collapse'}
+              </button>
               <div>
                 <label className="text-xs block mb-0.5" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.elName')}</label>
                 <input value={selected.name} onChange={e => updateProp('name', e.target.value)} className={inputCls} style={{ background: 'var(--bg-card)', borderColor: 'var(--border-glass)', color: 'var(--text-primary)' }} />
@@ -1300,6 +1320,30 @@ export default function MapEditor() {
               </button>
             </div>
           ) : (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+                <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: selected.color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>{selected.name}</div>
+                  <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{selected.type}</div>
+                </div>
+              </div>
+              <button onClick={() => setEditingId(selected.id)}
+                className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs hover:opacity-80 transition-opacity"
+                style={{ background: 'var(--accent)', color: '#fff' }}>
+                <Edit2 size={12} /> {i18n.language === 'ru' ? 'Редактировать' : 'Edit'}
+              </button>
+              <p className="text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>
+                {i18n.language === 'ru' ? 'ПКМ по элементу или иконка карандаша в списке' : 'Right-click element or pencil icon in list'}
+              </p>
+              <button onClick={duplicateSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--border-glass)' }}>
+                <Copy size={12} /> {t('mapEditor.duplicate')} <span className="opacity-50 ml-1">Ctrl+D</span>
+              </button>
+              <button onClick={deleteSelected} className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs mt-1 hover:opacity-80 transition-opacity" style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
+                <Trash2 size={12} /> {t('common.delete')}
+              </button>
+            </div>
+          )) : (
             <div className="space-y-3">
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapEditor.noSelection')}</p>
               <div className="pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
@@ -1327,15 +1371,25 @@ export default function MapEditor() {
           <h3 className="text-xs font-semibold mt-4 mb-2" style={{ color: 'var(--accent)' }}>{t('mapEditor.elements')}</h3>
           <div className="space-y-0.5 overflow-y-auto flex-1" style={{ minHeight: 0 }}>
             {elements.map(el => (
-              <button key={el.id} onClick={() => { setSelectedId(el.id); setTool('select'); }}
-                className="w-full text-left px-2 py-1 rounded text-xs truncate transition-all"
+              <div key={el.id}
+                className="group flex items-center gap-1 rounded transition-all"
                 style={{
                   background: el.id === selectedId ? 'var(--accent-light)' : 'transparent',
-                  color: el.id === selectedId ? 'var(--accent)' : 'var(--text-secondary)',
                 }}>
-                <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: el.color, verticalAlign: 'middle' }} />
-                {el.name}
-              </button>
+                <button onClick={() => { setSelectedId(el.id); setTool('select'); }}
+                  className="flex-1 text-left px-2 py-1 text-xs truncate"
+                  style={{ color: el.id === selectedId ? 'var(--accent)' : 'var(--text-secondary)' }}>
+                  <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: el.color, verticalAlign: 'middle' }} />
+                  {el.name}
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); setEditingId(el.id); setTool('select'); }}
+                  title={i18n.language === 'ru' ? 'Редактировать' : 'Edit'}
+                  aria-label={i18n.language === 'ru' ? 'Редактировать' : 'Edit'}
+                  className="flex-shrink-0 p-1 mr-1 rounded opacity-0 group-hover:opacity-100 hover:opacity-100 hover:bg-[var(--bg-card)] transition-opacity"
+                  style={{ color: editingId === el.id ? 'var(--accent)' : 'var(--text-muted)', opacity: editingId === el.id ? 1 : undefined }}>
+                  <Edit2 size={12} />
+                </button>
+              </div>
             ))}
           </div>
         </div>
