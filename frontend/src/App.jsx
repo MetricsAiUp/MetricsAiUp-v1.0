@@ -19,7 +19,6 @@ const Events = lazy(() => import('./pages/Events'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Data1C = lazy(() => import('./pages/Data1C'));
 const Cameras = lazy(() => import('./pages/Cameras'));
-const CameraMapping = lazy(() => import('./pages/CameraMapping'));
 const Users = lazy(() => import('./pages/Users'));
 const MapEditor = lazy(() => import('./pages/MapEditor'));
 const MapViewer = lazy(() => import('./pages/MapViewer'));
@@ -79,7 +78,6 @@ function AppRoutes() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="data-1c" element={<Data1C />} />
           <Route path="cameras" element={<Cameras />} />
-          <Route path="camera-mapping" element={<CameraMapping />} />
           <Route path="users" element={<Users />} />
           <Route path="map-editor" element={<MapEditor />} />
           <Route path="map-view" element={<MapViewer />} />

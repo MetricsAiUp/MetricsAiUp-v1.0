@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { X, User, AlertTriangle } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import StaleDataBanner from '../components/StaleDataBanner';
 import PostCardsView from '../components/postsDetail/PostCardsView';
 import PostTableView from '../components/postsDetail/PostTableView';
 import PostDetailPanel from '../components/postsDetail/PostDetailPanel';
@@ -102,6 +103,15 @@ export default function PostsDetail() {
 
   return (
     <div className="p-4">
+      {isLive && (data?.stale || dashData?.stale) && (
+        <div className="mb-3">
+          <StaleDataBanner
+            stale={data?.stale ?? dashData?.stale}
+            dataAsOf={data?.dataAsOf ?? dashData?.dataAsOf}
+            dataAgeMs={data?.dataAgeMs ?? dashData?.dataAgeMs}
+          />
+        </div>
+      )}
       <div>
         {selectedPost ? (
           elVis('detailPanel') && <PostDetailPanel

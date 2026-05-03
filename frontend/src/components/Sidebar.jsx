@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
-  BarChart3, Camera, Focus, Database, CalendarClock, Columns,
+  BarChart3, Camera, Database, CalendarClock, Columns,
   ChevronDown, Users, PenTool, MapPin, Clock, Shield, Wrench, Activity,
   FileSpreadsheet, BookOpen, Bug,
 } from 'lucide-react';
@@ -21,7 +21,6 @@ const navItems = [
   { path: '/events', icon: ScrollText, labelKey: 'nav.events', pageId: 'events' },
   { path: '/analytics', icon: BarChart3, labelKey: 'nav.analytics', pageId: 'analytics' },
   { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', pageId: 'cameras' },
-  { path: '/camera-mapping', icon: Focus, labelKey: 'nav.cameraMapping', pageId: 'camera-mapping' },
   { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', pageId: 'data-1c' },
   { path: '/users', icon: Users, labelKey: 'nav.users', pageId: 'users' },
   { path: '/map-view', icon: MapPin, labelKey: 'nav.mapView2', pageId: 'map-view' },

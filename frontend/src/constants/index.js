@@ -57,7 +57,7 @@ export const ALL_CAMERAS = [
   { id: 'cam15', name: 'cam 15', location: 'Верхний ряд, дальний', coverage: 'Свободная зона 02, ПОСТ 02' },
 ];
 
-// --- Zone type colors (for Cameras, CameraMapping) ---
+// --- Zone type colors (for Cameras) ---
 export const ZONE_TYPE_COLORS = {
   repair: '#6366f1',
   entry: '#10b981',

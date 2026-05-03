@@ -18,6 +18,7 @@ function hexA(hex, a) {
   const b = parseInt(h.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${a})`;
 }
+import StaleDataBanner from '../components/StaleDataBanner';
 import GanttTimeline from '../components/dashboardPosts/GanttTimeline';
 import ShiftSettings, { getTodayShift } from '../components/dashboardPosts/ShiftSettings';
 import WorkOrderModal from '../components/dashboardPosts/WorkOrderModal';
@@ -373,6 +374,10 @@ export default function DashboardPosts() {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Аварийный баннер: данные с CV не поступают > часа */}
+      {isLive && data?.stale && (
+        <StaleDataBanner stale={data.stale} dataAsOf={data.dataAsOf} dataAgeMs={data.dataAgeMs} />
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

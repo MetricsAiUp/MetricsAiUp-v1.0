@@ -5,7 +5,6 @@ const KEYS = {
   CURRENT_USER: 'currentUser',
   LANGUAGE: 'language',
   THEME: 'theme',
-  CAMERA_MAPPING: 'cameraMappingData',
   DASHBOARD_POSTS_SETTINGS: 'dashboardPostsSettings',
   IMPORTED_PLANNING: '1c-imported-planning',
   IMPORTED_WORKERS: '1c-imported-workers',

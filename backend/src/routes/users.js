@@ -10,7 +10,7 @@ const authCache = require('../config/authCache');
 const ROLE_DEFAULT_PAGES = {
   admin: [
     'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
-    'shifts', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c',
+    'shifts', 'events', 'analytics', 'cameras', 'data-1c',
     'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
     'report-schedule', 'tech-docs', 'live-debug',
   ],
@@ -117,7 +117,6 @@ router.get('/', requirePermission('manage_users'), async (req, res) => {
       { id: 'events', label: { ru: 'Журнал событий', en: 'Events' } },
       { id: 'analytics', label: { ru: 'Аналитика', en: 'Analytics' } },
       { id: 'cameras', label: { ru: 'Камеры', en: 'Cameras' } },
-      { id: 'camera-mapping', label: { ru: 'Разметка камер', en: 'Camera Mapping' } },
       { id: 'data-1c', label: { ru: 'Данные 1С', en: '1C Data' } },
       { id: 'users', label: { ru: 'Пользователи', en: 'Users' } },
       { id: 'map-view', label: { ru: 'Карта СТО', en: 'STO Map' } },

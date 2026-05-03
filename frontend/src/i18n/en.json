@@ -11,7 +11,6 @@
     "events": "Event Log",
     "analytics": "Analytics",
     "cameras": "Cameras",
-    "cameraMapping": "Camera Mapping",
     "data1c": "1C Data",
     "dashboardPosts": "Posts Dashboard",
     "postsDetail": "Posts",
@@ -317,6 +316,11 @@
     "saved": "Schedule saved"
   },
   "common": {
+    "dataStaleTitle": "No fresh data from monitoring system",
+    "dataStaleBody": "Last event was {{ago}} ago. Metrics and timeline are frozen until CV data flow resumes.",
+    "dataStaleNoData": "No data is being received from the monitoring system.",
+    "agoHours": "{{n}}h {{m}}m",
+    "agoMinutes": "{{n}}m",
     "loading": "Loading...",
     "error": "Error",
     "save": "Save",
@@ -381,17 +385,6 @@
     "connecting": "Connecting to camera...",
     "cameraOffline": "Camera offline",
     "streamError": "Stream error"
-  },
-  "cameraMapping": {
-    "title": "Camera Mapping",
-    "unsavedChanges": "Unsaved changes",
-    "zones": "Zones",
-    "cameras": "Cameras",
-    "links": "Links",
-    "unmapped": "Unmapped",
-    "zonesWithout": "Zones without cameras",
-    "camerasWithout": "Unlinked cameras",
-    "stoZones": "STO Zones"
   },
   "data1c": {
     "title": "1C Alfa-Auto Data",
@@ -556,6 +549,7 @@
   },
   "health": {
     "title": "System Health",
+    "subtitle": "Status of internal and external services",
     "backend": "Backend",
     "database": "Database",
     "cameras": "Cameras",
@@ -570,9 +564,132 @@
     "online": "Online",
     "offline": "Offline",
     "autoRefresh": "Auto-refresh: 30s",
+    "refresh": "Refresh",
+    "fresh": "No cache",
     "ok": "OK",
     "error": "Error",
-    "never": "Never"
+    "never": "Never",
+    "unknown": "Unknown",
+    "scoreLabel": "Health score",
+    "scoreSubtitle": "Higher is better",
+    "level": {
+      "ok": "All good",
+      "warn": "Attention",
+      "critical": "Critical"
+    },
+    "failures": {
+      "cv_api_down": "CV API unreachable",
+      "cv_api_stale": "CV API: stale data",
+      "events_silent": "No events for 10+ minutes",
+      "db_error": "Database error",
+      "heap_critical": "Heap > 95%",
+      "heap_warn": "Heap > 85%",
+      "disk_critical": "Disk > 95%",
+      "disk_warn": "Disk > 85%",
+      "sync1c_stale": "1C not synced for 24h+",
+      "sync1c_stale_critical": "1C not synced for 7 days+",
+      "ml_down": "ML service unreachable",
+      "hls_down": "HLS streaming unreachable",
+      "telegram_down": "Telegram bot unreachable",
+      "ssl_critical": "SSL expires in less than 7 days",
+      "ssl_expiring": "SSL expires in less than 30 days"
+    },
+    "sections": {
+      "dataSources": "Data Sources",
+      "pulse": "System Pulse",
+      "resources": "Resources",
+      "services": "Internal Services",
+      "backgroundServices": "Background Services",
+      "security": "Security",
+      "cameras": "Cameras"
+    },
+    "dataSources": {
+      "cvApi": "CV API",
+      "cvApiDesc": "Camera event source",
+      "mlApi": "ML Service",
+      "mlApiDesc": "Predictions (FastAPI :8282)",
+      "hls": "HLS Streaming",
+      "hlsDesc": "RTSP→HLS (:8181)",
+      "telegram": "Telegram Bot",
+      "telegramDesc": "Notifications and commands"
+    },
+    "status": {
+      "ok": "OK",
+      "degraded": "Degraded",
+      "down": "Down",
+      "warn": "Warning",
+      "critical": "Critical",
+      "never": "Never",
+      "unknown": "Unknown",
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "metrics": {
+      "lastFetch": "Last fetch",
+      "lastEvent": "Last event",
+      "lastTick": "Last tick",
+      "lastError": "Last error",
+      "latency": "Latency",
+      "httpCode": "HTTP",
+      "linkedUsers": "Linked users",
+      "eventsLast5m": "Events / 5 min",
+      "eventsLast1h": "Events / 1 h",
+      "eventsLast24h": "Events / 24 h",
+      "snapshotsLast24h": "Snapshots / 24 h",
+      "sessionsLast24h": "Sessions / 24 h",
+      "activeRecommendations": "Active recommendations",
+      "auditLast24h": "Audit / 24 h",
+      "ticks": "Ticks",
+      "errors": "Errors",
+      "registeredAt": "Started"
+    },
+    "resources": {
+      "memory": "Memory",
+      "heap": "Heap (Node.js)",
+      "disk": "Disk",
+      "cpu": "CPU",
+      "loadavg": "Load avg",
+      "totalMem": "Total RAM",
+      "freeMem": "Free RAM",
+      "cpuCount": "Cores"
+    },
+    "internal": {
+      "backend": "Backend",
+      "database": "Database",
+      "sync1c": "1C Sync",
+      "ssl": "SSL Certificate",
+      "expiresIn": "Expires in",
+      "nodeVersion": "Node",
+      "pid": "PID"
+    },
+    "security": {
+      "failedLogins": "Failed logins (24h)",
+      "auditEntries": "Audit entries (24h)",
+      "pushSubscriptions": "Push subscriptions"
+    },
+    "cameras": {
+      "online": "Online",
+      "offline": "Offline",
+      "total": "Total"
+    },
+    "units": {
+      "ms": "ms",
+      "sec": "s",
+      "min": "min",
+      "hours": "h",
+      "days": "d",
+      "percent": "%"
+    },
+    "ago": {
+      "now": "just now",
+      "secondsAgo": "{{n}}s ago",
+      "minutesAgo": "{{n}}m ago",
+      "hoursAgo": "{{n}}h ago",
+      "daysAgo": "{{n}}d ago"
+    },
+    "noFailures": "All systems nominal",
+    "loading": "Loading...",
+    "loadError": "Failed to load status"
   },
   "reportSchedule": {
     "title": "Report Schedule",

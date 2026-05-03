@@ -55,7 +55,6 @@ const PAGE_PERMISSIONS = {
   'events': ['view_events'],
   'analytics': ['view_analytics'],
   'cameras': ['view_cameras'],
-  'camera-mapping': ['manage_cameras'],
   'data-1c': ['view_work_orders'],
   'users': ['manage_users'],
   'map-view': ['view_zones'],

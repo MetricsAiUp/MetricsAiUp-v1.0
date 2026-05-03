@@ -1999,150 +1999,6 @@ const HELP_CONTENT = {
   },
 
   // ────────────────────────────
-  // МАППИНГ КАМЕР
-  // ────────────────────────────
-  cameraMapping: {
-    ru: {
-      title: 'Маппинг камер по зонам',
-      intro: 'Настройка покрытия зон СТО камерами с приоритетами P1–P10. Определяет, какие камеры мониторят какие зоны и в каком порядке используются для подтверждения CV-событий. 21 зона × 16 камер. Корректный маппинг прямо влияет на confidence событий и точность распознавания.',
-      sections: [
-        {
-          heading: 'Карта экрана',
-          items: [
-            '[eye] **Левая панель** — список 21 зоны со счётчиками привязанных камер.',
-            '[eye] **Правая панель** — редактор: 16 камер для выбранной зоны с тогглами и P-приоритетом.',
-            '[eye] **Внизу или в отдельной вкладке** — матрица «Зоны × Камеры» (визуальное покрытие).',
-            '[eye] **Сверху справа** — кнопки «Сохранить» / «Сбросить».',
-          ],
-        },
-        {
-          heading: 'Список зон (левая панель)',
-          items: [
-            'Перечень всех **21 зоны** СТО.',
-            'Рядом с каждой зоной — **счётчик** привязанных камер.',
-            'Клик по зоне — открывает редактор камер справа.',
-            'Зоны отсортированы по типу: ремонт, ожидание, въезд, парковка, свободная.',
-          ],
-        },
-        {
-          heading: 'Редактор камер (правая панель)',
-          items: [
-            'Для выбранной зоны — список всех **16 камер**.',
-            '**Переключатель** — включить/выключить камеру для этой зоны.',
-            '**Приоритет (P1-P10)** — чем выше приоритет, тем больше «вес» данных с этой камеры.',
-            'P1 = минимальный приоритет, P10 = максимальный.',
-            'Камера может быть привязана к нескольким зонам с разными приоритетами.',
-          ],
-        },
-        {
-          heading: 'Матрица покрытия',
-          items: [
-            'Таблица **зоны × камеры** — визуальная матрица привязок.',
-            'Цвет ячейки зависит от приоритета: тёмный = высокий, светлый = низкий, пустой = нет привязки.',
-            'Помогает увидеть общую картину покрытия: какие зоны хорошо покрыты, какие нет.',
-            'Выявляет «слепые зоны» — зоны без камер.',
-          ],
-        },
-        {
-          heading: 'Сохранение',
-          items: [
-            'Кнопка **«Сохранить»** — сохраняет текущую конфигурацию.',
-            'Кнопка **«Сбросить»** — откатить к последней сохранённой версии.',
-            'Данные сохраняются в **localStorage** (cameraMappingData) и на сервер.',
-            'Изменения вступают в силу немедленно после сохранения.',
-          ],
-        },
-        {
-          heading: 'Влияние на систему',
-          items: [
-            'Маппинг определяет, какие камеры используются для распознавания в каждой зоне.',
-            'Высокий приоритет = камера используется первой для подтверждения событий.',
-            'Корректная настройка повышает точность (confidence) событий CV.',
-            'При добавлении новой камеры — не забудьте обновить маппинг.',
-          ],
-        },
-        {
-          heading: 'Типичные сценарии',
-          items: [
-            '[ok] **Поиск слепых зон** — посмотрели в матрицу покрытия → нашли зоны с пустыми ячейками → добавили камеру или переориентировали существующую.',
-            '[ok] **Повышение точности** — постоянные ложные сработки в зоне → проверили приоритеты → подняли основную камеру до P10.',
-            '[ok] **Замена камеры** — снимаем CAM 03 на ремонт → сняли её со всех зон → подняли приоритеты резервных камер.',
-          ],
-        },
-      ],
-    },
-    en: {
-      title: 'Camera Zone Mapping',
-      intro: 'Configure zone coverage by cameras with P1–P10 priorities. Determines which cameras monitor which zones and the order they are used to confirm CV events. 21 zones × 16 cameras. Correct mapping directly affects event confidence and recognition accuracy.',
-      sections: [
-        {
-          heading: 'Screen Map',
-          items: [
-            '[eye] **Left panel** — list of 21 zones with assigned-camera counters.',
-            '[eye] **Right panel** — editor: 16 cameras for the selected zone with toggles and P priority.',
-            '[eye] **Bottom or separate tab** — "Zones × Cameras" matrix (visual coverage).',
-            '[eye] **Top right** — Save / Reset buttons.',
-          ],
-        },
-        {
-          heading: 'Zone List (left panel)',
-          items: [
-            'List of all **21 STO zones**.',
-            'Next to each zone — **counter** of assigned cameras.',
-            'Click a zone — opens camera editor on the right.',
-            'Zones sorted by type: repair, waiting, entry, parking, free.',
-          ],
-        },
-        {
-          heading: 'Camera Editor (right panel)',
-          items: [
-            'For selected zone — list of all **16 cameras**.',
-            '**Toggle** — enable/disable camera for this zone.',
-            '**Priority (P1-P10)** — higher priority = more weight for data from this camera.',
-            'P1 = minimum priority, P10 = maximum.',
-            'A camera can be assigned to multiple zones with different priorities.',
-          ],
-        },
-        {
-          heading: 'Coverage Matrix',
-          items: [
-            '**Zones x Cameras** table — visual assignment matrix.',
-            'Cell color depends on priority: dark = high, light = low, empty = no assignment.',
-            'Helps see overall coverage: which zones are well-covered, which are not.',
-            'Reveals "blind spots" — zones without cameras.',
-          ],
-        },
-        {
-          heading: 'Saving',
-          items: [
-            '**"Save"** button — saves current configuration.',
-            '**"Reset"** button — revert to last saved version.',
-            'Data saved to **localStorage** (cameraMappingData) and server.',
-            'Changes take effect immediately after saving.',
-          ],
-        },
-        {
-          heading: 'System Impact',
-          items: [
-            'Mapping determines which cameras are used for recognition in each zone.',
-            'High priority = camera used first for event confirmation.',
-            'Correct setup improves CV event confidence.',
-            'When adding a new camera — remember to update the mapping.',
-          ],
-        },
-        {
-          heading: 'Common Workflows',
-          items: [
-            '[ok] **Find blind spots** — review coverage matrix → find zones with empty cells → add a camera or re-aim an existing one.',
-            '[ok] **Boost accuracy** — constant false events in a zone → check priorities → raise the main camera to P10.',
-            '[ok] **Camera replacement** — taking CAM 03 down for repair → unassign from all zones → raise priorities of backup cameras.',
-          ],
-        },
-      ],
-    },
-  },
-
-  // ────────────────────────────
   // ДАННЫЕ 1С
   // ────────────────────────────
   data1c: {
@@ -2358,7 +2214,7 @@ const HELP_CONTENT = {
           heading: 'Доступ к страницам',
           items: [
             'Для каждого пользователя — набор **чекбоксов страниц** (до 20 штук).',
-            'Страницы: dashboard, dashboardPosts, postsDetail, map, sessions, workOrders, events, analytics, cameras, cameraMapping, data1c, users, shifts, audit, myPost, mapEditor, health, reportSchedule, workerStats, liveDebug, techDocs.',
+            'Страницы: dashboard, dashboardPosts, postsDetail, map, sessions, workOrders, events, analytics, cameras, data1c, users, shifts, audit, myPost, mapEditor, health, reportSchedule, workerStats, liveDebug, techDocs.',
             'Кнопка **«Выбрать все»** — включить все страницы.',
             'Кнопка **«Сбросить»** — снять все галочки.',
             'Пользователь видит в **Sidebar** только страницы из своего массива pages.',
@@ -2440,7 +2296,7 @@ const HELP_CONTENT = {
           heading: 'Page Access',
           items: [
             'For each user — set of **page checkboxes** (up to 20).',
-            'Pages: dashboard, dashboardPosts, postsDetail, map, sessions, workOrders, events, analytics, cameras, cameraMapping, data1c, users, shifts, audit, myPost, mapEditor, health, reportSchedule, workerStats, liveDebug, techDocs.',
+            'Pages: dashboard, dashboardPosts, postsDetail, map, sessions, workOrders, events, analytics, cameras, data1c, users, shifts, audit, myPost, mapEditor, health, reportSchedule, workerStats, liveDebug, techDocs.',
             '**"Select All"** button — enable all pages.',
             '**"Reset"** button — uncheck all.',
             'User sees only pages from their pages array in **Sidebar**.',

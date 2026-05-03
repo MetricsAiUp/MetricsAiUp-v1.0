@@ -9,6 +9,7 @@
 
 const logger = require('../config/logger');
 const prisma = require('../config/database');
+const registry = require('./_serviceRegistry');
 
 const MONITORING_API_BASE = 'https://dev.metricsavto.com/p/test1/3100/api';
 const POLL_INTERVAL = 10_000; // 10 seconds
@@ -407,8 +408,17 @@ async function processState(rawStateInput) {
 }
 
 async function poll() {
-  const raw = await fetchMonitoringState();
-  if (raw) await processState(raw);
+  try {
+    const raw = await fetchMonitoringState();
+    if (raw) {
+      await processState(raw);
+      registry.tick('monitoringProxy', { zones: raw.length });
+    } else {
+      registry.error('monitoringProxy', new Error('CV API returned null'));
+    }
+  } catch (err) {
+    registry.error('monitoringProxy', err);
+  }
 }
 
 // ---- Public API ----
@@ -496,6 +506,7 @@ const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000; // refresh full history every 5 
 async function start(io) {
   if (pollTimer) return;
   ioRef = io;
+  registry.register('monitoringProxy', { interval: POLL_INTERVAL, cvApi: MONITORING_API_BASE });
   logger.info('Monitoring proxy started', { interval: POLL_INTERVAL });
 
   // Hydrate from DB BEFORE any external fetches.
@@ -551,6 +562,7 @@ function stop() {
     clearInterval(activeSetsRefreshTimer);
     activeSetsRefreshTimer = null;
   }
+  registry.unregister('monitoringProxy');
   logger.info('Monitoring proxy stopped');
 }
 

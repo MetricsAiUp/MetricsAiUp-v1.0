@@ -6,7 +6,7 @@ const authCache = require('../config/authCache');
 const ROLE_PAGES = {
   admin: [
     'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
-    'shifts', 'events', 'analytics', 'cameras', 'camera-mapping', 'data-1c',
+    'shifts', 'events', 'analytics', 'cameras', 'data-1c',
     'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
     'report-schedule', 'tech-docs', 'live-debug',
   ],

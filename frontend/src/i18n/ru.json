@@ -11,7 +11,6 @@
     "events": "Журнал событий",
     "analytics": "Аналитика",
     "cameras": "Камеры",
-    "cameraMapping": "Разметка камер",
     "data1c": "Данные 1С",
     "dashboardPosts": "Дашборд постов",
     "postsDetail": "Посты",
@@ -317,6 +316,11 @@
     "saved": "Расписание сохранено"
   },
   "common": {
+    "dataStaleTitle": "Нет свежих данных от системы мониторинга",
+    "dataStaleBody": "Последнее событие — {{ago}} назад. Метрики и таймлайн заморожены до возобновления потока CV-данных.",
+    "dataStaleNoData": "Данные с системы мониторинга не поступают.",
+    "agoHours": "{{n}} ч {{m}} мин",
+    "agoMinutes": "{{n}} мин",
     "loading": "Загрузка...",
     "error": "Ошибка",
     "save": "Сохранить",
@@ -381,17 +385,6 @@
     "connecting": "Подключение к камере...",
     "cameraOffline": "Камера недоступна",
     "streamError": "Ошибка стрима"
-  },
-  "cameraMapping": {
-    "title": "Разметка камер",
-    "unsavedChanges": "Есть изменения",
-    "zones": "Зон",
-    "cameras": "Камер",
-    "links": "Привязок",
-    "unmapped": "Без камер",
-    "zonesWithout": "Зоны без камер",
-    "camerasWithout": "Камеры без привязки",
-    "stoZones": "Зоны СТО"
   },
   "data1c": {
     "title": "Данные 1С Альфа-Авто",
@@ -556,6 +549,7 @@
   },
   "health": {
     "title": "Здоровье системы",
+    "subtitle": "Состояние внутренних и внешних сервисов",
     "backend": "Бэкенд",
     "database": "База данных",
     "cameras": "Камеры",
@@ -570,9 +564,132 @@
     "online": "Онлайн",
     "offline": "Офлайн",
     "autoRefresh": "Автообновление: 30с",
+    "refresh": "Обновить",
+    "fresh": "Без кэша",
     "ok": "Работает",
     "error": "Ошибка",
-    "never": "Никогда"
+    "never": "Никогда",
+    "unknown": "Неизвестно",
+    "scoreLabel": "Оценка здоровья",
+    "scoreSubtitle": "Чем выше, тем лучше",
+    "level": {
+      "ok": "Всё в порядке",
+      "warn": "Внимание",
+      "critical": "Критично"
+    },
+    "failures": {
+      "cv_api_down": "CV API недоступен",
+      "cv_api_stale": "CV API: данные устарели",
+      "events_silent": "Нет событий более 10 минут",
+      "db_error": "Ошибка базы данных",
+      "heap_critical": "Heap > 95%",
+      "heap_warn": "Heap > 85%",
+      "disk_critical": "Диск > 95%",
+      "disk_warn": "Диск > 85%",
+      "sync1c_stale": "1С не синхронизировалась > 24ч",
+      "sync1c_stale_critical": "1С не синхронизировалась > 7 дней",
+      "ml_down": "ML-сервис недоступен",
+      "hls_down": "HLS-стриминг недоступен",
+      "telegram_down": "Telegram-бот недоступен",
+      "ssl_critical": "SSL истекает менее 7 дней",
+      "ssl_expiring": "SSL истекает менее 30 дней"
+    },
+    "sections": {
+      "dataSources": "Источники данных",
+      "pulse": "Пульс системы",
+      "resources": "Ресурсы",
+      "services": "Внутренние сервисы",
+      "backgroundServices": "Фоновые сервисы",
+      "security": "Безопасность",
+      "cameras": "Камеры"
+    },
+    "dataSources": {
+      "cvApi": "CV API",
+      "cvApiDesc": "Источник событий с камер",
+      "mlApi": "ML-сервис",
+      "mlApiDesc": "Прогнозы (FastAPI :8282)",
+      "hls": "HLS-стриминг",
+      "hlsDesc": "RTSP→HLS (:8181)",
+      "telegram": "Telegram-бот",
+      "telegramDesc": "Уведомления и команды"
+    },
+    "status": {
+      "ok": "OK",
+      "degraded": "С перебоями",
+      "down": "Недоступен",
+      "warn": "Внимание",
+      "critical": "Критично",
+      "never": "Никогда",
+      "unknown": "Неизвестно",
+      "running": "Работает",
+      "stopped": "Остановлен"
+    },
+    "metrics": {
+      "lastFetch": "Последний приём",
+      "lastEvent": "Последнее событие",
+      "lastTick": "Последний цикл",
+      "lastError": "Последняя ошибка",
+      "latency": "Задержка",
+      "httpCode": "HTTP",
+      "linkedUsers": "Привязано пользователей",
+      "eventsLast5m": "События за 5 мин",
+      "eventsLast1h": "События за 1 ч",
+      "eventsLast24h": "События за 24 ч",
+      "snapshotsLast24h": "Снапшоты за 24 ч",
+      "sessionsLast24h": "Сессии за 24 ч",
+      "activeRecommendations": "Активные рекомендации",
+      "auditLast24h": "Аудит за 24 ч",
+      "ticks": "Циклов",
+      "errors": "Ошибок",
+      "registeredAt": "Запущен"
+    },
+    "resources": {
+      "memory": "Память",
+      "heap": "Heap (Node.js)",
+      "disk": "Диск",
+      "cpu": "CPU",
+      "loadavg": "Load avg",
+      "totalMem": "Всего ОЗУ",
+      "freeMem": "Свободно ОЗУ",
+      "cpuCount": "Ядер"
+    },
+    "internal": {
+      "backend": "Бэкенд",
+      "database": "База данных",
+      "sync1c": "Синхронизация 1С",
+      "ssl": "SSL-сертификат",
+      "expiresIn": "Истекает через",
+      "nodeVersion": "Node",
+      "pid": "PID"
+    },
+    "security": {
+      "failedLogins": "Неудачные входы (24ч)",
+      "auditEntries": "Записи аудита (24ч)",
+      "pushSubscriptions": "Push-подписки"
+    },
+    "cameras": {
+      "online": "Онлайн",
+      "offline": "Офлайн",
+      "total": "Всего"
+    },
+    "units": {
+      "ms": "мс",
+      "sec": "с",
+      "min": "мин",
+      "hours": "ч",
+      "days": "дн",
+      "percent": "%"
+    },
+    "ago": {
+      "now": "только что",
+      "secondsAgo": "{{n}} с назад",
+      "minutesAgo": "{{n}} мин назад",
+      "hoursAgo": "{{n}} ч назад",
+      "daysAgo": "{{n}} дн назад"
+    },
+    "noFailures": "Все системы работают штатно",
+    "loading": "Загрузка...",
+    "loadError": "Не удалось загрузить состояние"
   },
   "reportSchedule": {
     "title": "Расписание отчётов",

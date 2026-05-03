@@ -2,6 +2,44 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const settingsReader = require('./settings');
 
+// Если данные с CV-системы не поступают дольше этого порога — считаем их
+// несвежими: фронт покажет аварийный баннер, расчёты «загрузка/эффективность»
+// замораживаются на моменте последнего реального события (а не дотягиваются до now).
+const STALE_DATA_MS = 60 * 60 * 1000; // 1 час
+
+// CV-система пингует каждые 10 секунд. Если между соседними записями истории
+// проходит больше этого порога — считаем это «провалом» данных: предыдущее
+// состояние не должно «протягиваться» через провал в метрики и таймлайн,
+// иначе один кадр «occupied» в 09:30 заполнит весь день до возврата CV.
+const GAP_THRESHOLD_MS = 5 * 60 * 1000; // 5 минут
+
+// Считает «время последнего знания» по массиву CV-объектов (постов и зон).
+// Источники: mp.lastUpdate и timestamps из mp.history. Если данных нет вовсе —
+// возвращаем dataAsOf=null и stale=true (фронт покажет «нет данных»).
+function computeDataFreshness(items) {
+  let maxTs = 0;
+  for (const item of items || []) {
+    if (!item) continue;
+    const lu = item.lastUpdate ? new Date(item.lastUpdate).getTime() : 0;
+    if (Number.isFinite(lu) && lu > maxTs) maxTs = lu;
+    const hist = Array.isArray(item.history) ? item.history : [];
+    for (const h of hist) {
+      const ht = new Date(h?.timestamp || h?.lastUpdate || 0).getTime();
+      if (Number.isFinite(ht) && ht > maxTs) maxTs = ht;
+    }
+  }
+  if (maxTs <= 0) {
+    return { dataAsOf: null, dataAsOfMs: null, dataAgeMs: null, stale: true };
+  }
+  const ageMs = Date.now() - maxTs;
+  return {
+    dataAsOf: new Date(maxTs).toISOString(),
+    dataAsOfMs: maxTs,
+    dataAgeMs: ageMs,
+    stale: ageMs > STALE_DATA_MS,
+  };
+}
+
 // Парсит wall-clock время "YYYY-MM-DD" + "HH:MM" в указанной IANA-таймзоне
 // и возвращает соответствующий UTC-timestamp (ms). Не зависит от TZ хост-системы.
 // Алгоритм: берём наивный UTC, форматируем в целевой TZ, считаем offset, корректируем.
@@ -210,8 +248,10 @@ router.get('/posts-analytics', async (req, res) => {
     const proxy = req.app.get('monitoringProxy');
     const { period, from, to } = req.query;
     const { dateFrom, dateTo } = getPeriodRange(period, from, to, curSettings);
-    // Compute daily breakdown from monitoring history
-    function computeDailyFromHistory(history, settings) {
+    // Compute daily breakdown from monitoring history.
+    // dailyCutoffMs ограничивает «сейчас» для текущего дня (чтобы при потере данных
+    // последний столбик не считался по полной смене).
+    function computeDailyFromHistory(history, settings, dailyCutoffMs = Date.now()) {
       const days = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
@@ -221,7 +261,7 @@ router.get('/posts-analytics', async (req, res) => {
           const ts = new Date(h.timestamp || h.lastUpdate).getTime();
           return ts >= sb.shiftStart && ts <= sb.shiftEnd;
         });
-        const m = calcMetricsForBounds(dayHistory, sb);
+        const m = calcMetricsForBounds(dayHistory, sb, dailyCutoffMs);
         days.push({
           date: d.toISOString().slice(0, 10),
           occupancy: m.loadPercent,
@@ -235,10 +275,13 @@ router.get('/posts-analytics', async (req, res) => {
       return days;
     }
 
-    // calcMetrics with explicit bounds (for daily breakdown)
-    function calcMetricsForBounds(history, bounds) {
+    // calcMetrics with explicit bounds (for daily breakdown).
+    // cutoffMs — верхняя граница «сейчас» (момент последнего реального события CV).
+    // Если данных нет — не дотягиваем до Date.now(), иначе посты «работают» весь день
+    // даже когда мониторинг лежит.
+    function calcMetricsForBounds(history, bounds, cutoffMs = Date.now()) {
       const { shiftStart, shiftEnd, maxMs, maxH } = bounds;
-      const now = Math.min(Date.now(), shiftEnd);
+      const now = Math.min(cutoffMs, shiftEnd);
       let occupiedMs = 0, workingMs = 0;
       const sorted = [...(history || [])]
         .filter(h => h.timestamp || h.lastUpdate)
@@ -247,7 +290,11 @@ router.get('/posts-analytics', async (req, res) => {
         const cur = sorted[i];
         const next = sorted[i + 1];
         const start = new Date(cur.timestamp || cur.lastUpdate).getTime();
-        const end = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
+        const rawEnd = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
+        // Защита от «протяжки» через провалы данных: ограничиваем длительность
+        // сегмента порогом GAP_THRESHOLD_MS. Если CV молчит >5 мин — состояние
+        // «cur» больше не подтверждается и не должно считаться занятостью.
+        const end = Math.min(rawEnd, start + GAP_THRESHOLD_MS);
         const cs = Math.max(start, shiftStart);
         const ce = Math.min(end, now);
         const dur = Math.max(0, ce - cs);
@@ -284,10 +331,11 @@ router.get('/posts-analytics', async (req, res) => {
       shiftBounds.shiftEnd = parseInTz(dateTo, '23:59', tzOf(curSettings)) + 59000;
     }
 
-    // Calculate occupancy metrics from history timeline within shift bounds
-    function calcMetrics(history, currentStatus, worksInProgress) {
+    // Calculate occupancy metrics from history timeline within shift bounds.
+    // cutoffMs ограничивает «сейчас» моментом последнего реального CV-события.
+    function calcMetrics(history, currentStatus, worksInProgress, cutoffMs = Date.now()) {
       const { shiftStart, maxMs, maxH } = shiftBounds;
-      const now = Math.min(Date.now(), shiftBounds.shiftEnd);
+      const now = Math.min(cutoffMs, shiftBounds.shiftEnd);
 
       let occupiedMs = 0;
       let workingMs = 0;
@@ -300,7 +348,11 @@ router.get('/posts-analytics', async (req, res) => {
         const cur = sorted[i];
         const next = sorted[i + 1];
         const start = new Date(cur.timestamp || cur.lastUpdate).getTime();
-        const end = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
+        const rawEnd = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
+        // Per-segment gap guard: если CV молчит дольше GAP_THRESHOLD_MS, считаем
+        // что состояние «cur» подтверждено только в пределах этого окна. Иначе
+        // одно «occupied» в 09:30 + 10ч молчания = «весь день занят».
+        const end = Math.min(rawEnd, start + GAP_THRESHOLD_MS);
 
         // Clamp to shift window [shiftStart, now]
         const clampedStart = Math.max(start, shiftStart);
@@ -336,13 +388,18 @@ router.get('/posts-analytics', async (req, res) => {
     if (curSettings.mode === 'live' && proxy && proxy.isRunning()) {
       const postsMap = await getActivePostsMap();
       const monPosts = proxy.getPosts();
+      const monZonesPre = (typeof proxy.getFreeZones === 'function') ? proxy.getFreeZones() : [];
+      const freshness = computeDataFreshness([...monPosts, ...monZonesPre]);
+      const cutoffMs = freshness.dataAsOfMs || 0; // 0 → calcMetrics получит min(0, shiftEnd) = 0, всё схлопнется в 0%
       const result = monPosts.map(mp => {
         const dbPost = postsMap.get(mp.postNumber);
         const history = mp.history || [];
         const occupiedEntries = history.filter(h => h.status === 'occupied' || h.status !== 'free');
         const freeEntries = history.filter(h => h.status === 'free');
-        const m = calcMetrics(history, mp.status, mp.worksInProgress);
+        const m = calcMetrics(history, mp.status, mp.worksInProgress, cutoffMs);
 
+        // При stale-данных статус из кэша CV неактуален — отдаём no_data.
+        const effectiveStatus = freshness.stale ? 'no_data' : mp.status;
         return {
           id: `post-${mp.postNumber}`,
           number: mp.postNumber,
@@ -351,7 +408,7 @@ router.get('/posts-analytics', async (req, res) => {
           displayNameEn: dbPost?.displayNameEn || null,
           type: postTypeOf(postsMap, mp.postNumber),
           zone: mp.externalZoneName,
-          status: mp.status,
+          status: effectiveStatus,
           maxCapacityHours: shiftBounds.maxH,
           occupancy: m.loadPercent,
           efficiency: m.efficiency,
@@ -400,26 +457,29 @@ router.get('/posts-analytics', async (req, res) => {
             openParts: mp.openParts,
             confidence: mp.confidence,
           },
-          daily: computeDailyFromHistory(history, curSettings),
+          daily: computeDailyFromHistory(history, curSettings, cutoffMs),
           calendar: [],
           workOrders: [],
         };
       });
       // Also add zones
-      const monZones = proxy.getFreeZones();
+      const monZones = monZonesPre;
       const zones = monZones.map(mz => {
         const history = mz.history || [];
         const occupiedEntries = history.filter(h => h.status === 'occupied' || h.status !== 'free');
         const freeEntries = history.filter(h => h.status === 'free');
-        const m = calcMetrics(history, mz.status, mz.worksInProgress);
+        const m = calcMetrics(history, mz.status, mz.worksInProgress, cutoffMs);
 
+        const effectiveZoneStatus = freshness.stale
+          ? 'no_data'
+          : (mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : 'free');
         return {
           id: `zone-${mz.zoneNumber}`,
           number: mz.zoneNumber,
           name: `Зона ${String(mz.zoneNumber).padStart(2, '0')}`,
           type: 'zone',
           zone: mz.externalZoneName,
-          status: mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : 'free',
+          status: effectiveZoneStatus,
           maxCapacityHours: shiftBounds.maxH,
           occupancy: m.loadPercent,
           efficiency: m.efficiency,
@@ -466,7 +526,7 @@ router.get('/posts-analytics', async (req, res) => {
             openParts: mz.openParts,
             confidence: mz.confidence,
           },
-          daily: computeDailyFromHistory(history, curSettings),
+          daily: computeDailyFromHistory(history, curSettings, cutoffMs),
           calendar: [],
           workOrders: [],
         };
@@ -510,7 +570,15 @@ router.get('/posts-analytics', async (req, res) => {
       }
       result.sort((a, b) => a.number - b.number);
 
-      return res.json({ posts: result, zones, mode: 'live' });
+      return res.json({
+        posts: result,
+        zones,
+        mode: 'live',
+        dataAsOf: freshness.dataAsOf,
+        dataAgeMs: freshness.dataAgeMs,
+        stale: freshness.stale,
+        staleThresholdMs: STALE_DATA_MS,
+      });
     }
 
     const posts = await prisma.post.findMany({
@@ -691,6 +759,15 @@ router.get('/dashboard-posts', async (req, res) => {
     if (settings.mode === 'live' && proxy && proxy.isRunning()) {
       const postsMap = await getActivePostsMap();
       const monPosts = proxy.getPosts();
+      const monZonesPre = (typeof proxy.getFreeZones === 'function') ? proxy.getFreeZones() : [];
+      const freshness = computeDataFreshness([...monPosts, ...monZonesPre]);
+      // На сколько мы вправе тянуть «активные» блоки таймлайна вправо. Если данные
+      // несвежие — не дотягиваем до now: визит должен закрыться на момент последнего
+      // реального события CV.
+      const timelineNowMs = freshness.dataAsOfMs
+        ? Math.min(Date.now(), freshness.dataAsOfMs)
+        : Date.now();
+      const timelineNowIso = new Date(timelineNowMs).toISOString();
       const posts = monPosts.map(mp => {
         const dbPost = postsMap.get(mp.postNumber);
         // Сворачиваем сырые snapshot-ы в «визиты» (один блок на одного авто на посту).
@@ -706,7 +783,17 @@ router.get('/dashboard-posts', async (req, res) => {
 
         const timeline = [];
         let visit = null;
+        let prevTs = null;
         for (const h of inShift) {
+          const curTs = new Date(h.timestamp).getTime();
+          // Если между прошлой и текущей записью — провал (>5 мин), значит CV
+          // молчал. Открытый визит закрываем по последнему подтверждённому
+          // кадру, а не «протягиваем» через провал. Иначе один кадр «occupied»
+          // даёт визит длиной во весь outage.
+          if (visit && prevTs && (curTs - prevTs) > GAP_THRESHOLD_MS) {
+            timeline.push({ ...visit, endTime: new Date(prevTs).toISOString(), completed: true });
+            visit = null;
+          }
           if (h.status !== 'free') {
             // Начало визита или продолжение
             if (!visit) {
@@ -732,21 +819,29 @@ router.get('/dashboard-posts', async (req, res) => {
             timeline.push({ ...visit, endTime: h.timestamp, completed: true });
             visit = null;
           }
+          prevTs = curTs;
         }
-        // Открытый визит на момент конца смены/сейчас → in_progress / scheduled
+        // Открытый визит на момент конца смены/сейчас → in_progress / scheduled.
+        // Когда данные несвежие или последний кадр старше GAP_THRESHOLD_MS —
+        // не дотягиваем визит до настоящего "сейчас", закрываем по prevTs.
         if (visit) {
-          timeline.push({ ...visit, endTime: null, completed: false });
-        } else if (mp.status && mp.status !== 'free' && mp.status !== 'no_data') {
+          const isLastFresh = prevTs && (timelineNowMs - prevTs) <= GAP_THRESHOLD_MS;
+          if (isLastFresh) {
+            timeline.push({ ...visit, endTime: null, completed: false });
+          } else if (prevTs) {
+            timeline.push({ ...visit, endTime: new Date(prevTs).toISOString(), completed: true });
+          }
+        } else if (!freshness.stale && mp.status && mp.status !== 'free' && mp.status !== 'no_data') {
           // Sync-fallback: текущее состояние = занят, но в истории последний кадр
-          // оказался 'free' (расхождение CV/полла). Стартом считаем последний
-          // close из таймлайна (если есть) или mp.lastUpdate, чтобы блок был виден.
+          // оказался 'free' (расхождение CV/полла). Используем только когда данные
+          // свежие — иначе мы рисуем призрак на момент часовой давности.
           const lastClosed = timeline[timeline.length - 1];
           const fallbackStart = lastClosed?.endTime
             || mp.lastUpdate
-            || new Date(Date.now() - 60_000).toISOString();
+            || new Date(timelineNowMs - 60_000).toISOString();
           timeline.push({
             start: fallbackStart,
-            end: new Date().toISOString(),
+            end: timelineNowIso,
             plate: mp.plateNumber || null,
             brand: mp.carMake || null,
             model: mp.carModel || null,
@@ -796,7 +891,11 @@ router.get('/dashboard-posts', async (req, res) => {
           hadWork: v.worksInProgress,
         }));
 
-        const currentVehicle = mp.status !== 'free' && (mp.plateNumber || mp.carModel)
+        // При stale-данных текущий статус из кэша CV неактуален: статус мог
+        // поменяться много раз за час молчания. Возвращаем 'no_data' и не светим
+        // currentVehicle, чтобы KPI-карточки не показывали ложную занятость.
+        const effectiveStatus = freshness.stale ? 'no_data' : mp.status;
+        const currentVehicle = !freshness.stale && mp.status !== 'free' && (mp.plateNumber || mp.carModel)
           ? { plateNumber: mp.plateNumber, brand: mp.carMake, model: mp.carModel, color: mp.carColor }
           : null;
 
@@ -808,12 +907,12 @@ router.get('/dashboard-posts', async (req, res) => {
           displayNameEn: dbPost?.displayNameEn || null,
           type: postTypeOf(postsMap, mp.postNumber),
           zone: mp.externalZoneName,
-          status: mp.status,
+          status: effectiveStatus,
           currentVehicle,
-          worksDescription: mp.worksDescription,
-          peopleCount: mp.peopleCount,
-          openParts: mp.openParts,
-          confidence: mp.confidence,
+          worksDescription: freshness.stale ? null : mp.worksDescription,
+          peopleCount: freshness.stale ? 0 : mp.peopleCount,
+          openParts: freshness.stale ? [] : mp.openParts,
+          confidence: freshness.stale ? null : mp.confidence,
           lastUpdate: mp.lastUpdate,
           timeline: tlBlocks,
           freeWorkOrders: [],
@@ -851,7 +950,7 @@ router.get('/dashboard-posts', async (req, res) => {
       // ── Зоны: строим строки по тому же принципу, что и посты ──
       // Источник: monitoringProxy.getFreeZones() — данные из CV-системы.
       // Дополнительно добираем зоны из БД (isActive=true), которых нет в мониторинге → status=no_data.
-      const monZones = (typeof proxy.getFreeZones === 'function') ? proxy.getFreeZones() : [];
+      const monZones = monZonesPre;
       const zoneRows = monZones.map(mz => {
         const allHistory = Array.isArray(mz.history) ? mz.history : [];
         const inShift = allHistory.filter(h => {
@@ -861,7 +960,13 @@ router.get('/dashboard-posts', async (req, res) => {
 
         const timeline = [];
         let visit = null;
+        let prevTs = null;
         for (const h of inShift) {
+          const curTs = new Date(h.timestamp).getTime();
+          if (visit && prevTs && (curTs - prevTs) > GAP_THRESHOLD_MS) {
+            timeline.push({ ...visit, endTime: new Date(prevTs).toISOString(), completed: true });
+            visit = null;
+          }
           if (h.status !== 'free') {
             if (!visit) {
               visit = {
@@ -884,19 +989,25 @@ router.get('/dashboard-posts', async (req, res) => {
             timeline.push({ ...visit, endTime: h.timestamp, completed: true });
             visit = null;
           }
+          prevTs = curTs;
         }
         if (visit) {
-          timeline.push({ ...visit, endTime: null, completed: false });
-        } else if (mz.status && mz.status !== 'free' && mz.status !== 'no_data') {
+          const isLastFresh = prevTs && (timelineNowMs - prevTs) <= GAP_THRESHOLD_MS;
+          if (isLastFresh) {
+            timeline.push({ ...visit, endTime: null, completed: false });
+          } else if (prevTs) {
+            timeline.push({ ...visit, endTime: new Date(prevTs).toISOString(), completed: true });
+          }
+        } else if (!freshness.stale && mz.status && mz.status !== 'free' && mz.status !== 'no_data') {
           // Sync-fallback (см. посты выше): зона занята «сейчас», но в истории нет
-          // открытого визита.
+          // открытого визита. Только при свежих данных.
           const lastClosed = timeline[timeline.length - 1];
           const fallbackStart = lastClosed?.endTime
             || mz.lastUpdate
-            || new Date(Date.now() - 60_000).toISOString();
+            || new Date(timelineNowMs - 60_000).toISOString();
           timeline.push({
             start: fallbackStart,
-            end: new Date().toISOString(),
+            end: timelineNowIso,
             plate: mz.plateNumber || null,
             brand: mz.carMake || null,
             model: mz.carModel || null,
@@ -933,9 +1044,12 @@ router.get('/dashboard-posts', async (req, res) => {
           hadWork: v.worksInProgress,
         }));
 
-        const currentVehicle = mz.status !== 'free' && (mz.plateNumber || mz.carModel)
+        const currentVehicle = !freshness.stale && mz.status !== 'free' && (mz.plateNumber || mz.carModel)
           ? { plateNumber: mz.plateNumber, brand: mz.carMake, model: mz.carModel, color: mz.carColor }
           : null;
+        const effectiveZoneStatus = freshness.stale
+          ? 'no_data'
+          : (mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : (mz.status || 'free'));
 
         return {
           id: `zone-${mz.zoneNumber}`,
@@ -946,13 +1060,14 @@ router.get('/dashboard-posts', async (req, res) => {
           zone: mz.externalZoneName,
           // Единая палитра карты СТО: зона с работами → active_work (индиго),
           // просто занята → occupied (оранжевый), свободна → free (зелёный).
-          status: mz.status === 'occupied' ? (mz.worksInProgress ? 'active_work' : 'occupied') : (mz.status || 'free'),
-          worksInProgress: !!mz.worksInProgress,
+          // При stale-данных всё → no_data.
+          status: effectiveZoneStatus,
+          worksInProgress: freshness.stale ? false : !!mz.worksInProgress,
           currentVehicle,
-          worksDescription: mz.worksDescription,
-          peopleCount: mz.peopleCount,
-          openParts: mz.openParts,
-          confidence: mz.confidence,
+          worksDescription: freshness.stale ? null : mz.worksDescription,
+          peopleCount: freshness.stale ? 0 : mz.peopleCount,
+          openParts: freshness.stale ? [] : mz.openParts,
+          confidence: freshness.stale ? null : mz.confidence,
           lastUpdate: mz.lastUpdate,
           timeline: tlBlocks,
           freeWorkOrders: [],
@@ -1021,6 +1136,10 @@ router.get('/dashboard-posts', async (req, res) => {
         posts,
         freeWorkOrders: [],
         workOrdersStats: woStats,
+        dataAsOf: freshness.dataAsOf,
+        dataAgeMs: freshness.dataAgeMs,
+        stale: freshness.stale,
+        staleThresholdMs: STALE_DATA_MS,
       });
     }
 

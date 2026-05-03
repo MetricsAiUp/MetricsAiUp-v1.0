@@ -45,7 +45,6 @@ const backupScheduler = require('./services/backupScheduler');
 const retentionCleaner = require('./services/retentionCleaner');
 const monitoringProxy = require('./services/monitoringProxy');
 const settingsRoutes = require('./routes/settings');
-const cameraMappingRoutes = require('./routes/cameraMapping');
 const { auditLogger } = require('./middleware/auditLogger');
 
 const app = express();
@@ -127,7 +126,6 @@ app.use('/api/replay', require('./routes/replay'));
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
 app.use('/api/monitoring', require('./routes/monitoring'));
-app.use('/api/camera-mapping', cameraMappingRoutes);
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check

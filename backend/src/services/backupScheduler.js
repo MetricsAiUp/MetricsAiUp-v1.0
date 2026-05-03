@@ -15,6 +15,7 @@ const path = require('path');
 const cron = require('node-cron');
 const prisma = require('../config/database');
 const logger = require('../config/logger');
+const registry = require('./_serviceRegistry');
 
 const BACKUP_ROOT = '/project/backups';
 const DAILY_DIR = path.join(BACKUP_ROOT, 'daily');
@@ -79,7 +80,9 @@ async function createBackup(label = 'manual') {
   const t0 = Date.now();
   try {
     await vacuumInto(targetPath);
+    registry.tick('backupScheduler', { file: filename });
   } catch (err) {
+    registry.error('backupScheduler', err);
     logger.error('Backup failed', { error: err.message, label, target: targetPath });
     return { success: false, error: err.message };
   }
@@ -153,6 +156,7 @@ function listBackups() {
 function start() {
   if (cronTask) return;
   ensureDirs();
+  registry.register('backupScheduler', { schedule: '0 3 * * *', root: BACKUP_ROOT });
   // Каждый день в 03:00 локального времени контейнера.
   cronTask = cron.schedule('0 3 * * *', () => {
     createBackup('scheduled').catch((err) =>

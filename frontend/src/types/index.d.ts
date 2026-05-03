@@ -22,7 +22,7 @@ export type UserRole = 'admin' | 'manager' | 'director' | 'mechanic' | 'viewer';
 export type PageId =
   | 'dashboard' | 'dashboard-posts' | 'posts-detail' | 'map'
   | 'sessions' | 'work-orders' | 'events' | 'analytics'
-  | 'cameras' | 'camera-mapping' | 'data-1c' | 'users';
+  | 'cameras' | 'data-1c' | 'users';
 
 export interface AuthContextValue {
   user: User | null;

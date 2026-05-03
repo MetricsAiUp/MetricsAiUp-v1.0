@@ -1,5 +1,6 @@
 const { getIO } = require('../config/socket');
 const logger = require('../config/logger');
+const registry = require('./_serviceRegistry');
 
 const EXTERNAL_STREAM_API = 'https://dev.metricsavto.com/p/test1/8181';
 const CAM_IDS = Array.from({ length: 16 }, (_, i) => `cam${String(i).padStart(2, '0')}`);
@@ -22,16 +23,22 @@ async function checkCamera(camId) {
 }
 
 function startCameraHealthCheck() {
+  registry.register('cameraHealthCheck', { interval: 30000, cameras: CAM_IDS.length });
   const check = async () => {
-    for (const camId of CAM_IDS) {
-      const online = await checkCamera(camId);
-      const prev = statusMap.get(camId);
-      statusMap.set(camId, { online, lastCheck: new Date() });
-      if (!prev || prev.online !== online) {
-        try {
-          getIO()?.to('all_events').emit('camera:status', { camId, online });
-        } catch {}
+    try {
+      for (const camId of CAM_IDS) {
+        const online = await checkCamera(camId);
+        const prev = statusMap.get(camId);
+        statusMap.set(camId, { online, lastCheck: new Date() });
+        if (!prev || prev.online !== online) {
+          try {
+            getIO()?.to('all_events').emit('camera:status', { camId, online });
+          } catch {}
+        }
       }
+      registry.tick('cameraHealthCheck');
+    } catch (err) {
+      registry.error('cameraHealthCheck', err);
     }
   };
   check();

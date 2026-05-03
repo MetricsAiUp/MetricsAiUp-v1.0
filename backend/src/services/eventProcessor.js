@@ -1,6 +1,10 @@
 const prisma = require('../config/database');
 const { getIO } = require('../config/socket');
 const { checkRecommendations } = require('./recommendationEngine');
+const registry = require('./_serviceRegistry');
+
+// Регистрируем процессор сразу при загрузке модуля — он on-demand, без интервала.
+registry.register('eventProcessor', { type: 'on-demand' });
 
 /**
  * Обрабатывает событие от CV-системы
@@ -82,6 +86,7 @@ async function processEvent(data) {
   // Отправить через Socket.IO
   emitEvent(event, zone_id, post_id);
 
+  registry.tick('eventProcessor', { type: event_type });
   return event;
 }
 

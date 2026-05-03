@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const prisma = require('../config/database');
 const { generateReportXlsx } = require('./serverExport');
 const logger = require('../config/logger');
+const registry = require('./_serviceRegistry');
 
 function shouldRun(schedule, now) {
   if (now.getHours() !== schedule.hour || now.getMinutes() !== schedule.minute) return false;
@@ -16,6 +17,7 @@ function shouldRun(schedule, now) {
 function startReportScheduler() {
   cron.schedule('* * * * *', async () => {
     try {
+      registry.tick('reportScheduler');
       const schedules = await prisma.reportSchedule.findMany({ where: { isActive: true } });
       const now = new Date();
       for (const s of schedules) {
@@ -31,11 +33,15 @@ function startReportScheduler() {
             } catch {}
             await prisma.reportSchedule.update({ where: { id: s.id }, data: { lastRunAt: now } });
             logger.info('Report sent', { name: s.name });
-          } catch (err) { logger.error('Report error', { name: s.name, error: err.message }); }
+          } catch (err) {
+            registry.error('reportScheduler', err);
+            logger.error('Report error', { name: s.name, error: err.message });
+          }
         }
       }
-    } catch {}
+    } catch (err) { registry.error('reportScheduler', err); }
   });
+  registry.register('reportScheduler', { cron: '* * * * *' });
   logger.info('Report scheduler started');
 }
 

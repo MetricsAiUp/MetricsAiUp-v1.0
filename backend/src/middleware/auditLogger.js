@@ -29,7 +29,6 @@ const ENTITY_RULES = [
   { pattern: /^\/posts/,             entity: 'post' },
   { pattern: /^\/users/,             entity: 'user' },
   { pattern: /^\/cameras/,           entity: 'camera' },
-  { pattern: /^\/camera-mapping/,    entity: 'cameraMapping' },
   { pattern: /^\/work-orders-crud/,  entity: 'workOrder' },
   { pattern: /^\/work-orders/,       entity: 'workOrder' },
   { pattern: /^\/sessions/,          entity: 'session' },

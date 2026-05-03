@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const logger = require('../config/logger');
+const registry = require('./_serviceRegistry');
 
 let bot = null;
 
@@ -13,7 +14,13 @@ function initTelegramBot() {
   try {
     const TelegramBot = require('node-telegram-bot-api');
     bot = new TelegramBot(token, { polling: true });
+    registry.register('telegramBot', { polling: true });
+    registry.tick('telegramBot');
     logger.info('Telegram bot started');
+
+    // Любое входящее сообщение → tick (signal of liveness).
+    bot.on('message', () => { try { registry.tick('telegramBot'); } catch {} });
+    bot.on('polling_error', (err) => { try { registry.error('telegramBot', err); } catch {} });
 
     // /start — link account
     bot.onText(/\/start (.+)/, async (msg, match) => {
@@ -123,6 +130,7 @@ function initTelegramBot() {
 
     return bot;
   } catch (err) {
+    registry.error('telegramBot', err);
     logger.error('Telegram bot failed to start', { error: err.message });
     return null;
   }

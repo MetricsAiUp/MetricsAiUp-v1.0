@@ -18,6 +18,7 @@ const cron = require('node-cron');
 const prisma = require('../config/database');
 const logger = require('../config/logger');
 const settingsRoutes = require('../routes/settings');
+const registry = require('./_serviceRegistry');
 
 let cronTask = null;
 
@@ -101,11 +102,13 @@ async function runOnce(label = 'scheduled') {
     result.sync_logs = await cleanSyncLogs(r.syncLogCount);
     result.recommendations = await cleanRecommendations(r.recommendationDays);
   } catch (err) {
+    registry.error('retentionCleaner', err);
     logger.error('Retention cleaner failed', { error: err.message, label });
     return { success: false, error: err.message };
   }
   const durationMs = Date.now() - t0;
   const totalDeleted = Object.values(result).reduce((a, b) => a + b, 0);
+  registry.tick('retentionCleaner', { deleted: totalDeleted });
   logger.info('Retention cleaner finished', {
     label,
     durationMs,
@@ -118,6 +121,7 @@ async function runOnce(label = 'scheduled') {
 
 function start() {
   if (cronTask) return;
+  registry.register('retentionCleaner', { schedule: '30 3 * * *' });
   // 03:30 — после бэкапа в 03:00.
   cronTask = cron.schedule('30 3 * * *', () => {
     runOnce('scheduled').catch((err) =>

@@ -32,7 +32,7 @@ describe('auth middleware', () => {
 
   // ── ROLE_PAGES ──────────────────────────────────────────────
   describe('ROLE_PAGES constant', () => {
-    it('admin role produces 20 pages when user.pages is empty', async () => {
+    it('admin role produces 19 pages when user.pages is empty', async () => {
       spyVerify.mockReturnValue({ userId: 'u1' });
       spyCacheGet.mockReturnValue(null);
       spyFindUnique.mockResolvedValue({
@@ -50,7 +50,7 @@ describe('auth middleware', () => {
       expect(req.user.pages).toContain('dashboard');
       expect(req.user.pages).toContain('map-editor');
       expect(req.user.pages).toContain('health');
-      expect(req.user.pages.length).toBe(20);
+      expect(req.user.pages.length).toBe(19);
     });
 
     it('viewer role produces 3 pages when user.pages is empty', async () => {

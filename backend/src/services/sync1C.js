@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const logger = require('../config/logger');
+const registry = require('./_serviceRegistry');
 
 const DATA_DIR = path.join(__dirname, '../../../data');
 const IMPORT_DIR = path.join(DATA_DIR, '1c-import');
@@ -413,10 +414,12 @@ function startFileWatcher(intervalMs = 5 * 60 * 1000) {
   fs.mkdirSync(IMPORT_DIR, { recursive: true });
   fs.mkdirSync(PROCESSED_DIR, { recursive: true });
 
+  registry.register('sync1C', { interval: intervalMs, dir: IMPORT_DIR });
   logger.info('File watcher started', { dir: IMPORT_DIR, intervalSec: intervalMs / 1000 });
 
   const checkFiles = async () => {
     try {
+      registry.tick('sync1C');
       if (!fs.existsSync(IMPORT_DIR)) return;
 
       const files = fs.readdirSync(IMPORT_DIR).filter(f => /\.(xlsx|xls)$/i.test(f));
@@ -448,6 +451,7 @@ function startFileWatcher(intervalMs = 5 * 60 * 1000) {
         }
       }
     } catch (e) {
+      registry.error('sync1C', e);
       logger.error('File watcher error', { error: e.message });
     }
   };
@@ -461,6 +465,7 @@ function stopFileWatcher() {
   if (watcherInterval) {
     clearInterval(watcherInterval);
     watcherInterval = null;
+    registry.unregister('sync1C');
     logger.info('File watcher stopped');
   }
 }

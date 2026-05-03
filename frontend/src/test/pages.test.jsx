@@ -21,7 +21,7 @@ vi.mock('../contexts/AuthContext', () => ({
       role: 'admin', roles: ['admin'],
       pages: [
         'dashboard','dashboard-posts','posts-detail','sessions','work-orders',
-        'shifts','events','analytics','cameras','camera-mapping','data-1c',
+        'shifts','events','analytics','cameras','data-1c',
         'users','map-view','map-editor','audit','health','my-post',
         'report-schedule','tech-docs','live-debug',
       ],
@@ -214,7 +214,6 @@ import Events from '../pages/Events';
 import Analytics from '../pages/Analytics';
 import Data1C from '../pages/Data1C';
 import Cameras from '../pages/Cameras';
-import CameraMapping from '../pages/CameraMapping';
 import Users from '../pages/Users';
 import MapEditor from '../pages/MapEditor';
 import MapViewer from '../pages/MapViewer';
@@ -272,10 +271,6 @@ describe('Page Rendering — Smoke Tests', () => {
 
   it('Cameras renders without crashing', () => {
     render(<PageWrapper><Cameras /></PageWrapper>);
-  });
-
-  it('CameraMapping renders without crashing', () => {
-    render(<PageWrapper><CameraMapping /></PageWrapper>);
   });
 
   it('Users renders without crashing', () => {
