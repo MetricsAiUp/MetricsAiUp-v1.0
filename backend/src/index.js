@@ -46,6 +46,7 @@ const retentionCleaner = require('./services/retentionCleaner');
 const monitoringProxy = require('./services/monitoringProxy');
 const settingsRoutes = require('./routes/settings');
 const cameraMappingRoutes = require('./routes/cameraMapping');
+const { auditLogger } = require('./middleware/auditLogger');
 
 const app = express();
 
@@ -95,6 +96,9 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
+
+// Глобальный аудит-логгер для всех мутирующих /api/* эндпоинтов
+app.use(auditLogger);
 
 // API Routes
 app.use('/api/auth', authRoutes);
