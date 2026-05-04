@@ -28,13 +28,13 @@ export default function WorkOrderModal({ item, post, onClose, t }) {
           <div className="flex items-center gap-2">
             <FileText size={20} style={{ color: 'var(--accent)' }} />
             <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-              {item.workOrderNumber}
+              {item.workOrderNumber || t('workOrders.noWorkOrder')}
             </h3>
             <span
               className="text-xs px-2 py-0.5 rounded-full font-medium"
               style={{ background: statusColor.bg, color: statusColor.text }}
             >
-              {t(`workOrders.${status}`)}
+              {t(`workOrders.${status}`, { defaultValue: status })}
             </span>
           </div>
           <button
@@ -67,7 +67,7 @@ export default function WorkOrderModal({ item, post, onClose, t }) {
               {t('workOrders.workType')}
             </div>
             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {item.workType}
+              {item.workType ? t(`workOrders.workType_${item.workType}`, { defaultValue: item.workType }) : '—'}
             </div>
           </div>
 
@@ -113,7 +113,7 @@ export default function WorkOrderModal({ item, post, onClose, t }) {
               {t('workOrders.normHours')}
             </div>
             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {item.normHours} {t('dashboardPosts.hours')}
+              {item.normHours != null ? `${item.normHours} ${t('dashboardPosts.hours')}` : '—'}
             </div>
           </div>
 

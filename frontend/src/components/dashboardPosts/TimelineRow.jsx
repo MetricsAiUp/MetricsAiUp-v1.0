@@ -189,7 +189,11 @@ export default function TimelineRow({ post, shiftStart, shiftEnd, onBlockClick, 
                 boxShadow: hasConflict ? '0 0 6px rgba(239, 68, 68, 0.5)' : undefined,
               }}
               onClick={() => onBlockClick(item, post)}
-              title={`${item.workOrderNumber} — ${item.workType}`}
+              title={(() => {
+                const wo = item.workOrderNumber || t('workOrders.noWorkOrder');
+                const wt = item.workType ? t(`workOrders.workType_${item.workType}`, { defaultValue: item.workType }) : '';
+                return wt ? `${wo} — ${wt}` : wo;
+              })()}
             >
               <span className="font-medium truncate" style={{ fontSize: '10px' }}>
                 {item.workOrderNumber}
