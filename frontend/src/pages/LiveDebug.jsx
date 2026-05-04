@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin, Camera, Video, Database } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, Wrench, Users, Shield, AlertTriangle, MapPin, Camera, Video, Database, X } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import CameraStreamModal from '../components/CameraStreamModal';
 import { translateWorksDesc } from '../utils/translate';
 
 const AUTO_REFRESH_INTERVAL = 10000;
@@ -134,19 +136,113 @@ function HistoryTable({ history, t, isRu }) {
   );
 }
 
-function RawDataRow({ item, t, isRu }) {
+function SnapshotModal({ cam, isRu, onClose }) {
+  const [ts, setTs] = useState(() => Date.now());
+  if (!cam?.stream?.snapshot) return null;
+  const baseUrl = cam.stream.snapshot;
+  const url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${ts}`;
+  const zonesText = (cam.zones || []).map(z => z.zone).filter(Boolean).join(', ');
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
+      <div className="w-full max-w-4xl glass rounded-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center gap-2">
+            <Eye size={14} style={{ color: 'var(--accent)' }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{cam.name || cam.id}</p>
+              {zonesText && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{zonesText}</p>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setTs(Date.now())} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs hover:opacity-80" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
+              <RefreshCw size={12} /> {isRu ? 'Обновить' : 'Refresh'}
+            </button>
+            <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-white/10">
+              <X size={14} style={{ color: 'var(--text-primary)' }} />
+            </button>
+          </div>
+        </div>
+        <div style={{ background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+          <img src={url} alt={cam.name || cam.id} style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', display: 'block' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoveringCamerasBar({ cameras, isRu, onOpenStream, onOpenSnapshot }) {
+  if (!cameras || cameras.length === 0) {
+    return (
+      <div className="text-xs px-1 py-0.5" style={{ color: 'var(--text-muted)' }}>
+        {isRu ? 'Нет камер, покрывающих эту зону' : 'No cameras covering this zone'}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 px-1 py-1">
+      <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+        {isRu ? 'Камеры покрытия:' : 'Covering cameras:'}
+      </span>
+      {cameras.map(cam => (
+        <span key={cam.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <span className="font-mono text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{cam.name || cam.id}</span>
+          {cam.stream?.hls && (
+            <button type="button" onClick={() => onOpenStream && onOpenStream(cam)} className="inline-flex items-center gap-0.5 text-xs hover:opacity-80" style={{ color: 'var(--accent)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+              <Video size={10} /> HLS
+            </button>
+          )}
+          {cam.stream?.snapshot && (
+            <button type="button" onClick={() => onOpenSnapshot && onOpenSnapshot(cam)} className="inline-flex items-center gap-0.5 text-xs hover:opacity-80" style={{ color: 'var(--accent)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+              <Eye size={10} /> {isRu ? 'Кадр' : 'Frame'}
+            </button>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function RawDataColgroup() {
+  return (
+    <colgroup>
+      <col style={{ width: '120px' }} />
+      <col style={{ width: '70px' }} />
+      <col style={{ width: '80px' }} />
+      <col />
+      <col style={{ width: '70px' }} />
+      <col style={{ width: '60px' }} />
+      <col style={{ width: '80px' }} />
+      <col style={{ width: '50px' }} />
+      <col />
+      <col style={{ width: '50px' }} />
+      <col />
+      <col style={{ width: '80px' }} />
+      <col style={{ width: '80px' }} />
+      <col style={{ width: '60px' }} />
+    </colgroup>
+  );
+}
+
+function RawDataRow({ item, t, isRu, coveringCameras, onOpenStream, onOpenSnapshot }) {
   const [expanded, setExpanded] = useState(false);
   const car = item.car || {};
   const history = item.history || [];
   const hasHistory = history.length > 0;
+  const hasCameras = (coveringCameras || []).length > 0;
+  const isExpandable = hasHistory || hasCameras;
 
   return (
     <>
       <tr style={{ borderBottom: '1px solid var(--border-glass)' }} className="hover:opacity-90 transition-opacity">
         <td className="px-1.5 py-1">
-          <button onClick={() => hasHistory && setExpanded(!expanded)} className="flex items-center gap-1" disabled={!hasHistory}>
-            {hasHistory ? (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />) : <span className="w-3" />}
+          <button onClick={() => isExpandable && setExpanded(!expanded)} className="flex items-center gap-1" disabled={!isExpandable}>
+            {isExpandable ? (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />) : <span className="w-3" />}
             <span className="font-medium text-xs" style={{ color: 'var(--text-primary)' }}>{item.zone}</span>
+            {hasCameras && (
+              <span className="inline-flex items-center gap-0.5 px-1 rounded text-[10px]" style={{ background: 'var(--bg-glass)', color: 'var(--text-muted)' }} title={coveringCameras.map(c => c.name || c.id).join(', ')}>
+                <Camera size={9} /> {coveringCameras.length}
+              </span>
+            )}
           </button>
         </td>
         <td className="px-1.5 py-1"><StatusBadge status={item.status} isRu={isRu} /></td>
@@ -182,7 +278,8 @@ function RawDataRow({ item, t, isRu }) {
       {expanded && (
         <tr>
           <td colSpan={14} style={{ background: 'var(--bg-glass)', padding: '4px 12px 8px' }}>
-            <HistoryTable history={history} t={t} isRu={isRu} />
+            <CoveringCamerasBar cameras={coveringCameras} isRu={isRu} onOpenStream={onOpenStream} onOpenSnapshot={onOpenSnapshot} />
+            {hasHistory && <HistoryTable history={history} t={t} isRu={isRu} />}
           </td>
         </tr>
       )}
@@ -193,8 +290,10 @@ function RawDataRow({ item, t, isRu }) {
 export default function LiveDebug() {
   const { t, i18n } = useTranslation();
   const { api, appMode } = useAuth();
+  const { theme } = useTheme();
   const isLive = appMode === 'live';
   const isRu = i18n.language === 'ru';
+  const isDark = theme === 'dark';
 
   const [rawData, setRawData] = useState([]);
   const [fullHistory, setFullHistory] = useState(null);
@@ -206,6 +305,8 @@ export default function LiveDebug() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [summary, setSummary] = useState(null);
+  const [selectedCam, setSelectedCam] = useState(null);
+  const [snapshotCam, setSnapshotCam] = useState(null);
 
   const fetchCurrent = useCallback(async () => {
     try {
@@ -272,6 +373,15 @@ export default function LiveDebug() {
   // Подгружаем DB stats при первом маунте (для верхней статистической карточки).
   useEffect(() => { fetchDbStatsOnly(); }, [fetchDbStatsOnly]);
 
+  // Камеры подгружаем один раз при маунте, чтобы показывать покрытие в строках постов/зон.
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/api/monitoring/cameras')
+      .then(res => { if (!cancelled && res?.data) setCameras(Array.isArray(res.data) ? res.data : []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [api]);
+
   // Auto-refresh for current mode
   useEffect(() => {
     if (viewMode !== 'current' || !autoRefresh) return;
@@ -325,6 +435,16 @@ export default function LiveDebug() {
   const posts = displayData.filter(d => /^Пост\s+\d/.test(d.zone));
   const zones = displayData.filter(d => /^Свободная зона\s+\d/.test(d.zone));
   const other = displayData.filter(d => !/^Пост\s+\d/.test(d.zone) && !/^Свободная зона\s+\d/.test(d.zone));
+
+  // Карта zoneName → камеры, покрывающие эту зону (для отображения HLS/Кадр-ссылок в раскрытой строке)
+  const camerasByZone = {};
+  cameras.forEach(cam => {
+    (cam.zones || []).forEach(z => {
+      if (!z?.zone) return;
+      if (!camerasByZone[z.zone]) camerasByZone[z.zone] = [];
+      camerasByZone[z.zone].push(cam);
+    });
+  });
 
   const totalHistory = displayData.reduce((sum, d) => sum + (d.history?.length || 0), 0);
 
@@ -496,6 +616,7 @@ export default function LiveDebug() {
               </div>
               <div>
                 <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
+                  <RawDataColgroup />
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
                       <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
@@ -515,7 +636,7 @@ export default function LiveDebug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {posts.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} />)}
+                    {posts.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} coveringCameras={camerasByZone[item.zone] || []} onOpenStream={setSelectedCam} onOpenSnapshot={setSnapshotCam} />)}
                   </tbody>
                 </table>
               </div>
@@ -533,6 +654,7 @@ export default function LiveDebug() {
               </div>
               <div>
                 <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
+                  <RawDataColgroup />
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
                       <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
@@ -552,7 +674,7 @@ export default function LiveDebug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {zones.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} />)}
+                    {zones.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} coveringCameras={camerasByZone[item.zone] || []} onOpenStream={setSelectedCam} onOpenSnapshot={setSnapshotCam} />)}
                   </tbody>
                 </table>
               </div>
@@ -570,6 +692,7 @@ export default function LiveDebug() {
               </div>
               <div>
                 <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
+                  <RawDataColgroup />
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
                       <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
@@ -589,7 +712,7 @@ export default function LiveDebug() {
                     </tr>
                   </thead>
                   <tbody>
-                    {other.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} />)}
+                    {other.map((item, i) => <RawDataRow key={i} item={item} t={t} isRu={isRu} coveringCameras={camerasByZone[item.zone] || []} onOpenStream={setSelectedCam} onOpenSnapshot={setSnapshotCam} />)}
                   </tbody>
                 </table>
               </div>
@@ -606,22 +729,29 @@ export default function LiveDebug() {
                 </h2>
               </div>
               <div>
-                <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
+                <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'auto', fontSize: '12px', lineHeight: '1.4', wordBreak: 'break-word' }}>
+                  <colgroup>
+                    <col style={{ width: '70px' }} />
+                    <col style={{ width: '90px' }} />
+                    <col />
+                    <col style={{ width: '70px' }} />
+                    <col style={{ width: '80px' }} />
+                  </colgroup>
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
-                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>ID</th>
-                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Название' : 'Name'}</th>
-                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Зоны' : 'Zones'}</th>
-                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Стрим' : 'Stream'}</th>
-                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Снапшот' : 'Snapshot'}</th>
+                      <th className="px-2 py-1.5 text-left" style={{ color: 'var(--text-muted)' }}>ID</th>
+                      <th className="px-2 py-1.5 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Название' : 'Name'}</th>
+                      <th className="px-2 py-1.5 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Зоны' : 'Zones'}</th>
+                      <th className="px-2 py-1.5 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Стрим' : 'Stream'}</th>
+                      <th className="px-2 py-1.5 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Снапшот' : 'Snapshot'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cameras.map(cam => (
                       <tr key={cam.id} style={{ borderBottom: '1px solid var(--border-glass)' }}>
-                        <td className="px-1.5 py-1 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{cam.id}</td>
-                        <td className="px-1.5 py-1" style={{ color: 'var(--text-secondary)' }}>{cam.name}</td>
-                        <td className="px-1.5 py-1">
+                        <td className="px-2 py-1.5 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{cam.id}</td>
+                        <td className="px-2 py-1.5" style={{ color: 'var(--text-secondary)' }}>{cam.name}</td>
+                        <td className="px-2 py-1.5">
                           <div className="flex flex-wrap gap-1">
                             {(cam.zones || []).map((z, i) => (
                               <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
@@ -630,18 +760,18 @@ export default function LiveDebug() {
                             ))}
                           </div>
                         </td>
-                        <td className="px-1.5 py-1">
+                        <td className="px-2 py-1.5">
                           {cam.stream?.hls ? (
-                            <a href={cam.stream.hls} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                            <button type="button" onClick={() => setSelectedCam(cam)} className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
                               <Video size={10} /> HLS
-                            </a>
+                            </button>
                           ) : '—'}
                         </td>
-                        <td className="px-1.5 py-1">
+                        <td className="px-2 py-1.5">
                           {cam.stream?.snapshot ? (
-                            <a href={cam.stream.snapshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                            <button type="button" onClick={() => setSnapshotCam(cam)} className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
                               <Eye size={10} /> {isRu ? 'Кадр' : 'Frame'}
-                            </a>
+                            </button>
                           ) : '—'}
                         </td>
                       </tr>
@@ -658,6 +788,22 @@ export default function LiveDebug() {
             </div>
           )}
         </>
+      )}
+
+      {snapshotCam && (
+        <SnapshotModal cam={snapshotCam} isRu={isRu} onClose={() => setSnapshotCam(null)} />
+      )}
+
+      {selectedCam && (
+        <CameraStreamModal
+          camId={selectedCam.id}
+          camName={selectedCam.name || selectedCam.id}
+          camLocation={(selectedCam.zones || []).map(z => z.zone).filter(Boolean).join(', ')}
+          camCovers={(selectedCam.zones || []).map(z => z.zone).filter(Boolean).join(', ')}
+          isRu={isRu}
+          isDark={isDark}
+          onClose={() => setSelectedCam(null)}
+        />
       )}
     </div>
   );

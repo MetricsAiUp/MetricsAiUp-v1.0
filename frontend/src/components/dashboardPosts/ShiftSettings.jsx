@@ -28,6 +28,22 @@ const TIMEZONE_OPTIONS = [
   'UTC',
 ];
 
+// Возвращает строку вида "+3", "+5:30", "+0" по идентификатору таймзоны.
+function getTimezoneOffsetLabel(tz) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(new Date());
+    const v = parts.find(p => p.type === 'timeZoneName')?.value || '';
+    const m = v.match(/([+-])(\d+)(?::(\d+))?/);
+    if (!m) return '+0';
+    const sign = m[1];
+    const hours = parseInt(m[2], 10);
+    const mins = m[3] ? parseInt(m[3], 10) : 0;
+    return mins === 0 ? `${sign}${hours}` : `${sign}${hours}:${m[3]}`;
+  } catch {
+    return '';
+  }
+}
+
 const defaultDaySchedule = (start = '08:00', end = '20:00') => ({
   start,
   end,
@@ -206,9 +222,12 @@ export default function ShiftSettings({ settings, onSettingsChange, onClose, t }
               className="w-full px-3 py-2 rounded-xl text-sm"
               style={inputStyle}
             >
-              {TIMEZONE_OPTIONS.map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
+              {TIMEZONE_OPTIONS.map((tz) => {
+                const off = getTimezoneOffsetLabel(tz);
+                return (
+                  <option key={tz} value={tz}>{off ? `${off} ${tz}` : tz}</option>
+                );
+              })}
             </select>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               {t('dashboardPosts.timezoneHint')}
