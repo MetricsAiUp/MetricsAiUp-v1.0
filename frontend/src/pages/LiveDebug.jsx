@@ -41,7 +41,10 @@ function tr(dict, val) {
 function formatDate(iso) {
   if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const d = new Date(iso);
+    const date = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${date} ${time}`;
   } catch { return iso; }
 }
 
@@ -106,7 +109,7 @@ function HistoryTable({ history, t, isRu }) {
         <tbody>
           {history.map((h, i) => (
             <tr key={i} style={{ borderBottom: '1px solid var(--border-glass)' }}>
-              <td className="px-2 py-1 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(h.timestamp || h.lastUpdate)}</td>
+              <td className="px-2 py-1" style={{ color: 'var(--text-secondary)' }}>{formatDate(h.timestamp || h.lastUpdate)}</td>
               <td className="px-2 py-1"><StatusBadge status={h.status} isRu={isRu} /></td>
               <td className="px-2 py-1 font-mono" style={{ color: h.car?.plate ? 'var(--text-primary)' : 'var(--text-muted)' }}>{h.car?.plate || '—'}</td>
               <td className="px-2 py-1" style={{ color: 'var(--text-secondary)' }}>
@@ -140,39 +143,39 @@ function RawDataRow({ item, t, isRu }) {
   return (
     <>
       <tr style={{ borderBottom: '1px solid var(--border-glass)' }} className="hover:opacity-90 transition-opacity">
-        <td className="px-3 py-2">
+        <td className="px-1.5 py-1">
           <button onClick={() => hasHistory && setExpanded(!expanded)} className="flex items-center gap-1" disabled={!hasHistory}>
             {hasHistory ? (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />) : <span className="w-3" />}
             <span className="font-medium text-xs" style={{ color: 'var(--text-primary)' }}>{item.zone}</span>
           </button>
         </td>
-        <td className="px-3 py-2"><StatusBadge status={item.status} isRu={isRu} /></td>
-        <td className="px-3 py-2 font-mono text-xs" style={{ color: car.plate ? 'var(--text-primary)' : 'var(--text-muted)' }}>{car.plate || '—'}</td>
-        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+        <td className="px-1.5 py-1"><StatusBadge status={item.status} isRu={isRu} /></td>
+        <td className="px-1.5 py-1 font-mono text-xs" style={{ color: car.plate ? 'var(--text-primary)' : 'var(--text-muted)' }}>{car.plate || '—'}</td>
+        <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
           {car.make && car.model ? `${car.make} ${car.model}` : '—'}
         </td>
-        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{isRu ? tr(COLOR_RU, car.color) || '—' : car.color || '—'}</td>
-        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{isRu ? tr(BODY_RU, car.body) || '—' : car.body || '—'}</td>
-        <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(car.firstSeen)}</td>
-        <td className="px-3 py-2 text-center">
+        <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{isRu ? tr(COLOR_RU, car.color) || '—' : car.color || '—'}</td>
+        <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{isRu ? tr(BODY_RU, car.body) || '—' : car.body || '—'}</td>
+        <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{formatDate(car.firstSeen)}</td>
+        <td className="px-1.5 py-1 text-center">
           {item.worksInProgress ? (
             <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--accent)' }}><Wrench size={10} /> {isRu ? 'да' : 'yes'}</span>
           ) : (
             <span style={{ color: 'var(--text-muted)' }}>—</span>
           )}
         </td>
-        <td className="px-3 py-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+        <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
           {translateWorksDesc(item.worksDescription, isRu) || '—'}
         </td>
-        <td className="px-3 py-2 text-center text-xs">
+        <td className="px-1.5 py-1 text-center text-xs">
           <span className="inline-flex items-center gap-1" style={{ color: item.peopleCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
             <Users size={10} /> {item.peopleCount ?? 0}
           </span>
         </td>
-        <td className="px-3 py-2"><OpenPartsBadge parts={item.openParts} isRu={isRu} /></td>
-        <td className="px-3 py-2"><ConfidenceBadge level={item.confidence} isRu={isRu} /></td>
-        <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{formatDate(item.lastUpdate)}</td>
-        <td className="px-3 py-2 text-center text-xs" style={{ color: hasHistory ? 'var(--accent)' : 'var(--text-muted)' }}>
+        <td className="px-1.5 py-1"><OpenPartsBadge parts={item.openParts} isRu={isRu} /></td>
+        <td className="px-1.5 py-1"><ConfidenceBadge level={item.confidence} isRu={isRu} /></td>
+        <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{formatDate(item.lastUpdate)}</td>
+        <td className="px-1.5 py-1 text-center text-xs" style={{ color: hasHistory ? 'var(--accent)' : 'var(--text-muted)' }}>
           {history.length}
         </td>
       </tr>
@@ -491,24 +494,24 @@ export default function LiveDebug() {
                   {t('liveDebug.posts')} ({posts.length})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+              <div>
+                <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.status')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.plate')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.carModel')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.color')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.body')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.firstSeen')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.works')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.worksDesc')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.people')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.openParts')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.confidence')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.historyCount')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.status')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.plate')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.carModel')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.color')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.body')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.firstSeen')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.works')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.worksDesc')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.people')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.openParts')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.confidence')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.historyCount')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -528,24 +531,24 @@ export default function LiveDebug() {
                   {t('liveDebug.zones')} ({zones.length})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+              <div>
+                <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.status')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.plate')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.carModel')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.color')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.body')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.firstSeen')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.works')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.worksDesc')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.people')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.openParts')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.confidence')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.historyCount')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.status')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.plate')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.carModel')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.color')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.body')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.firstSeen')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.works')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.worksDesc')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.people')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.openParts')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.confidence')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.historyCount')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -565,24 +568,24 @@ export default function LiveDebug() {
                   {t('liveDebug.other')} ({other.length})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+              <div>
+                <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.status')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.plate')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.carModel')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.color')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.body')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.firstSeen')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.works')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.worksDesc')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.people')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.openParts')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.confidence')}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</th>
-                      <th className="px-3 py-2 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.historyCount')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.zoneName')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.status')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.plate')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.carModel')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.color')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.body')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.firstSeen')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.works')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.worksDesc')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.people')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.openParts')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.confidence')}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.lastUpdate')}</th>
+                      <th className="px-1.5 py-1 text-center" style={{ color: 'var(--text-muted)' }}>{t('liveDebug.historyCount')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -602,23 +605,23 @@ export default function LiveDebug() {
                   {isRu ? 'Камеры' : 'Cameras'} ({cameras.length})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+              <div>
+                <table className="w-full" style={{ borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg-glass)' }}>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>ID</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Название' : 'Name'}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Зоны' : 'Zones'}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Стрим' : 'Stream'}</th>
-                      <th className="px-3 py-2 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Снапшот' : 'Snapshot'}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>ID</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Название' : 'Name'}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Зоны' : 'Zones'}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Стрим' : 'Stream'}</th>
+                      <th className="px-1.5 py-1 text-left" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Снапшот' : 'Snapshot'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cameras.map(cam => (
                       <tr key={cam.id} style={{ borderBottom: '1px solid var(--border-glass)' }}>
-                        <td className="px-3 py-2 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{cam.id}</td>
-                        <td className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>{cam.name}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-1.5 py-1 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{cam.id}</td>
+                        <td className="px-1.5 py-1" style={{ color: 'var(--text-secondary)' }}>{cam.name}</td>
+                        <td className="px-1.5 py-1">
                           <div className="flex flex-wrap gap-1">
                             {(cam.zones || []).map((z, i) => (
                               <span key={i} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
@@ -627,14 +630,14 @@ export default function LiveDebug() {
                             ))}
                           </div>
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-1.5 py-1">
                           {cam.stream?.hls ? (
                             <a href={cam.stream.hls} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>
                               <Video size={10} /> HLS
                             </a>
                           ) : '—'}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-1.5 py-1">
                           {cam.stream?.snapshot ? (
                             <a href={cam.stream.snapshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs hover:opacity-80" style={{ color: 'var(--accent)' }}>
                               <Eye size={10} /> {isRu ? 'Кадр' : 'Frame'}

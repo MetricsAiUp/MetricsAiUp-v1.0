@@ -49,12 +49,12 @@ function TocItem({ section, isRu, isActive, onClick }) {
 
 function Table({ headers, rows }) {
   return (
-    <div className="overflow-x-auto my-2">
-      <table className="w-full text-xs border-collapse">
+    <div className="my-2">
+      <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.35' }}>
         <thead>
           <tr>
             {headers.map((h, i) => (
-              <th key={i} className="text-left px-2 py-1.5 font-semibold border-b" style={{ borderColor: 'var(--border-glass)', color: 'var(--text-primary)', background: 'var(--bg-secondary)' }}>{h}</th>
+              <th key={i} className="text-left px-1.5 py-1 font-semibold border-b align-top" style={{ borderColor: 'var(--border-glass)', color: 'var(--text-primary)', background: 'var(--bg-secondary)', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -62,7 +62,7 @@ function Table({ headers, rows }) {
           {rows.map((row, ri) => (
             <tr key={ri}>
               {row.map((cell, ci) => (
-                <td key={ci} className="px-2 py-1 border-b" style={{ borderColor: 'var(--border-glass)', color: 'var(--text-secondary)' }}>{cell}</td>
+                <td key={ci} className="px-1.5 py-1 border-b align-top" style={{ borderColor: 'var(--border-glass)', color: 'var(--text-secondary)', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{cell}</td>
               ))}
             </tr>
           ))}
