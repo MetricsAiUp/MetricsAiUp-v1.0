@@ -16,7 +16,7 @@
       // Force clear old SW caches on version mismatch
       (async()=>{const V='v53';const ks=await caches.keys();const old=ks.filter(k=>k!=='metricsaiup-'+V);if(old.length){await Promise.all(old.map(k=>caches.delete(k)));const regs=await navigator.serviceWorker?.getRegistrations()||[];await Promise.all(regs.map(r=>r.unregister()));location.reload();}})();
     </script>
-    <script type="module" crossorigin src="./assets/index-BgCBGZ6D.js"></script>
+    <script type="module" crossorigin src="./assets/index-oaath5Ix.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/chunk-DECur_0Z.js">
     <link rel="modulepreload" crossorigin href="./assets/preload-helper-xBbMyY7u.js">
     <link rel="modulepreload" crossorigin href="./assets/useTranslation-DvTd0jSy.js">
