@@ -8,6 +8,7 @@ import {
   Wrench, Car, Clock, Play, Pause, CheckCircle, Timer, FileText, User, AlertTriangle,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 
 const BASE = import.meta.env.BASE_URL || './';
 
@@ -122,6 +123,7 @@ export default function MyPost() {
           </h1>
           <HelpButton pageKey="myPost" />
         </div>
+        <div className="flex justify-center mt-1"><ShowDiscrepanciesToggle /></div>
         {myPost && (
           <div className="text-lg font-medium" style={{ color: 'var(--accent)' }}>
             {t(`posts.post${myPost.number}`)}

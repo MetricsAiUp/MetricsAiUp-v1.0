@@ -55,7 +55,8 @@ const PAGE_PERMISSIONS = {
   'events': ['view_events'],
   'analytics': ['view_analytics'],
   'cameras': ['view_cameras'],
-  'data-1c': ['view_work_orders'],
+  'data-1c': ['view_work_orders', 'view_1c'],
+  'discrepancies': ['view_1c'],
   'users': ['manage_users'],
   'map-view': ['view_zones'],
   'map-editor': ['manage_zones'],
@@ -113,6 +114,7 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     },
     post: (url, body) => request('POST', url, body),
     put: (url, body) => request('PUT', url, body),
+    patch: (url, body) => request('PATCH', url, body),
     delete: (url) => request('DELETE', url),
   };
 }
@@ -120,8 +122,8 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
 // Default pages per role (used when backend doesn't return pages)
 const ROLE_DEFAULT_PAGES = {
   admin: Object.keys(PAGE_PERMISSIONS),
-  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'data-1c'],
-  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'cameras'],
+  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'data-1c', 'discrepancies'],
+  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'cameras', 'discrepancies'],
   mechanic: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post'],
   viewer: ['dashboard', 'dashboard-posts', 'map-view'],
 };

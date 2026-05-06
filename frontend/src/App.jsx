@@ -32,6 +32,7 @@ const TechDocs = lazy(() => import('./pages/TechDocs'));
 const LiveDebug = lazy(() => import('./pages/LiveDebug'));
 const PostHistory = lazy(() => import('./pages/PostHistory'));
 const ZoneHistory = lazy(() => import('./pages/PostHistory').then(m => ({ default: m.ZoneHistory })));
+const Discrepancies = lazy(() => import('./pages/Discrepancies'));
 
 function PageLoader() {
   return (
@@ -77,6 +78,7 @@ function AppRoutes() {
           <Route path="events" element={<Events />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="data-1c" element={<Data1C />} />
+          <Route path="discrepancies" element={<Discrepancies />} />
           <Route path="cameras" element={<Cameras />} />
           <Route path="users" element={<Users />} />
           <Route path="map-editor" element={<MapEditor />} />

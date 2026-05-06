@@ -26,6 +26,7 @@ import FreeWorkOrdersTable from '../components/dashboardPosts/FreeWorkOrdersTabl
 import Legend from '../components/dashboardPosts/Legend';
 import ConflictModal from '../components/dashboardPosts/ConflictModal';
 import HelpButton from '../components/HelpButton';
+import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 
@@ -390,6 +391,7 @@ export default function DashboardPosts() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ShowDiscrepanciesToggle />
           {/* Save button — only visible when there are pending changes */}
           {pendingChanges.length > 0 && (
             <button

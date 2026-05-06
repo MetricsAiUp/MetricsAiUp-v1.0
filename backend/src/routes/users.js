@@ -10,13 +10,13 @@ const authCache = require('../config/authCache');
 const ROLE_DEFAULT_PAGES = {
   admin: [
     'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
-    'shifts', 'events', 'analytics', 'cameras', 'data-1c',
+    'shifts', 'events', 'analytics', 'cameras', 'data-1c', 'discrepancies',
     'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
     'report-schedule', 'tech-docs', 'live-debug',
   ],
   manager: [
     'dashboard', 'dashboard-posts', 'posts-detail', 'map-view',
-    'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c',
+    'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c', 'discrepancies',
   ],
   mechanic: [
     'dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post',
@@ -118,6 +118,7 @@ router.get('/', requirePermission('manage_users'), async (req, res) => {
       { id: 'analytics', label: { ru: 'Аналитика', en: 'Analytics' } },
       { id: 'cameras', label: { ru: 'Камеры', en: 'Cameras' } },
       { id: 'data-1c', label: { ru: 'Данные 1С', en: '1C Data' } },
+      { id: 'discrepancies', label: { ru: 'Нестыковки', en: 'Discrepancies' } },
       { id: 'users', label: { ru: 'Пользователи', en: 'Users' } },
       { id: 'map-view', label: { ru: 'Карта СТО', en: 'STO Map' } },
       { id: 'map-editor', label: { ru: 'Редактор карты', en: 'Map Editor' } },

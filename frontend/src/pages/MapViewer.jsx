@@ -16,6 +16,7 @@ import {
 } from '../constants';
 import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
+import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 import {
   X, Car, Clock, Timer, User, FileText, AlertTriangle,
   ArrowRight, MapPin, Layers, Download, ChevronDown, ChevronUp, Image, FileDown,
@@ -968,6 +969,7 @@ export default function MapViewer() {
           <FileDown size={12} /> PDF
         </button>
         <HelpButton pageKey="map" />
+        <ShowDiscrepanciesToggle />
       </div>
 
       {/* Canvas */}

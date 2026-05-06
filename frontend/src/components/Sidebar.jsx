@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
   BarChart3, Camera, Database, CalendarClock, Columns,
   ChevronDown, Users, PenTool, MapPin, Clock, Shield, Wrench, Activity,
-  FileSpreadsheet, BookOpen, Bug,
+  FileSpreadsheet, BookOpen, Bug, AlertTriangle,
 } from 'lucide-react';
 import { POST_STATUS_COLORS } from '../constants';
 
@@ -22,6 +22,7 @@ const navItems = [
   { path: '/analytics', icon: BarChart3, labelKey: 'nav.analytics', pageId: 'analytics' },
   { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', pageId: 'cameras' },
   { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', pageId: 'data-1c' },
+  { path: '/discrepancies', icon: AlertTriangle, labelKey: 'nav.discrepancies', pageId: 'discrepancies' },
   { path: '/users', icon: Users, labelKey: 'nav.users', pageId: 'users' },
   { path: '/map-view', icon: MapPin, labelKey: 'nav.mapView2', pageId: 'map-view' },
   { path: '/map-editor', icon: PenTool, labelKey: 'nav.mapEditor', pageId: 'map-editor' },
@@ -52,6 +53,7 @@ export default function Sidebar() {
   const [postsOpen, setPostsOpen] = useState(false);
   const [posts, setPosts] = useState([]);
   const [liveData, setLiveData] = useState(null);
+  const [discrepStats, setDiscrepStats] = useState({ open: 0, critical24h: 0 });
 
   useEffect(() => {
     api.get('/api/posts-analytics')
@@ -87,6 +89,20 @@ export default function Sidebar() {
     const id = setInterval(fetchZones, 10000);
     return () => clearInterval(id);
   }, [isLive]);
+
+  // Discrepancies counter — каждые 30с
+  useEffect(() => {
+    if (!user?.pages?.includes('discrepancies') && user?.role !== 'admin') return;
+    const fetchStats = () => {
+      api.get('/api/discrepancies/stats').then(r => {
+        const d = r.data;
+        if (d) setDiscrepStats({ open: d.open || 0, critical24h: d.critical24h || 0 });
+      }).catch(() => {});
+    };
+    fetchStats();
+    const id = setInterval(fetchStats, 30000);
+    return () => clearInterval(id);
+  }, [user?.id]);
 
   const isPostsActive = location.pathname === '/posts-detail';
 
@@ -268,6 +284,9 @@ export default function Sidebar() {
           }
 
           // Regular nav item
+          const isDiscrep = item.path === '/discrepancies';
+          const badgeCount = isDiscrep ? discrepStats.open : 0;
+          const badgeCritical = isDiscrep && discrepStats.critical24h > 0;
           return (
             <NavLink
               key={item.path}
@@ -283,8 +302,25 @@ export default function Sidebar() {
                 fontSize: '11px',
               })}
             >
-              <Icon size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
-              <span className="truncate">{t(item.labelKey)}</span>
+              <Icon size={14} strokeWidth={2} style={{ flexShrink: 0, color: badgeCritical ? '#ef4444' : undefined }} />
+              <span className="truncate flex-1">{t(item.labelKey)}</span>
+              {badgeCount > 0 && (
+                <span
+                  className="px-1.5 rounded-full"
+                  style={{
+                    fontSize: '9px',
+                    fontWeight: 600,
+                    background: badgeCritical ? '#ef4444' : 'rgba(245,158,11,0.85)',
+                    color: '#fff',
+                    minWidth: 16,
+                    textAlign: 'center',
+                    lineHeight: '14px',
+                  }}
+                  title={badgeCritical ? `${discrepStats.critical24h} критичных за 24ч` : `${badgeCount} открытых нестыковок`}
+                >
+                  {badgeCount > 99 ? '99+' : badgeCount}
+                </span>
+              )}
             </NavLink>
           );
         })}

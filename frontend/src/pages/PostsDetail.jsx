@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { X, User, AlertTriangle } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 import StaleDataBanner from '../components/StaleDataBanner';
 import PostCardsView from '../components/postsDetail/PostCardsView';
 import PostTableView from '../components/postsDetail/PostTableView';
@@ -135,6 +136,7 @@ export default function PostsDetail() {
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')} <HelpButton pageKey="postsDetail" /></h2>
               <div className="flex items-center gap-3 flex-wrap">
+                <ShowDiscrepanciesToggle />
                 {/* Period selector */}
                 <div className="flex items-center gap-1">
                   {[

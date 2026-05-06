@@ -6,12 +6,12 @@ const authCache = require('../config/authCache');
 const ROLE_PAGES = {
   admin: [
     'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
-    'shifts', 'events', 'analytics', 'cameras', 'data-1c',
+    'shifts', 'events', 'analytics', 'cameras', 'data-1c', 'discrepancies',
     'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
     'report-schedule', 'tech-docs', 'live-debug',
   ],
-  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'events', 'analytics', 'cameras'],
-  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c'],
+  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'events', 'analytics', 'cameras', 'discrepancies'],
+  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c', 'discrepancies'],
   mechanic: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post'],
   viewer: ['dashboard', 'dashboard-posts', 'map-view'],
 };

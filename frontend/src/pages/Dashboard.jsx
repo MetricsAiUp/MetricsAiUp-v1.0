@@ -6,6 +6,7 @@ import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import { translateZone } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
+import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 import PredictionWidget from '../components/PredictionWidget';
 import LiveSTOWidget from '../components/LiveSTOWidget';
 
@@ -136,6 +137,7 @@ export default function Dashboard() {
           {t('nav.dashboard')}
         </h2>
         <HelpButton pageKey="dashboard" />
+        <div className="ml-auto"><ShowDiscrepanciesToggle /></div>
       </div>
 
       {/* Stats — only in demo mode */}

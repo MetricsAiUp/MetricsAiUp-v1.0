@@ -26,7 +26,8 @@
     "myPost": "My Post",
     "reportSchedule": "Report Schedule",
     "techDocs": "Documentation",
-    "liveDebug": "Live Debug"
+    "liveDebug": "Live Debug",
+    "discrepancies": "Discrepancies"
   },
   "shifts": {
     "title": "Shift Management",

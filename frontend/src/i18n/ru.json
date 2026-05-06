@@ -26,7 +26,8 @@
     "myPost": "Мой пост",
     "reportSchedule": "Расписание отчётов",
     "techDocs": "Документация",
-    "liveDebug": "Live-отладка"
+    "liveDebug": "Live-отладка",
+    "discrepancies": "Нестыковки"
   },
   "shifts": {
     "title": "Управление сменами",
