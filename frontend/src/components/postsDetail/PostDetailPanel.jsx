@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { buildDbItems, getPeriodDates } from '../../pages/PostHistory';
 import {
   Car, Truck, Wrench, Clock, User, AlertTriangle, ScrollText,
   Camera, Image, ChevronRight, ChevronDown, ArrowLeft, BarChart3, Calendar, FileText,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import CollapsibleSection from './CollapsibleSection';
 import CameraStreamModal from '../CameraStreamModal';
+import HelpButton from '../HelpButton';
 
 // Real camera mapping per post/zone (cam number → location/covers)
 const POST_CAMERAS = {
@@ -189,14 +191,13 @@ function AlertsSection({ alerts }) {
   );
 }
 
-function EventLogSection({ events }) {
+function EventLogSection({ events, total, onShowAll }) {
   const { i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const [showAll, setShowAll] = useState(false);
   if (!events.length) return null;
   // Show latest first
   const sorted = [...events].sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-  const visible = showAll ? sorted : sorted.slice(0, 10);
+  const visible = sorted.slice(0, 10);
   const statusColor = (type) => type === 'post_occupied' ? 'var(--warning)' : 'var(--success)';
   return (
     <div>
@@ -217,9 +218,9 @@ function EventLogSection({ events }) {
           );
         })}
       </div>
-      {sorted.length > 10 && (
-        <button onClick={() => setShowAll(!showAll)} className="mt-2 text-[11px] hover:opacity-80" style={{ color: 'var(--accent)' }}>
-          {showAll ? (isRu ? 'Свернуть' : 'Collapse') : (isRu ? `Показать все ${sorted.length}` : `Show all ${sorted.length}`)}
+      {(total ?? sorted.length) > visible.length && (
+        <button onClick={onShowAll} className="mt-2 text-[11px] hover:opacity-80" style={{ color: 'var(--accent)' }}>
+          {isRu ? `Показать все ${total ?? sorted.length}` : `Show all ${total ?? sorted.length}`}
         </button>
       )}
     </div>
@@ -616,11 +617,102 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
 
 export default function PostDetailPanel({ selectedPost, dashData, period, setPeriod, showCustom, setShowCustom, customFrom, setCustomFrom, customTo, setCustomTo, navigate, setModal }) {
   const { t, i18n } = useTranslation();
-  const { isElementVisible } = useAuth();
+  const { api, isElementVisible, appMode } = useAuth();
   const { theme } = useTheme();
   const elVis = (id) => isElementVisible('posts-detail', id);
   const isRu = i18n.language === 'ru';
+  const isLive = appMode === 'live';
   const [streamCam, setStreamCam] = useState(null);
+
+  // Load event history from the same source as the PostHistory / ZoneHistory page,
+  // so the count in the section header matches what is displayed on that page (default 7d).
+  const isZone = selectedPost?.type === 'zone';
+  const zoneName = isZone ? selectedPost?.name : null;
+  const postNumber = !isZone ? selectedPost?.number : null;
+  const [historyEvents, setHistoryEvents] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryEvents([]);
+    if (!selectedPost) return;
+    const load = async () => {
+      try {
+        if (isZone && zoneName) {
+          const res = await api.get(`/api/monitoring/zone-history/${encodeURIComponent(zoneName)}`);
+          if (!cancelled) setHistoryEvents(res.data?.history || []);
+        } else if (postNumber != null) {
+          if (isLive) {
+            const [monRes, dbRes] = await Promise.all([
+              api.get(`/api/monitoring/post-history/${postNumber}`).catch(() => ({ data: null })),
+              api.get(`/api/posts/by-number/${postNumber}/history?limit=500`).catch(() => ({ data: null })),
+            ]);
+            const monHistory = monRes.data?.history || [];
+            let dbItems = [];
+            if (dbRes.data) {
+              const { events = [], stays = [], workOrders = [] } = dbRes.data;
+              dbItems = buildDbItems(events, stays, workOrders);
+            }
+            const all = [...monHistory, ...dbItems];
+            const seen = new Set();
+            const dedup = all.filter(item => {
+              const key = `${new Date(item.timestamp).getTime()}_${item.status}_${item.car?.plate || ''}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            if (!cancelled) setHistoryEvents(dedup);
+          } else {
+            const res = await api.get(`/api/posts/by-number/${postNumber}/history?limit=500`);
+            const { events = [], stays = [], workOrders = [] } = res.data || {};
+            if (!cancelled) setHistoryEvents(buildDbItems(events, stays, workOrders));
+          }
+        }
+      } catch {
+        if (!cancelled) setHistoryEvents([]);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [api, isLive, isZone, zoneName, postNumber]);
+
+  // Filter by 7d — matches the default period of PostHistory/ZoneHistory pages,
+  // so the count shown here equals what the user sees when navigating there.
+  const filteredHistory = useMemo(() => {
+    const { start, end } = getPeriodDates('7d');
+    return historyEvents.filter(h => {
+      const ts = new Date(h.timestamp);
+      return ts >= start && ts <= end;
+    });
+  }, [historyEvents]);
+
+  // Map history items into the shape that EventLogSection expects.
+  const eventLogItems = useMemo(() => filteredHistory.map((h, i) => {
+    const statusKey = h.worksInProgress ? 'active_work' : (h.status || 'unknown');
+    const description = isRu
+      ? (statusKey === 'free' ? 'Пост свободен'
+        : statusKey === 'occupied' ? 'Авто на посту'
+        : statusKey === 'active_work' ? 'Работы ведутся'
+        : statusKey === 'occupied_no_work' ? 'Авто без работы'
+        : statusKey)
+      : (statusKey === 'free' ? 'Free'
+        : statusKey === 'occupied' ? 'Vehicle on post'
+        : statusKey === 'active_work' ? 'Work in progress'
+        : statusKey === 'occupied_no_work' ? 'Vehicle idle'
+        : statusKey);
+    return {
+      id: `${h.timestamp}_${i}`,
+      timestamp: h.timestamp,
+      type: statusKey === 'free' ? 'post_free' : 'post_occupied',
+      description,
+      car: h.car || {},
+      peopleCount: h.peopleCount || 0,
+    };
+  }), [filteredHistory, isRu]);
+
+  const goToHistory = () => {
+    if (isZone && zoneName) navigate(`/zone-history/${encodeURIComponent(zoneName)}`);
+    else if (postNumber != null) navigate(`/post-history/${postNumber}`);
+  };
 
   return (
     <>
@@ -640,6 +732,7 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
               <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
                 {t(`posts.${selectedPost.type}`)}
               </span>
+              <HelpButton pageKey="postsDetail" />
             </h2>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{translateZoneName(selectedPost.zone, t)}</p>
           </div>
@@ -713,8 +806,8 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
       )}
 
       {elVis('pd.eventLog') && (
-        <CollapsibleSection icon={ScrollText} title={t('postsDetail.eventLog')} count={selectedPost.today.eventLog.length}>
-          <EventLogSection events={selectedPost.today.eventLog} />
+        <CollapsibleSection icon={ScrollText} title={t('postsDetail.eventLog')} count={eventLogItems.length}>
+          <EventLogSection events={eventLogItems} total={eventLogItems.length} onShowAll={goToHistory} />
         </CollapsibleSection>
       )}
 

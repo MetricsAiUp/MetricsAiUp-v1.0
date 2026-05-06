@@ -30,7 +30,7 @@ function ConfidenceBadge({ confidence }) {
 }
 
 // ── Period presets ───────────────────────────────────────────────────
-function getPeriodDates(period) {
+export function getPeriodDates(period) {
   const now = new Date();
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);
@@ -66,7 +66,7 @@ function getPeriodDates(period) {
 }
 
 // ── Build history items from DB data ────────────────────────────────
-function buildDbItems(events = [], stays = [], workOrders = []) {
+export function buildDbItems(events = [], stays = [], workOrders = []) {
   const items = [];
 
   for (const e of events) {
