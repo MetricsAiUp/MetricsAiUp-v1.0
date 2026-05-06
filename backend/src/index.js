@@ -126,6 +126,8 @@ app.use('/api/replay', require('./routes/replay'));
 app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
 app.use('/api/monitoring', require('./routes/monitoring'));
+app.use('/api/oneC', require('./routes/oneC'));
+app.use('/api/discrepancies', require('./routes/discrepancies'));
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check
@@ -192,6 +194,7 @@ server.listen(PORT, '0.0.0.0', () => {
   startReportScheduler();
   backupScheduler.start();
   retentionCleaner.start();
+  require('./services/discrepancyDigest').start();
 
   // Start demo generator only if mode is 'demo', monitoring proxy if 'live'
   const appSettings = settingsRoutes.readSettings();

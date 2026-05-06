@@ -26,7 +26,7 @@ let task = null;
 let running = false;
 
 async function loadConfig() {
-  const cfg = await prisma.imap1cConfig.findUnique({ where: { id: 1 } });
+  const cfg = await prisma.imap1CConfig.findUnique({ where: { id: 1 } });
   return cfg;
 }
 
@@ -54,7 +54,7 @@ async function fetchOnce({ manual = false } = {}) {
 
     const password = await getDecryptedPassword(cfg);
     if (!password) {
-      await prisma.imap1cConfig.update({
+      await prisma.imap1CConfig.update({
         where: { id: 1 },
         data: { lastFetchStatus: 'error', lastFetchError: 'cannot_decrypt_password', lastFetchAt: new Date() },
       });
@@ -160,7 +160,7 @@ async function fetchOnce({ manual = false } = {}) {
       await client.logout().catch(() => {});
     }
 
-    await prisma.imap1cConfig.update({
+    await prisma.imap1CConfig.update({
       where: { id: 1 },
       data: {
         lastFetchAt: new Date(),
@@ -174,7 +174,7 @@ async function fetchOnce({ manual = false } = {}) {
 
   } catch (err) {
     logger.error('IMAP 1C: fetch failed', { err: err.message, stack: err.stack });
-    await prisma.imap1cConfig.update({
+    await prisma.imap1CConfig.update({
       where: { id: 1 },
       data: { lastFetchAt: new Date(), lastFetchStatus: 'error', lastFetchError: err.message?.slice(0, 500) },
     }).catch(() => {});
@@ -202,7 +202,7 @@ async function start() {
   const cfg = await loadConfig();
   if (!cfg) {
     // Создаём дефолтную пустую запись чтобы UI имел что показывать
-    await prisma.imap1cConfig.create({ data: { id: 1 } }).catch(() => {});
+    await prisma.imap1CConfig.create({ data: { id: 1 } }).catch(() => {});
     logger.info('IMAP 1C: default config created (disabled)');
     return;
   }

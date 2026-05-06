@@ -293,4 +293,29 @@ router.delete('/:id', requirePermission('manage_users'), async (req, res) => {
   }
 });
 
+// PATCH /api/users/me/ui-state — merge JSON-патча в User.uiState
+router.patch('/me/ui-state', authenticate, async (req, res) => {
+  try {
+    const patch = req.body?.patch;
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+      return res.status(400).json({ error: 'patch must be an object' });
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { uiState: true } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    let current = {};
+    try { current = user.uiState ? JSON.parse(user.uiState) : {}; } catch { current = {}; }
+    if (typeof current !== 'object' || Array.isArray(current) || current === null) current = {};
+    const next = { ...current, ...patch };
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { uiState: JSON.stringify(next) },
+      select: { id: true, uiState: true },
+    });
+    authCache.invalidate(req.user.id);
+    res.json({ uiState: JSON.parse(updated.uiState) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
