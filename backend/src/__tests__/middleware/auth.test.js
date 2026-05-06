@@ -50,7 +50,7 @@ describe('auth middleware', () => {
       expect(req.user.pages).toContain('dashboard');
       expect(req.user.pages).toContain('map-editor');
       expect(req.user.pages).toContain('health');
-      expect(req.user.pages.length).toBe(19);
+      expect(req.user.pages.length).toBe(20);
     });
 
     it('viewer role produces 3 pages when user.pages is empty', async () => {
@@ -87,7 +87,7 @@ describe('auth middleware', () => {
       expect(req.user.pages).toEqual(['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post']);
     });
 
-    it('director role has 9 pages', async () => {
+    it('director role has 10 pages', async () => {
       spyVerify.mockReturnValue({ userId: 'u3b' });
       spyCacheGet.mockReturnValue(null);
       spyFindUnique.mockResolvedValue({
@@ -101,12 +101,13 @@ describe('auth middleware', () => {
       const next = vi.fn();
       await authenticate(req, res, next);
 
-      expect(req.user.pages.length).toBe(9);
+      expect(req.user.pages.length).toBe(10);
       expect(req.user.pages).toContain('analytics');
       expect(req.user.pages).toContain('cameras');
+      expect(req.user.pages).toContain('discrepancies');
     });
 
-    it('manager role has 10 pages', async () => {
+    it('manager role has 11 pages', async () => {
       spyVerify.mockReturnValue({ userId: 'u3c' });
       spyCacheGet.mockReturnValue(null);
       spyFindUnique.mockResolvedValue({
@@ -120,9 +121,10 @@ describe('auth middleware', () => {
       const next = vi.fn();
       await authenticate(req, res, next);
 
-      expect(req.user.pages.length).toBe(10);
+      expect(req.user.pages.length).toBe(11);
       expect(req.user.pages).toContain('data-1c');
       expect(req.user.pages).toContain('shifts');
+      expect(req.user.pages).toContain('discrepancies');
     });
   });
 
