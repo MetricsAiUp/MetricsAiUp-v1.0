@@ -398,9 +398,40 @@
     "tabs": {
       "current": "Current",
       "imports": "Imports",
+      "raw": "Raw tables",
       "unmapped": "Unmapped",
       "payroll": "Payroll",
       "settings": "Settings"
+    },
+    "raw": {
+      "subtab": {
+        "plan": "Repair plan",
+        "repair": "Repair summary",
+        "performed": "Work performed"
+      },
+      "searchPlaceholder": "Search by order #",
+      "rowsCount": "Rows: {{count}}",
+      "loadMore": "Load more",
+      "col": {
+        "received": "Received",
+        "number": "#",
+        "plate": "Plate",
+        "vin": "VIN",
+        "state": "State",
+        "scheduledStart": "Plan from",
+        "scheduledEnd": "Plan to",
+        "post": "Post",
+        "duration": "Duration, s",
+        "outdated": "Stale",
+        "repairKind": "Repair kind",
+        "workStart": "Start",
+        "workEnd": "End",
+        "closed": "Closed",
+        "master": "Master",
+        "executor": "Executor",
+        "normHours": "Norm hrs",
+        "mileage": "Mileage"
+      }
     },
     "common": {
       "loading": "Loading…",

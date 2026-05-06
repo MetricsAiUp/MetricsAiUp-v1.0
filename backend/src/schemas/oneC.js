@@ -18,11 +18,12 @@ const imap1cConfigUpdateSchema = z.object({
 });
 
 const testConnectionSchema = z.object({
-  host: z.string().min(1),
-  port: z.number().int().min(1).max(65535),
-  useSsl: z.boolean(),
-  user: z.string().email(),
-  password: z.string().min(1),
+  host: z.string().min(1).optional(),
+  port: z.number().int().min(1).max(65535).optional(),
+  useSsl: z.boolean().optional(),
+  user: z.string().email().optional(),
+  // password optional — если не передан, сервер возьмёт сохранённый пароль из БД
+  password: z.string().min(1).optional(),
 });
 
 const resolveUnmappedPostSchema = z.object({

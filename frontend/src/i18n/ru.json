@@ -398,9 +398,40 @@
     "tabs": {
       "current": "Сейчас",
       "imports": "Импорты",
+      "raw": "Сырые таблицы",
       "unmapped": "Несопоставленные",
       "payroll": "Выработка",
       "settings": "Настройки"
+    },
+    "raw": {
+      "subtab": {
+        "plan": "План ремонта",
+        "repair": "Сводная (ремонты)",
+        "performed": "Выработка исполнителей"
+      },
+      "searchPlaceholder": "Поиск по № заказа",
+      "rowsCount": "Строк: {{count}}",
+      "loadMore": "Загрузить ещё",
+      "col": {
+        "received": "Получено",
+        "number": "№",
+        "plate": "Госномер",
+        "vin": "VIN",
+        "state": "Состояние",
+        "scheduledStart": "План с",
+        "scheduledEnd": "План по",
+        "post": "Пост",
+        "duration": "Длит., с",
+        "outdated": "Не акт.",
+        "repairKind": "Вид работ",
+        "workStart": "Начало",
+        "workEnd": "Окончание",
+        "closed": "Закрыт",
+        "master": "Мастер",
+        "executor": "Исполнитель",
+        "normHours": "Нормочасы",
+        "mileage": "Пробег"
+      }
     },
     "common": {
       "loading": "Загрузка…",

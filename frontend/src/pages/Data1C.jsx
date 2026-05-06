@@ -5,12 +5,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Database, Inbox, AlertTriangle, BarChart3, Settings, Upload, RefreshCw, Save, CheckCircle2, XCircle } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import { Database, Inbox, AlertTriangle, BarChart3, Settings, Upload, RefreshCw, Save, CheckCircle2, XCircle, Layers } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import Pagination from '../components/Pagination';
 
 const TAB_DEFS = [
   { id: 'current', icon: Database, perm: 'view_1c' },
   { id: 'imports', icon: Inbox, perm: 'view_1c' },
+  { id: 'raw', icon: Layers, perm: 'view_1c' },
   { id: 'unmapped', icon: AlertTriangle, perm: 'manage_1c_import' },
   { id: 'payroll', icon: BarChart3, perm: 'view_1c' },
   { id: 'settings', icon: Settings, perm: 'manage_1c_config' },
@@ -25,22 +28,42 @@ function fmtDt(s) {
 // ---------- Tab: Current ----------
 function TabCurrent({ api }) {
   const { t } = useTranslation();
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [state, setState] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ take: '200' });
-    if (search) params.set('search', search);
-    if (state) params.set('state', state);
-    const r = await api.get(`/api/oneC/current?${params.toString()}`);
-    setItems(r.data?.items || []);
+    const r = await api.get('/api/oneC/current?take=50000');
+    setAllItems(r.data?.items || []);
     setLoading(false);
-  }, [api, search, state]);
+  }, [api]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [search, state]);
+
+  const filtered = (() => {
+    let res = allItems;
+    if (state) {
+      const st = state.toLowerCase();
+      res = res.filter((r) => (r.state || '').toLowerCase().includes(st));
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      res = res.filter((r) =>
+        (r.order_number || '').toLowerCase().includes(q) ||
+        (r.vin || '').toLowerCase().includes(q) ||
+        (r.plate_number || '').toLowerCase().includes(q) ||
+        (r.executor || '').toLowerCase().includes(q)
+      );
+    }
+    return res;
+  })();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const items = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <div className="space-y-3">
@@ -94,6 +117,10 @@ function TabCurrent({ api }) {
           </tbody>
         </table>
       </div>
+      <Pagination
+        page={page} totalPages={totalPages} totalItems={filtered.length}
+        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
+      />
     </div>
   );
 }
@@ -101,17 +128,23 @@ function TabCurrent({ api }) {
 // ---------- Tab: Imports ----------
 function TabImports({ api, canImport }) {
   const { t } = useTranslation();
+  const toast = useToast();
   const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [forceType, setForceType] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await api.get('/api/oneC/imports?take=50');
+    const skip = (page - 1) * perPage;
+    const r = await api.get(`/api/oneC/imports?take=${perPage}&skip=${skip}`);
     setItems(r.data?.items || []);
+    setTotal(r.data?.total || 0);
     setLoading(false);
-  }, [api]);
+  }, [api, page, perPage]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -125,11 +158,11 @@ function TabImports({ api, canImport }) {
     const data = btoa(bin);
     try {
       const r = await api.post('/api/oneC/imports/upload', { filename: file.name, data, forceType: forceType || undefined });
-      alert(`${t('data1c.imports.uploaded')}: ${file.name}\n${t('data1c.imports.type')}: ${r.data?.detected || forceType || '—'}\n${t('data1c.imports.rows')}: ${r.data?.inserted ?? '—'}`);
+      toast.success(`${t('data1c.imports.uploaded')}: ${file.name} — ${t('data1c.imports.type')}: ${r.data?.detected || forceType || '—'}, ${t('data1c.imports.rows')}: ${r.data?.inserted ?? '—'}`);
       e.target.value = '';
       await load();
     } catch (err) {
-      alert(t('data1c.common.error') + ': ' + err.message);
+      toast.error(t('data1c.common.error') + ': ' + err.message);
     }
   };
 
@@ -137,10 +170,10 @@ function TabImports({ api, canImport }) {
     setRunning(true);
     try {
       const r = await api.post('/api/oneC/imports/run', {});
-      alert(t('data1c.imports.imapCycleResult', { count: r.data?.fetched ?? 0 }));
+      toast.success(t('data1c.imports.imapCycleResult', { count: r.data?.fetched ?? 0 }));
       await load();
     } catch (err) {
-      alert(t('data1c.common.error') + ': ' + err.message);
+      toast.error(t('data1c.common.error') + ': ' + err.message);
     } finally {
       setRunning(false);
     }
@@ -203,6 +236,10 @@ function TabImports({ api, canImport }) {
           </tbody>
         </table>
       </div>
+      <Pagination
+        page={page} totalPages={Math.max(1, Math.ceil(total / perPage))} totalItems={total}
+        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
+      />
     </div>
   );
 }
@@ -210,10 +247,13 @@ function TabImports({ api, canImport }) {
 // ---------- Tab: Unmapped ----------
 function TabUnmapped({ api, canManage }) {
   const { t } = useTranslation();
-  const [items, setItems] = useState([]);
+  const toast = useToast();
+  const [allItems, setAllItems] = useState([]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState({});
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -221,12 +261,15 @@ function TabUnmapped({ api, canManage }) {
       api.get('/api/oneC/unmapped-posts'),
       api.get('/api/posts'),
     ]);
-    setItems(u.data?.items || []);
+    setAllItems(u.data?.items || []);
     setPosts(p.data || []);
     setLoading(false);
   }, [api]);
 
   useEffect(() => { load(); }, [load]);
+
+  const totalPages = Math.max(1, Math.ceil(allItems.length / perPage));
+  const items = allItems.slice((page - 1) * perPage, page * perPage);
 
   const onSave = async (rawName) => {
     const draft = drafts[rawName] || {};
@@ -238,11 +281,12 @@ function TabUnmapped({ api, canManage }) {
       });
       await load();
     } catch (e) {
-      alert(t('data1c.common.error') + ': ' + e.message);
+      toast.error(t('data1c.common.error') + ': ' + e.message);
     }
   };
 
   return (
+    <div className="space-y-3">
     <div className="glass-static rounded-lg overflow-auto">
       <table className="w-full text-xs">
         <thead style={{ background: 'var(--bg-glass)' }}>
@@ -301,6 +345,11 @@ function TabUnmapped({ api, canManage }) {
         </tbody>
       </table>
     </div>
+      <Pagination
+        page={page} totalPages={totalPages} totalItems={allItems.length}
+        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
+      />
+    </div>
   );
 }
 
@@ -311,6 +360,8 @@ function TabPayroll({ api }) {
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -323,6 +374,10 @@ function TabPayroll({ api }) {
   }, [api, from, to]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [from, to]);
+
+  const totalPages = Math.max(1, Math.ceil((data.items?.length || 0) / perPage));
+  const pageItems = (data.items || []).slice((page - 1) * perPage, page * perPage);
 
   return (
     <div className="space-y-3">
@@ -348,9 +403,9 @@ function TabPayroll({ api }) {
           <tbody>
             {loading ? (
               <tr><td colSpan={4} className="px-2 py-4 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.loading')}</td></tr>
-            ) : data.items.length === 0 ? (
+            ) : pageItems.length === 0 ? (
               <tr><td colSpan={4} className="px-2 py-4 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.noData')}</td></tr>
-            ) : data.items.map((r) => (
+            ) : pageItems.map((r) => (
               <tr key={r.executor} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
                 <td className="px-2 py-1">{r.executor}</td>
                 <td className="px-2 py-1 font-semibold">{r.normHours}</td>
@@ -363,6 +418,142 @@ function TabPayroll({ api }) {
           </tbody>
         </table>
       </div>
+      <Pagination
+        page={page} totalPages={totalPages} totalItems={data.items?.length || 0}
+        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
+      />
+    </div>
+  );
+}
+
+// ---------- Tab: Raw (план / ремонты / выработка) ----------
+const RAW_COLUMNS = {
+  plan: [
+    { key: 'receivedAt', i18n: 'received', fmt: 'dt' },
+    { key: 'number', i18n: 'number' },
+    { key: 'plateNumber', i18n: 'plate' },
+    { key: 'vin', i18n: 'vin' },
+    { key: 'scheduledStart', i18n: 'scheduledStart', fmt: 'dt' },
+    { key: 'scheduledEnd', i18n: 'scheduledEnd', fmt: 'dt' },
+    { key: 'postRawName', i18n: 'post' },
+    { key: 'durationSec', i18n: 'duration' },
+    { key: 'isOutdated', i18n: 'outdated', fmt: 'bool' },
+  ],
+  repair: [
+    { key: 'receivedAt', i18n: 'received', fmt: 'dt' },
+    { key: 'orderNumber', i18n: 'number' },
+    { key: 'plateNumber1', i18n: 'plate' },
+    { key: 'vin', i18n: 'vin' },
+    { key: 'state', i18n: 'state' },
+    { key: 'repairKind', i18n: 'repairKind' },
+    { key: 'workStartedAt', i18n: 'workStart', fmt: 'dt' },
+    { key: 'workFinishedAt', i18n: 'workEnd', fmt: 'dt' },
+    { key: 'closedAt', i18n: 'closed', fmt: 'dt' },
+    { key: 'master', i18n: 'master' },
+  ],
+  performed: [
+    { key: 'receivedAt', i18n: 'received', fmt: 'dt' },
+    { key: 'orderNumber', i18n: 'number' },
+    { key: 'plateNumber', i18n: 'plate' },
+    { key: 'vin', i18n: 'vin' },
+    { key: 'executor', i18n: 'executor' },
+    { key: 'repairKind', i18n: 'repairKind' },
+    { key: 'workStartedAt', i18n: 'workStart', fmt: 'dt' },
+    { key: 'closedAt', i18n: 'closed', fmt: 'dt' },
+    { key: 'normHours', i18n: 'normHours' },
+    { key: 'mileage', i18n: 'mileage' },
+  ],
+};
+
+function TabRaw({ api }) {
+  const { t } = useTranslation();
+  const [type, setType] = useState('plan');
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const skip = (page - 1) * perPage;
+    const params = new URLSearchParams({ take: String(perPage), skip: String(skip) });
+    if (search) params.set('orderNumber', search);
+    const r = await api.get(`/api/oneC/raw/${type}?${params.toString()}`);
+    setItems(r.data?.items || []);
+    setTotal(r.data?.total || 0);
+    setLoading(false);
+  }, [api, type, search, page, perPage]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [type, search]);
+
+  const onSearch = (e) => { e.preventDefault(); setPage(1); load(); };
+
+  const cols = RAW_COLUMNS[type];
+
+  const fmtCell = (val, fmt) => {
+    if (val == null || val === '') return '—';
+    if (fmt === 'dt') return fmtDt(val);
+    if (fmt === 'bool') return val ? '✓' : '';
+    return String(val);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-1 flex-wrap">
+        {['plan', 'repair', 'performed'].map((id) => (
+          <button key={id} onClick={() => setType(id)}
+            className="px-3 py-1.5 rounded text-sm transition-all"
+            style={{
+              background: type === id ? 'var(--accent)' : 'var(--bg-glass)',
+              color: type === id ? 'white' : 'var(--text-primary)',
+              border: '1px solid var(--border-glass)',
+              fontWeight: type === id ? 600 : 400,
+            }}>
+            {t(`data1c.raw.subtab.${id}`)}
+          </button>
+        ))}
+        <form onSubmit={onSearch} className="flex gap-1 ml-auto items-center">
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('data1c.raw.searchPlaceholder')}
+            className="px-2 py-1 rounded text-sm"
+            style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} />
+          <button type="submit" className="px-2 py-1 rounded text-sm"
+            style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
+            <RefreshCw size={14} />
+          </button>
+        </form>
+      </div>
+      <div className="glass-static rounded-lg overflow-auto">
+        <table className="w-full text-xs">
+          <thead style={{ background: 'var(--bg-glass)', position: 'sticky', top: 0 }}>
+            <tr>
+              {cols.map((c) => (
+                <th key={c.key} className="text-left px-2 py-1.5">{t(`data1c.raw.col.${c.i18n}`)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && items.length === 0 ? (
+              <tr><td colSpan={cols.length} className="px-2 py-4 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.loading')}</td></tr>
+            ) : items.length === 0 ? (
+              <tr><td colSpan={cols.length} className="px-2 py-4 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.noData')}</td></tr>
+            ) : items.map((r) => (
+              <tr key={r.id} className="border-t" style={{ borderColor: 'var(--border-glass)' }}>
+                {cols.map((c) => (
+                  <td key={c.key} className="px-2 py-1">{fmtCell(r[c.key], c.fmt)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination
+        page={page} totalPages={Math.max(1, Math.ceil(total / perPage))} totalItems={total}
+        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
+      />
     </div>
   );
 }
@@ -370,6 +561,7 @@ function TabPayroll({ api }) {
 // ---------- Tab: Settings ----------
 function TabSettings({ api }) {
   const { t } = useTranslation();
+  const toast = useToast();
   const [cfg, setCfg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -404,25 +596,31 @@ function TabSettings({ api }) {
       const r = await api.put('/api/oneC/config', body);
       setCfg(r.data);
       setPwd('');
-      alert(t('data1c.common.saved'));
+      toast.success(t('data1c.common.saved'));
     } catch (e) {
-      alert(t('data1c.common.error') + ': ' + e.message);
+      toast.error(t('data1c.common.error') + ': ' + e.message);
     } finally {
       setSaving(false);
     }
   };
 
   const onTest = async () => {
-    if (!pwd) { alert(t('data1c.settings.enterPasswordForTest')); return; }
+    // Если в форме поле пустое — сервер возьмёт сохранённый пароль из БД (passwordSet=true).
+    if (!pwd && !cfg.passwordSet) { toast.warning(t('data1c.settings.enterPasswordForTest')); return; }
     setTesting(true);
     setTestResult(null);
     try {
-      const r = await api.post('/api/oneC/config/test', {
-        host: cfg.host, port: Number(cfg.port), useSsl: !!cfg.useSsl, user: cfg.user, password: pwd,
-      });
+      const body = {
+        host: cfg.host, port: Number(cfg.port), useSsl: !!cfg.useSsl, user: cfg.user,
+      };
+      if (pwd) body.password = pwd;
+      const r = await api.post('/api/oneC/config/test', body);
       setTestResult(r.data);
+      if (r.data?.ok) toast.success(t('data1c.settings.ok'));
+      else toast.error(r.data?.error || t('data1c.settings.testFailed'));
     } catch (e) {
       setTestResult({ ok: false, error: e.message });
+      toast.error(e.message);
     } finally {
       setTesting(false);
     }
@@ -542,6 +740,7 @@ export default function Data1C() {
       <div>
         {active === 'current' && <TabCurrent api={api} />}
         {active === 'imports' && <TabImports api={api} canImport={canImport} />}
+        {active === 'raw' && <TabRaw api={api} />}
         {active === 'unmapped' && <TabUnmapped api={api} canManage={canImport} />}
         {active === 'payroll' && <TabPayroll api={api} />}
         {active === 'settings' && <TabSettings api={api} />}

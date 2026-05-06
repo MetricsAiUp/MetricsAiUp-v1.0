@@ -87,14 +87,40 @@ router.put(
 );
 
 // POST /api/oneC/config/test  — проверка соединения без сохранения
+// Поля host/port/useSsl/user/password — опциональны: если не переданы,
+// подставим из сохранённого Imap1CConfig (включая расшифрованный пароль).
 router.post(
   '/config/test',
   authenticate,
   requirePermission('manage_1c_config'),
   validate(testConnectionSchema),
   async (req, res) => {
-    const result = await imap1cFetcher.testConnection(req.body);
-    res.json(result);
+    try {
+      const { decrypt } = require('../utils/crypto');
+      const cfg = await prisma.imap1CConfig.findUnique({ where: { id: 1 } });
+      const merged = {
+        host: req.body.host || cfg?.host,
+        port: req.body.port || cfg?.port,
+        useSsl: req.body.useSsl === undefined ? !!cfg?.useSsl : !!req.body.useSsl,
+        user: req.body.user || cfg?.user,
+        password: req.body.password,
+      };
+      if (!merged.password) {
+        if (!cfg?.passwordEncrypted) {
+          return res.json({ ok: false, error: 'Пароль не задан и не сохранён' });
+        }
+        try { merged.password = decrypt(cfg.passwordEncrypted); }
+        catch (e) { return res.json({ ok: false, error: 'Не удалось расшифровать сохранённый пароль: ' + e.message }); }
+      }
+      if (!merged.host || !merged.port || !merged.user) {
+        return res.json({ ok: false, error: 'Не заполнены host/port/user (ни в форме, ни в сохранённой конфигурации)' });
+      }
+      const result = await imap1cFetcher.testConnection(merged);
+      res.json(result);
+    } catch (err) {
+      logger.error('POST /oneC/config/test failed', { err: err.message });
+      res.status(500).json({ error: err.message });
+    }
   }
 );
 
@@ -188,7 +214,7 @@ router.post('/imports/upload', authenticate, requirePermission('manage_1c_import
 // GET /api/oneC/current?take=&skip=&state=&plate=&search=
 router.get('/current', authenticate, requirePermission('view_1c'), async (req, res) => {
   try {
-    const take = parseInteger(req.query.take, 100, 1000);
+    const take = parseInteger(req.query.take, 100, 50000);
     const skip = parseInteger(req.query.skip, 0, 100000);
     const rows = await merger.getWorkOrderCurrent({ take, skip });
 
