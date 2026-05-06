@@ -164,7 +164,6 @@ describe('workers - response shape', () => {
       topBrands: [{ brand: 'BMW', count: 3 }],
       dailyStats: [{ date: '2026-04-10', workOrders: 2, normHours: 5, actualHours: 5.3 }],
       recentOrders: [{ id: '1', number: 'ЗН-001', workType: 'Диагностика', status: 'completed' }],
-      data1c: [],
     };
     expect(response).toHaveProperty('worker');
     expect(response).toHaveProperty('summary');
@@ -172,7 +171,6 @@ describe('workers - response shape', () => {
     expect(response).toHaveProperty('topBrands');
     expect(response).toHaveProperty('dailyStats');
     expect(response).toHaveProperty('recentOrders');
-    expect(response).toHaveProperty('data1c');
     expect(response.summary.avgEfficiency).toBeGreaterThan(0);
   });
 });

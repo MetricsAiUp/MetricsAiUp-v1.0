@@ -38,7 +38,8 @@ const ENTITY_RULES = [
   { pattern: /^\/map-layout/,        entity: 'mapLayout' },
   { pattern: /^\/settings/,          entity: 'settings' },
   { pattern: /^\/report-schedules/,  entity: 'reportSchedule' },
-  { pattern: /^\/1c/,                entity: 'data1c' },
+  { pattern: /^\/oneC/,              entity: 'oneC' },
+  { pattern: /^\/discrepancies/,     entity: 'discrepancy' },
   { pattern: /^\/backup/,            entity: 'backup' },
 ];
 

@@ -44,14 +44,6 @@ router.get('/:name/stats', authenticate, async (req, res) => {
       dailyMap[date].actualHours += o.actualHours || 0;
     });
 
-    // Try to get 1C data
-    let data1c = [];
-    try {
-      const raw = fs.readFileSync(path.join(__dirname, '../../../data/1c-workers.json'), 'utf-8');
-      const parsed = JSON.parse(raw);
-      data1c = (parsed.workers || []).filter(w => w.worker === name || w.name === name);
-    } catch {}
-
     res.json({
       worker: { name, totalOrders: orders.length },
       summary: {
@@ -63,7 +55,6 @@ router.get('/:name/stats', authenticate, async (req, res) => {
       topBrands: Object.entries(brandMap).map(([brand, count]) => ({ brand, count })).sort((a, b) => b.count - a.count).slice(0, 10),
       dailyStats: Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date)),
       recentOrders: orders.slice(0, 15).map(o => ({ id: o.id, number: o.orderNumber, workType: o.workType, brand: o.brand, model: o.model, normHours: o.normHours, status: o.status, scheduledTime: o.scheduledTime })),
-      data1c,
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

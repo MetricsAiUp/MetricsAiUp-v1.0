@@ -25,7 +25,6 @@ const dashboardRoutes = require('./routes/dashboard');
 const cameraRoutes = require('./routes/cameras');
 const userRoutes = require('./routes/users');
 const mapLayoutRoutes = require('./routes/mapLayout');
-const data1cRoutes = require('./routes/data1c');
 const shiftsRoutes = require('./routes/shifts');
 const auditLogRoutes = require('./routes/auditLog');
 const pushRoutes = require('./routes/push');
@@ -36,7 +35,6 @@ const postsDataRoutes = require('./routes/postsData');
 const healthRoutes = require('./routes/health');
 const workersRoutes = require('./routes/workers');
 const backupRoutes = require('./routes/backup');
-const { startFileWatcher } = require('./services/sync1C');
 const { initTelegramBot } = require('./services/telegramBot');
 const { generate: generateDemoData } = require('./generateDemoData');
 const { startCameraHealthCheck } = require('./services/cameraHealthCheck');
@@ -111,7 +109,6 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/map-layout', mapLayoutRoutes);
-app.use('/api/1c', data1cRoutes);
 app.use('/api/shifts', shiftsRoutes);
 app.use('/api/audit-log', auditLogRoutes);
 app.use('/api/push', pushRoutes);
@@ -188,13 +185,13 @@ app.set('monitoringProxy', monitoringProxy);
 server.listen(PORT, '0.0.0.0', () => {
   logger.info('HTTP server started', { port: PORT });
   logger.info('Socket.IO ready for connections');
-  startFileWatcher();
   initTelegramBot();
   startCameraHealthCheck();
   startReportScheduler();
   backupScheduler.start();
   retentionCleaner.start();
   require('./services/discrepancyDigest').start();
+  require('./services/imap1cFetcher').start().catch(e => logger.warn('imap1cFetcher start failed', { err: e.message }));
 
   // Start demo generator only if mode is 'demo', monitoring proxy if 'live'
   const appSettings = settingsRoutes.readSettings();
