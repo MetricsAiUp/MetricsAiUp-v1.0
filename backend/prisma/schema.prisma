@@ -20,6 +20,7 @@ model User {
   isActive       Boolean  @default(true) @map("is_active")
   hiddenElements String   @default("[]") @map("hidden_elements")
   pages          String   @default("[]")
+  uiState        String   @default("{}") @map("ui_state")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -122,6 +123,7 @@ model Post {
   displayNameEn    String?   @map("display_name_en")     // "Post 4 — light vehicles"
   externalZoneName String?   @map("external_zone_name")  // имя зоны во внешнем CV API
   externalAliases  String?   @map("external_aliases")    // JSON-массив доп. имён
+  isTracked        Boolean   @default(true) @map("is_tracked") // false = «не наш» пост (Приёмка, ОК), 1С его не считает
   deleted          Boolean   @default(false)
   deletedAt        DateTime? @map("deleted_at")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -135,6 +137,7 @@ model Post {
   @@index([isActive])
   @@index([zoneId])
   @@index([deleted])
+  @@index([isTracked])
   @@map("posts")
 }
 
@@ -584,4 +587,328 @@ model ShiftWorker {
   shift     Shift  @relation(fields: [shiftId], references: [id], onDelete: Cascade)
 
   @@map("shift_workers")
+}
+
+// ==========================================
+// 1С Импорт V2 (IMAP + xlsx, append-only)
+// ==========================================
+// OneCImport.status: pending | success | partial | error_unknown_format | error
+// OneCImport.source: imap | manual
+// OneCImport.detectedType: plan | repair | performed | unknown
+
+model OneCImport {
+  id             String   @id @default(uuid())
+  uid            String                                            // IMAP UID (или "manual-<uuid>" для ручной загрузки)
+  messageId      String?  @map("message_id")
+  fromAddress    String   @map("from_address")
+  subject        String?
+  receivedAt     DateTime @map("received_at")
+  processedAt    DateTime @default(now()) @map("processed_at")
+  status         String   @default("pending")
+  source         String   @default("imap")
+  uploadedBy     String?  @map("uploaded_by")
+  attachmentName String?  @map("attachment_name")
+  attachmentSize Int?     @map("attachment_size")
+  detectedType   String?  @map("detected_type")
+  rowsTotal      Int      @default(0) @map("rows_total")
+  rowsInserted   Int      @default(0) @map("rows_inserted")
+  errorMessage   String?  @map("error_message")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  planRows      OneCPlanRow[]
+  repairRows    OneCRepairSnapshot[]
+  performedRows OneCWorkPerformed[]
+
+  @@unique([uid, attachmentName])
+  @@index([receivedAt])
+  @@index([status])
+  @@map("one_c_imports")
+}
+
+// raw-строки из «Основной (анализ) (XLSX)»
+model OneCPlanRow {
+  id             String   @id @default(uuid())
+  importId       String   @map("import_id")
+  documentText   String   @map("document_text")
+  documentType   String?  @map("document_type")
+  organization   String?
+  vehicleText    String?  @map("vehicle_text")
+  number         String
+  plateNumber    String?  @map("plate_number")
+  vin            String?
+  scheduledStart DateTime @map("scheduled_start")
+  scheduledEnd   DateTime @map("scheduled_end")
+  postRawName    String   @map("post_raw_name")
+  postId         String?  @map("post_id")
+  durationSec    Int?     @map("duration_sec")
+  isOutdated     Boolean  @default(false) @map("is_outdated")
+  receivedAt     DateTime @map("received_at")
+  contentHash    String   @map("content_hash")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  import OneCImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@index([number])
+  @@index([plateNumber])
+  @@index([vin])
+  @@index([scheduledStart])
+  @@index([receivedAt])
+  @@index([contentHash])
+  @@map("one_c_plan_rows")
+}
+
+// raw-строки из «Сводная ведомость_Простыня (анализ) (XLSX)»
+model OneCRepairSnapshot {
+  id             String   @id @default(uuid())
+  importId       String   @map("import_id")
+  vehicleText    String?  @map("vehicle_text")
+  vin            String?
+  brand          String?
+  model          String?
+  plateNumber1   String?  @map("plate_number_1")
+  plateNumber2   String?  @map("plate_number_2")
+  warrantyEnd    DateTime? @map("warranty_end")
+  yearMade       Int?     @map("year_made")
+  orderText      String?  @map("order_text")
+  orderNumber    String   @map("order_number")
+  orderDate      DateTime @map("order_date")
+  state          String
+  repairKind     String?  @map("repair_kind")
+  mileage        Int?
+  workStartedAt  DateTime? @map("work_started_at")
+  workFinishedAt DateTime? @map("work_finished_at")
+  closedAt       DateTime? @map("closed_at")
+  basis          String?
+  basisStart     DateTime? @map("basis_start")
+  basisEnd       DateTime? @map("basis_end")
+  master         String?
+  dispatcher     String?
+  receivedAt     DateTime @map("received_at")
+  contentHash    String   @map("content_hash")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  import OneCImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@index([orderNumber])
+  @@index([vin])
+  @@index([plateNumber1])
+  @@index([state])
+  @@index([receivedAt])
+  @@index([contentHash])
+  @@map("one_c_repair_snapshots")
+}
+
+// raw-строки из «Выработка исполнителей_… (XLSX)»
+model OneCWorkPerformed {
+  id               String   @id @default(uuid())
+  importId         String   @map("import_id")
+  vehicleText      String?  @map("vehicle_text")
+  vin              String?
+  brand            String?
+  model            String?
+  plateNumber      String?  @map("plate_number")
+  yearMade         Int?     @map("year_made")
+  orderText        String?  @map("order_text")
+  orderNumber      String   @map("order_number")
+  orderDate        DateTime @map("order_date")
+  repairKind       String?  @map("repair_kind")
+  state            String
+  workStartedAt    DateTime? @map("work_started_at")
+  workFinishedAt   DateTime? @map("work_finished_at")
+  closedAt         DateTime  @map("closed_at")
+  master           String?
+  dispatcher       String?
+  executor         String?
+  basisPlateNumber String?   @map("basis_plate_number")
+  mileage          Int?
+  causeDescription String?   @map("cause_description")
+  normHours        Float?    @map("norm_hours")
+  receivedAt       DateTime  @map("received_at")
+  contentHash      String    @map("content_hash")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  import OneCImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@index([orderNumber])
+  @@index([vin])
+  @@index([plateNumber])
+  @@index([executor])
+  @@index([closedAt])
+  @@index([receivedAt])
+  @@index([contentHash])
+  @@map("one_c_work_performed")
+}
+
+// ==========================================
+// Сводные таблицы (append-only с дедупом по contentHash)
+// ==========================================
+
+model OneCWorkOrderMerged {
+  id               String    @id @default(uuid())
+  orderNumber      String    @map("order_number")
+  vin              String?
+  brand            String?
+  model            String?
+  plateNumber      String?   @map("plate_number")
+  yearMade         Int?      @map("year_made")
+  mileage          Int?
+  orderDate        DateTime? @map("order_date")
+  scheduledStart   DateTime? @map("scheduled_start")
+  scheduledEnd     DateTime? @map("scheduled_end")
+  workStartedAt    DateTime? @map("work_started_at")
+  workFinishedAt   DateTime? @map("work_finished_at")
+  closedAt         DateTime? @map("closed_at")
+  state            String?
+  documentType     String?   @map("document_type")
+  organization     String?
+  repairKind       String?   @map("repair_kind")
+  basis            String?
+  master           String?
+  dispatcher       String?
+  executor         String?
+  causeDescription String?   @map("cause_description")
+  normHours        Float?    @map("norm_hours")
+  inPlan           Boolean   @default(false) @map("in_plan")
+  inRepair         Boolean   @default(false) @map("in_repair")
+  inPerformed      Boolean   @default(false) @map("in_performed")
+  contentHash      String    @map("content_hash")
+  receivedAt       DateTime  @map("received_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@index([orderNumber, receivedAt(sort: Desc)])
+  @@index([vin])
+  @@index([plateNumber])
+  @@index([state])
+  @@index([executor])
+  @@index([contentHash])
+  @@map("one_c_work_order_merged")
+}
+
+model OneCStageMerged {
+  id             String   @id @default(uuid())
+  orderNumber    String   @map("order_number")
+  postRawName    String   @map("post_raw_name")
+  postId         String?  @map("post_id")
+  scheduledStart DateTime @map("scheduled_start")
+  scheduledEnd   DateTime @map("scheduled_end")
+  durationSec    Int?     @map("duration_sec")
+  isOutdated     Boolean  @default(false) @map("is_outdated")
+  vin            String?
+  plateNumber    String?  @map("plate_number")
+  contentHash    String   @map("content_hash")
+  receivedAt     DateTime @map("received_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([orderNumber, postRawName, scheduledStart, receivedAt(sort: Desc)])
+  @@index([postId, scheduledStart])
+  @@index([scheduledStart])
+  @@index([contentHash])
+  @@map("one_c_stage_merged")
+}
+
+// ==========================================
+// Несопоставленные рабочие места (для UI)
+// ==========================================
+
+model OneCUnmappedPost {
+  rawName     String   @id @map("raw_name")
+  occurrences Int      @default(1)
+  firstSeenAt DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at")
+  resolved    Boolean  @default(false)                          // когда админ выбрал postId или isTracked=false
+  resolvedPostId String? @map("resolved_post_id")               // что в итоге выбрали
+  resolvedAsNonTracked Boolean @default(false) @map("resolved_as_non_tracked")
+  resolvedBy  String?  @map("resolved_by")
+  resolvedAt  DateTime? @map("resolved_at")
+
+  @@index([resolved])
+  @@map("one_c_unmapped_posts")
+}
+
+// ==========================================
+// Матчинг 1С ↔ CV
+// ==========================================
+// matchType: exact_vin | exact_plate | fuzzy_plate | none
+
+model OneCCvMatch {
+  id               String   @id @default(uuid())
+  orderNumber      String   @map("order_number")
+  vehicleSessionId String?  @map("vehicle_session_id")
+  postStayId       String?  @map("post_stay_id")
+  matchType        String   @map("match_type")
+  confidence       Float
+  windowApplied    Boolean  @default(false) @map("window_applied")
+  matchedAt        DateTime @default(now()) @map("matched_at")
+  context          String?
+
+  @@unique([orderNumber, vehicleSessionId])
+  @@index([orderNumber])
+  @@index([vehicleSessionId])
+  @@map("one_c_cv_match")
+}
+
+// ==========================================
+// Discrepancy (нестыковки)
+// ==========================================
+// type: no_show_in_cv | no_show_in_1c | wrong_post | overstated_norm_hours | understated_actual_time | time_mismatch
+// severity: critical | warning | info
+// status: open | acknowledged | resolved | dismissed
+
+model Discrepancy {
+  id               String    @id @default(uuid())
+  type             String
+  severity         String    @default("warning")
+  status           String    @default("open")
+  orderNumber      String?   @map("order_number")
+  vehicleSessionId String?   @map("vehicle_session_id")
+  postId           String?   @map("post_id")
+  plateNumber      String?   @map("plate_number")
+  vin              String?
+  oneCValue        String?   @map("one_c_value")
+  cvValue          String?   @map("cv_value")
+  description      String
+  descriptionEn    String?   @map("description_en")
+  detectedAt       DateTime  @default(now()) @map("detected_at")
+  acknowledgedAt   DateTime? @map("acknowledged_at")
+  acknowledgedBy   String?   @map("acknowledged_by")
+  resolvedAt       DateTime? @map("resolved_at")
+  resolvedBy       String?   @map("resolved_by")
+  closeReason      String?   @map("close_reason")
+  closeComment     String?   @map("close_comment")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@unique([type, orderNumber, postId, vehicleSessionId])
+  @@index([status, severity, detectedAt(sort: Desc)])
+  @@index([type])
+  @@index([orderNumber])
+  @@index([postId])
+  @@map("discrepancies")
+}
+
+// ==========================================
+// IMAP-конфиг (одна строка, id=1)
+// ==========================================
+
+model Imap1CConfig {
+  id                Int       @id @default(1)
+  host              String    @default("imap.gmail.com")
+  port              Int       @default(993)
+  useSsl            Boolean   @default(true) @map("use_ssl")
+  user              String    @default("")
+  passwordEncrypted String    @default("") @map("password_encrypted")
+  fromFilter        String    @default("zakaz@paradavto.by") @map("from_filter")
+  subjectMask       String?   @map("subject_mask")
+  intervalMinutes   Int       @default(30) @map("interval_minutes")
+  matchWindowHours  Int       @default(24) @map("match_window_hours")
+  enabled           Boolean   @default(false)
+  markAsRead        Boolean   @default(true) @map("mark_as_read")
+  deleteAfterDays   Int?      @map("delete_after_days")
+  lastFetchAt       DateTime? @map("last_fetch_at")
+  lastFetchStatus   String?   @map("last_fetch_status")
+  lastFetchError    String?   @map("last_fetch_error")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  updatedBy         String?   @map("updated_by")
+
+  @@map("imap_1c_config")
 }

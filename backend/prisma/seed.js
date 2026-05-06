@@ -23,6 +23,10 @@ async function main() {
     { key: 'manage_settings', displayName: 'Управление настройками', group: 'admin' },
     { key: 'view_cameras', displayName: 'Просмотр камер', group: 'cameras' },
     { key: 'manage_cameras', displayName: 'Управление камерами', group: 'cameras' },
+    { key: 'view_1c', displayName: 'Просмотр 1С', group: '1c' },
+    { key: 'manage_1c_import', displayName: 'Импорт 1С', group: '1c' },
+    { key: 'manage_1c_config', displayName: 'Настройки IMAP/1С', group: '1c' },
+    { key: 'manage_discrepancies', displayName: 'Управление нестыковками', group: 'discrepancies' },
   ];
 
   const permissions = {};
@@ -67,10 +71,10 @@ async function main() {
   // Role-Permission mappings
   const rolePerms = {
     admin: Object.keys(permissions), // все права
-    director: ['view_dashboard', 'view_analytics', 'view_zones', 'view_posts', 'view_sessions', 'view_events', 'view_work_orders', 'view_recommendations', 'view_cameras'],
-    manager: ['view_dashboard', 'view_zones', 'view_posts', 'view_sessions', 'view_events', 'view_work_orders', 'manage_work_orders', 'view_recommendations'],
+    director: ['view_dashboard', 'view_analytics', 'view_zones', 'view_posts', 'view_sessions', 'view_events', 'view_work_orders', 'view_recommendations', 'view_cameras', 'view_1c', 'manage_discrepancies'],
+    manager: ['view_dashboard', 'view_zones', 'view_posts', 'view_sessions', 'view_events', 'view_work_orders', 'manage_work_orders', 'view_recommendations', 'view_1c', 'manage_1c_import', 'manage_discrepancies'],
     mechanic: ['view_dashboard', 'view_posts', 'view_sessions'],
-    viewer: ['view_dashboard', 'view_zones', 'view_posts'],
+    viewer: ['view_dashboard', 'view_zones', 'view_posts', 'view_1c'],
   };
 
   for (const [roleName, permKeys] of Object.entries(rolePerms)) {

@@ -1,3 +1,20 @@
+-- Создание таблицы monitoring_snapshots (до этого создавалась через db push, без миграции).
+CREATE TABLE IF NOT EXISTS "monitoring_snapshots" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "zone_name" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "plate_number" TEXT,
+    "car_color" TEXT,
+    "car_model" TEXT,
+    "car_make" TEXT,
+    "car_body" TEXT,
+    "works_in_progress" BOOLEAN NOT NULL DEFAULT false,
+    "works_description" TEXT,
+    "people_count" INTEGER NOT NULL DEFAULT 0,
+    "confidence" TEXT,
+    "timestamp" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Расширение monitoring_snapshots дополнительными полями внешнего API.
 ALTER TABLE "monitoring_snapshots" ADD COLUMN "external_type" TEXT;
 ALTER TABLE "monitoring_snapshots" ADD COLUMN "car_first_seen" DATETIME;
