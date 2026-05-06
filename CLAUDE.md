@@ -43,7 +43,7 @@ cd /project && node server.js
 ```
 /project
 ├── frontend/src/
-│   ├── App.jsx                 # HashRouter, 23 маршрута + ProtectedRoute (lazy-loaded)
+│   ├── App.jsx                 # HashRouter, 24 маршрута + ProtectedRoute (lazy-loaded)
 │   ├── main.jsx                # ThemeProvider → ToastProvider → AuthProvider → AppRoutes
 │   ├── components/             # 19 корневых + dashboardPosts/ (9) + postsDetail/ (4)
 │   ├── pages/                  # 23 страницы
@@ -68,7 +68,7 @@ cd /project && node server.js
 └── index.html                  # Entry point (SPA)
 ```
 
-## Frontend — 23 страницы
+## Frontend — 24 страницы
 
 | Страница | Файл | Описание |
 |----------|------|----------|
@@ -81,7 +81,8 @@ cd /project && node server.js
 | WorkOrders | WorkOrders.jsx | Заказ-наряды, CSV-импорт, start/pause/complete |
 | Events | Events.jsx (297) | Журнал событий, 10 типов, фильтры, auto-refresh |
 | Analytics | Analytics.jsx (668) | Графики Recharts, экспорт XLSX/PDF/PNG |
-| Data1C | Data1C.jsx (900) | Данные 1С: Excel-импорт, sync, export |
+| Data1C | Data1C.jsx (540) | Данные 1С v2: 5 табов (Сейчас/Импорты/Несопоставленные/Выработка/Настройки IMAP) |
+| Discrepancies | Discrepancies.jsx (315) | Нестыковки 1С↔CV: 6 правил, 4 статуса, KPI/фильтры/двухпанельный детал |
 | Cameras | Cameras.jsx | 10 камер, зоны покрытия, HLS стримы |
 | CameraMapping | CameraMapping.jsx (328) | Маппинг камера↔зона, приоритеты |
 | Users | Users.jsx | CRUD пользователей, роли, доступ к страницам |
@@ -118,7 +119,7 @@ cd /project && node server.js
 | **translate.js** | utils/translate.js | translateZone(), translatePost(), translateWorksDesc() |
 | **export.js** | utils/export.js | exportToXlsx(), exportToPdf(), downloadChartAsPng() |
 
-## Backend API — 24 модуля маршрутов (70+ эндпоинтов)
+## Backend API — 25 модулей маршрутов (75+ эндпоинтов)
 
 | Модуль | Путь | Ключевые операции |
 |--------|------|-------------------|
@@ -133,7 +134,8 @@ cd /project && node server.js
 | cameras | `/api/cameras` | CRUD, health, zone mapping с приоритетами (0-10) |
 | users | `/api/users` | CRUD, role assignment, page access, hiddenElements |
 | shifts | `/api/shifts` | CRUD, worker assignment, conflict detection, complete (handover) |
-| data1c | `/api/1c` | import XLSX (auto-detect planning/workers), export XLSX, sync-history, planning/workers/stats |
+| oneC | `/api/oneC` | current, imports (upload/run), unmapped-posts (resolve), payroll, config (IMAP, AES-GCM password), config/test |
+| discrepancies | `/api/discrepancies` | list (фильтры), stats, :id (детали + связанный заказ), :id/status (acknowledge/resolve/dismiss), run (force detect 7d) |
 | mapLayout | `/api/map-layout` | CRUD с версионированием, restore, public GET |
 | auditLog | `/api/audit-log` | GET с фильтрами (admin), CSV export |
 | predict | `/api/predict` | load, load/week, duration, free, health (seeded random) |
@@ -147,14 +149,20 @@ cd /project && node server.js
 | settings | `/api/settings` | GET/PUT mode (demo/live), triggers demo generator / monitoring proxy |
 | reportSchedule | `/api/report-schedules` | CRUD, run (generate XLSX), daily/weekly frequency |
 
-## Backend Services (8 фоновых)
+## Backend Services (12 фоновых)
 
 | Сервис | Файл | Что делает |
 |--------|------|-----------|
 | Event Processor | eventProcessor.js | CV-события → сессии, статусы постов, ZoneStay/PostStay, Socket.IO |
 | Recommendation Engine | recommendationEngine.js | 5 проверок: post_free (>30мин), overtime (>120%), idle (>15мин), capacity (>50%), no_show (>30мин) |
 | Monitoring Proxy | monitoringProxy.js | Polling внешнего CV API каждые 10с, кэш, Socket.IO emit при изменениях |
-| 1C Sync | sync1C.js | File watcher `/data/1c-import/` каждые 5 мин, XLSX парсинг, JSON-генерация, дедупликация |
+| IMAP 1C Fetcher | imap1cFetcher.js | Опрос почтового ящика, парсинг attachments → OneCImport, дедуп по contentHash, AES-GCM пароль |
+| 1C Parser | oneCParser.js | Парсинг XLSX (plan/repair/performed) → OneCPlanRow / OneCRepairOrderRow / OneCStageRow |
+| 1C Merger | oneCMerger.js | Сводка последних версий: OneCWorkOrderMerged + OneCStageMerged через ROW_NUMBER OVER |
+| 1C↔CV Matcher | oneCCvMatcher.js | Levenshtein-каскад VIN→exact_plate→fuzzy_plate, привязка ЗН к VehicleSession |
+| Discrepancy Detector | discrepancyDetector.js | 6 правил: no_show_in_cv/_in_1c, wrong_post, overstated_norm_hours, understated_actual_time, time_mismatch |
+| Discrepancy Notifier | discrepancyNotifier.js | Telegram critical instant + Socket.IO `discrepancy:new` |
+| Discrepancy Digest | discrepancyDigest.js | Дайджест в Telegram раз в N часов (top-3 постов, разбивка по severity) |
 | Camera Health | cameraHealthCheck.js | HTTP HEAD пинг каждые 30с, Socket.IO emit при изменении статуса |
 | Telegram Bot | telegramBot.js | /start, /status, /post N, /free, /report |
 | Report Scheduler | reportScheduler.js | node-cron каждую минуту, XLSX генерация, Telegram delivery |
@@ -169,7 +177,7 @@ cd /project && node server.js
 | validate.js | Zod-валидация req.body → 400 с field-level details |
 | asyncHandler.js | Обёртка async handlers, Prisma P2025 → 404 |
 
-## База данных — Prisma + SQLite (27 моделей)
+## База данных — Prisma + SQLite (39 моделей)
 
 **RBAC:** User → UserRole → Role → RolePermission → Permission
 - 15 permissions: view_dashboard, view_analytics, manage_zones, manage_users, manage_cameras, manage_shifts, manage_work_orders, manage_settings, manage_roles и др.
@@ -186,6 +194,8 @@ cd /project && node server.js
 **Смены:** Shift (date, startTime, endTime, status) → ShiftWorker (name, role, postId)
 
 **Прочее:** Event (10 типов, confidence, cameraSources), Recommendation (5 типов), AuditLog, SyncLog, MapLayout → MapLayoutVersion, Photo, PushSubscription, TelegramLink, ReportSchedule, Location
+
+**1C-v2 (новый стек):** Imap1CConfig (host/port/SSL/AES-GCM пароль), OneCImport (письма из IMAP, contentHash дедуп), OneCPlanRow / OneCRepairOrderRow / OneCStageRow (raw из XLSX), OneCWorkOrderMerged / OneCStageMerged (актуальная сводка через ROW_NUMBER), PostNameMapping (резолюция сырых имён постов), Discrepancy (6 типов, статусы open/acknowledged/resolved/dismissed, unique по type+orderNumber+postId+vehicleSessionId)
 
 ## Dual Mode — Demo / Live
 
@@ -205,7 +215,7 @@ cd /project && node server.js
 
 ```
 CV-система → POST /api/events → eventProcessor → DB + Socket.IO → Frontend
-1С ERP     → XLSX → sync1C (file watcher) → JSON → /api/1c/* → Frontend
+1С ERP     → IMAP (XLSX) → imap1cFetcher → oneCParser → oneCMerger → oneCCvMatcher → discrepancyDetector → /api/oneC/*, /api/discrepancies/* → Frontend
 ML         → /api/predict/* → FastAPI :8282 → Frontend (PredictionWidget)
 Камеры     → RTSP → FFmpeg → HLS :8181 → CameraStreamModal (hls.js)
 Frontend   → api.get/post/put/delete → Backend /api/* → Prisma/SQLite
@@ -217,6 +227,8 @@ Frontend   → api.get/post/put/delete → Backend /api/* → Prisma/SQLite
 1. **Роли** (admin, director, manager, mechanic, viewer) → permissions
 2. **Страницы** (user.pages[] — массив разрешённых pageId, Sidebar фильтрует)
 3. **Элементы** (user.hiddenElements[] — скрытые UI-элементы, isElementVisible())
+
+**Permissions для 1С-v2:** view_1c (Data1C+Discrepancies read), manage_1c_import (загрузка xlsx, резолюция unmapped), manage_1c_config (IMAP-настройки), manage_discrepancies (статусы + force-detect)
 
 **Backend:** `authenticate` → `requirePermission('manage_users')`
 **Frontend:** `hasPermission(key)`, `isElementVisible(pageId, elementId)` из AuthContext
@@ -247,7 +259,7 @@ cd /project/frontend && npm test
 ## Билд и деплой
 ```bash
 cd /project/frontend && npm run build && cp -r dist/* /project/
-# После билда — бампить CACHE_NAME в sw.js (текущий: metricsaiup-v23)
+# После билда — бампить CACHE_NAME в frontend/public/sw.js (источник, текущий: metricsaiup-v90)
 ```
 
 ## SSL/HTTPS

@@ -394,24 +394,172 @@
     "streamError": "Ошибка стрима"
   },
   "data1c": {
-    "title": "Данные 1С Альфа-Авто",
-    "statistics": "Статистика",
-    "planning": "Планирование",
-    "output": "Выработка",
-    "uploadFrom1c": "Загрузка из 1С",
-    "dragOrClick": "Перетащите файлы или нажмите",
-    "processed": "Обработан",
-    "added": "Добавлено",
-    "skippedDuplicates": "пропущено дублей",
-    "syncTab": "Синхронизация",
-    "syncHistory": "История синхронизации",
-    "importFile": "Импорт файла",
-    "exportData": "Экспорт данных",
-    "syncStatus": "Статус",
-    "syncRecords": "Записей",
-    "syncErrors": "Ошибок",
-    "syncSource": "Источник",
-    "noSyncHistory": "Нет истории синхронизации"
+    "title": "Данные 1С",
+    "tabs": {
+      "current": "Сейчас",
+      "imports": "Импорты",
+      "unmapped": "Несопоставленные",
+      "payroll": "Выработка",
+      "settings": "Настройки"
+    },
+    "common": {
+      "loading": "Загрузка…",
+      "noData": "Нет данных",
+      "refresh": "Обновить",
+      "save": "Сохранить",
+      "saved": "Сохранено",
+      "error": "Ошибка"
+    },
+    "current": {
+      "searchPlaceholder": "Поиск (номер/VIN/госномер)",
+      "statePlaceholder": "Состояние",
+      "colNumber": "№",
+      "colPlate": "Госномер",
+      "colVin": "VIN",
+      "colState": "Состояние",
+      "colPlan": "План",
+      "colClosed": "Закрыт",
+      "colNorm": "Норма",
+      "colExecutor": "Исполнитель"
+    },
+    "imports": {
+      "autoDetectType": "Авто-детект типа",
+      "uploadXlsx": "Загрузить xlsx",
+      "imapCycle": "Цикл IMAP",
+      "uploaded": "Загружено",
+      "type": "Тип",
+      "rows": "Строк",
+      "imapCycleResult": "Цикл IMAP: {{count}} писем обработано",
+      "noImports": "Импортов нет",
+      "colReceived": "Получено",
+      "colFrom": "От",
+      "colSubject": "Тема",
+      "colFile": "Файл",
+      "colType": "Тип",
+      "colRows": "Строк",
+      "colStatus": "Статус"
+    },
+    "unmapped": {
+      "colRawName": "Сырое имя",
+      "colOccurrences": "Встречалось",
+      "colFirstSeen": "Первое",
+      "colLastSeen": "Последнее",
+      "colResolution": "Резолюция",
+      "allResolved": "Все имена сопоставлены",
+      "notOurPost": "— не наш пост —",
+      "track": "отслеживать",
+      "saveTitle": "Сохранить",
+      "resolvedNotOurPost": "не наш пост",
+      "resolved": "сопоставлено",
+      "unresolved": "не сопоставлено"
+    },
+    "payroll": {
+      "from": "С:",
+      "to": "По:",
+      "totalHours": "Итого",
+      "hoursUnit": "ч",
+      "colExecutor": "Исполнитель",
+      "colNormHours": "Нормочасы",
+      "colOrders": "Заказов",
+      "colRepairKinds": "Виды работ"
+    },
+    "settings": {
+      "host": "IMAP host",
+      "port": "Порт",
+      "user": "Логин (email)",
+      "password": "Пароль",
+      "passwordSaved": "(сохранён, оставьте пустым чтобы не менять)",
+      "passwordNotSet": "(не задан)",
+      "passwordPlaceholder": "введите пароль",
+      "fromFilter": "Фильтр From",
+      "subjectMask": "Маска темы (опционально)",
+      "intervalMinutes": "Интервал, мин",
+      "matchWindowHours": "Окно матчинга, ч",
+      "deleteAfterDays": "Удалять после, дней (0/пусто = не удалять)",
+      "ssl": "SSL",
+      "enabled": "Включён",
+      "markAsRead": "Помечать как прочитанные",
+      "testConnection": "Проверить соединение",
+      "enterPasswordForTest": "Введите пароль для теста",
+      "lastFetch": "Последний цикл",
+      "ok": "OK",
+      "testFailed": "ошибка"
+    }
+  },
+  "discrepancies": {
+    "title": "Нестыковки 1С↔CV",
+    "recompute": "Пересчитать",
+    "recomputeConfirm": "Запустить пересчёт нестыковок за последние 7 дней?",
+    "type": {
+      "no_show_in_cv": "Авто не приехало по CV",
+      "no_show_in_1c": "Авто на посту без оформления в 1С",
+      "wrong_post": "Не тот пост",
+      "overstated_norm_hours": "Завышены нормочасы",
+      "understated_actual_time": "Заниженное фактическое время",
+      "time_mismatch": "Расхождение времени закрытия"
+    },
+    "severity": {
+      "critical": "Критично",
+      "warning": "Внимание",
+      "info": "Инфо"
+    },
+    "status": {
+      "open": "Открыто",
+      "acknowledged": "Принято",
+      "resolved": "Решено",
+      "dismissed": "Отклонено"
+    },
+    "kpi": {
+      "total": "Всего",
+      "open": "Открыто",
+      "last24h": "За 24 часа",
+      "critical": "Critical",
+      "warning": "Warning"
+    },
+    "filters": {
+      "label": "Фильтры:",
+      "allStatuses": "Все статусы",
+      "allSeverities": "Все severity",
+      "orderNumber": "Номер заказа",
+      "found": "Найдено"
+    },
+    "table": {
+      "type": "Тип",
+      "severity": "Severity",
+      "orderNumber": "Заказ-наряд",
+      "description": "Описание",
+      "detectedAt": "Обнаружено",
+      "status": "Статус",
+      "loading": "Загрузка…",
+      "empty": "Нет нестыковок по фильтрам",
+      "actAcknowledge": "Принять",
+      "actResolve": "Решено",
+      "actDismiss": "Отклонить",
+      "actReopen": "Открыть"
+    },
+    "detail": {
+      "oneCSection": "1С",
+      "cvSection": "CV",
+      "noOneC": "Нет данных 1С",
+      "noCv": "Нет данных CV",
+      "fNumber": "Номер",
+      "fState": "Состояние",
+      "fPlate": "Госномер",
+      "fVin": "VIN",
+      "fPlan": "План",
+      "fClosed": "Закрыт",
+      "fNorm": "Норма",
+      "fNormUnit": "ч",
+      "fExecutor": "Исполнитель",
+      "fEntry": "Въезд",
+      "fExit": "Выезд"
+    },
+    "toggle": {
+      "on": "Нестыковки: вкл.",
+      "off": "Нестыковки: выкл.",
+      "showHint": "Показать индикаторы нестыковок",
+      "hideHint": "Скрыть индикаторы нестыковок"
+    }
   },
   "auth": {
     "login": "Войти",

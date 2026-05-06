@@ -3,10 +3,12 @@
 // DashboardPosts, MapViewer, PostsDetail, MyPost.
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { AlertTriangle, AlertTriangleIcon } from 'lucide-react';
 
 export default function ShowDiscrepanciesToggle() {
+  const { t } = useTranslation();
   const { user, api, updateCurrentUser } = useAuth();
   const [busy, setBusy] = useState(false);
 
@@ -35,7 +37,7 @@ export default function ShowDiscrepanciesToggle() {
     <button
       onClick={onToggle}
       disabled={busy}
-      title={enabled ? 'Скрыть индикаторы нестыковок' : 'Показать индикаторы нестыковок'}
+      title={enabled ? t('discrepancies.toggle.hideHint') : t('discrepancies.toggle.showHint')}
       className="px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-all"
       style={{
         background: enabled ? 'rgba(245,158,11,0.15)' : 'var(--bg-glass)',
@@ -44,7 +46,7 @@ export default function ShowDiscrepanciesToggle() {
       }}
     >
       <AlertTriangle size={13} strokeWidth={2} />
-      <span>{enabled ? 'Нестыковки: вкл.' : 'Нестыковки: выкл.'}</span>
+      <span>{enabled ? t('discrepancies.toggle.on') : t('discrepancies.toggle.off')}</span>
     </button>
   );
 }

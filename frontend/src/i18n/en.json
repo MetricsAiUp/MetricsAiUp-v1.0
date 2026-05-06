@@ -394,24 +394,172 @@
     "streamError": "Stream error"
   },
   "data1c": {
-    "title": "1C Alfa-Auto Data",
-    "statistics": "Statistics",
-    "planning": "Planning",
-    "output": "Output",
-    "uploadFrom1c": "Upload from 1C",
-    "dragOrClick": "Drag files or click",
-    "processed": "Done",
-    "added": "Added",
-    "skippedDuplicates": "skipped duplicates",
-    "syncTab": "Synchronization",
-    "syncHistory": "Sync History",
-    "importFile": "Import File",
-    "exportData": "Export Data",
-    "syncStatus": "Status",
-    "syncRecords": "Records",
-    "syncErrors": "Errors",
-    "syncSource": "Source",
-    "noSyncHistory": "No sync history"
+    "title": "1C Data",
+    "tabs": {
+      "current": "Current",
+      "imports": "Imports",
+      "unmapped": "Unmapped",
+      "payroll": "Payroll",
+      "settings": "Settings"
+    },
+    "common": {
+      "loading": "Loading…",
+      "noData": "No data",
+      "refresh": "Refresh",
+      "save": "Save",
+      "saved": "Saved",
+      "error": "Error"
+    },
+    "current": {
+      "searchPlaceholder": "Search (number/VIN/plate)",
+      "statePlaceholder": "State",
+      "colNumber": "#",
+      "colPlate": "Plate",
+      "colVin": "VIN",
+      "colState": "State",
+      "colPlan": "Plan",
+      "colClosed": "Closed",
+      "colNorm": "Norm",
+      "colExecutor": "Executor"
+    },
+    "imports": {
+      "autoDetectType": "Auto-detect type",
+      "uploadXlsx": "Upload xlsx",
+      "imapCycle": "IMAP cycle",
+      "uploaded": "Uploaded",
+      "type": "Type",
+      "rows": "Rows",
+      "imapCycleResult": "IMAP cycle: {{count}} emails processed",
+      "noImports": "No imports",
+      "colReceived": "Received",
+      "colFrom": "From",
+      "colSubject": "Subject",
+      "colFile": "File",
+      "colType": "Type",
+      "colRows": "Rows",
+      "colStatus": "Status"
+    },
+    "unmapped": {
+      "colRawName": "Raw name",
+      "colOccurrences": "Occurrences",
+      "colFirstSeen": "First seen",
+      "colLastSeen": "Last seen",
+      "colResolution": "Resolution",
+      "allResolved": "All names resolved",
+      "notOurPost": "— not our post —",
+      "track": "track",
+      "saveTitle": "Save",
+      "resolvedNotOurPost": "not our post",
+      "resolved": "resolved",
+      "unresolved": "unresolved"
+    },
+    "payroll": {
+      "from": "From:",
+      "to": "To:",
+      "totalHours": "Total",
+      "hoursUnit": "h",
+      "colExecutor": "Executor",
+      "colNormHours": "Norm hours",
+      "colOrders": "Orders",
+      "colRepairKinds": "Repair kinds"
+    },
+    "settings": {
+      "host": "IMAP host",
+      "port": "Port",
+      "user": "Login (email)",
+      "password": "Password",
+      "passwordSaved": "(saved, leave empty to keep)",
+      "passwordNotSet": "(not set)",
+      "passwordPlaceholder": "enter password",
+      "fromFilter": "From filter",
+      "subjectMask": "Subject mask (optional)",
+      "intervalMinutes": "Interval, min",
+      "matchWindowHours": "Match window, h",
+      "deleteAfterDays": "Delete after, days (0/empty = never)",
+      "ssl": "SSL",
+      "enabled": "Enabled",
+      "markAsRead": "Mark as read",
+      "testConnection": "Test connection",
+      "enterPasswordForTest": "Enter password for test",
+      "lastFetch": "Last fetch",
+      "ok": "OK",
+      "testFailed": "failed"
+    }
+  },
+  "discrepancies": {
+    "title": "Discrepancies 1C↔CV",
+    "recompute": "Recompute",
+    "recomputeConfirm": "Run discrepancy detection for the last 7 days?",
+    "type": {
+      "no_show_in_cv": "Vehicle not seen by CV",
+      "no_show_in_1c": "Vehicle on post without 1C order",
+      "wrong_post": "Wrong post",
+      "overstated_norm_hours": "Overstated norm hours",
+      "understated_actual_time": "Understated actual time",
+      "time_mismatch": "Closing time mismatch"
+    },
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "status": {
+      "open": "Open",
+      "acknowledged": "Acknowledged",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "kpi": {
+      "total": "Total",
+      "open": "Open",
+      "last24h": "Last 24h",
+      "critical": "Critical",
+      "warning": "Warning"
+    },
+    "filters": {
+      "label": "Filters:",
+      "allStatuses": "All statuses",
+      "allSeverities": "All severities",
+      "orderNumber": "Order number",
+      "found": "Found"
+    },
+    "table": {
+      "type": "Type",
+      "severity": "Severity",
+      "orderNumber": "Order",
+      "description": "Description",
+      "detectedAt": "Detected",
+      "status": "Status",
+      "loading": "Loading…",
+      "empty": "No discrepancies for selected filters",
+      "actAcknowledge": "Acknowledge",
+      "actResolve": "Resolve",
+      "actDismiss": "Dismiss",
+      "actReopen": "Reopen"
+    },
+    "detail": {
+      "oneCSection": "1C",
+      "cvSection": "CV",
+      "noOneC": "No 1C data",
+      "noCv": "No CV data",
+      "fNumber": "Number",
+      "fState": "State",
+      "fPlate": "Plate",
+      "fVin": "VIN",
+      "fPlan": "Plan",
+      "fClosed": "Closed",
+      "fNorm": "Norm",
+      "fNormUnit": "h",
+      "fExecutor": "Executor",
+      "fEntry": "Entry",
+      "fExit": "Exit"
+    },
+    "toggle": {
+      "on": "Discrepancies: on",
+      "off": "Discrepancies: off",
+      "showHint": "Show discrepancy indicators",
+      "hideHint": "Hide discrepancy indicators"
+    }
   },
   "auth": {
     "login": "Login",
