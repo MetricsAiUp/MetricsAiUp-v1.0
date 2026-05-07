@@ -627,10 +627,13 @@
     "filters": {
       "label": "Фильтры:",
       "allStatuses": "Все статусы",
-      "allSeverities": "Все severity",
+      "allSeverities": "Любая важность",
+      "allTypes": "Любой тип",
       "orderNumber": "Номер заказа",
-      "found": "Найдено"
+      "found": "Найдено",
+      "searchPlaceholder": "Поиск по описанию, заказу, ВИН, госномеру"
     },
+    "byTypeTitle": "По типам",
     "table": {
       "type": "Тип",
       "severity": "Severity",

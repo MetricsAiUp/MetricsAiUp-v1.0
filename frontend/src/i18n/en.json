@@ -627,10 +627,13 @@
     "filters": {
       "label": "Filters:",
       "allStatuses": "All statuses",
-      "allSeverities": "All severities",
+      "allSeverities": "Any severity",
+      "allTypes": "Any type",
       "orderNumber": "Order number",
-      "found": "Found"
+      "found": "Found",
+      "searchPlaceholder": "Search by description, order, VIN, plate"
     },
+    "byTypeTitle": "By type",
     "table": {
       "type": "Type",
       "severity": "Severity",

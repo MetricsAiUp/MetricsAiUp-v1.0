@@ -233,7 +233,7 @@ function TabCurrent({ api }) {
 }
 
 // ---------- Tab: Imports ----------
-function TabImports({ api, canImport }) {
+function TabImports({ api, canImport, onMutate }) {
   const { t } = useTranslation();
   const toast = useToast();
   const [items, setItems] = useState([]);
@@ -325,6 +325,7 @@ function TabImports({ api, canImport }) {
       await api.post(url, {});
       toast.success(t(currentlyAcked ? 'data1c.imports.unacknowledged' : 'data1c.imports.acknowledged'));
       await load();
+      if (onMutate) onMutate();
     } catch (e) {
       toast.error(t('data1c.common.error') + ': ' + e.message);
     }
@@ -351,9 +352,9 @@ function TabImports({ api, canImport }) {
             className="px-2 py-1.5 rounded-md text-sm"
             style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
             <option value="">{t('data1c.imports.autoDetectType')}</option>
-            <option value="plan">plan</option>
-            <option value="repair">repair</option>
-            <option value="performed">performed</option>
+            <option value="plan">{t('data1c.imports.typeName.plan')}</option>
+            <option value="repair">{t('data1c.imports.typeName.repair')}</option>
+            <option value="performed">{t('data1c.imports.typeName.performed')}</option>
           </select>
           <label className="px-3 py-1.5 rounded-md text-sm flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)', color: 'white' }}>
@@ -615,7 +616,7 @@ function TabRaw({ api }) {
 }
 
 // ---------- Tab: Unmapped ----------
-function TabUnmapped({ api, canManage }) {
+function TabUnmapped({ api, canManage, onMutate }) {
   const { t } = useTranslation();
   const toast = useToast();
   const [allItems, setAllItems] = useState([]);
@@ -684,6 +685,7 @@ function TabUnmapped({ api, canManage }) {
         setSavedRows((p) => ({ ...p, [rawName]: Date.now() }));
         // Тихо обновим данные через секунду
         setTimeout(() => load(), 800);
+        if (onMutate) onMutate();
       } catch (e) {
         toast.error(t('data1c.savingError') + ': ' + e.message);
       }
@@ -1071,86 +1073,83 @@ export default function Data1C() {
 
   // Подгружаем счётчики для табов фоном — только то, что важно показать.
   // Несопоставленные: количество нерешённых. Импорты: ошибок за неделю.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const next = {};
-      // Несопоставленные
-      if (canImport) {
-        try {
-          const u = await api.get('/api/oneC/unmapped-posts');
-          const items = u.data?.items || [];
-          const unresolved = items.filter((r) => !r.resolved).length;
-          if (unresolved > 0) next.unmapped = { count: unresolved, tone: 'warning' };
-        } catch { /* ignore */ }
-      }
-      // Импорты — некквитированные ошибки за 7 дней
+  const reloadBadges = useCallback(async () => {
+    const next = {};
+    if (canImport) {
       try {
-        const now = new Date();
-        const w = new Date(now); w.setDate(w.getDate() - 7);
-        const params = new URLSearchParams({ take: '500', from: w.toISOString(), acknowledged: 'false' });
-        const r = await api.get(`/api/oneC/imports?${params.toString()}`);
-        const items = r.data?.items || [];
-        const errors = items.filter((it) => (it.status || '').startsWith('error')).length;
-        if (errors > 0) next.imports = { count: errors, tone: 'danger' };
+        const u = await api.get('/api/oneC/unmapped-posts');
+        const items = u.data?.items || [];
+        const unresolved = items.filter((r) => !r.resolved).length;
+        if (unresolved > 0) next.unmapped = { count: unresolved, tone: 'warning' };
       } catch { /* ignore */ }
+    }
+    try {
+      const now = new Date();
+      const w = new Date(now); w.setDate(w.getDate() - 7);
+      const params = new URLSearchParams({ take: '500', from: w.toISOString(), acknowledged: 'false' });
+      const r = await api.get(`/api/oneC/imports?${params.toString()}`);
+      const items = r.data?.items || [];
+      const errors = items.filter((it) => (it.status || '').startsWith('error')).length;
+      if (errors > 0) next.imports = { count: errors, tone: 'danger' };
+    } catch { /* ignore */ }
+    setTabBadges(next);
+  }, [api, canImport]);
 
-      if (!cancelled) setTabBadges(next);
-    })();
-    return () => { cancelled = true; };
-  }, [api, canImport, active]);
+  useEffect(() => { reloadBadges(); }, [reloadBadges, active]);
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Database size={20} /> {t('data1c.title')}
-        </h1>
-        <HelpButton pageKey="data1c" />
-      </div>
-
-      <div className="flex gap-1 border-b overflow-x-auto" style={{ borderColor: 'var(--border-glass)' }}>
-        {visibleTabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = active === tab.id;
-          const badge = tabBadges[tab.id];
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActive(tab.id)}
-              className="px-3 py-2 text-sm flex items-center gap-1.5 transition-all whitespace-nowrap relative"
-              style={{
-                color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-                borderBottom: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
-                fontWeight: isActive ? 600 : 500,
-              }}
-            >
-              <Icon size={14} /> {t(`data1c.tabs.${tab.id}`)}
-              {badge && (
-                <span
-                  className="inline-flex items-center justify-center rounded-full font-bold"
+    <div className="p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2 border-b" style={{ borderColor: 'var(--border-glass)' }}>
+        <div className="flex items-center gap-3 flex-1 overflow-x-auto">
+          <h1 className="text-sm font-bold flex items-center gap-1.5 whitespace-nowrap pr-2"
+              style={{ color: 'var(--text-secondary)', borderRight: '1px solid var(--border-glass)' }}>
+            <Database size={14} /> {t('data1c.title')}
+          </h1>
+          <div className="flex gap-1">
+            {visibleTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = active === tab.id;
+              const badge = tabBadges[tab.id];
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActive(tab.id)}
+                  className="px-3 py-1.5 text-sm flex items-center gap-1.5 transition-all whitespace-nowrap relative"
                   style={{
-                    background: badge.tone === 'danger' ? '#ef4444' : '#f59e0b',
-                    color: 'white',
-                    fontSize: 10,
-                    minWidth: 18,
-                    height: 18,
-                    padding: '0 5px',
+                    color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                    borderBottom: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+                    fontWeight: isActive ? 600 : 500,
                   }}
                 >
-                  {badge.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+                  <Icon size={14} /> {t(`data1c.tabs.${tab.id}`)}
+                  {badge && (
+                    <span
+                      className="inline-flex items-center justify-center rounded-full font-bold"
+                      style={{
+                        background: badge.tone === 'danger' ? '#ef4444' : '#f59e0b',
+                        color: 'white',
+                        fontSize: 10,
+                        minWidth: 18,
+                        height: 18,
+                        padding: '0 5px',
+                      }}
+                    >
+                      {badge.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <HelpButton pageKey="data1c" />
       </div>
 
       <div>
         {active === 'current'  && <TabCurrent  api={api} />}
-        {active === 'imports'  && <TabImports  api={api} canImport={canImport} />}
+        {active === 'imports'  && <TabImports  api={api} canImport={canImport} onMutate={reloadBadges} />}
         {active === 'raw'      && <TabRaw      api={api} />}
-        {active === 'unmapped' && <TabUnmapped api={api} canManage={canImport} />}
+        {active === 'unmapped' && <TabUnmapped api={api} canManage={canImport} onMutate={reloadBadges} />}
         {active === 'payroll'  && <TabPayroll  api={api} />}
         {active === 'settings' && <TabSettings api={api} />}
       </div>
