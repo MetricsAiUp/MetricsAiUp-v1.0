@@ -126,7 +126,7 @@ router.post(
 
 // /imports -------------------------------------------------------------------
 
-// GET /api/oneC/imports?status=...&take=&skip=
+// GET /api/oneC/imports?status=...&take=&skip=&from=&to=
 router.get('/imports', authenticate, requirePermission('view_1c'), async (req, res) => {
   try {
     const take = parseInteger(req.query.take, 50, 500);
@@ -134,6 +134,22 @@ router.get('/imports', authenticate, requirePermission('view_1c'), async (req, r
     const where = {};
     if (req.query.status) where.status = String(req.query.status);
     if (req.query.detectedType) where.detectedType = String(req.query.detectedType);
+    if (req.query.from || req.query.to) {
+      where.receivedAt = {};
+      if (req.query.from) where.receivedAt.gte = new Date(String(req.query.from));
+      if (req.query.to) where.receivedAt.lte = new Date(String(req.query.to));
+    }
+    if (req.query.q) {
+      const q = String(req.query.q);
+      where.OR = [
+        { subject:        { contains: q } },
+        { fromAddress:    { contains: q } },
+        { attachmentName: { contains: q } },
+      ];
+    }
+    // Фильтр для бейджа на табе: только не-квитированные ошибки.
+    if (req.query.acknowledged === 'false') where.acknowledgedAt = null;
+    if (req.query.acknowledged === 'true')  where.acknowledgedAt = { not: null };
 
     const [items, total] = await Promise.all([
       prisma.oneCImport.findMany({
@@ -145,6 +161,7 @@ router.get('/imports', authenticate, requirePermission('view_1c'), async (req, r
           id: true, uid: true, messageId: true, fromAddress: true, subject: true, receivedAt: true,
           status: true, source: true, detectedType: true, attachmentName: true, attachmentSize: true,
           rowsTotal: true, rowsInserted: true, errorMessage: true, processedAt: true, createdAt: true,
+          acknowledgedAt: true, acknowledgedBy: true,
         },
       }),
       prisma.oneCImport.count({ where }),
@@ -205,6 +222,44 @@ router.post('/imports/upload', authenticate, requirePermission('manage_1c_import
     res.json({ importId: importRecord.id, ...result });
   } catch (err) {
     logger.error('POST /oneC/imports/upload failed', { err: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/oneC/imports/:id/acknowledge — пометить ошибочный импорт как «прочитанный».
+// Разрешено только для записей с status, начинающимся на 'error'.
+router.post('/imports/:id/acknowledge', authenticate, requirePermission('manage_1c_import'), async (req, res) => {
+  try {
+    const imp = await prisma.oneCImport.findUnique({ where: { id: req.params.id } });
+    if (!imp) return res.status(404).json({ error: 'Import not found' });
+    if (!String(imp.status || '').startsWith('error')) {
+      return res.status(400).json({ error: 'Acknowledge is allowed only for error imports' });
+    }
+    const updated = await prisma.oneCImport.update({
+      where: { id: imp.id },
+      data: {
+        acknowledgedAt: new Date(),
+        acknowledgedBy: req.user?.email || req.user?.id || 'unknown',
+      },
+    });
+    res.json(updated);
+  } catch (err) {
+    logger.error('POST /oneC/imports/:id/acknowledge failed', { err: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/oneC/imports/:id/unacknowledge — снять отметку.
+router.post('/imports/:id/unacknowledge', authenticate, requirePermission('manage_1c_import'), async (req, res) => {
+  try {
+    const imp = await prisma.oneCImport.findUnique({ where: { id: req.params.id } });
+    if (!imp) return res.status(404).json({ error: 'Import not found' });
+    const updated = await prisma.oneCImport.update({
+      where: { id: imp.id },
+      data: { acknowledgedAt: null, acknowledgedBy: null },
+    });
+    res.json(updated);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -278,6 +333,21 @@ router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req,
       else where.orderNumber = String(req.query.orderNumber);
     }
     if (req.query.importId) where.importId = String(req.query.importId);
+    if (req.query.from || req.query.to) {
+      where.receivedAt = {};
+      if (req.query.from) where.receivedAt.gte = new Date(String(req.query.from));
+      if (req.query.to) where.receivedAt.lte = new Date(String(req.query.to));
+    }
+    if (req.query.q) {
+      const q = String(req.query.q);
+      // Набор полей для OR-поиска подбираем под конкретную raw-таблицу.
+      const FIELDS = {
+        plan:      ['number', 'plateNumber', 'vin', 'postRawName'],
+        repair:    ['orderNumber', 'plateNumber1', 'vin', 'master', 'repairKind', 'state'],
+        performed: ['orderNumber', 'plateNumber', 'vin', 'executor', 'repairKind'],
+      };
+      where.OR = (FIELDS[req.params.type] || []).map((f) => ({ [f]: { contains: q } }));
+    }
     const items = await prisma[meta.delegate].findMany({
       where,
       orderBy: { [meta.orderField]: 'desc' },

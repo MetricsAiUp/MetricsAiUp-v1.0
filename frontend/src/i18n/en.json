@@ -337,6 +337,7 @@
     "add": "Add",
     "search": "Search",
     "searchPlaceholder": "Search...",
+    "clear": "Clear",
     "noData": "No data",
     "period": "Period",
     "24h": "24 hours",
@@ -403,13 +404,66 @@
       "payroll": "Payroll",
       "settings": "Settings"
     },
+    "period": {
+      "all": "All time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Week",
+      "month": "Month",
+      "custom": "Custom"
+    },
+    "kpi": {
+      "current": {
+        "total": "Total orders",
+        "inWork": "In progress",
+        "closedToday": "Closed today",
+        "overdue": "Overdue"
+      },
+      "imports": {
+        "totalPeriod": "In period",
+        "success": "Success",
+        "errors": "Errors",
+        "rowsTotal": "Rows total"
+      },
+      "raw": {
+        "plan": "Repair plan",
+        "repair": "Summary",
+        "performed": "Performed"
+      },
+      "unmapped": {
+        "total": "Total",
+        "unresolved": "Unresolved",
+        "tracked": "Tracked",
+        "skipped": "Not our post"
+      },
+      "payroll": {
+        "executors": "Executors",
+        "normHours": "Norm hours",
+        "orders": "Orders",
+        "avg": "Avg / executor"
+      }
+    },
+    "filterByPeriod": "By date",
+    "filterByReceived": "By received date",
+    "filterByPlan": "By plan date",
+    "filterByClosed": "By closed date",
+    "found": "Found: {{shown}} of {{total}}",
+    "stateFilter": "State",
+    "typeFilter": "Type",
+    "statusFilter": "Status",
+    "anyState": "Any state",
+    "anyType": "Any type",
+    "anyStatus": "Any status",
+    "onlyUnresolved": "Only unresolved",
+    "saved": "Saved",
+    "savingError": "Could not save",
     "raw": {
       "subtab": {
         "plan": "Repair plan",
         "repair": "Repair summary",
         "performed": "Work performed"
       },
-      "searchPlaceholder": "Search by order #",
+      "searchPlaceholder": "Search: order #, VIN, plate, executor/master, post",
       "rowsCount": "Rows: {{count}}",
       "loadMore": "Load more",
       "col": {
@@ -442,7 +496,7 @@
       "error": "Error"
     },
     "current": {
-      "searchPlaceholder": "Search (number/VIN/plate)",
+      "searchPlaceholder": "Search: order #, VIN, plate, executor",
       "statePlaceholder": "State",
       "colNumber": "#",
       "colPlate": "Plate",
@@ -461,16 +515,39 @@
       "type": "Type",
       "rows": "Rows",
       "imapCycleResult": "IMAP cycle: {{count}} emails processed",
+      "searchPlaceholder": "Search: subject, sender, file name",
       "noImports": "No imports",
+      "colAck": "Ack",
+      "acknowledge": "Acknowledge",
+      "acknowledgeHint": "Mark error as reviewed — it will stop counting toward the tab badge",
+      "unacknowledge": "Unacknowledge",
+      "ackedShort": "Ack'd",
+      "acknowledged": "Error acknowledged",
+      "unacknowledged": "Acknowledgement removed",
       "colReceived": "Received",
       "colFrom": "From",
       "colSubject": "Subject",
       "colFile": "File",
       "colType": "Type",
       "colRows": "Rows",
-      "colStatus": "Status"
+      "colStatus": "Status",
+      "typeName": {
+        "plan": "Plan",
+        "repair": "Repairs",
+        "performed": "Performed",
+        "unknown": "Unknown"
+      },
+      "statusName": {
+        "success": "Success",
+        "partial": "Partial",
+        "pending": "Pending",
+        "error": "Error",
+        "error_unknown_format": "Error: unknown format",
+        "unknown": "—"
+      }
     },
     "unmapped": {
+      "searchPlaceholder": "Search by raw post name",
       "colRawName": "Raw name",
       "colOccurrences": "Occurrences",
       "colFirstSeen": "First seen",

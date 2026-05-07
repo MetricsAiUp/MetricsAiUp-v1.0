@@ -337,6 +337,7 @@
     "add": "Добавить",
     "search": "Поиск",
     "searchPlaceholder": "Поиск...",
+    "clear": "Очистить",
     "noData": "Нет данных",
     "period": "Период",
     "24h": "24 часа",
@@ -403,13 +404,66 @@
       "payroll": "Выработка",
       "settings": "Настройки"
     },
+    "period": {
+      "all": "Всё время",
+      "today": "Сегодня",
+      "yesterday": "Вчера",
+      "week": "Неделя",
+      "month": "Месяц",
+      "custom": "Период"
+    },
+    "kpi": {
+      "current": {
+        "total": "Всего заказов",
+        "inWork": "В работе",
+        "closedToday": "Закрыто сегодня",
+        "overdue": "Просрочено"
+      },
+      "imports": {
+        "totalPeriod": "За период",
+        "success": "Успешно",
+        "errors": "С ошибками",
+        "rowsTotal": "Строк всего"
+      },
+      "raw": {
+        "plan": "План ремонта",
+        "repair": "Сводная (ремонты)",
+        "performed": "Выработка"
+      },
+      "unmapped": {
+        "total": "Всего",
+        "unresolved": "Не решено",
+        "tracked": "Отслеживается",
+        "skipped": "Не наш пост"
+      },
+      "payroll": {
+        "executors": "Исполнителей",
+        "normHours": "Нормочасов",
+        "orders": "Заказов",
+        "avg": "Средн. на исп."
+      }
+    },
+    "filterByPeriod": "По дате",
+    "filterByReceived": "По дате получения",
+    "filterByPlan": "По плану",
+    "filterByClosed": "По закрытию",
+    "found": "Найдено: {{shown}} из {{total}}",
+    "stateFilter": "Состояние",
+    "typeFilter": "Тип",
+    "statusFilter": "Статус",
+    "anyState": "Все состояния",
+    "anyType": "Все типы",
+    "anyStatus": "Все статусы",
+    "onlyUnresolved": "Только нерешённые",
+    "saved": "Сохранено",
+    "savingError": "Не удалось сохранить",
     "raw": {
       "subtab": {
         "plan": "План ремонта",
         "repair": "Сводная (ремонты)",
         "performed": "Выработка исполнителей"
       },
-      "searchPlaceholder": "Поиск по № заказа",
+      "searchPlaceholder": "Поиск: № заказа, VIN, госномер, исполнитель/мастер, пост",
       "rowsCount": "Строк: {{count}}",
       "loadMore": "Загрузить ещё",
       "col": {
@@ -442,7 +496,7 @@
       "error": "Ошибка"
     },
     "current": {
-      "searchPlaceholder": "Поиск (номер/VIN/госномер)",
+      "searchPlaceholder": "Поиск: № заказа, VIN, госномер, исполнитель",
       "statePlaceholder": "Состояние",
       "colNumber": "№",
       "colPlate": "Госномер",
@@ -461,16 +515,39 @@
       "type": "Тип",
       "rows": "Строк",
       "imapCycleResult": "Цикл IMAP: {{count}} писем обработано",
+      "searchPlaceholder": "Поиск: тема, отправитель, имя файла",
       "noImports": "Импортов нет",
+      "colAck": "Квит.",
+      "acknowledge": "Квитировать",
+      "acknowledgeHint": "Пометить ошибку как просмотренную — она перестанет учитываться в бейдже на табе",
+      "unacknowledge": "Снять отметку",
+      "ackedShort": "Квит.",
+      "acknowledged": "Ошибка квитирована",
+      "unacknowledged": "Отметка снята",
       "colReceived": "Получено",
       "colFrom": "От",
       "colSubject": "Тема",
       "colFile": "Файл",
       "colType": "Тип",
       "colRows": "Строк",
-      "colStatus": "Статус"
+      "colStatus": "Статус",
+      "typeName": {
+        "plan": "План",
+        "repair": "Ремонты",
+        "performed": "Выработка",
+        "unknown": "Неизв."
+      },
+      "statusName": {
+        "success": "Успешно",
+        "partial": "Частично",
+        "pending": "В очереди",
+        "error": "Ошибка",
+        "error_unknown_format": "Ошибка: неизвестный формат",
+        "unknown": "—"
+      }
     },
     "unmapped": {
+      "searchPlaceholder": "Поиск по сырому имени поста",
       "colRawName": "Сырое имя",
       "colOccurrences": "Встречалось",
       "colFirstSeen": "Первое",

@@ -613,6 +613,8 @@ model OneCImport {
   rowsTotal      Int      @default(0) @map("rows_total")
   rowsInserted   Int      @default(0) @map("rows_inserted")
   errorMessage   String?  @map("error_message")
+  acknowledgedAt DateTime? @map("acknowledged_at")
+  acknowledgedBy String?  @map("acknowledged_by")
   createdAt      DateTime @default(now()) @map("created_at")
 
   planRows      OneCPlanRow[]
