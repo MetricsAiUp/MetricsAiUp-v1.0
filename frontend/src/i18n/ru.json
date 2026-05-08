@@ -597,7 +597,38 @@
   "discrepancies": {
     "title": "Нестыковки 1С↔CV",
     "recompute": "Пересчитать",
+    "recomputing": "Пересчёт…",
+    "recomputeHint": "Запустить детектор и обновить список нестыковок (фоновая операция)",
     "recomputeConfirm": "Запустить пересчёт нестыковок за последние 7 дней?",
+    "runStarted": "Пересчёт нестыковок запущен",
+    "runAlreadyRunning": "Пересчёт уже выполняется",
+    "runFinished": "Пересчёт завершён · обработано: {{detected}}, новых: {{fresh}}",
+    "runFailed": "Пересчёт завершился с ошибкой",
+    "runningNow": "выполняется",
+    "lastRun": "Последний пересчёт",
+    "autoOn": "Авто {{time}} ({{tz}})",
+    "autoOff": "Авто выключен",
+    "scheduleSettings": "Настройки расписания",
+    "scheduleSaved": "Расписание сохранено",
+    "scheduleForm": {
+      "enabled": "Автозапуск",
+      "enabledOn": "включён",
+      "enabledOff": "выключен",
+      "time": "Время запуска",
+      "timezone": "Часовой пояс",
+      "sinceWindow": "Период анализа",
+      "save": "Сохранить",
+      "cancel": "Отмена"
+    },
+    "relTime": {
+      "justNow": "только что",
+      "minAgo": "{{n}} мин назад",
+      "hAgo": "{{n}} ч назад",
+      "dAgo": "{{n}} д назад",
+      "secShort": "с",
+      "hShort": "ч",
+      "dShort": "д"
+    },
     "type": {
       "no_show_in_cv": "Авто не приехало по CV",
       "no_show_in_1c": "Авто на посту без оформления в 1С",

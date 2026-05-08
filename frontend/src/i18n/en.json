@@ -597,7 +597,38 @@
   "discrepancies": {
     "title": "Discrepancies 1C↔CV",
     "recompute": "Recompute",
+    "recomputing": "Recomputing…",
+    "recomputeHint": "Run detector and refresh discrepancy list (background job)",
     "recomputeConfirm": "Run discrepancy detection for the last 7 days?",
+    "runStarted": "Discrepancy detection started",
+    "runAlreadyRunning": "Detection is already running",
+    "runFinished": "Detection finished · processed: {{detected}}, new: {{fresh}}",
+    "runFailed": "Detection failed",
+    "runningNow": "running",
+    "lastRun": "Last run",
+    "autoOn": "Auto {{time}} ({{tz}})",
+    "autoOff": "Auto disabled",
+    "scheduleSettings": "Schedule settings",
+    "scheduleSaved": "Schedule saved",
+    "scheduleForm": {
+      "enabled": "Auto-run",
+      "enabledOn": "enabled",
+      "enabledOff": "disabled",
+      "time": "Run time",
+      "timezone": "Timezone",
+      "sinceWindow": "Analysis window",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "relTime": {
+      "justNow": "just now",
+      "minAgo": "{{n}} min ago",
+      "hAgo": "{{n}} h ago",
+      "dAgo": "{{n}} d ago",
+      "secShort": "s",
+      "hShort": "h",
+      "dShort": "d"
+    },
     "type": {
       "no_show_in_cv": "Vehicle not seen by CV",
       "no_show_in_1c": "Vehicle on post without 1C order",

@@ -191,6 +191,7 @@ server.listen(PORT, '0.0.0.0', () => {
   backupScheduler.start();
   retentionCleaner.start();
   require('./services/discrepancyDigest').start();
+  require('./services/discrepancyDetectorScheduler').start();
   require('./services/imap1cFetcher').start().catch(e => logger.warn('imap1cFetcher start failed', { err: e.message }));
 
   // Start demo generator only if mode is 'demo', monitoring proxy if 'live'
@@ -238,6 +239,7 @@ async function shutdown(signal) {
     ]);
     backupScheduler.stop();
     retentionCleaner.stop();
+    try { require('./services/discrepancyDetectorScheduler').stop(); } catch { /* */ }
     await new Promise(res => server.close(() => res()));
     if (httpsServer) await new Promise(res => httpsServer.close(() => res()));
     if (io) await new Promise(res => io.close(() => res()));

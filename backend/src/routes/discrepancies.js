@@ -10,6 +10,7 @@ const logger = require('../config/logger');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const detector = require('../services/discrepancyDetector');
+const scheduler = require('../services/discrepancyDetectorScheduler');
 const { updateStatusSchema } = require('../schemas/discrepancies');
 
 function parseInteger(v, def, max = 1000) {
@@ -24,12 +25,44 @@ function buildWhere(query) {
   if (query.severity) where.severity = String(query.severity);
   if (query.type) where.type = String(query.type);
   if (query.postId) where.postId = String(query.postId);
-  if (query.orderNumber) where.orderNumber = String(query.orderNumber);
+  if (query.orderNumber) where.orderNumber = { contains: String(query.orderNumber) };
+
+  // Фильтр периода: применяется к occurred_at (дата реального события).
+  // Если occurred_at NULL — откатываемся на detected_at, чтобы старые записи без бэкфилла
+  // тоже были найдены по периоду их регистрации детектором.
   if (query.from || query.to) {
-    where.detectedAt = {};
-    if (query.from) where.detectedAt.gte = new Date(String(query.from));
-    if (query.to) where.detectedAt.lte = new Date(String(query.to));
+    const from = query.from ? new Date(String(query.from)) : null;
+    const to = query.to ? new Date(String(query.to)) : null;
+    const range = {};
+    if (from) range.gte = from;
+    if (to) range.lte = to;
+    where.OR = [
+      { occurredAt: range },
+      { AND: [{ occurredAt: null }, { detectedAt: range }] },
+    ];
   }
+
+  // Полнотекстовый поиск (description / orderNumber / plateNumber / vin)
+  if (query.q) {
+    const q = String(query.q).trim();
+    if (q) {
+      const term = { contains: q };
+      const orSearch = [
+        { description: term },
+        { orderNumber: term },
+        { plateNumber: term },
+        { vin: term },
+      ];
+      // Если уже есть OR от периода — комбинируем через AND-обёртку
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: orSearch }];
+        delete where.OR;
+      } else {
+        where.OR = orSearch;
+      }
+    }
+  }
+
   return where;
 }
 
@@ -42,7 +75,11 @@ router.get('/', authenticate, requirePermission('view_1c'), async (req, res) => 
     const [rows, total] = await Promise.all([
       prisma.discrepancy.findMany({
         where,
-        orderBy: [{ severity: 'desc' }, { detectedAt: 'desc' }],
+        orderBy: [
+          { severity: 'desc' },
+          { occurredAt: { sort: 'desc', nulls: 'last' } },
+          { detectedAt: 'desc' },
+        ],
         take,
         skip,
       }),
@@ -182,15 +219,45 @@ router.patch(
   }
 );
 
-// POST /api/discrepancies/run — форс-пересчёт всей детекции
+// POST /api/discrepancies/run — асинхронный форс-пересчёт.
+// Возвращает 202 сразу. Прогресс смотреть через GET /schedule (поле isRunning + lastRun*).
 router.post('/run', authenticate, requirePermission('manage_discrepancies'), async (req, res) => {
   try {
-    const since = req.body?.since || '7d';
-    const result = await detector.detectAll({ since });
-    res.json(result);
+    const state = scheduler.getState();
+    if (state.isRunning) {
+      return res.status(202).json({ ok: true, alreadyRunning: true, state });
+    }
+    const since = req.body?.since;
+    // fire-and-forget; ошибки уже записываются в lastError внутри scheduler
+    scheduler.runOnce({ trigger: 'manual', since }).catch((err) => {
+      logger.error('runOnce background failure', { err: err.message });
+    });
+    res.status(202).json({ ok: true, started: true, state: scheduler.getState() });
   } catch (err) {
     logger.error('POST /discrepancies/run failed', { err: err.message });
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/discrepancies/schedule — конфиг + last-run state
+router.get('/schedule', authenticate, requirePermission('view_1c'), async (req, res) => {
+  try {
+    res.json(scheduler.getState());
+  } catch (err) {
+    logger.error('GET /discrepancies/schedule failed', { err: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/discrepancies/schedule — обновить конфиг (enabled/time/timezone/sinceWindow)
+router.put('/schedule', authenticate, requirePermission('manage_discrepancies'), async (req, res) => {
+  try {
+    const { enabled, time, timezone, sinceWindow } = req.body || {};
+    const next = scheduler.setConfig({ enabled, time, timezone, sinceWindow });
+    res.json(next);
+  } catch (err) {
+    logger.warn('PUT /discrepancies/schedule failed', { err: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 

@@ -35,6 +35,7 @@ function noShowInCv(ctx) {
     descriptionEn: `Work order ${order.orderNumber} (${order.plateNumber || order.vin}) is "${order.state}" but CV recorded no visit`,
     oneCValue: { state: order.state, scheduledStart: order.scheduledStart, plateNumber: order.plateNumber, vin: order.vin },
     cvValue: null,
+    occurredAt: order.scheduledStart || order.workStartedAt || order.closedAt || null,
   };
 }
 
@@ -66,6 +67,7 @@ function noShowIn1C(ctx) {
     cvValue: { postStayId: postStay.id, startTime: postStay.startTime, endTime: postStay.endTime, durationSec },
     oneCValue: null,
     postId: postStay.postId,
+    occurredAt: postStay.startTime || null,
   };
 }
 
@@ -94,6 +96,7 @@ function wrongPost(ctx) {
     oneCValue: { stagePostId: stage.postId, postRawName: stage.postRawName, scheduledStart: stage.scheduledStart },
     cvValue: { postStayId: postStay.id, postId: postStay.postId, startTime: postStay.startTime },
     postId: stage.postId,
+    occurredAt: postStay.startTime || stage.scheduledStart || null,
   };
 }
 
@@ -113,6 +116,7 @@ function overstatedNormHours(ctx) {
     descriptionEn: `Order ${order.orderNumber}: 1C lists ${order.normHours}h norm but CV recorded ${Math.round(cvHours * 10) / 10}h active work`,
     oneCValue: { normHours: order.normHours, executor: order.executor },
     cvValue: { activeHours: cvHours, postStayId: postStay.id },
+    occurredAt: postStay.startTime || order.scheduledStart || null,
   };
 }
 
@@ -132,6 +136,7 @@ function understatedActualTime(ctx) {
     descriptionEn: `Order ${order.orderNumber}: CV recorded ${Math.round(cvHours * 10) / 10}h active work but 1C norm is ${order.normHours}h`,
     oneCValue: { normHours: order.normHours },
     cvValue: { activeHours: cvHours, postStayId: postStay.id },
+    occurredAt: postStay.startTime || order.scheduledStart || null,
   };
 }
 
@@ -150,6 +155,7 @@ function timeMismatch(ctx) {
     descriptionEn: `Order ${order.orderNumber}: 1C close time (${fmtDate(order.closedAt)}) differs from CV (${fmtDate(postStay.endTime)}) by ${Math.round(diffMin)} min`,
     oneCValue: { closedAt: order.closedAt },
     cvValue: { postStayEnd: postStay.endTime, postStayId: postStay.id },
+    occurredAt: order.closedAt || postStay.endTime || null,
   };
 }
 

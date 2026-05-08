@@ -2270,11 +2270,19 @@ const HELP_CONTENT = {
           ],
         },
         {
+          heading: 'Кнопки «Обновить» vs «Пересчитать»',
+          items: [
+            '**Обновить** (внутри блока фильтров) — перезагружает данные с сервера БЕЗ запуска детектора. Просто свежий снимок текущего содержимого таблицы Discrepancy.',
+            '**Пересчитать** (синяя кнопка в шапке) — запускает **discrepancyDetector** в фоне: гоняет 6 правил по всем merged-заказам и осиротевшим PostStay за выбранное окно (по умолчанию 7 дней), создаёт новые / обновляет существующие записи Discrepancy. Операция небыстрая (на 1500+ ордерах — десятки секунд), поэтому делается асинхронно: индикатор крутится, по завершении приходит toast с числом обработанных и новых.',
+            '**Авто-пересчёт** — рядом с кнопкой шестерёнка ⚙: расписание (по умолчанию **08:00 Europe/Minsk**, ежедневно), часовой пояс и окно анализа. Можно временно выключить.',
+            'Время последнего пересчёта показано слева от кнопки («2 ч назад · 18с · +12»). Цвет: зелёный — ok, красный — error, синий с крутилкой — выполняется.',
+          ],
+        },
+        {
           heading: 'Permissions',
           items: [
-            '**view_1c** — читать список, детали, статистику, дёргать тоггл.',
-            '**manage_discrepancies** — менять статус (acknowledge/resolve/dismiss/reopen) и форс-пересчёт.',
-            'Кнопка «Пересчитать» (RefreshCw в шапке) гонит детектор за последние 7 дней — нужно для пересчёта правил после ручной правки 1С.',
+            '**view_1c** — читать список, детали, статистику, видеть расписание автозапуска.',
+            '**manage_discrepancies** — менять статус (acknowledge/resolve/dismiss/reopen), нажимать «Пересчитать», изменять расписание автозапуска.',
           ],
         },
         {
@@ -2342,11 +2350,19 @@ const HELP_CONTENT = {
           ],
         },
         {
+          heading: '"Refresh" vs "Recompute"',
+          items: [
+            '**Refresh** (inside the filter bar) — re-fetches the table from the server WITHOUT running the detector. Just a fresh snapshot of the existing Discrepancy rows.',
+            '**Recompute** (blue button in the header) — runs **discrepancyDetector** in background: 6 rules across all merged orders + orphan PostStay for the chosen window (7 days by default), upserts Discrepancy rows. Heavy on 1500+ orders, so it is async: spinner spins, a toast arrives on completion with processed/new counts.',
+            '**Auto-recompute** — gear icon next to the button: schedule (default **08:00 Europe/Minsk**, daily), timezone, analysis window. Can be temporarily disabled.',
+            'The last-run timestamp is shown left of the button ("2 h ago · 18s · +12"). Colour: green = ok, red = error, blue spinner = running.',
+          ],
+        },
+        {
           heading: 'Permissions',
           items: [
-            '**view_1c** — read list, details, stats, and toggle.',
-            '**manage_discrepancies** — change status (acknowledge/resolve/dismiss/reopen) and force-recompute.',
-            '"Recompute" button (RefreshCw in the header) reruns the detector over the last 7 days — useful after a manual fix in 1C.',
+            '**view_1c** — read list, details, stats, see the auto-run schedule.',
+            '**manage_discrepancies** — change status (acknowledge/resolve/dismiss/reopen), click "Recompute", edit the auto-run schedule.',
           ],
         },
         {

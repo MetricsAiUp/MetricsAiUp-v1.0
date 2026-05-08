@@ -100,6 +100,7 @@ async function upsertDiscrepancy(draft) {
     where: { type, orderNumber, postId, vehicleSessionId },
   });
 
+  const occurredAt = draft.occurredAt ? safeParseDate(draft.occurredAt) : null;
   const data = {
     type: draft.type,
     severity: draft.severity || 'warning',
@@ -112,6 +113,7 @@ async function upsertDiscrepancy(draft) {
     descriptionEn: draft.descriptionEn || null,
     oneCValue: draft.oneCValue ? JSON.stringify(draft.oneCValue) : null,
     cvValue: draft.cvValue ? JSON.stringify(draft.cvValue) : null,
+    occurredAt,
   };
 
   if (existing) {
@@ -129,6 +131,8 @@ async function upsertDiscrepancy(draft) {
         cvValue: data.cvValue,
         plateNumber: data.plateNumber,
         vin: data.vin,
+        // Не затираем уже заполненный occurredAt пустым значением.
+        ...(occurredAt ? { occurredAt } : {}),
       },
     });
     return { discrepancy: updated, isNew: false, updated: true };

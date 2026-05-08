@@ -871,6 +871,7 @@ model Discrepancy {
   description      String
   descriptionEn    String?   @map("description_en")
   detectedAt       DateTime  @default(now()) @map("detected_at")
+  occurredAt       DateTime? @map("occurred_at")
   acknowledgedAt   DateTime? @map("acknowledged_at")
   acknowledgedBy   String?   @map("acknowledged_by")
   resolvedAt       DateTime? @map("resolved_at")
@@ -882,6 +883,8 @@ model Discrepancy {
 
   @@unique([type, orderNumber, postId, vehicleSessionId])
   @@index([status, severity, detectedAt(sort: Desc)])
+  @@index([status, severity, occurredAt(sort: Desc)])
+  @@index([occurredAt])
   @@index([type])
   @@index([orderNumber])
   @@index([postId])

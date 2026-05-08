@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import {
   AlertTriangle, AlertCircle, CheckCircle2, XCircle, RefreshCw,
   ChevronDown, ChevronRight, ListChecks, Inbox, Clock, Flame,
   EyeOff, MapPinOff, Timer, TimerOff, Hourglass, RotateCcw,
+  Loader2, Settings, Calendar,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
@@ -59,6 +61,125 @@ function tdStyle(idx) {
   return { background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' };
 }
 
+function formatRelative(s, t) {
+  if (!s) return null;
+  const diffMs = Date.now() - new Date(s).getTime();
+  if (Number.isNaN(diffMs) || diffMs < 0) return formatDateTime(s);
+  const sec = Math.round(diffMs / 1000);
+  if (sec < 60)  return t('discrepancies.relTime.justNow');
+  const min = Math.round(sec / 60);
+  if (min < 60) return t('discrepancies.relTime.minAgo', { n: min });
+  const h = Math.round(min / 60);
+  if (h < 24)   return t('discrepancies.relTime.hAgo', { n: h });
+  const d = Math.round(h / 24);
+  return t('discrepancies.relTime.dAgo', { n: d });
+}
+
+function LastRunInfo({ schedule, t }) {
+  if (!schedule) return null;
+  const isRunning = !!schedule.isRunning;
+  const ts = schedule.lastFinishAt || schedule.lastRunAt;
+  const rel = formatRelative(ts, t);
+  const tone = schedule.lastStatus === 'error' ? '#ef4444'
+    : schedule.lastStatus === 'ok' ? '#10b981'
+    : 'var(--text-muted)';
+
+  const autoLabel = schedule.enabled
+    ? t('discrepancies.autoOn', { time: schedule.time, tz: schedule.timezone })
+    : t('discrepancies.autoOff');
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap"
+         style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+      <Clock size={12} style={{ color: 'var(--text-muted)' }} />
+      <span style={{ color: 'var(--text-muted)' }}>{t('discrepancies.lastRun')}:</span>
+      {isRunning ? (
+        <span className="flex items-center gap-1" style={{ color: '#3b82f6' }}>
+          <Loader2 size={11} className="animate-spin" /> {t('discrepancies.runningNow')}
+        </span>
+      ) : ts ? (
+        <span style={{ color: tone }} title={formatDateTime(ts)}>
+          {rel}
+          {schedule.lastDurationMs != null && schedule.lastStatus === 'ok'
+            ? ` · ${Math.round(schedule.lastDurationMs / 1000)}${t('discrepancies.relTime.secShort')}`
+            : ''}
+          {schedule.lastNew != null && schedule.lastStatus === 'ok'
+            ? ` · +${schedule.lastNew}`
+            : ''}
+        </span>
+      ) : (
+        <span style={{ color: 'var(--text-muted)' }}>—</span>
+      )}
+      <span style={{ color: 'var(--border-glass)' }}>·</span>
+      <Calendar size={11} style={{ color: 'var(--text-muted)' }} />
+      <span style={{ color: 'var(--text-muted)' }}>{autoLabel}</span>
+    </div>
+  );
+}
+
+function SchedulePopover({ schedule, onSave, onClose, saving, t }) {
+  const [enabled, setEnabled] = useState(!!schedule?.enabled);
+  const [time, setTime] = useState(schedule?.time || '08:00');
+  const [tz, setTz] = useState(schedule?.timezone || 'Europe/Minsk');
+  const [sinceWindow, setSinceWindow] = useState(schedule?.sinceWindow || '7d');
+
+  const tzOptions = ['Europe/Minsk', 'Europe/Moscow', 'Europe/Kaliningrad', 'Europe/Kiev', 'Europe/Warsaw', 'Asia/Yekaterinburg', 'Asia/Novosibirsk', 'UTC'];
+
+  return (
+    <div className="rounded-xl p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
+         style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+      <label className="flex flex-col gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span>{t('discrepancies.scheduleForm.enabled')}</span>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+          <span style={{ color: 'var(--text-primary)' }}>
+            {enabled ? t('discrepancies.scheduleForm.enabledOn') : t('discrepancies.scheduleForm.enabledOff')}
+          </span>
+        </label>
+      </label>
+      <label className="flex flex-col gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span>{t('discrepancies.scheduleForm.time')}</span>
+        <input type="time" value={time} onChange={(e) => setTime(e.target.value)}
+          className="px-2 py-1 rounded-md text-sm"
+          style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} />
+      </label>
+      <label className="flex flex-col gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span>{t('discrepancies.scheduleForm.timezone')}</span>
+        <select value={tz} onChange={(e) => setTz(e.target.value)}
+          className="px-2 py-1 rounded-md text-sm"
+          style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
+          {tzOptions.map((z) => <option key={z} value={z}>{z}</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span>{t('discrepancies.scheduleForm.sinceWindow')}</span>
+        <select value={sinceWindow} onChange={(e) => setSinceWindow(e.target.value)}
+          className="px-2 py-1 rounded-md text-sm"
+          style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
+          <option value="24h">24{t('discrepancies.relTime.hShort')}</option>
+          <option value="3d">3{t('discrepancies.relTime.dShort')}</option>
+          <option value="7d">7{t('discrepancies.relTime.dShort')}</option>
+          <option value="14d">14{t('discrepancies.relTime.dShort')}</option>
+          <option value="30d">30{t('discrepancies.relTime.dShort')}</option>
+        </select>
+      </label>
+      <div className="md:col-span-4 flex items-center justify-end gap-2">
+        <button onClick={onClose}
+          className="px-3 py-1.5 rounded-md text-sm hover:opacity-80"
+          style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+          {t('discrepancies.scheduleForm.cancel')}
+        </button>
+        <button onClick={() => onSave({ enabled, time, timezone: tz, sinceWindow })} disabled={saving}
+          className="px-3 py-1.5 rounded-md text-sm flex items-center gap-1.5 hover:opacity-90 disabled:opacity-60"
+          style={{ background: 'var(--accent)', color: 'white' }}>
+          {saving && <Loader2 size={12} className="animate-spin" />}
+          {t('discrepancies.scheduleForm.save')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ExpandedDetail({ item, oneCOrder }) {
   const { t } = useTranslation();
   const oneC = (() => { try { return item.oneCValue ? JSON.parse(item.oneCValue) : null; } catch { return null; } })();
@@ -106,6 +227,7 @@ function ExpandedDetail({ item, oneCOrder }) {
 export default function Discrepancies() {
   const { t } = useTranslation();
   const { api, hasPermission } = useAuth();
+  const toast = useToast();
   const canManage = hasPermission && hasPermission('manage_discrepancies');
 
   const [stats, setStats] = useState(null);
@@ -113,11 +235,18 @@ export default function Discrepancies() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: 'open', severity: '', type: '', orderNumber: '', search: '' });
+  const [searchDebounced, setSearchDebounced] = useState('');
   const [period, setPeriod] = useState({ preset: 'all', from: null, to: null });
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [expanded, setExpanded] = useState({});
   const [details, setDetails] = useState({});
+
+  // Scheduler / last-run state
+  const [schedule, setSchedule] = useState(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const pollTimerRef = useRef(null);
 
   const loadStats = useCallback(async () => {
     const r = await api.get('/api/discrepancies/stats');
@@ -134,35 +263,59 @@ export default function Discrepancies() {
     if (filters.severity) params.set('severity', filters.severity);
     if (filters.type) params.set('type', filters.type);
     if (filters.orderNumber) params.set('orderNumber', filters.orderNumber);
+    if (searchDebounced) params.set('q', searchDebounced);
     if (period.from) params.set('from', period.from);
     if (period.to) params.set('to', period.to);
     const r = await api.get(`/api/discrepancies?${params.toString()}`);
     setItems(r.data?.items || []);
     setTotal(r.data?.total || 0);
     setLoading(false);
-  }, [api, filters.status, filters.severity, filters.type, filters.orderNumber, period.from, period.to, page, perPage]);
+  }, [api, filters.status, filters.severity, filters.type, filters.orderNumber, searchDebounced, period.from, period.to, page, perPage]);
 
-  useEffect(() => { loadStats(); loadList(); }, [loadStats, loadList]);
+  const loadSchedule = useCallback(async () => {
+    try {
+      const r = await api.get('/api/discrepancies/schedule');
+      setSchedule(r.data || null);
+      return r.data;
+    } catch { /* ignore */ }
+    return null;
+  }, [api]);
+
+  useEffect(() => { loadStats(); loadList(); loadSchedule(); }, [loadStats, loadList, loadSchedule]);
+
+  // Debounce поиска: 350мс после последнего ввода
+  useEffect(() => {
+    const id = setTimeout(() => setSearchDebounced(filters.search), 350);
+    return () => clearTimeout(id);
+  }, [filters.search]);
+
+  // Polling state while detector is running
+  useEffect(() => {
+    if (!schedule?.isRunning) {
+      if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
+      return;
+    }
+    if (pollTimerRef.current) return;
+    pollTimerRef.current = setInterval(async () => {
+      const next = await loadSchedule();
+      if (next && !next.isRunning) {
+        clearInterval(pollTimerRef.current); pollTimerRef.current = null;
+        await Promise.all([loadStats(), loadList()]);
+        if (next.lastStatus === 'ok') {
+          toast.success(t('discrepancies.runFinished', { detected: next.lastDetected ?? 0, fresh: next.lastNew ?? 0 }));
+        } else if (next.lastStatus === 'error') {
+          toast.error(t('discrepancies.runFailed') + ': ' + (next.lastError || ''));
+        }
+      }
+    }, 2500);
+    return () => { if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; } };
+  }, [schedule?.isRunning, loadSchedule, loadStats, loadList, toast, t]);
 
   // Reset to first page when filters/period change (but not when page itself changes)
-  useEffect(() => { setPage(1); }, [filters.status, filters.severity, filters.type, filters.orderNumber, period.preset, period.from, period.to, perPage]);
+  useEffect(() => { setPage(1); }, [filters.status, filters.severity, filters.type, filters.orderNumber, searchDebounced, period.preset, period.from, period.to, perPage]);
 
-  const visibleItems = useMemo(() => {
-    if (!filters.search) return items;
-    const q = filters.search.toLowerCase();
-    return items.filter((it) => {
-      if ((it.description || '').toLowerCase().includes(q)) return true;
-      if ((it.orderNumber || '').toLowerCase().includes(q)) return true;
-      const plate = it.vehicleSession?.plateNumber || '';
-      if (plate.toLowerCase().includes(q)) return true;
-      try {
-        const o = it.oneCValue ? JSON.parse(it.oneCValue) : null;
-        if (o?.vin && String(o.vin).toLowerCase().includes(q)) return true;
-        if (o?.plate_number && String(o.plate_number).toLowerCase().includes(q)) return true;
-      } catch { /* ignore */ }
-      return false;
-    });
-  }, [items, filters.search]);
+  // Поиск выполняется на сервере (через ?q=) — клиентский префильтр не нужен.
+  const visibleItems = items;
 
   const toggleExpand = async (id) => {
     setExpanded((p) => ({ ...p, [id]: !p[id] }));
@@ -181,17 +334,39 @@ export default function Discrepancies() {
       await api.patch(`/api/discrepancies/${id}/status`, body);
       await Promise.all([loadStats(), loadList()]);
     } catch (e) {
-      alert(t('data1c.common.error') + ': ' + e.message);
+      toast.error(t('data1c.common.error') + ': ' + e.message);
     }
   };
 
   const runDetect = async () => {
-    if (!confirm(t('discrepancies.recomputeConfirm'))) return;
+    if (schedule?.isRunning) {
+      toast.info(t('discrepancies.runAlreadyRunning'));
+      return;
+    }
     try {
-      await api.post('/api/discrepancies/run', { since: '7d' });
-      await Promise.all([loadStats(), loadList()]);
+      const r = await api.post('/api/discrepancies/run', {});
+      if (r.data?.alreadyRunning) {
+        toast.info(t('discrepancies.runAlreadyRunning'));
+      } else {
+        toast.info(t('discrepancies.runStarted'));
+      }
+      // Сразу подхватим isRunning=true → активируется polling-эффект
+      await loadSchedule();
     } catch (e) {
-      alert(t('data1c.common.error') + ': ' + e.message);
+      toast.error(t('data1c.common.error') + ': ' + e.message);
+    }
+  };
+
+  const saveSchedule = async (patch) => {
+    setSavingSchedule(true);
+    try {
+      const r = await api.put('/api/discrepancies/schedule', patch);
+      setSchedule(r.data || null);
+      toast.success(t('discrepancies.scheduleSaved'));
+    } catch (e) {
+      toast.error(t('data1c.common.error') + ': ' + (e.response?.data?.error || e.message));
+    } finally {
+      setSavingSchedule(false);
     }
   };
 
@@ -230,18 +405,44 @@ export default function Discrepancies() {
                    onClick={() => setFilters((p) => ({ ...p, severity: p.severity === 'warning' ? '' : 'warning' }))} active={filters.severity === 'warning'} />
         </div>
         <div className="flex items-center gap-2">
+          <LastRunInfo schedule={schedule} t={t} />
           {canManage && (
             <button
               onClick={runDetect}
-              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-opacity hover:opacity-90"
+              disabled={!!schedule?.isRunning}
+              className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ background: 'var(--accent)', color: 'white' }}
+              title={t('discrepancies.recomputeHint')}
             >
-              <RefreshCw size={14} /> {t('discrepancies.recompute')}
+              {schedule?.isRunning
+                ? <Loader2 size={14} className="animate-spin" />
+                : <RefreshCw size={14} />}
+              {schedule?.isRunning ? t('discrepancies.recomputing') : t('discrepancies.recompute')}
+            </button>
+          )}
+          {canManage && (
+            <button
+              onClick={() => setScheduleOpen((v) => !v)}
+              className="p-1.5 rounded-lg transition-opacity hover:opacity-80"
+              style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}
+              title={t('discrepancies.scheduleSettings')}
+            >
+              <Settings size={14} />
             </button>
           )}
           <HelpButton pageKey="discrepancies" />
         </div>
       </div>
+
+      {scheduleOpen && canManage && (
+        <SchedulePopover
+          schedule={schedule}
+          onSave={saveSchedule}
+          onClose={() => setScheduleOpen(false)}
+          saving={savingSchedule}
+          t={t}
+        />
+      )}
 
       {/* By type — chips */}
       <div className="rounded-xl p-3 flex flex-col gap-2"
