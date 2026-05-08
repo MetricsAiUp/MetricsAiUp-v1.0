@@ -3,14 +3,19 @@ const prisma = require('../config/database');
 const { generateReportXlsx } = require('./serverExport');
 const logger = require('../config/logger');
 const registry = require('./_serviceRegistry');
+const settingsReader = require('../routes/settings');
+const { tzOf, dateStrInTz, dayOfWeekInTz, hourMinuteInTz } = require('../utils/dateUtils');
 
-function shouldRun(schedule, now) {
-  if (now.getHours() !== schedule.hour || now.getMinutes() !== schedule.minute) return false;
+// Все сравнения «час/минута/день недели» проводим в TZ Location (а не в TZ хоста),
+// иначе на UTC-сервере «09:00 московское» сработает в 12:00.
+function shouldRun(schedule, now, tz) {
+  const { hour, minute } = hourMinuteInTz(now, tz);
+  if (hour !== schedule.hour || minute !== schedule.minute) return false;
   if (schedule.lastRunAt) {
     const last = new Date(schedule.lastRunAt);
-    if (last.toDateString() === now.toDateString()) return false;
+    if (dateStrInTz(last, tz) === dateStrInTz(now, tz)) return false;
   }
-  if (schedule.frequency === 'weekly' && schedule.dayOfWeek !== null && now.getDay() !== schedule.dayOfWeek) return false;
+  if (schedule.frequency === 'weekly' && schedule.dayOfWeek !== null && dayOfWeekInTz(now, tz) !== schedule.dayOfWeek) return false;
   return true;
 }
 
@@ -20,8 +25,9 @@ function startReportScheduler() {
       registry.tick('reportScheduler');
       const schedules = await prisma.reportSchedule.findMany({ where: { isActive: true } });
       const now = new Date();
+      const tz = tzOf(settingsReader.readSettings());
       for (const s of schedules) {
-        if (shouldRun(s, now)) {
+        if (shouldRun(s, now, tz)) {
           try {
             const periodDays = s.frequency === 'daily' ? 1 : 7;
             const { buffer, filename } = await generateReportXlsx(periodDays);

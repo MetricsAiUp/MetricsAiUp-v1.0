@@ -3,6 +3,8 @@ const prisma = require('../config/database');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { createShiftSchema, updateShiftSchema } = require('../schemas/shifts');
+const settingsReader = require('./settings');
+const { tzOf, getDayBoundsInTz, addDaysInTz, parseInTz } = require('../utils/dateUtils');
 
 // GET /api/shifts — list shifts (filter by ?date, ?status, ?week=2026-04-06)
 router.get('/', authenticate, async (req, res) => {
@@ -12,15 +14,15 @@ router.get('/', authenticate, async (req, res) => {
 
     if (status) where.status = status;
 
+    // Календарные границы дня/недели интерпретируем в TZ Location, а не TZ хоста.
+    const tz = tzOf(settingsReader.readSettings());
     if (date) {
-      const d = new Date(date);
-      const nextDay = new Date(d);
-      nextDay.setDate(nextDay.getDate() + 1);
-      where.date = { gte: d, lt: nextDay };
+      const { start, end } = getDayBoundsInTz(date, tz);
+      where.date = { gte: start, lt: end };
     } else if (week) {
-      const start = new Date(week);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 7);
+      const { start } = getDayBoundsInTz(week, tz);
+      const endStr = addDaysInTz(week, 7, tz);
+      const end = new Date(parseInTz(endStr, '00:00', tz));
       where.date = { gte: start, lt: end };
     }
 
@@ -63,11 +65,10 @@ async function detectConflicts(date, startTime, endTime, workers, excludeShiftId
   }
   // Check cross-shift conflicts
   const where = {};
-  // Parse date for query
-  const d = new Date(date);
-  const nextDay = new Date(d);
-  nextDay.setDate(nextDay.getDate() + 1);
-  where.date = { gte: d, lt: nextDay };
+  // Календарный день интерпретируем в TZ Location.
+  const tz = tzOf(settingsReader.readSettings());
+  const { start, end } = getDayBoundsInTz(date, tz);
+  where.date = { gte: start, lt: end };
   if (excludeShiftId) where.id = { not: excludeShiftId };
   const existingShifts = await prisma.shift.findMany({ where, include: { workers: true } });
   for (const w of (workers || [])) {
@@ -99,10 +100,12 @@ router.post('/', authenticate, requirePermission('manage_shifts'), validate(crea
       }
     }
 
+    const tz = tzOf(settingsReader.readSettings());
     const shift = await prisma.shift.create({
       data: {
         name,
-        date: new Date(date),
+        // Интерпретируем YYYY-MM-DD как полночь в TZ Location, не в TZ хоста.
+        date: new Date(parseInTz(String(date), '00:00', tz)),
         startTime,
         endTime,
         status: status || 'planned',
@@ -139,7 +142,10 @@ router.put('/:id', authenticate, requirePermission('manage_shifts'), validate(up
 
     const data = {};
     if (name !== undefined) data.name = name;
-    if (date !== undefined) data.date = new Date(date);
+    if (date !== undefined) {
+      const tz = tzOf(settingsReader.readSettings());
+      data.date = new Date(parseInTz(String(date), '00:00', tz));
+    }
     if (startTime !== undefined) data.startTime = startTime;
     if (endTime !== undefined) data.endTime = endTime;
     if (status !== undefined) data.status = status;

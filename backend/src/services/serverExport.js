@@ -1,8 +1,14 @@
 const XLSX = require('xlsx');
 const prisma = require('../config/database');
+const settingsReader = require('../routes/settings');
+const { tzOf, dateStrInTz, addDaysInTz, parseInTz } = require('../utils/dateUtils');
 
 async function generateReportXlsx(periodDays = 1) {
-  const since = new Date(); since.setDate(since.getDate() - periodDays); since.setHours(0,0,0,0);
+  // Период считаем в TZ Location: «N дней назад» от начала сегодняшних суток в TZ.
+  const tz = tzOf(settingsReader.readSettings());
+  const todayStr = dateStrInTz(new Date(), tz);
+  const sinceStr = addDaysInTz(todayStr, -periodDays, tz);
+  const since = new Date(parseInTz(sinceStr, '00:00', tz));
   const orders = await prisma.workOrder.findMany({ where: { scheduledTime: { gte: since } }, orderBy: { scheduledTime: 'desc' } });
 
   const wb = XLSX.utils.book_new();
@@ -25,7 +31,7 @@ async function generateReportXlsx(periodDays = 1) {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ordersData), 'Orders');
 
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  const filename = `report-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  const filename = `report-${todayStr}.xlsx`;
   return { buffer, filename };
 }
 

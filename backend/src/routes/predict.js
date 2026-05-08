@@ -3,6 +3,8 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const prisma = require('../config/database');
+const settingsReader = require('./settings');
+const { tzOf, dateStrInTz, dayOfWeekInTz, parseInTz, addDaysInTz } = require('../utils/dateUtils');
 
 const DATA_DIR = path.join(__dirname, '../../../data');
 
@@ -40,11 +42,13 @@ function baseLoad(hour, dow) {
 
 // ─── GET /predict/load ───
 router.get('/load', async (req, res) => {
-  const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+  const tz = tzOf(settingsReader.readSettings());
+  const dateStr = req.query.date || dateStrInTz(new Date(), tz);
   const postFilter = req.query.post ? parseInt(req.query.post) : null;
-  const date = new Date(dateStr);
-  const dow = date.getDay();
-  const dateSeed = Math.floor(date.getTime() / 86400000);
+  // День недели берём по TZ Location: иначе на UTC-сервере «суббота» сдвинется на «пятницу».
+  const dayStartMs = parseInTz(dateStr, '00:00', tz);
+  const dow = dayOfWeekInTz(new Date(dayStartMs), tz);
+  const dateSeed = Math.floor(dayStartMs / 86400000);
 
   const posts = postFilter ? [postFilter] : await getActivePostNumbers();
   const hourly = [];
@@ -68,19 +72,19 @@ router.get('/load', async (req, res) => {
 
 // ─── GET /predict/load/week ───
 router.get('/load/week', async (req, res) => {
+  const tz = tzOf(settingsReader.readSettings());
   const postFilter = req.query.post ? parseInt(req.query.post) : null;
-  const now = new Date();
+  const todayStr = dateStrInTz(new Date(), tz);
   const days = [];
 
   // Один запрос к БД на весь week (вместо 7 итераций).
   const allActivePosts = postFilter ? [postFilter] : await getActivePostNumbers();
 
   for (let d = 0; d < 7; d++) {
-    const date = new Date(now);
-    date.setDate(date.getDate() + d);
-    const dateStr = date.toISOString().split('T')[0];
-    const dow = date.getDay();
-    const dateSeed = Math.floor(date.getTime() / 86400000);
+    const dateStr = addDaysInTz(todayStr, d, tz);
+    const dayStartMs = parseInTz(dateStr, '00:00', tz);
+    const dow = dayOfWeekInTz(new Date(dayStartMs), tz);
+    const dateSeed = Math.floor(dayStartMs / 86400000);
     const posts = allActivePosts;
     const hourly = [];
 

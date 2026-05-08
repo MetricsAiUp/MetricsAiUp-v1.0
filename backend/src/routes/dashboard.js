@@ -2,6 +2,7 @@ const router = require('express').Router();
 const prisma = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 const settingsReader = require('./settings');
+const { tzOf, dateStrInTz, addDaysInTz, getDayBoundsInTz } = require('../utils/dateUtils');
 
 /**
  * @openapi
@@ -123,18 +124,21 @@ router.get('/metrics', authenticate, async (req, res) => {
  */
 router.get('/trends', authenticate, async (req, res) => {
   try {
+    const tz = tzOf(settingsReader.readSettings());
+    const todayStr = dateStrInTz(new Date(), tz);
     const days = 7;
     const results = [];
     for (let i = days - 1; i >= 0; i--) {
-      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0); dayStart.setDate(dayStart.getDate() - i);
-      const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+      // Календарный день вычисляем в TZ Location (а не в TZ хоста), границы — UTC.
+      const dateStr = addDaysInTz(todayStr, -i, tz);
+      const { start: dayStart, end: dayEnd } = getDayBoundsInTz(dateStr, tz);
       const [sessions, postStays, occupiedPosts, recs] = await Promise.all([
         prisma.vehicleSession.count({ where: { entryTime: { gte: dayStart, lt: dayEnd } } }),
         prisma.postStay.count({ where: { startTime: { gte: dayStart, lt: dayEnd } } }),
         prisma.postStay.groupBy({ by: ['postId'], where: { startTime: { gte: dayStart, lt: dayEnd } } }).then(g => g.length),
         prisma.recommendation.count({ where: { createdAt: { gte: dayStart, lt: dayEnd } } }),
       ]);
-      results.push({ date: dayStart.toISOString().slice(0, 10), activeSessions: sessions, postStays, occupiedPosts, recommendations: recs });
+      results.push({ date: dateStr, activeSessions: sessions, postStays, occupiedPosts, recommendations: recs });
     }
     res.json(results);
   } catch (err) { res.status(500).json({ error: err.message }); }

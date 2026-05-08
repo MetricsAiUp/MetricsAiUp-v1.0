@@ -1,10 +1,22 @@
 import { useTranslation } from 'react-i18next';
+import { dateStrInAppTz, dayOfWeekInAppTz, addDaysInAppTz } from '../utils/appTimezone';
 
+// Все пресеты считаем в TZ Location (а не в TZ браузера), чтобы у пользователей
+// в разных часовых поясах «сегодня/эта неделя» совпадали с тем, что считает backend.
 const presets = [
-  { key: 'today', getDates: () => { const d = new Date().toISOString().slice(0, 10); return [d, d]; } },
-  { key: 'yesterday', getDates: () => { const d = new Date(); d.setDate(d.getDate() - 1); const s = d.toISOString().slice(0, 10); return [s, s]; } },
-  { key: 'thisWeek', getDates: () => { const now = new Date(); const d = new Date(now); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return [d.toISOString().slice(0, 10), now.toISOString().slice(0, 10)]; } },
-  { key: 'thisMonth', getDates: () => { const now = new Date(); const d = new Date(now.getFullYear(), now.getMonth(), 1); return [d.toISOString().slice(0, 10), now.toISOString().slice(0, 10)]; } },
+  { key: 'today', getDates: () => { const d = dateStrInAppTz(); return [d, d]; } },
+  { key: 'yesterday', getDates: () => { const d = addDaysInAppTz(dateStrInAppTz(), -1); return [d, d]; } },
+  { key: 'thisWeek', getDates: () => {
+    const today = dateStrInAppTz();
+    // Понедельник как начало недели: сдвиг от текущего dow до пн (Mon=1..Sun=0).
+    const dow = dayOfWeekInAppTz();
+    const diff = (dow + 6) % 7;
+    return [addDaysInAppTz(today, -diff), today];
+  } },
+  { key: 'thisMonth', getDates: () => {
+    const today = dateStrInAppTz();
+    return [today.slice(0, 7) + '-01', today];
+  } },
   { key: 'allDates', getDates: () => ['', ''] },
 ];
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { connectSocket, disconnectSocket, getSocket } from '../hooks/useSocket';
+import { setAppTimezone } from '../utils/appTimezone';
 
 const AuthContext = createContext();
 
@@ -203,6 +204,7 @@ export function AuthProvider({ children }) {
             setAppMode(settings.mode);
             localStorage.setItem('appMode', settings.mode);
           }
+          if (settings?.timezone) setAppTimezone(settings.timezone);
         };
         socket.on('settings:changed', handleModeChange);
         return () => { socket.off('settings:changed', handleModeChange); };
@@ -234,6 +236,7 @@ export function AuthProvider({ children }) {
           setAppMode(res.data.mode);
           localStorage.setItem('appMode', res.data.mode);
         }
+        if (res.data?.timezone) setAppTimezone(res.data.timezone);
       });
     }
   }, [user]);

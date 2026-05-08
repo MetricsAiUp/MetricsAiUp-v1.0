@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const prisma = require('../config/database');
 const settingsReader = require('./settings');
+const { tzOf, parseInTz, dateStrInTz, dayKeyInTz } = require('../utils/dateUtils');
 
 // Если данные с CV-системы не поступают дольше этого порога — считаем их
 // несвежими: фронт покажет аварийный баннер, расчёты «загрузка/эффективность»
@@ -40,49 +41,7 @@ function computeDataFreshness(items) {
   };
 }
 
-// Парсит wall-clock время "YYYY-MM-DD" + "HH:MM" в указанной IANA-таймзоне
-// и возвращает соответствующий UTC-timestamp (ms). Не зависит от TZ хост-системы.
-// Алгоритм: берём наивный UTC, форматируем в целевой TZ, считаем offset, корректируем.
-function parseInTz(dateStr, timeStr, tz) {
-  const naive = new Date(`${dateStr}T${timeStr}:00Z`).getTime();
-  if (!Number.isFinite(naive)) return NaN;
-  const dtf = new Intl.DateTimeFormat('en-US', {
-    timeZone: tz,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  });
-  const parts = Object.fromEntries(
-    dtf.formatToParts(new Date(naive))
-      .filter(p => p.type !== 'literal')
-      .map(p => [p.type, p.value])
-  );
-  const hour = parts.hour === '24' ? 0 : Number(parts.hour);
-  const wallInTz = Date.UTC(
-    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
-    hour, Number(parts.minute), Number(parts.second)
-  );
-  const offsetMs = wallInTz - naive; // насколько TZ опережает UTC в этот момент
-  return naive - offsetMs;
-}
-
-function tzOf(settings) {
-  return settings && settings.timezone ? settings.timezone : 'Europe/Moscow';
-}
-
-// Возвращает дату YYYY-MM-DD «по часам» указанной таймзоны (а не UTC).
-function dateStrInTz(d, tz) {
-  const dtf = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
-  });
-  return dtf.format(d); // en-CA даёт YYYY-MM-DD
-}
-
-// Возвращает ключ дня недели (mon..sun) по часам TZ.
-function dayKeyInTz(d, tz) {
-  const dtf = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
-  const wk = dtf.format(d).toLowerCase(); // mon, tue...
-  return wk;
-}
+// TZ-утилиты parseInTz / dateStrInTz / dayKeyInTz / tzOf — в backend/src/utils/dateUtils.js.
 
 // Активные посты из БД (после Этапа А — источник истины: Map (number → post)).
 // Возвращает Map с гарантированно заполненными number.
