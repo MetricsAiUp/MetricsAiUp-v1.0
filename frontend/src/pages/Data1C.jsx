@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useSocket } from '../hooks/useSocket';
 import {
   Database, Inbox, AlertTriangle, BarChart3, Settings, Upload, RefreshCw, Save,
   CheckCircle2, XCircle, Layers, Activity, Hourglass, ListChecks, Hash, Users, Mail, Server, FilterX,
@@ -1096,6 +1097,10 @@ export default function Data1C() {
   }, [api, canImport]);
 
   useEffect(() => { reloadBadges(); }, [reloadBadges, active]);
+
+  // Live-обновление счётчика «Несопоставленные»: бэкенд эмитит unmapped:changed
+  // при auto-резолве (детектор нестыковок) и при ручном резолве через UI.
+  useSocket('unmapped:changed', () => { reloadBadges(); });
 
   return (
     <div className="p-3 space-y-2">

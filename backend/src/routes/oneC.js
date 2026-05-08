@@ -468,6 +468,12 @@ router.post(
       const resolver = require('../services/postNameResolver');
       if (resolver.resetCache) resolver.resetCache();
 
+      // Сообщим фронту, что бейдж «Несопоставленные» надо перечитать.
+      try {
+        const io = req.app.get('io');
+        if (io) io.emit('unmapped:changed', { autoResolved: 0, manualResolved: 1, at: new Date().toISOString() });
+      } catch { /* ignore */ }
+
       res.json(resolved);
     } catch (err) {
       logger.error('POST /oneC/unmapped-posts/resolve failed', { err: err.message });

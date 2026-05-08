@@ -201,6 +201,18 @@ async function detectForOrder(orderNumber) {
 // Массовый прогон по всем orderNumber из current view + плюс осиротевшие PostStay
 // без 1С-записи (для правила no_show_in_1c).
 async function detectAll({ since } = {}) {
+  // 0. Перед запуском пере-проверяем «несопоставленные»: автоматически
+  //    закрываем старые записи, которые теперь резолвятся через regex/aliases,
+  //    и добираем сырые имена постов из raw-таблиц. Падать здесь нельзя —
+  //    глотаем ошибку, логируем.
+  let unmappedRescan = null;
+  try {
+    const rescanner = require('./unmappedPostsRescanner');
+    unmappedRescan = await rescanner.rescan({ trigger: 'detectAll' });
+  } catch (err) {
+    logger.warn('discrepancyDetector.detectAll: unmapped rescan failed', { err: err.message });
+  }
+
   // 1. Все orderNumbers из current view
   const orderRows = await prisma.$queryRawUnsafe(`
     SELECT DISTINCT order_number FROM one_c_work_order_merged
@@ -240,8 +252,8 @@ async function detectAll({ since } = {}) {
     }
   }
 
-  logger.info('discrepancyDetector.detectAll done', { orders: orderNumbers.length, stays: stays.length, totalDetected, totalNew });
-  return { orders: orderNumbers.length, totalDetected, totalNew };
+  logger.info('discrepancyDetector.detectAll done', { orders: orderNumbers.length, stays: stays.length, totalDetected, totalNew, unmappedRescan });
+  return { orders: orderNumbers.length, totalDetected, totalNew, unmappedRescan };
 }
 
 function parseDuration(s) {
