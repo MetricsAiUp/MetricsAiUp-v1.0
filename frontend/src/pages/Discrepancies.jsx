@@ -6,12 +6,13 @@ import {
   AlertTriangle, AlertCircle, CheckCircle2, XCircle, RefreshCw,
   ChevronDown, ChevronRight, ListChecks, Inbox, Clock, Flame,
   EyeOff, MapPinOff, Timer, TimerOff, Hourglass, RotateCcw,
-  Loader2, Settings, Calendar,
+  Loader2, Settings, Calendar, ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
 import KpiCard from '../components/data1c/KpiCard';
 import FilterBar from '../components/data1c/FilterBar';
+import { getAppTimezone } from '../utils/appTimezone';
 
 const TYPE_KEYS = ['no_show_in_cv', 'no_show_in_1c', 'wrong_post', 'overstated_norm_hours', 'understated_actual_time', 'time_mismatch'];
 const SEVERITY_KEYS = ['critical', 'warning', 'info'];
@@ -41,8 +42,13 @@ const TYPE_ICON = {
 
 function formatDateTime(s) {
   if (!s) return '—';
-  try { return new Date(s).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-  catch { return s; }
+  try {
+    return new Date(s).toLocaleString('ru-RU', {
+      timeZone: getAppTimezone(),
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return s; }
 }
 
 function Pill({ children, color }) {
@@ -59,6 +65,28 @@ function Pill({ children, color }) {
 
 function tdStyle(idx) {
   return { background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' };
+}
+
+function SortHeader({ field, sort, onChange, title, tooltip, align = 'left' }) {
+  const active = sort.by === field;
+  const Icon = active ? (sort.dir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  const handleClick = () => {
+    if (!active) onChange({ by: field, dir: 'desc' });
+    else onChange({ by: field, dir: sort.dir === 'desc' ? 'asc' : 'desc' });
+  };
+  return (
+    <th
+      className={`px-3 py-2 font-semibold text-xs uppercase tracking-wide cursor-pointer select-none transition-colors hover:opacity-80 text-${align}`}
+      style={{ color: active ? 'var(--text-primary)' : 'var(--text-muted)' }}
+      onClick={handleClick}
+      title={tooltip || title}
+    >
+      <span className="inline-flex items-center gap-1">
+        {title}
+        <Icon size={11} style={{ opacity: active ? 1 : 0.4 }} />
+      </span>
+    </th>
+  );
 }
 
 function formatRelative(s, t) {
@@ -239,6 +267,7 @@ export default function Discrepancies() {
   const [period, setPeriod] = useState({ preset: 'all', from: null, to: null });
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
+  const [sort, setSort] = useState({ by: 'occurredAt', dir: 'desc' });
   const [expanded, setExpanded] = useState({});
   const [details, setDetails] = useState({});
 
@@ -266,11 +295,13 @@ export default function Discrepancies() {
     if (searchDebounced) params.set('q', searchDebounced);
     if (period.from) params.set('from', period.from);
     if (period.to) params.set('to', period.to);
+    params.set('sortBy', sort.by);
+    params.set('sortDir', sort.dir);
     const r = await api.get(`/api/discrepancies?${params.toString()}`);
     setItems(r.data?.items || []);
     setTotal(r.data?.total || 0);
     setLoading(false);
-  }, [api, filters.status, filters.severity, filters.type, filters.orderNumber, searchDebounced, period.from, period.to, page, perPage]);
+  }, [api, filters.status, filters.severity, filters.type, filters.orderNumber, searchDebounced, period.from, period.to, page, perPage, sort.by, sort.dir]);
 
   const loadSchedule = useCallback(async () => {
     try {
@@ -492,7 +523,7 @@ export default function Discrepancies() {
       <FilterBar
         period={period}
         onPeriodChange={setPeriod}
-        periodLabel={t('discrepancies.table.detectedAt')}
+        periodLabel={t('discrepancies.table.occurredAt')}
         search={filters.search}
         onSearchChange={(v) => setFilters((p) => ({ ...p, search: v }))}
         searchPlaceholder={t('discrepancies.filters.searchPlaceholder')}
@@ -545,12 +576,12 @@ export default function Discrepancies() {
             <thead style={{ background: 'rgba(0,0,0,0.12)', position: 'sticky', top: 0, zIndex: 1 }}>
               <tr>
                 <th className="text-left px-3 py-2 font-semibold" style={{ width: 32, color: 'var(--text-muted)' }}></th>
-                <th className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t('discrepancies.table.type')}</th>
-                <th className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t('discrepancies.table.severity')}</th>
-                <th className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t('discrepancies.table.orderNumber')}</th>
+                <SortHeader field="type"        sort={sort} onChange={setSort} title={t('discrepancies.table.type')} />
+                <SortHeader field="severity"    sort={sort} onChange={setSort} title={t('discrepancies.table.severity')} />
+                <SortHeader field="orderNumber" sort={sort} onChange={setSort} title={t('discrepancies.table.orderNumber')} />
                 <th className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t('discrepancies.table.description')}</th>
-                <th className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t('discrepancies.table.detectedAt')}</th>
-                <th className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t('discrepancies.table.status')}</th>
+                <SortHeader field="occurredAt"  sort={sort} onChange={setSort} title={t('discrepancies.table.occurredAt')} tooltip={t('discrepancies.table.occurredAtTooltip')} />
+                <SortHeader field="status"      sort={sort} onChange={setSort} title={t('discrepancies.table.status')} />
                 <th className="text-right px-3 py-2 font-semibold text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}></th>
               </tr>
             </thead>
@@ -593,7 +624,13 @@ export default function Discrepancies() {
                     </td>
                     <td className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{item.orderNumber || <span style={{ opacity: 0.4 }}>·</span>}</td>
                     <td className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>{item.description}</td>
-                    <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{formatDateTime(item.detectedAt)}</td>
+                    <td className="px-3 py-2 text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}
+                        title={`${t('discrepancies.table.occurredAt')}: ${formatDateTime(item.occurredAt)} · ${t('discrepancies.table.detectedAt')}: ${formatDateTime(item.detectedAt)}`}>
+                      {formatDateTime(item.occurredAt || item.detectedAt)}
+                      {!item.occurredAt && (
+                        <span className="ml-1 opacity-60">·</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2"><Pill color={statusColor}>{STATUS_KEYS.includes(item.status) ? t(`discrepancies.status.${item.status}`) : item.status}</Pill></td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
                       {canManage && item.status === 'open' && (

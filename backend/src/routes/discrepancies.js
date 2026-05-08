@@ -66,23 +66,43 @@ function buildWhere(query) {
   return where;
 }
 
-// GET /api/discrepancies — list with filters & pagination
+// GET /api/discrepancies — list with filters, sorting & pagination
+const SORT_FIELDS = {
+  occurredAt: 'occurredAt',
+  detectedAt: 'detectedAt',
+  type: 'type',
+  severity: 'severity',
+  status: 'status',
+  orderNumber: 'orderNumber',
+};
+
+function buildOrderBy(query) {
+  const dir = String(query.sortDir || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
+  const field = SORT_FIELDS[String(query.sortBy || '')] || 'occurredAt';
+
+  // Дефолт — занять детектируемые свежие события сверху, NULL вниз, фоллбек на detectedAt.
+  if (field === 'occurredAt') {
+    return [
+      { occurredAt: { sort: dir, nulls: 'last' } },
+      { detectedAt: dir },
+    ];
+  }
+  // Для прочих полей — основной + tie-break по occurredAt
+  return [
+    { [field]: dir },
+    { occurredAt: { sort: 'desc', nulls: 'last' } },
+    { detectedAt: 'desc' },
+  ];
+}
+
 router.get('/', authenticate, requirePermission('view_1c'), async (req, res) => {
   try {
     const where = buildWhere(req.query);
     const take = parseInteger(req.query.take, 50, 500);
     const skip = parseInteger(req.query.skip, 0, 100000);
+    const orderBy = buildOrderBy(req.query);
     const [rows, total] = await Promise.all([
-      prisma.discrepancy.findMany({
-        where,
-        orderBy: [
-          { severity: 'desc' },
-          { occurredAt: { sort: 'desc', nulls: 'last' } },
-          { detectedAt: 'desc' },
-        ],
-        take,
-        skip,
-      }),
+      prisma.discrepancy.findMany({ where, orderBy, take, skip }),
       prisma.discrepancy.count({ where }),
     ]);
 
