@@ -194,7 +194,11 @@ function parseRepair(workbook, receivedAt) {
       workStartedAt: parseDate(r[14]),
       workFinishedAt: parseDate(r[15]),
       closedAt: parseDate(r[16]),
-      basis: s(r[17]),
+      // Основание: убираем хвостовые статусы 1С «(проведен)»/«(записан)» — это служебная метка.
+      basis: (() => {
+        const v = s(r[17]);
+        return v ? v.replace(/\s*\((?:проведен|записан)\)\s*$/iu, '').trim() || null : null;
+      })(),
       basisStart: parseDate(r[18]),
       basisEnd: parseDate(r[19]),
       master: s(r[20]),

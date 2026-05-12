@@ -480,39 +480,26 @@ const RAW_COLUMNS = {
   plan: [
     { key: 'documentText',   i18n: 'documentText', sortable: true },
     { key: 'organization',   i18n: 'organization', sortable: true },
-    { key: 'vehicleText',    i18n: 'vehicleText',  sortable: true },
+    { key: 'vehicle',        i18n: 'vehicle',      fmt: 'vehicle', derived: true },
     { key: 'number',         i18n: 'number',       fmt: 'mono', sortable: true },
-    { key: 'plateNumber',    i18n: 'plate1',       sortable: true },
-    { key: 'vin',            i18n: 'vin',          fmt: 'mono', sortable: true },
     { key: 'scheduledStart', i18n: 'scheduledStart', fmt: 'dt', sortable: true },
     { key: 'scheduledEnd',   i18n: 'scheduledEnd',   fmt: 'dt', sortable: true },
     { key: 'durationSec',    i18n: 'duration',     fmt: 'hours', sortable: true, align: 'right' },
     { key: 'note',           i18n: 'note',         fmt: 'note',  sortable: false, derived: true },
   ],
   repair: [
-    { key: 'receivedAt',     i18n: 'received',     fmt: 'dt',   sortable: true },
-    { key: 'vehicleText',    i18n: 'vehicleText',  sortable: true },
-    { key: 'vin',            i18n: 'vin',          fmt: 'mono', sortable: true },
-    { key: 'brand',          i18n: 'brand',        sortable: true },
-    { key: 'model',          i18n: 'model',        sortable: true },
-    { key: 'plateNumber1',   i18n: 'plate1',       sortable: true },
-    { key: 'plateNumber2',   i18n: 'plate2',       sortable: true },
-    { key: 'warrantyEnd',    i18n: 'warrantyEnd',  fmt: 'dt',   sortable: true },
-    { key: 'yearMade',       i18n: 'yearMade',     fmt: 'num',  sortable: true, align: 'right' },
-    { key: 'orderText',      i18n: 'orderText',    sortable: true },
-    { key: 'orderNumber',    i18n: 'number',       fmt: 'mono', sortable: true },
-    { key: 'orderDate',      i18n: 'orderDate',    fmt: 'dt',   sortable: true },
-    { key: 'state',          i18n: 'state',        fmt: 'state', sortable: true },
-    { key: 'repairKind',     i18n: 'repairKind',   sortable: true },
-    { key: 'mileage',        i18n: 'mileage',      fmt: 'num',  sortable: true, align: 'right' },
-    { key: 'workStartedAt',  i18n: 'workStart',    fmt: 'dt',   sortable: true },
-    { key: 'workFinishedAt', i18n: 'workEnd',      fmt: 'dt',   sortable: true },
-    { key: 'closedAt',       i18n: 'closed',       fmt: 'dt',   sortable: true },
-    { key: 'basis',          i18n: 'basis',        sortable: true },
-    { key: 'basisStart',     i18n: 'basisStart',   fmt: 'dt',   sortable: true },
-    { key: 'basisEnd',       i18n: 'basisEnd',     fmt: 'dt',   sortable: true },
-    { key: 'master',         i18n: 'master',       sortable: true },
-    { key: 'dispatcher',     i18n: 'dispatcher',   sortable: true },
+    { key: 'vehicle',        i18n: 'vehicle',           fmt: 'vehicle', derived: true },
+    { key: 'orderNumber',    i18n: 'orderNumberZN',     fmt: 'mono',  sortable: true },
+    { key: 'state',          i18n: 'state',             fmt: 'state', sortable: true },
+    { key: 'repairKind',     i18n: 'repairKind',        sortable: true },
+    { key: 'workStartedAt',  i18n: 'workStartFact',     fmt: 'dt',    sortable: true },
+    { key: 'workFinishedAt', i18n: 'workEndFact',       fmt: 'dt',    sortable: true },
+    { key: 'closedAt',       i18n: 'closedFact',        fmt: 'dt',    sortable: true },
+    { key: 'basis',          i18n: 'basis',             fmt: 'basis', sortable: true },
+    { key: 'basisStart',     i18n: 'basisStartPlanned', fmt: 'dt',    sortable: true },
+    { key: 'basisEnd',       i18n: 'basisEndPlanned',   fmt: 'dt',    sortable: true },
+    { key: 'master',         i18n: 'master',            sortable: true },
+    { key: 'dispatcher',     i18n: 'dispatcher',        sortable: true },
   ],
   performed: [
     { key: 'receivedAt',       i18n: 'received',     fmt: 'dt',   sortable: true },
@@ -571,7 +558,14 @@ function TabRaw({ api }) {
   useEffect(() => { setPage(1); }, [type, search, period.preset, period.from, period.to]);
 
   const cols = RAW_COLUMNS[type];
-  const { sorted, sortKey, sortDir, toggle } = useTableSort(items, 'receivedAt', 'desc');
+  // Дефолтная сортировка зависит от подвкладки: для «Заказ-нарядов» — по дате начала (факт).
+  const DEFAULT_SORT = { plan: 'receivedAt', repair: 'workStartedAt', performed: 'receivedAt' };
+  const { sorted, sortKey, sortDir, toggle, setSortKey, setSortDir } = useTableSort(items, DEFAULT_SORT.plan, 'desc');
+  useEffect(() => {
+    setSortKey(DEFAULT_SORT[type] || 'receivedAt');
+    setSortDir('desc');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
 
   const fmtCell = (val, fmt, row) => {
     // Синтетическая колонка-примечание: статус по содержимому исходного «Рабочее место».
@@ -582,6 +576,42 @@ function TabRaw({ api }) {
       const label = isAcceptance ? t('data1c.raw.col.noteAcceptance') : t('data1c.raw.col.noteWork');
       const color = isAcceptance ? '#f59e0b' : '#22c55e';
       return <span className="whitespace-nowrap" style={{ color, fontWeight: 600 }}>{label}</span>;
+    }
+    // Синтетическая колонка-автомобиль: объединяем марка/модель/гос.номер/VIN/vehicleText
+    // в один блок — данные в этих полях часто дублируются или разрежены.
+    // Поля у разных таблиц называются по-разному: repair → plateNumber1/2, plan → plateNumber.
+    if (fmt === 'vehicle') {
+      const brand = String(row?.brand || '').trim();
+      const model = String(row?.model || '').trim();
+      const plate = String(row?.plateNumber1 || row?.plateNumber2 || row?.plateNumber || '').trim();
+      const vin = String(row?.vin || '').trim();
+      const veh = String(row?.vehicleText || '').trim();
+      // Чистим vehicleText из 1С: убираем слово «Автомобиль», а модификатор-прилагательное
+      // (целиком строчное кириллическое слово — «грузовой», «легковой», …) выносим в скобки.
+      const cleanVeh = (() => {
+        let t = veh.replace(/^\s*Автомобиль\s+/iu, '').trim();
+        const m = t.match(/^([а-яё]+)\s+(.+)$/u);
+        if (m) t = `${m[2]} (${m[1]})`;
+        return t;
+      })();
+      const headline = [brand, model].filter(Boolean).join(' ') || cleanVeh;
+      if (!headline && !plate && !vin) return <Dash />;
+      return (
+        <div className="leading-tight">
+          {headline ? <div className="block truncate" style={{ maxWidth: 220, fontWeight: 500 }} title={headline}>{headline}</div> : null}
+          {plate ? <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{plate}</div> : null}
+          {vin ? <div className="font-mono text-xs" style={{ color: 'var(--text-muted)' }} title={vin}>{vin}</div> : null}
+        </div>
+      );
+    }
+    // Основание: убираем хвостовые «(проведен)»/«(записан)», пусто → «без заявки/плана».
+    if (fmt === 'basis') {
+      const raw = String(val ?? '').trim();
+      const cleaned = raw.replace(/\s*\((?:проведен|записан)\)\s*$/iu, '').trim();
+      if (!cleaned) {
+        return <span className="whitespace-nowrap" style={{ color: '#f59e0b', fontStyle: 'italic' }}>{t('data1c.raw.col.noBasis')}</span>;
+      }
+      return <span className="block truncate" style={{ maxWidth: 260 }} title={cleaned}>{cleaned}</span>;
     }
     if (val == null || val === '') return <Dash />;
     if (fmt === 'dt') return <span className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{fmtDt(val)}</span>;

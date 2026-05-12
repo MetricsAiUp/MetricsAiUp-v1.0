@@ -316,7 +316,9 @@ router.get('/stages/current', authenticate, requirePermission('view_1c'), async 
 
 const RAW_MODELS = {
   plan: { delegate: 'oneCPlanRow', orderField: 'receivedAt' },
-  repair: { delegate: 'oneCRepairSnapshot', orderField: 'receivedAt' },
+  // repair: сортируем по «Дата начала (факт)» — это нагляднее для пользователя,
+  // чем дата получения письма. NULLы при DESC в SQLite уходят в конец.
+  repair: { delegate: 'oneCRepairSnapshot', orderField: 'workStartedAt' },
   performed: { delegate: 'oneCWorkPerformed', orderField: 'receivedAt' },
 };
 
@@ -348,8 +350,10 @@ router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req,
       const q = String(req.query.q);
       // Набор полей для OR-поиска подбираем под конкретную raw-таблицу.
       const FIELDS = {
-        plan:      ['number', 'plateNumber', 'vin', 'postRawName'],
-        repair:    ['orderNumber', 'plateNumber1', 'vin', 'master', 'repairKind', 'state'],
+        // plan: ищем и по объединённой «Автомобиль» (vehicleText/plateNumber/vin).
+        plan:      ['number', 'vehicleText', 'plateNumber', 'vin', 'postRawName'],
+        // repair: ищем и по объединённой «Автомобиль» (vehicleText/brand/model/plate1/plate2/vin).
+        repair:    ['orderNumber', 'vehicleText', 'brand', 'model', 'plateNumber1', 'plateNumber2', 'vin', 'master', 'dispatcher', 'repairKind', 'state'],
         performed: ['orderNumber', 'plateNumber', 'vin', 'executor', 'repairKind'],
       };
       where.OR = (FIELDS[req.params.type] || []).map((f) => ({ [f]: { contains: q } }));

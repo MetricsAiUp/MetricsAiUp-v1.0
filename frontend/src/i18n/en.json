@@ -427,7 +427,7 @@
       },
       "raw": {
         "plan": "Plans & Requests",
-        "repair": "Summary",
+        "repair": "Work orders",
         "performed": "Performed"
       },
       "unmapped": {
@@ -460,7 +460,7 @@
     "raw": {
       "subtab": {
         "plan": "Plans & Requests",
-        "repair": "Repair summary",
+        "repair": "Work orders",
         "performed": "Work performed"
       },
       "searchPlaceholder": "Search: order #, VIN, plate, executor/master, post",
@@ -505,7 +505,15 @@
         "cause": "Cause description",
         "note": "Note",
         "noteAcceptance": "Acceptance",
-        "noteWork": "Work"
+        "noteWork": "Work",
+        "vehicle": "Vehicle",
+        "orderNumberZN": "Order #",
+        "workStartFact": "Start date (fact)",
+        "workEndFact": "End date (fact)",
+        "closedFact": "Closed date (fact)",
+        "basisStartPlanned": "Plan start (refined)",
+        "basisEndPlanned": "Plan end (refined)",
+        "noBasis": "no request/plan"
       }
     },
     "common": {
