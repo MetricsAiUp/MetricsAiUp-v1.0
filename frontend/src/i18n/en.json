@@ -426,7 +426,7 @@
         "rowsTotal": "Rows total"
       },
       "raw": {
-        "plan": "Repair plan",
+        "plan": "Plans & Requests",
         "repair": "Summary",
         "performed": "Performed"
       },
@@ -459,7 +459,7 @@
     "savingError": "Could not save",
     "raw": {
       "subtab": {
-        "plan": "Repair plan",
+        "plan": "Plans & Requests",
         "repair": "Repair summary",
         "performed": "Work performed"
       },
@@ -474,17 +474,38 @@
         "state": "State",
         "scheduledStart": "Plan from",
         "scheduledEnd": "Plan to",
-        "post": "Post",
+        "post": "Workplace",
         "duration": "Duration, s",
         "outdated": "Stale",
         "repairKind": "Repair kind",
-        "workStart": "Start",
-        "workEnd": "End",
-        "closed": "Closed",
+        "workStart": "Work started",
+        "workEnd": "Work ended",
+        "closed": "Closed at",
         "master": "Master",
-        "executor": "Executor",
+        "executor": "Employee",
         "normHours": "Norm hrs",
-        "mileage": "Mileage"
+        "mileage": "Mileage",
+        "documentText": "Document",
+        "documentType": "Document type",
+        "organization": "Organization",
+        "vehicleText": "Vehicle",
+        "brand": "Brand",
+        "model": "Model",
+        "plate1": "Plate (state)",
+        "plate2": "Plate",
+        "warrantyEnd": "Warranty until",
+        "yearMade": "Year made",
+        "orderText": "Work order",
+        "orderDate": "Date",
+        "basis": "Basis",
+        "basisStart": "Plan start",
+        "basisEnd": "Plan end",
+        "dispatcher": "Dispatcher",
+        "basisPlate": "Basis: plate",
+        "cause": "Cause description",
+        "note": "Note",
+        "noteAcceptance": "Acceptance",
+        "noteWork": "Work"
       }
     },
     "common": {

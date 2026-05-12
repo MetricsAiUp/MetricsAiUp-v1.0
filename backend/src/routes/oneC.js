@@ -327,6 +327,12 @@ router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req,
     const take = parseInteger(req.query.take, 50, 500);
     const skip = parseInteger(req.query.skip, 0, 100000);
     const where = {};
+    // Вкладка «Планы и Заявки»: показываем строки из «Основной (анализ)», у которых
+    // в колонке «Документ» документ-тип = «План ремонта» или «Заявка на ремонт».
+    // Строки с «Заказ-наряд» игнорируем (по требованию: они отображаются в других местах).
+    if (req.params.type === 'plan') {
+      where.documentType = { in: ['План ремонта', 'Заявка на ремонт'] };
+    }
     if (req.query.orderNumber) {
       // plan-таблица использует поле number
       if (req.params.type === 'plan') where.number = String(req.query.orderNumber);

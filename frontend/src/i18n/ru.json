@@ -426,7 +426,7 @@
         "rowsTotal": "Строк всего"
       },
       "raw": {
-        "plan": "План ремонта",
+        "plan": "Планы и Заявки",
         "repair": "Сводная (ремонты)",
         "performed": "Выработка"
       },
@@ -459,7 +459,7 @@
     "savingError": "Не удалось сохранить",
     "raw": {
       "subtab": {
-        "plan": "План ремонта",
+        "plan": "Планы и Заявки",
         "repair": "Сводная (ремонты)",
         "performed": "Выработка исполнителей"
       },
@@ -474,17 +474,38 @@
         "state": "Состояние",
         "scheduledStart": "План с",
         "scheduledEnd": "План по",
-        "post": "Пост",
-        "duration": "Длит., с",
-        "outdated": "Не акт.",
-        "repairKind": "Вид работ",
-        "workStart": "Начало",
-        "workEnd": "Окончание",
-        "closed": "Закрыт",
+        "post": "Рабочее место",
+        "duration": "Продолжительность",
+        "outdated": "Не актуален",
+        "repairKind": "Вид ремонта",
+        "workStart": "Дата начала работ",
+        "workEnd": "Дата окончания",
+        "closed": "Дата закрытия",
         "master": "Мастер",
-        "executor": "Исполнитель",
+        "executor": "Сотрудник",
         "normHours": "Нормочасы",
-        "mileage": "Пробег"
+        "mileage": "Пробег",
+        "documentText": "Документ",
+        "documentType": "Тип документа",
+        "organization": "Организация",
+        "vehicleText": "Автомобиль",
+        "brand": "Марка",
+        "model": "Модель",
+        "plate1": "Государственный номер",
+        "plate2": "Гос. номер",
+        "warrantyEnd": "Гарантия до",
+        "yearMade": "Год выпуска",
+        "orderText": "Заказ-наряд",
+        "orderDate": "Дата",
+        "basis": "Основание",
+        "basisStart": "Дата начала (план)",
+        "basisEnd": "Дата окончания (план)",
+        "dispatcher": "Диспетчер",
+        "basisPlate": "Основание: гос. номер",
+        "cause": "Описание причины обращения",
+        "note": "Примечание",
+        "noteAcceptance": "Приемка",
+        "noteWork": "Работа"
       }
     },
     "common": {

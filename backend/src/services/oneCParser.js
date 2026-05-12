@@ -45,12 +45,24 @@ function parseDate(v) {
   return null;
 }
 
+// SheetJS с raw:false форматирует числа по en-US локали (запятая = разделитель тысяч):
+// 43200 → "43,200". Раньше парсер трактовал «,» как десятичный → 43.2 → 43.
+// Поэтому отличаем шаблон «1,234» / «43,200,000» (тысячи) от русского «12,5» (десятичный).
+function normalizeNumberString(v) {
+  let cleaned = v.replace(/[\s\u00A0]/g, '');
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(cleaned)) {
+    cleaned = cleaned.replace(/,/g, ''); // тысячи (en-US)
+  } else {
+    cleaned = cleaned.replace(',', '.'); // десятичный (ru)
+  }
+  return cleaned;
+}
+
 function parseInt2(v) {
   if (v == null || v === '') return null;
   if (typeof v === 'number') return Math.trunc(v);
   if (typeof v === 'string') {
-    const cleaned = v.replace(/[\s\u00A0]/g, '').replace(',', '.');
-    const n = Number(cleaned);
+    const n = Number(normalizeNumberString(v));
     return Number.isFinite(n) ? Math.trunc(n) : null;
   }
   return null;
@@ -60,8 +72,7 @@ function parseFloat2(v) {
   if (v == null || v === '') return null;
   if (typeof v === 'number') return v;
   if (typeof v === 'string') {
-    const cleaned = v.replace(/[\s\u00A0]/g, '').replace(',', '.');
-    const n = Number(cleaned);
+    const n = Number(normalizeNumberString(v));
     return Number.isFinite(n) ? n : null;
   }
   return null;
@@ -124,7 +135,9 @@ function parsePlan(workbook, receivedAt) {
     const scheduledEnd = parseDate(r[7]);
     if (!number || !postRawName || !scheduledStart || !scheduledEnd) continue;
 
-    const documentText = s(r[0]) || '';
+    const rawDocText = s(r[0]) || '';
+    // Убираем хвостовые статусы 1С «(проведен)» / «(записан)» — это служебная метка, в таблицу не пишем.
+    const documentText = rawDocText.replace(/\s*\((?:проведен|записан)\)\s*$/iu, '').trim();
     const docTypeMatch = documentText.match(/^(Заказ-наряд|План ремонта|Заявка на ремонт)/u);
 
     out.push({

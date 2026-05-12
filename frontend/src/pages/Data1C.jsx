@@ -473,41 +473,70 @@ function TabImports({ api, canImport, onMutate }) {
 }
 
 // ---------- Tab: Raw ----------
+// plan      — «Планы и Заявки» (из «Основной (анализ) (XLSX)», только План ремонта/Заявка на ремонт): 9 колонок
+// repair    — «Сводная ведомость_Простыня (анализ) (XLSX)»        : 22 колонки файла + receivedAt
+// performed — «Выработка исполнителей_…_для анализа (XLSX)»       : 21 колонка файла + receivedAt
 const RAW_COLUMNS = {
   plan: [
-    { key: 'receivedAt',     i18n: 'received', fmt: 'dt',   sortable: true },
-    { key: 'number',         i18n: 'number',   fmt: 'mono', sortable: true },
-    { key: 'plateNumber',    i18n: 'plate',    sortable: true },
-    { key: 'vin',            i18n: 'vin',      fmt: 'mono', sortable: true },
+    { key: 'documentText',   i18n: 'documentText', sortable: true },
+    { key: 'organization',   i18n: 'organization', sortable: true },
+    { key: 'vehicleText',    i18n: 'vehicleText',  sortable: true },
+    { key: 'number',         i18n: 'number',       fmt: 'mono', sortable: true },
+    { key: 'plateNumber',    i18n: 'plate1',       sortable: true },
+    { key: 'vin',            i18n: 'vin',          fmt: 'mono', sortable: true },
     { key: 'scheduledStart', i18n: 'scheduledStart', fmt: 'dt', sortable: true },
     { key: 'scheduledEnd',   i18n: 'scheduledEnd',   fmt: 'dt', sortable: true },
-    { key: 'postRawName',    i18n: 'post',     sortable: true },
-    { key: 'durationSec',    i18n: 'duration', fmt: 'num',  sortable: true, align: 'right' },
-    { key: 'isOutdated',     i18n: 'outdated', fmt: 'bool', sortable: true },
+    { key: 'durationSec',    i18n: 'duration',     fmt: 'hours', sortable: true, align: 'right' },
+    { key: 'note',           i18n: 'note',         fmt: 'note',  sortable: false, derived: true },
   ],
   repair: [
-    { key: 'receivedAt',     i18n: 'received',   fmt: 'dt',   sortable: true },
-    { key: 'orderNumber',    i18n: 'number',     fmt: 'mono', sortable: true },
-    { key: 'plateNumber1',   i18n: 'plate',      sortable: true },
-    { key: 'vin',            i18n: 'vin',        fmt: 'mono', sortable: true },
-    { key: 'state',          i18n: 'state',      fmt: 'state', sortable: true },
-    { key: 'repairKind',     i18n: 'repairKind', sortable: true },
-    { key: 'workStartedAt',  i18n: 'workStart',  fmt: 'dt',   sortable: true },
-    { key: 'workFinishedAt', i18n: 'workEnd',    fmt: 'dt',   sortable: true },
-    { key: 'closedAt',       i18n: 'closed',     fmt: 'dt',   sortable: true },
-    { key: 'master',         i18n: 'master',     sortable: true },
+    { key: 'receivedAt',     i18n: 'received',     fmt: 'dt',   sortable: true },
+    { key: 'vehicleText',    i18n: 'vehicleText',  sortable: true },
+    { key: 'vin',            i18n: 'vin',          fmt: 'mono', sortable: true },
+    { key: 'brand',          i18n: 'brand',        sortable: true },
+    { key: 'model',          i18n: 'model',        sortable: true },
+    { key: 'plateNumber1',   i18n: 'plate1',       sortable: true },
+    { key: 'plateNumber2',   i18n: 'plate2',       sortable: true },
+    { key: 'warrantyEnd',    i18n: 'warrantyEnd',  fmt: 'dt',   sortable: true },
+    { key: 'yearMade',       i18n: 'yearMade',     fmt: 'num',  sortable: true, align: 'right' },
+    { key: 'orderText',      i18n: 'orderText',    sortable: true },
+    { key: 'orderNumber',    i18n: 'number',       fmt: 'mono', sortable: true },
+    { key: 'orderDate',      i18n: 'orderDate',    fmt: 'dt',   sortable: true },
+    { key: 'state',          i18n: 'state',        fmt: 'state', sortable: true },
+    { key: 'repairKind',     i18n: 'repairKind',   sortable: true },
+    { key: 'mileage',        i18n: 'mileage',      fmt: 'num',  sortable: true, align: 'right' },
+    { key: 'workStartedAt',  i18n: 'workStart',    fmt: 'dt',   sortable: true },
+    { key: 'workFinishedAt', i18n: 'workEnd',      fmt: 'dt',   sortable: true },
+    { key: 'closedAt',       i18n: 'closed',       fmt: 'dt',   sortable: true },
+    { key: 'basis',          i18n: 'basis',        sortable: true },
+    { key: 'basisStart',     i18n: 'basisStart',   fmt: 'dt',   sortable: true },
+    { key: 'basisEnd',       i18n: 'basisEnd',     fmt: 'dt',   sortable: true },
+    { key: 'master',         i18n: 'master',       sortable: true },
+    { key: 'dispatcher',     i18n: 'dispatcher',   sortable: true },
   ],
   performed: [
-    { key: 'receivedAt',    i18n: 'received',   fmt: 'dt',   sortable: true },
-    { key: 'orderNumber',   i18n: 'number',     fmt: 'mono', sortable: true },
-    { key: 'plateNumber',   i18n: 'plate',      sortable: true },
-    { key: 'vin',           i18n: 'vin',        fmt: 'mono', sortable: true },
-    { key: 'executor',      i18n: 'executor',   sortable: true },
-    { key: 'repairKind',    i18n: 'repairKind', sortable: true },
-    { key: 'workStartedAt', i18n: 'workStart',  fmt: 'dt',   sortable: true },
-    { key: 'closedAt',      i18n: 'closed',     fmt: 'dt',   sortable: true },
-    { key: 'normHours',     i18n: 'normHours',  fmt: 'num',  sortable: true, align: 'right' },
-    { key: 'mileage',       i18n: 'mileage',    fmt: 'num',  sortable: true, align: 'right' },
+    { key: 'receivedAt',       i18n: 'received',     fmt: 'dt',   sortable: true },
+    { key: 'vehicleText',      i18n: 'vehicleText',  sortable: true },
+    { key: 'vin',              i18n: 'vin',          fmt: 'mono', sortable: true },
+    { key: 'brand',            i18n: 'brand',        sortable: true },
+    { key: 'model',            i18n: 'model',        sortable: true },
+    { key: 'plateNumber',      i18n: 'plate1',       sortable: true },
+    { key: 'yearMade',         i18n: 'yearMade',     fmt: 'num',  sortable: true, align: 'right' },
+    { key: 'orderText',        i18n: 'orderText',    sortable: true },
+    { key: 'orderNumber',      i18n: 'number',       fmt: 'mono', sortable: true },
+    { key: 'orderDate',        i18n: 'orderDate',    fmt: 'dt',   sortable: true },
+    { key: 'repairKind',       i18n: 'repairKind',   sortable: true },
+    { key: 'state',            i18n: 'state',        fmt: 'state', sortable: true },
+    { key: 'workStartedAt',    i18n: 'workStart',    fmt: 'dt',   sortable: true },
+    { key: 'workFinishedAt',   i18n: 'workEnd',      fmt: 'dt',   sortable: true },
+    { key: 'closedAt',         i18n: 'closed',       fmt: 'dt',   sortable: true },
+    { key: 'master',           i18n: 'master',       sortable: true },
+    { key: 'dispatcher',       i18n: 'dispatcher',   sortable: true },
+    { key: 'executor',         i18n: 'executor',     sortable: true },
+    { key: 'basisPlateNumber', i18n: 'basisPlate',   sortable: true },
+    { key: 'mileage',          i18n: 'mileage',      fmt: 'num',  sortable: true, align: 'right' },
+    { key: 'causeDescription', i18n: 'cause',        sortable: true },
+    { key: 'normHours',        i18n: 'normHours',    fmt: 'num',  sortable: true, align: 'right' },
   ],
 };
 
@@ -544,14 +573,32 @@ function TabRaw({ api }) {
   const cols = RAW_COLUMNS[type];
   const { sorted, sortKey, sortDir, toggle } = useTableSort(items, 'receivedAt', 'desc');
 
-  const fmtCell = (val, fmt) => {
+  const fmtCell = (val, fmt, row) => {
+    // Синтетическая колонка-примечание: статус по содержимому исходного «Рабочее место».
+    // «*приемка*» (без учёта регистра) → "Приемка", иначе → "Работа".
+    if (fmt === 'note') {
+      const raw = String(row?.postRawName || '');
+      const isAcceptance = /приемка/iu.test(raw);
+      const label = isAcceptance ? t('data1c.raw.col.noteAcceptance') : t('data1c.raw.col.noteWork');
+      const color = isAcceptance ? '#f59e0b' : '#22c55e';
+      return <span className="whitespace-nowrap" style={{ color, fontWeight: 600 }}>{label}</span>;
+    }
     if (val == null || val === '') return <Dash />;
-    if (fmt === 'dt') return <span style={{ color: 'var(--text-secondary)' }}>{fmtDt(val)}</span>;
+    if (fmt === 'dt') return <span className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{fmtDt(val)}</span>;
     if (fmt === 'bool') return val ? <span style={{ color: '#f59e0b' }}>✓</span> : <Dash />;
-    if (fmt === 'mono') return <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{val}</span>;
+    if (fmt === 'mono') return <span className="font-mono text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{val}</span>;
     if (fmt === 'num') return <span className="font-mono">{val}</span>;
+    if (fmt === 'hours') {
+      // В файле — секунды; для человека показываем часы. Меньше минуты → "<0.01 ч".
+      const sec = Number(val);
+      if (!Number.isFinite(sec)) return <Dash />;
+      const h = sec / 3600;
+      const shown = h >= 0.01 ? h.toFixed(2) : '<0.01';
+      return <span className="font-mono whitespace-nowrap">{shown} <span style={{ color: 'var(--text-muted)' }}>ч</span></span>;
+    }
     if (fmt === 'state') return <StateBadge state={String(val)} size="sm" />;
-    return String(val);
+    // Длинные тексты (документ, автомобиль, причина обращения и т.п.) обрезаем с tooltip.
+    return <span className="block truncate" style={{ maxWidth: 260 }} title={String(val)}>{String(val)}</span>;
   };
 
   const onReset = () => { setSearch(''); setPeriod({ preset: 'all', from: null, to: null }); };
@@ -601,7 +648,7 @@ function TabRaw({ api }) {
           ) : sorted.map((r, idx) => (
             <tr key={r.id} className={TR_CLASS} style={{ ...tdStyle(idx), borderTop: '1px solid var(--border-glass)' }}>
               {cols.map((c) => (
-                <td key={c.key} className={`px-3 py-2 ${c.align === 'right' ? 'text-right' : ''}`}>{fmtCell(r[c.key], c.fmt)}</td>
+                <td key={c.key} className={`px-3 py-2 ${c.align === 'right' ? 'text-right' : ''}`}>{fmtCell(r[c.key], c.fmt, r)}</td>
               ))}
             </tr>
           ))}
