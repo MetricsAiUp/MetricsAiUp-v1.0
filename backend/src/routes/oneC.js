@@ -319,7 +319,9 @@ const RAW_MODELS = {
   // repair: сортируем по «Дата начала (факт)» — это нагляднее для пользователя,
   // чем дата получения письма. NULLы при DESC в SQLite уходят в конец.
   repair: { delegate: 'oneCRepairSnapshot', orderField: 'workStartedAt' },
-  performed: { delegate: 'oneCWorkPerformed', orderField: 'receivedAt' },
+  // performed («Закрытые ЗН»): сортируем по дате закрытия — это смысловой ключ
+  // этой подвкладки. NULLы при DESC в SQLite уходят в конец.
+  performed: { delegate: 'oneCWorkPerformed', orderField: 'closedAt' },
 };
 
 router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req, res) => {
@@ -354,7 +356,9 @@ router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req,
         plan:      ['number', 'vehicleText', 'plateNumber', 'vin', 'postRawName'],
         // repair: ищем и по объединённой «Автомобиль» (vehicleText/brand/model/plate1/plate2/vin).
         repair:    ['orderNumber', 'vehicleText', 'brand', 'model', 'plateNumber1', 'plateNumber2', 'vin', 'master', 'dispatcher', 'repairKind', 'state'],
-        performed: ['orderNumber', 'plateNumber', 'vin', 'executor', 'repairKind'],
+        // performed: ищем и по объединённой «Автомобиль» (vehicleText/brand/model/plateNumber/vin),
+        // а также по мастеру/диспетчеру/причине обращения и состоянию.
+        performed: ['orderNumber', 'vehicleText', 'brand', 'model', 'plateNumber', 'vin', 'executor', 'master', 'dispatcher', 'repairKind', 'state', 'causeDescription'],
       };
       where.OR = (FIELDS[req.params.type] || []).map((f) => ({ [f]: { contains: q } }));
     }

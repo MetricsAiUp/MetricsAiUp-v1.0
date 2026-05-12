@@ -399,7 +399,7 @@
     "tabs": {
       "current": "Current",
       "imports": "Imports",
-      "raw": "Raw tables",
+      "raw": "1C files",
       "unmapped": "Unmapped",
       "payroll": "Payroll",
       "settings": "Settings"
@@ -461,7 +461,7 @@
       "subtab": {
         "plan": "Plans & Requests",
         "repair": "Work orders",
-        "performed": "Work performed"
+        "performed": "Closed work orders"
       },
       "searchPlaceholder": "Search: order #, VIN, plate, executor/master, post",
       "rowsCount": "Rows: {{count}}",
@@ -513,7 +513,9 @@
         "closedFact": "Closed date (fact)",
         "basisStartPlanned": "Plan start (refined)",
         "basisEndPlanned": "Plan end (refined)",
-        "noBasis": "no request/plan"
+        "noBasis": "no request/plan",
+        "causeShort": "Reason",
+        "orderStateZN": "Work order state"
       }
     },
     "common": {

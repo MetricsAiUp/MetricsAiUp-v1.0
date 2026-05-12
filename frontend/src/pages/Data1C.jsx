@@ -473,9 +473,9 @@ function TabImports({ api, canImport, onMutate }) {
 }
 
 // ---------- Tab: Raw ----------
-// plan      — «Планы и Заявки» (из «Основной (анализ) (XLSX)», только План ремонта/Заявка на ремонт): 9 колонок
-// repair    — «Сводная ведомость_Простыня (анализ) (XLSX)»        : 22 колонки файла + receivedAt
-// performed — «Выработка исполнителей_…_для анализа (XLSX)»       : 21 колонка файла + receivedAt
+// plan      — «Планы и Заявки» (из «Основной (анализ) (XLSX)», только План ремонта/Заявка на ремонт): 8 колонок
+// repair    — «Заказ-наряды» (из «Сводная ведомость_Простыня (анализ)»)        : 12 колонок
+// performed — «Закрытые ЗН» (из «Выработка исполнителей_… (XLSX)»)             : 12 колонок
 const RAW_COLUMNS = {
   plan: [
     { key: 'documentText',   i18n: 'documentText', sortable: true },
@@ -502,28 +502,18 @@ const RAW_COLUMNS = {
     { key: 'dispatcher',     i18n: 'dispatcher',        sortable: true },
   ],
   performed: [
-    { key: 'receivedAt',       i18n: 'received',     fmt: 'dt',   sortable: true },
-    { key: 'vehicleText',      i18n: 'vehicleText',  sortable: true },
-    { key: 'vin',              i18n: 'vin',          fmt: 'mono', sortable: true },
-    { key: 'brand',            i18n: 'brand',        sortable: true },
-    { key: 'model',            i18n: 'model',        sortable: true },
-    { key: 'plateNumber',      i18n: 'plate1',       sortable: true },
-    { key: 'yearMade',         i18n: 'yearMade',     fmt: 'num',  sortable: true, align: 'right' },
-    { key: 'orderText',        i18n: 'orderText',    sortable: true },
-    { key: 'orderNumber',      i18n: 'number',       fmt: 'mono', sortable: true },
-    { key: 'orderDate',        i18n: 'orderDate',    fmt: 'dt',   sortable: true },
-    { key: 'repairKind',       i18n: 'repairKind',   sortable: true },
-    { key: 'state',            i18n: 'state',        fmt: 'state', sortable: true },
-    { key: 'workStartedAt',    i18n: 'workStart',    fmt: 'dt',   sortable: true },
-    { key: 'workFinishedAt',   i18n: 'workEnd',      fmt: 'dt',   sortable: true },
-    { key: 'closedAt',         i18n: 'closed',       fmt: 'dt',   sortable: true },
-    { key: 'master',           i18n: 'master',       sortable: true },
-    { key: 'dispatcher',       i18n: 'dispatcher',   sortable: true },
-    { key: 'executor',         i18n: 'executor',     sortable: true },
-    { key: 'basisPlateNumber', i18n: 'basisPlate',   sortable: true },
-    { key: 'mileage',          i18n: 'mileage',      fmt: 'num',  sortable: true, align: 'right' },
-    { key: 'causeDescription', i18n: 'cause',        sortable: true },
-    { key: 'normHours',        i18n: 'normHours',    fmt: 'num',  sortable: true, align: 'right' },
+    { key: 'vehicle',          i18n: 'vehicle',           fmt: 'vehicle', derived: true },
+    { key: 'orderNumber',      i18n: 'orderNumberZN',     fmt: 'mono',   sortable: true },
+    { key: 'repairKind',       i18n: 'repairKind',        sortable: true },
+    { key: 'state',            i18n: 'orderStateZN',      fmt: 'state',  sortable: true },
+    { key: 'workStartedAt',    i18n: 'workStart',         fmt: 'dt',     sortable: true },
+    { key: 'workFinishedAt',   i18n: 'workEnd',           fmt: 'dt',     sortable: true },
+    { key: 'closedAt',         i18n: 'closed',            fmt: 'dt',     sortable: true },
+    { key: 'master',           i18n: 'master',            sortable: true },
+    { key: 'dispatcher',       i18n: 'dispatcher',        sortable: true },
+    { key: 'executor',         i18n: 'executor',          sortable: true },
+    { key: 'causeDescription', i18n: 'causeShort',        sortable: true },
+    { key: 'normHours',        i18n: 'normHours',         fmt: 'hoursDirect', sortable: true, align: 'right' },
   ],
 };
 
@@ -559,7 +549,7 @@ function TabRaw({ api }) {
 
   const cols = RAW_COLUMNS[type];
   // Дефолтная сортировка зависит от подвкладки: для «Заказ-нарядов» — по дате начала (факт).
-  const DEFAULT_SORT = { plan: 'receivedAt', repair: 'workStartedAt', performed: 'receivedAt' };
+  const DEFAULT_SORT = { plan: 'receivedAt', repair: 'workStartedAt', performed: 'closedAt' };
   const { sorted, sortKey, sortDir, toggle, setSortKey, setSortDir } = useTableSort(items, DEFAULT_SORT.plan, 'desc');
   useEffect(() => {
     setSortKey(DEFAULT_SORT[type] || 'receivedAt');
@@ -623,6 +613,14 @@ function TabRaw({ api }) {
       const sec = Number(val);
       if (!Number.isFinite(sec)) return <Dash />;
       const h = sec / 3600;
+      const shown = h >= 0.01 ? h.toFixed(2) : '<0.01';
+      return <span className="font-mono whitespace-nowrap">{shown} <span style={{ color: 'var(--text-muted)' }}>ч</span></span>;
+    }
+    if (fmt === 'hoursDirect') {
+      // В файле «Выработка исполнителей» нормо-часы уже приходят в часах — просто
+      // нормализуем число и подписываем единицу.
+      const h = Number(val);
+      if (!Number.isFinite(h)) return <Dash />;
       const shown = h >= 0.01 ? h.toFixed(2) : '<0.01';
       return <span className="font-mono whitespace-nowrap">{shown} <span style={{ color: 'var(--text-muted)' }}>ч</span></span>;
     }
