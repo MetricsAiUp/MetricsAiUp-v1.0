@@ -313,64 +313,155 @@ router.get('/stages/current', authenticate, requirePermission('view_1c'), async 
 });
 
 // /raw/:type -----------------------------------------------------------------
+//
+// Дедуп полностью идентичных строк: 1С присылает snapshot-выгрузки повторно,
+// поэтому в raw-таблицах накапливаются записи с одинаковым набором отображаемых
+// в UI полей. На уровне выдачи схлопываем их в одну (самая свежая по received_at)
+// через ROW_NUMBER() OVER (PARTITION BY <набор UI-колонок>).
+//
+// Набор UI-колонок жёстко синхронизирован с frontend/src/pages/Data1C.jsx
+// (константа RAW_COLUMNS). Любые поля, не отображаемые в UI (importId, receivedAt,
+// contentHash и т.д.), в partition НЕ входят.
 
-const RAW_MODELS = {
-  plan: { delegate: 'oneCPlanRow', orderField: 'receivedAt' },
-  // repair: сортируем по «Дата начала (факт)» — это нагляднее для пользователя,
-  // чем дата получения письма. NULLы при DESC в SQLite уходят в конец.
-  repair: { delegate: 'oneCRepairSnapshot', orderField: 'workStartedAt' },
-  // performed («Закрытые ЗН»): сортируем по дате закрытия — это смысловой ключ
-  // этой подвкладки. NULLы при DESC в SQLite уходят в конец.
-  performed: { delegate: 'oneCWorkPerformed', orderField: 'closedAt' },
+// snake_case → camelCase (имена столбцов из $queryRawUnsafe).
+function snakeToCamel(s) {
+  return s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
+function camelizeRow(row) {
+  const out = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (k === 'rn') continue;
+    const ck = snakeToCamel(k);
+    out[ck] = typeof v === 'bigint' ? Number(v) : v;
+  }
+  return out;
+}
+
+const RAW_META = {
+  plan: {
+    table: 'one_c_plan_rows',
+    orderCol: 'received_at',
+    // Колонки UI «Планы и Заявки» (RAW_COLUMNS.plan): documentText, organization,
+    // vehicle (= vehicleText/plateNumber/vin), number, scheduledStart, scheduledEnd,
+    // durationSec, note (= isOutdated).
+    dedupCols: [
+      'document_text', 'organization',
+      'vehicle_text', 'plate_number', 'vin',
+      'number',
+      'scheduled_start', 'scheduled_end',
+      'duration_sec', 'is_outdated',
+    ],
+    searchCols: ['number', 'vehicle_text', 'plate_number', 'vin', 'post_raw_name'],
+    orderNumberCol: 'number',
+  },
+  repair: {
+    table: 'one_c_repair_snapshots',
+    orderCol: 'work_started_at',
+    // Колонки UI «Заказ-наряды» (RAW_COLUMNS.repair): vehicle (= vehicleText/brand/
+    // model/plateNumber1/plateNumber2/vin), orderNumber, state, repairKind,
+    // workStartedAt, workFinishedAt, closedAt, basis, basisStart, basisEnd, master,
+    // dispatcher.
+    dedupCols: [
+      'vehicle_text', 'brand', 'model', 'plate_number_1', 'plate_number_2', 'vin',
+      'order_number', 'state', 'repair_kind',
+      'work_started_at', 'work_finished_at', 'closed_at',
+      'basis', 'basis_start', 'basis_end',
+      'master', 'dispatcher',
+    ],
+    searchCols: ['order_number', 'vehicle_text', 'brand', 'model', 'plate_number_1', 'plate_number_2', 'vin', 'master', 'dispatcher', 'repair_kind', 'state'],
+    orderNumberCol: 'order_number',
+  },
+  performed: {
+    table: 'one_c_work_performed',
+    orderCol: 'closed_at',
+    // Колонки UI «Закрытые ЗН» (RAW_COLUMNS.performed): vehicle (= vehicleText/brand/
+    // model/plateNumber/vin), orderNumber, repairKind, state, workStartedAt,
+    // workFinishedAt, closedAt, master, dispatcher, executor, causeDescription,
+    // normHours.
+    dedupCols: [
+      'vehicle_text', 'brand', 'model', 'plate_number', 'vin',
+      'order_number', 'repair_kind', 'state',
+      'work_started_at', 'work_finished_at', 'closed_at',
+      'master', 'dispatcher', 'executor',
+      'cause_description', 'norm_hours',
+    ],
+    searchCols: ['order_number', 'vehicle_text', 'brand', 'model', 'plate_number', 'vin', 'executor', 'master', 'dispatcher', 'repair_kind', 'state', 'cause_description'],
+    orderNumberCol: 'order_number',
+  },
 };
 
 router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req, res) => {
   try {
-    const meta = RAW_MODELS[req.params.type];
+    const meta = RAW_META[req.params.type];
     if (!meta) return res.status(400).json({ error: 'type must be plan|repair|performed' });
     const take = parseInteger(req.query.take, 50, 500);
     const skip = parseInteger(req.query.skip, 0, 100000);
-    const where = {};
-    // Вкладка «Планы и Заявки»: показываем строки из «Основной (анализ)», у которых
-    // в колонке «Документ» документ-тип = «План ремонта» или «Заявка на ремонт».
-    // Строки с «Заказ-наряд» игнорируем (по требованию: они отображаются в других местах).
+
+    // Собираем WHERE (фильтры применяются ДО дедупа — это корректно, потому что
+    // фильтрующие поля сами входят в дедуп-ключ либо являются техническими).
+    const conditions = [];
+    const params = [];
+    // Вкладка «Планы и Заявки»: только строки с document_type ∈ {План ремонта, Заявка на ремонт}.
     if (req.params.type === 'plan') {
-      where.documentType = { in: ['План ремонта', 'Заявка на ремонт'] };
+      conditions.push(`document_type IN ('План ремонта', 'Заявка на ремонт')`);
     }
     if (req.query.orderNumber) {
-      // plan-таблица использует поле number
-      if (req.params.type === 'plan') where.number = String(req.query.orderNumber);
-      else where.orderNumber = String(req.query.orderNumber);
+      conditions.push(`${meta.orderNumberCol} = ?`);
+      params.push(String(req.query.orderNumber));
     }
-    if (req.query.importId) where.importId = String(req.query.importId);
-    if (req.query.from || req.query.to) {
-      where.receivedAt = {};
-      if (req.query.from) where.receivedAt.gte = new Date(String(req.query.from));
-      if (req.query.to) where.receivedAt.lte = new Date(String(req.query.to));
+    if (req.query.importId) {
+      conditions.push(`import_id = ?`);
+      params.push(String(req.query.importId));
+    }
+    if (req.query.from) {
+      conditions.push(`received_at >= ?`);
+      params.push(new Date(String(req.query.from)).toISOString());
+    }
+    if (req.query.to) {
+      conditions.push(`received_at <= ?`);
+      params.push(new Date(String(req.query.to)).toISOString());
     }
     if (req.query.q) {
       const q = String(req.query.q);
-      // Набор полей для OR-поиска подбираем под конкретную raw-таблицу.
-      const FIELDS = {
-        // plan: ищем и по объединённой «Автомобиль» (vehicleText/plateNumber/vin).
-        plan:      ['number', 'vehicleText', 'plateNumber', 'vin', 'postRawName'],
-        // repair: ищем и по объединённой «Автомобиль» (vehicleText/brand/model/plate1/plate2/vin).
-        repair:    ['orderNumber', 'vehicleText', 'brand', 'model', 'plateNumber1', 'plateNumber2', 'vin', 'master', 'dispatcher', 'repairKind', 'state'],
-        // performed: ищем и по объединённой «Автомобиль» (vehicleText/brand/model/plateNumber/vin),
-        // а также по мастеру/диспетчеру/причине обращения и состоянию.
-        performed: ['orderNumber', 'vehicleText', 'brand', 'model', 'plateNumber', 'vin', 'executor', 'master', 'dispatcher', 'repairKind', 'state', 'causeDescription'],
-      };
-      where.OR = (FIELDS[req.params.type] || []).map((f) => ({ [f]: { contains: q } }));
+      const orParts = meta.searchCols.map((c) => `${c} LIKE ?`);
+      conditions.push(`(${orParts.join(' OR ')})`);
+      meta.searchCols.forEach(() => params.push(`%${q}%`));
     }
-    const items = await prisma[meta.delegate].findMany({
-      where,
-      orderBy: { [meta.orderField]: 'desc' },
-      take,
-      skip,
-    });
-    const total = await prisma[meta.delegate].count({ where });
+    const whereSql = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // COALESCE(..., '') в PARTITION BY — иначе NULL'ы трактуются как разные значения
+    // и две идентичные строки с NULL в одном из полей не схлопываются.
+    const partitionExpr = meta.dedupCols.map((c) => `COALESCE(${c}, '')`).join(', ');
+
+    const itemsSql = `
+      SELECT * FROM (
+        SELECT *, ROW_NUMBER() OVER (
+          PARTITION BY ${partitionExpr}
+          ORDER BY received_at DESC
+        ) AS rn
+        FROM ${meta.table}
+        ${whereSql}
+      ) WHERE rn = 1
+      ORDER BY ${meta.orderCol} DESC
+      LIMIT ${take} OFFSET ${skip}
+    `;
+    const totalSql = `
+      SELECT COUNT(*) AS c FROM (
+        SELECT 1 FROM ${meta.table}
+        ${whereSql}
+        GROUP BY ${partitionExpr}
+      )
+    `;
+
+    const rowsRaw = await prisma.$queryRawUnsafe(itemsSql, ...params);
+    const totalRows = await prisma.$queryRawUnsafe(totalSql, ...params);
+
+    const items = rowsRaw.map(camelizeRow);
+    const total = Number(totalRows[0]?.c ?? 0);
+
     res.json({ items, total, take, skip });
   } catch (err) {
+    logger.error('GET /oneC/raw failed', { err: err.message });
     res.status(500).json({ error: err.message });
   }
 });

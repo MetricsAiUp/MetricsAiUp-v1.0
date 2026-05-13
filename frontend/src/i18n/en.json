@@ -27,7 +27,8 @@
     "reportSchedule": "Report Schedule",
     "techDocs": "Documentation",
     "liveDebug": "Live Debug",
-    "discrepancies": "Discrepancies"
+    "discrepancies": "Discrepancies",
+    "orderMatching": "WO ↔ Plan Matching"
   },
   "shifts": {
     "title": "Shift Management",
@@ -468,7 +469,7 @@
       "loadMore": "Load more",
       "col": {
         "received": "Received",
-        "number": "#",
+        "number": "Plan/Req No.",
         "plate": "Plate",
         "vin": "VIN",
         "state": "State",
@@ -1091,5 +1092,60 @@
     "occupied": "occupied",
     "rawEntries": "API Entries",
     "historyRecords": "history records"
+  },
+  "orderMatching": {
+    "searchPlaceholder": "Search: VIN, plate, WO #, basis…",
+    "resetFilters": "Reset",
+    "matchStatus": "Match",
+    "minSeverity": "Min severity",
+    "state": "State",
+    "rowsCount": "{{count}} rows",
+    "empty": "No data for the selected filters",
+    "hasHistory": "Changes: {{count}}",
+    "kpi": {
+      "total": "Total WOs",
+      "matched": "Matched",
+      "noBasis": "No basis",
+      "basisNotFound": "Basis not found",
+      "severityOrangeOrRed": "Significant deltas"
+    },
+    "col": {
+      "vehicle": "Vehicle",
+      "orderNumber": "WO #",
+      "state": "State",
+      "basis": "Basis",
+      "match": "Link",
+      "start": "Start",
+      "end": "End",
+      "dPlan": "Δ plan",
+      "dPlanHint": "actual {{fact}} − plan {{plan}}",
+      "dUchn": "Δ refined",
+      "dUchnHint": "actual {{fact}} − refined {{uchn}}",
+      "master": "Master",
+      "dispatcher": "Dispatcher"
+    },
+    "row": {
+      "plan": "plan",
+      "uchn": "refined",
+      "fact": "actual"
+    },
+    "badge": {
+      "matched": "Matched",
+      "vehicleMismatch": "Vehicle mismatch",
+      "noBasis": "No basis",
+      "basisNotFound": "Basis not found"
+    },
+    "severity": {
+      "all": "All",
+      "yellow": "≥1h",
+      "orange": "≥4h",
+      "red": ">4h"
+    },
+    "detail": {
+      "history": "WO change log: {{count}} versions (only differing columns shown)",
+      "allIdentical": "All {{count}} versions are identical",
+      "receivedAt": "Received from 1C",
+      "latest": "latest"
+    }
   }
 }

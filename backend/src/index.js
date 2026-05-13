@@ -124,6 +124,7 @@ app.use('/api/report-schedules', require('./routes/reportSchedule'));
 app.use('/api/settings', settingsRoutes);
 app.use('/api/monitoring', require('./routes/monitoring'));
 app.use('/api/oneC', require('./routes/oneC'));
+app.use('/api/oneC', require('./routes/oneCMatching'));
 app.use('/api/discrepancies', require('./routes/discrepancies'));
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 

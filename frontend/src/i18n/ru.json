@@ -27,7 +27,8 @@
     "reportSchedule": "Расписание отчётов",
     "techDocs": "Документация",
     "liveDebug": "Live-отладка",
-    "discrepancies": "Нестыковки"
+    "discrepancies": "Нестыковки",
+    "orderMatching": "Сопоставление ЗН и заявок"
   },
   "shifts": {
     "title": "Управление сменами",
@@ -468,7 +469,7 @@
       "loadMore": "Загрузить ещё",
       "col": {
         "received": "Получено",
-        "number": "№",
+        "number": "Номер П/З",
         "plate": "Госномер",
         "vin": "VIN",
         "state": "Состояние",
@@ -1091,5 +1092,60 @@
     "occupied": "занято",
     "rawEntries": "Записей API",
     "historyRecords": "записей истории"
+  },
+  "orderMatching": {
+    "searchPlaceholder": "Поиск: ВИН, госномер, № ЗН, основание…",
+    "resetFilters": "Сбросить",
+    "matchStatus": "Сопоставление",
+    "minSeverity": "Мин. отклонение",
+    "state": "Состояние",
+    "rowsCount": "{{count}} строк",
+    "empty": "Нет данных по выбранным фильтрам",
+    "hasHistory": "Изменений: {{count}}",
+    "kpi": {
+      "total": "Всего ЗН",
+      "matched": "Сопоставлено",
+      "noBasis": "Без основания",
+      "basisNotFound": "Основание не найдено",
+      "severityOrangeOrRed": "Существенные расхождения"
+    },
+    "col": {
+      "vehicle": "Авто",
+      "orderNumber": "№ ЗН",
+      "state": "Состояние",
+      "basis": "Основание",
+      "match": "Связь",
+      "start": "Начало",
+      "end": "Окончание",
+      "dPlan": "Δ план",
+      "dPlanHint": "факт {{fact}} − план {{plan}}",
+      "dUchn": "Δ уточн.",
+      "dUchnHint": "факт {{fact}} − уточн. {{uchn}}",
+      "master": "Мастер",
+      "dispatcher": "Диспетчер"
+    },
+    "row": {
+      "plan": "план",
+      "uchn": "уточн.",
+      "fact": "факт"
+    },
+    "badge": {
+      "matched": "Совпадает",
+      "vehicleMismatch": "Авто не совпадает",
+      "noBasis": "Без основания",
+      "basisNotFound": "Основание не найдено"
+    },
+    "severity": {
+      "all": "Все",
+      "yellow": "≥1ч",
+      "orange": "≥4ч",
+      "red": ">4ч"
+    },
+    "detail": {
+      "history": "Лог изменений ЗН: {{count}} версий (показаны только различающиеся колонки)",
+      "allIdentical": "Все {{count}} версий идентичны",
+      "receivedAt": "Получено из 1С",
+      "latest": "актуальная"
+    }
   }
 }
