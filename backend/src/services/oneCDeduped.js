@@ -42,6 +42,16 @@ const REPAIR_DEDUP_COLS = [
   'master', 'dispatcher',
 ];
 
+// Колонки UI «Закрытые ЗН» (RAW_COLUMNS.performed в Data1C.jsx + RAW_META.performed
+// в routes/oneC.js). Дедуп идентичен тому, что отдаётся на /api/oneC/raw/performed.
+const PERFORMED_DEDUP_COLS = [
+  'vehicle_text', 'brand', 'model', 'plate_number', 'vin',
+  'order_number', 'repair_kind', 'state',
+  'work_started_at', 'work_finished_at', 'closed_at',
+  'master', 'dispatcher', 'executor',
+  'cause_description', 'norm_hours',
+];
+
 function partitionExpr(cols) {
   return cols.map((c) => `COALESCE(${c}, '')`).join(', ');
 }
@@ -78,9 +88,26 @@ async function getDedupedRepairRows() {
   return rows.map(camelizeRow);
 }
 
+// Дедуп OneCWorkPerformed = «Закрытые ЗН» (UI-фильтров нет).
+async function getDedupedPerformedRows() {
+  const sql = `
+    SELECT * FROM (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY ${partitionExpr(PERFORMED_DEDUP_COLS)}
+        ORDER BY received_at DESC
+      ) AS rn
+      FROM one_c_work_performed
+    ) WHERE rn = 1
+  `;
+  const rows = await prisma.$queryRawUnsafe(sql);
+  return rows.map(camelizeRow);
+}
+
 module.exports = {
   getDedupedPlanRows,
   getDedupedRepairRows,
+  getDedupedPerformedRows,
   PLAN_DEDUP_COLS,
   REPAIR_DEDUP_COLS,
+  PERFORMED_DEDUP_COLS,
 };

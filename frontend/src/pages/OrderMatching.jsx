@@ -4,16 +4,19 @@
 // компонент. Сейчас активен один (ЗН ↔ Заявки 1С), остальные — заглушки.
 // Источник данных активного таба: GET /api/oneC/matching.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   GitMerge, ClipboardList, Camera, Activity, Wrench,
   Search, ChevronDown, ChevronRight,
   AlertTriangle, GitBranch,
   CheckCircle2, XCircle, MinusCircle,
+  TrendingUp, TrendingDown,
+  ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import HelpButton from '../components/HelpButton';
+import Pagination from '../components/Pagination';
 
 // ---------- helpers ----------
 
@@ -134,7 +137,7 @@ function DeltaCell({ deltaSec, severity, noData }) {
 // Новые типы матчинга добавляются сюда; страница больше ничего не правит.
 const MATCHING_TABS = [
   { id: 'zn_plan',            icon: GitMerge,      Component: TabZnPlanMatching },
-  { id: 'closed_zn_orders',   icon: ClipboardList, Component: TabPlaceholder },
+  { id: 'closed_zn_orders',   icon: ClipboardList, Component: TabClosedZnOrders },
   { id: 'closed_zn_cv',       icon: Camera,        Component: TabPlaceholder },
   { id: 'payroll',            icon: Wrench,        Component: TabPlaceholder },
 ];
@@ -144,6 +147,14 @@ const MATCHING_TABS = [
 export default function OrderMatching() {
   const { t } = useTranslation();
   const [active, setActive] = useState('zn_plan');
+  // Кросс-табная навигация: клик по № ЗН в одной вкладке → переход на другую
+  // с фильтрацией+подсветкой строки. Передаём вниз `navigateTo(tabId, orderNumber)`;
+  // дочерний таб получает `focusOrderNumber` только когда он стал активным.
+  const [focusOrderNumber, setFocusOrderNumber] = useState(null);
+  function navigateTo(tabId, orderNumber) {
+    setActive(tabId);
+    setFocusOrderNumber(orderNumber || null);
+  }
 
   const ActiveComponent = (MATCHING_TABS.find((tab) => tab.id === active) || MATCHING_TABS[0]).Component;
 
@@ -184,11 +195,13 @@ export default function OrderMatching() {
             })}
           </div>
         </div>
-        <HelpButton pageKey="orderMatching" />
+        <HelpButton pageKey="orderMatching" tabId={active} />
       </div>
 
       <div>
-        <ActiveComponent t={t} tabId={active} />
+        <ActiveComponent t={t} tabId={active} navigateTo={navigateTo}
+          focusOrderNumber={focusOrderNumber}
+          clearFocus={() => setFocusOrderNumber(null)} />
       </div>
     </div>
   );
@@ -196,7 +209,7 @@ export default function OrderMatching() {
 
 // ---------- TAB: ЗН ↔ Заявки 1С ----------
 
-function TabZnPlanMatching({ t }) {
+function TabZnPlanMatching({ t, focusOrderNumber, clearFocus }) {
   const { api } = useAuth();
 
   const [items, setItems] = useState([]);
@@ -211,18 +224,48 @@ function TabZnPlanMatching({ t }) {
   const [minSeverity, setMinSeverity] = useState('');
   const [stateFilter, setStateFilter] = useState([]);
   const [page, setPage] = useState(0);
-  const TAKE = 100;
+  const [perPage, setPerPage] = useState(50);
+  // По умолчанию — самая новая дата окончания (факт → уточн → план).
+  // Бэкенд понимает sortBy=endAny|startAny|orderNumber|state|master|dispatcher|
+  // matchStatus|deltaPlan|deltaUchn.
+  const [sortBy, setSortBy] = useState('endAny');
+  const [sortDir, setSortDir] = useState('desc');
+
+  // Кросс-табный фокус: при переходе с «Закр. ЗН» подставляем номер ЗН в поиск,
+  // сбрасываем остальные фильтры, и после загрузки скроллим/подсвечиваем строку.
+  const [highlightOrder, setHighlightOrder] = useState(null);
+  const rowRefs = useRef({});
+  useEffect(() => {
+    if (!focusOrderNumber) return;
+    setQ(focusOrderNumber);
+    setMatchStatus([]); setMinSeverity(''); setStateFilter([]); setPage(0);
+    setHighlightOrder(focusOrderNumber);
+    if (clearFocus) clearFocus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusOrderNumber]);
+  useEffect(() => {
+    if (!highlightOrder || loading) return;
+    const el = rowRefs.current[highlightOrder];
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    // Подсветка живёт ~2.5с, потом сама гаснет.
+    const tm = setTimeout(() => setHighlightOrder(null), 2500);
+    return () => clearTimeout(tm);
+  }, [highlightOrder, loading, items]);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
-    params.set('take', String(TAKE));
-    params.set('skip', String(page * TAKE));
+    params.set('take', String(perPage));
+    params.set('skip', String(page * perPage));
     if (q.trim()) params.set('q', q.trim());
     if (matchStatus.length) params.set('matchStatus', matchStatus.join(','));
     if (minSeverity) params.set('minSeverity', minSeverity);
     if (stateFilter.length) params.set('state', stateFilter.join(','));
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortDir) params.set('sortDir', sortDir);
 
     api.get(`/api/oneC/matching?${params.toString()}`)
       .then((res) => {
@@ -233,7 +276,20 @@ function TabZnPlanMatching({ t }) {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [q, matchStatus.join(','), minSeverity, stateFilter.join(','), page, api]);
+  }, [q, matchStatus.join(','), minSeverity, stateFilter.join(','), page, perPage, sortBy, sortDir, api]);
+
+  // Клик по заголовку: тот же столбец → инверсия dir; новый → desc по умолчанию,
+  // кроме текстовых (orderNumber/state/master/dispatcher/matchStatus) — для них asc.
+  function onSort(key) {
+    if (sortBy === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortBy(key);
+      const textKeys = ['orderNumber', 'state', 'master', 'dispatcher', 'matchStatus'];
+      setSortDir(textKeys.includes(key) ? 'asc' : 'desc');
+    }
+    setPage(0);
+  }
 
   const stateOptions = Array.from(new Set(items.map((it) => it.state).filter(Boolean))).sort();
 
@@ -333,16 +389,16 @@ function TabZnPlanMatching({ t }) {
               <tr style={{ color: 'var(--text-muted)' }}>
                 <th className="w-8"></th>
                 <th className="text-left px-3 py-2">{t('orderMatching.col.vehicle')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.orderNumber')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.state')}</th>
+                <SortableTh sortKey="orderNumber" sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.orderNumber')}</SortableTh>
+                <SortableTh sortKey="state"       sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.state')}</SortableTh>
                 <th className="text-left px-3 py-2">{t('orderMatching.col.basis')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.match')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.start')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.end')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.dPlan')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.dUchn')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.master')}</th>
-                <th className="text-left px-3 py-2">{t('orderMatching.col.dispatcher')}</th>
+                <SortableTh sortKey="matchStatus" sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.match')}</SortableTh>
+                <SortableTh sortKey="startAny"    sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.start')}</SortableTh>
+                <SortableTh sortKey="endAny"      sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.end')}</SortableTh>
+                <SortableTh sortKey="deltaPlan"   sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.dPlan')}</SortableTh>
+                <SortableTh sortKey="deltaUchn"   sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.dUchn')}</SortableTh>
+                <SortableTh sortKey="master"      sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.master')}</SortableTh>
+                <SortableTh sortKey="dispatcher"  sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.col.dispatcher')}</SortableTh>
               </tr>
             </thead>
             <tbody>
@@ -350,6 +406,8 @@ function TabZnPlanMatching({ t }) {
                 <RowAndDetail key={it.id} item={it}
                   isExpanded={expanded.has(it.id)}
                   onToggle={() => toggleExpanded(it.id)}
+                  highlight={highlightOrder && it.orderNumber === highlightOrder}
+                  rowRef={(el) => { if (it.orderNumber) rowRefs.current[it.orderNumber] = el; }}
                   t={t} />
               ))}
               {!loading && items.length === 0 && (
@@ -361,21 +419,240 @@ function TabZnPlanMatching({ t }) {
           </table>
         </div>
 
-        {total > TAKE && (
-          <div className="px-3 py-1.5 flex items-center justify-between text-[11px]" style={{ borderTop: '1px solid var(--border-glass)' }}>
-            <span style={{ color: 'var(--text-muted)' }}>
-              {page * TAKE + 1}–{Math.min((page + 1) * TAKE, total)} / {total}
-            </span>
-            <div className="flex gap-2">
-              <button disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}
-                className="px-3 py-1 rounded disabled:opacity-30"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>‹</button>
-              <button disabled={(page + 1) * TAKE >= total} onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1 rounded disabled:opacity-30"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>›</button>
-            </div>
-          </div>
-        )}
+        <div className="px-3 py-1.5" style={{ borderTop: '1px solid var(--border-glass)' }}>
+          <Pagination
+            page={page + 1}
+            totalPages={Math.max(1, Math.ceil(total / perPage))}
+            totalItems={total}
+            perPage={perPage}
+            perPageOptions={[25, 50, 100]}
+            onPageChange={(p) => setPage(p - 1)}
+            onPerPageChange={(pp) => { setPerPage(pp); setPage(0); }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- TAB: Закр. ЗН ↔ Заказ-наряды и Заявки ----------
+//
+// База — «Закрытые ЗН» (deduped performed). К каждой строке backend подтягивает
+// длительности из repair/plan: Δплан, Δуточн, Δфакт, Δзакр−старт.
+// Цвета фона колонок отличают семантику (нормо vs 4 разницы), но НЕ зависят
+// от severity — это самостоятельные «жёсткие» цвета.
+// Подсветка строки: |Δфакт − нормочасы| / нормочасы > 30%.
+
+const CLOSED_COL_BG = {
+  norm:    'rgba(124, 58, 237, 0.10)', // violet — нормочасы (эталон)
+  dPlan:   'rgba(56, 189, 248, 0.10)', // sky    — Δ план
+  dUchn:   'rgba(234, 179, 8, 0.10)',  // amber  — Δ уточн
+  dFact:   'rgba(34, 197, 94, 0.10)',  // emerald — Δ факт
+  dClosed: 'rgba(244, 114, 182, 0.10)',// pink   — Δ закр−старт
+};
+const CLOSED_COL_HEADER = {
+  norm:    '#a78bfa',
+  dPlan:   '#38bdf8',
+  dUchn:   '#eab308',
+  dFact:   '#22c55e',
+  dClosed: '#f472b6',
+};
+
+// Длительность в часах с одной десятой: 3540сек → "0.98ч". null → null.
+function fmtHoursSec(sec) {
+  if (sec == null) return null;
+  const h = sec / 3600;
+  return `${h.toFixed(h < 10 ? 2 : 1)}ч`;
+}
+function fmtHoursNumber(h) {
+  if (h == null) return null;
+  return `${Number(h).toFixed(Number(h) < 10 ? 2 : 1)}ч`;
+}
+
+function TabClosedZnOrders({ t, navigateTo }) {
+  const { api } = useAuth();
+
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [kpi, setKpi] = useState(null);
+  const [threshold, setThreshold] = useState(0.3);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [q, setQ] = useState('');
+  const [onlyMismatch, setOnlyMismatch] = useState(false);
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(50);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams();
+    params.set('take', String(perPage));
+    params.set('skip', String(page * perPage));
+    if (q.trim()) params.set('q', q.trim());
+    if (onlyMismatch) params.set('onlyMismatch', '1');
+
+    api.get(`/api/oneC/matching/closed?${params.toString()}`)
+      .then((res) => {
+        const data = res && res.data ? res.data : {};
+        setItems(data.items || []);
+        setTotal(data.total || 0);
+        setKpi(data.kpi || null);
+        if (data.threshold != null) setThreshold(data.threshold);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [q, onlyMismatch, page, perPage, api]);
+
+  const noData = t('orderMatching.noData');
+  const NoData = () => <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>;
+
+  const kpiChips = kpi ? [
+    { id: 'total',    label: t('orderMatching.closed.kpi.total'),    value: kpi.total,    color: 'var(--text)',    active: !onlyMismatch, onClick: () => { setOnlyMismatch(false); setPage(0); } },
+    { id: 'mismatch', label: t('orderMatching.closed.kpi.mismatch', { pct: Math.round(threshold * 100) }), value: kpi.mismatch, color: '#ef4444', active: onlyMismatch, onClick: () => { setOnlyMismatch(!onlyMismatch); setPage(0); } },
+    { id: 'overrun',  label: t('orderMatching.closed.kpi.overrun'),  value: kpi.overrun,  color: '#f97316', active: false, onClick: () => {} },
+    { id: 'saved',    label: t('orderMatching.closed.kpi.saved'),    value: kpi.saved,    color: '#22c55e', active: false, onClick: () => {} },
+    { id: 'noNorm',   label: t('orderMatching.closed.kpi.noNorm'),   value: kpi.noNorm,   color: 'var(--text-muted)', active: false, onClick: () => {} },
+  ] : [];
+
+  function resetFilters() { setQ(''); setOnlyMismatch(false); setPage(0); }
+
+  return (
+    <div className="space-y-2">
+      {kpi && (
+        <div className="flex flex-wrap gap-1.5">
+          {kpiChips.map((c) => {
+            const clickable = c.id === 'total' || c.id === 'mismatch';
+            return (
+              <button key={c.id} onClick={c.onClick} disabled={!clickable}
+                className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs transition-all backdrop-blur-md"
+                style={{
+                  background: c.active ? 'var(--accent)' : 'var(--bg-glass)',
+                  color: c.active ? '#fff' : 'var(--text-muted)',
+                  border: '1px solid ' + (c.active ? 'var(--accent)' : 'var(--border-glass)'),
+                  boxShadow: c.active ? '0 4px 12px rgba(124,58,237,0.25)' : '0 2px 8px rgba(0,0,0,0.08)',
+                  cursor: clickable ? 'pointer' : 'default',
+                  opacity: clickable ? 1 : 0.85,
+                }}>
+                <span>{c.label}</span>
+                <span className="font-semibold" style={{ color: c.active ? '#fff' : c.color }}>{c.value}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 flex-wrap p-2 rounded-xl backdrop-blur-md"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+        <div className="flex items-center gap-1.5 flex-1 min-w-[220px]">
+          <Search className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+          <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }}
+            placeholder={t('orderMatching.closed.searchPlaceholder')}
+            className="flex-1 px-2 py-1 rounded text-xs"
+            style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+        </div>
+
+        <ChipToggle active={onlyMismatch}
+          onClick={() => { setOnlyMismatch(!onlyMismatch); setPage(0); }}
+          label={t('orderMatching.closed.onlyMismatch', { pct: Math.round(threshold * 100) })} />
+
+        <button onClick={resetFilters} className="px-2 py-1 text-[11px] rounded"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+          {t('orderMatching.resetFilters')}
+        </button>
+      </div>
+
+      <div className="rounded-xl overflow-hidden backdrop-blur-md"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+        <div className="px-3 py-1.5 flex items-center justify-between text-[11px]" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+          <span style={{ color: 'var(--text-muted)' }}>{t('orderMatching.rowsCount', { count: total })}</span>
+          {loading && <span style={{ color: 'var(--text-muted)' }}>…</span>}
+          {error && <span style={{ color: '#ef4444' }}>{error}</span>}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead style={{ background: 'var(--bg)' }}>
+              <tr style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2">{t('orderMatching.closed.col.orderNumber')}</th>
+                <th className="text-left px-3 py-2">{t('orderMatching.closed.col.closedAt')}</th>
+                <th className="text-right px-3 py-2" style={{ background: CLOSED_COL_BG.norm,    color: CLOSED_COL_HEADER.norm,    fontWeight: 600 }}>{t('orderMatching.closed.col.normHours')}</th>
+                <th className="text-right px-3 py-2" style={{ background: CLOSED_COL_BG.dPlan,   color: CLOSED_COL_HEADER.dPlan,   fontWeight: 600 }}>{t('orderMatching.closed.col.dPlan')}</th>
+                <th className="text-right px-3 py-2" style={{ background: CLOSED_COL_BG.dUchn,   color: CLOSED_COL_HEADER.dUchn,   fontWeight: 600 }}>{t('orderMatching.closed.col.dUchn')}</th>
+                <th className="text-right px-3 py-2" style={{ background: CLOSED_COL_BG.dFact,   color: CLOSED_COL_HEADER.dFact,   fontWeight: 600 }}>{t('orderMatching.closed.col.dFact')}</th>
+                <th className="text-right px-3 py-2" style={{ background: CLOSED_COL_BG.dClosed, color: CLOSED_COL_HEADER.dClosed, fontWeight: 600 }}>{t('orderMatching.closed.col.dClosed')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => {
+                const mismatch = it.norm && it.norm.mismatch;
+                const ratio = it.norm ? it.norm.ratio : null;
+                const overrun = ratio != null && ratio > 0;
+                return (
+                  <tr key={it.id} style={{
+                    borderTop: '1px solid var(--border)',
+                    background: mismatch ? 'rgba(239, 68, 68, 0.06)' : 'transparent',
+                    boxShadow: mismatch ? 'inset 3px 0 0 #ef4444' : 'none',
+                  }}>
+                    <td className="px-3 py-2 font-mono whitespace-nowrap align-top">
+                      {it.orderNumber ? (
+                        <button onClick={() => navigateTo && navigateTo('zn_plan', it.orderNumber)}
+                          className="hover:underline transition-colors"
+                          title={t('orderMatching.closed.gotoZnPlan')}
+                          style={{ color: 'var(--accent)', cursor: 'pointer', background: 'transparent', border: 0, padding: 0, font: 'inherit' }}>
+                          {it.orderNumber}
+                        </button>
+                      ) : <NoData />}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap align-top text-xs">{fmtDt(it.closedAt) || <NoData />}</td>
+                    <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top" style={{ background: CLOSED_COL_BG.norm }}>
+                      {fmtHoursNumber(it.normHours) || <NoData />}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top" style={{ background: CLOSED_COL_BG.dPlan }}>
+                      {fmtHoursSec(it.durations.tPlan) || <NoData />}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top" style={{ background: CLOSED_COL_BG.dUchn }}>
+                      {fmtHoursSec(it.durations.tUchn) || <NoData />}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top" style={{ background: CLOSED_COL_BG.dFact }}>
+                      <span style={{ color: mismatch ? '#ef4444' : 'var(--text)', fontWeight: mismatch ? 700 : 400 }}>
+                        {fmtHoursSec(it.durations.tFact) || noData}
+                      </span>
+                      {mismatch && ratio != null && (
+                        <div className="text-[9px] mt-0.5 inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
+                          style={{ background: overrun ? 'rgba(239,68,68,0.18)' : 'rgba(34,197,94,0.18)', color: overrun ? '#ef4444' : '#22c55e' }}>
+                          {overrun ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                          {ratio > 0 ? '+' : ''}{Math.round(ratio * 100)}%
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top" style={{ background: CLOSED_COL_BG.dClosed }}>
+                      {fmtHoursSec(it.durations.tClosed) || <NoData />}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!loading && items.length === 0 && (
+                <tr><td colSpan={7} className="text-center px-4 py-8" style={{ color: 'var(--text-muted)' }}>
+                  {t('orderMatching.empty')}
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="px-3 py-1.5" style={{ borderTop: '1px solid var(--border-glass)' }}>
+          <Pagination
+            page={page + 1}
+            totalPages={Math.max(1, Math.ceil(total / perPage))}
+            totalItems={total}
+            perPage={perPage}
+            perPageOptions={[25, 50, 100]}
+            onPageChange={(p) => setPage(p - 1)}
+            onPerPageChange={(pp) => { setPerPage(pp); setPage(0); }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -398,6 +675,28 @@ function TabPlaceholder({ t, tabId }) {
 
 // ---------- subcomponents ----------
 
+// Кликабельный заголовок столбца с тривиальной индикацией направления.
+// Активная колонка: иконка ↑/↓; неактивная: «двойная» иконка ⇅ (приглушённо).
+function SortableTh({ sortKey, sortBy, sortDir, onSort, children, align = 'left' }) {
+  const isActive = sortBy === sortKey;
+  const Icon = isActive ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return (
+    <th className={`text-${align} px-3 py-2 select-none`}>
+      <button onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1 hover:opacity-100 transition-opacity"
+        style={{
+          background: 'transparent', border: 0, padding: 0, font: 'inherit',
+          color: isActive ? 'var(--accent)' : 'inherit',
+          cursor: 'pointer',
+          opacity: isActive ? 1 : 0.85,
+        }}>
+        <span>{children}</span>
+        <Icon className="w-3 h-3" style={{ opacity: isActive ? 1 : 0.45 }} />
+      </button>
+    </th>
+  );
+}
+
 function ChipToggle({ active, onClick, label }) {
   return (
     <button onClick={onClick}
@@ -412,7 +711,7 @@ function ChipToggle({ active, onClick, label }) {
   );
 }
 
-function RowAndDetail({ item, isExpanded, onToggle, t }) {
+function RowAndDetail({ item, isExpanded, onToggle, t, highlight, rowRef }) {
   const canExpand = item.hasHistory;
   const d = item.dates || {};
   const sev = d.sev || {};
@@ -423,7 +722,12 @@ function RowAndDetail({ item, isExpanded, onToggle, t }) {
   const NoData = () => <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>;
   return (
     <>
-      <tr style={{ borderTop: '1px solid var(--border)', background: isExpanded ? 'var(--bg)' : 'transparent' }}>
+      <tr ref={rowRef} style={{
+          borderTop: '1px solid var(--border)',
+          background: highlight ? 'rgba(124, 58, 237, 0.18)' : (isExpanded ? 'var(--bg)' : 'transparent'),
+          boxShadow: highlight ? 'inset 3px 0 0 var(--accent)' : 'none',
+          transition: 'background 0.35s ease',
+        }}>
         <td className="px-2 py-2 text-center align-top">
           {canExpand ? (
             <button onClick={onToggle} style={{ color: 'var(--text-muted)' }}>

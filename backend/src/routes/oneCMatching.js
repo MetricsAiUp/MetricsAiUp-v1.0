@@ -292,7 +292,10 @@ router.get('/matching', authenticate, requirePermission('view_1c'), async (req, 
     }
 
     // Сортировка
-    const sortBy = req.query.sortBy || 'factStart';
+    // По умолчанию — endAny DESC: «самая новая дата окончания» с каскадом
+    // факт → уточн → план (для строк без факта используется уточн, иначе план).
+    // Аналогично startAny для колонки «Начало».
+    const sortBy = req.query.sortBy || 'endAny';
     const sortDir = req.query.sortDir === 'asc' ? 1 : -1;
     function getSortVal(it) {
       switch (sortBy) {
@@ -300,15 +303,18 @@ router.get('/matching', authenticate, requirePermission('view_1c'), async (req, 
         case 'state': return it.state;
         case 'master': return it.master;
         case 'dispatcher': return it.dispatcher;
+        case 'matchStatus': return it.matchStatus;
         case 'planStart': return it.dates.planStart;
         case 'planEnd': return it.dates.planEnd;
         case 'uchnStart': return it.dates.uchnStart;
         case 'uchnEnd': return it.dates.uchnEnd;
         case 'factStart': return it.dates.factStart;
         case 'factEnd': return it.dates.factEnd;
+        case 'startAny': return it.dates.factStart || it.dates.uchnStart || it.dates.planStart;
+        case 'endAny':   return it.dates.factEnd   || it.dates.uchnEnd   || it.dates.planEnd;
         case 'deltaPlan': return it.durations.deltaPlan;
         case 'deltaUchn': return it.durations.deltaUchn;
-        default: return it.dates.factStart;
+        default: return it.dates.factEnd || it.dates.uchnEnd || it.dates.planEnd;
       }
     }
     function cmp(a, b) {
@@ -333,6 +339,192 @@ router.get('/matching', authenticate, requirePermission('view_1c'), async (req, 
     res.json({ items, total: filtered.length, kpi, take, skip });
   } catch (err) {
     logger.error('GET /oneC/matching failed', { err: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/oneC/matching/closed — «Закр. ЗН ↔ Заказ-наряды и Заявки»
+//
+// База — «Закрытые ЗН» (deduped performed). Для каждой строки по orderNumber
+// подтягиваем последний repair-snapshot (для basis/uchn-дат и фактических
+// меток работы) и через basis → plan-rows (охватывающий интервал). Считаем
+// четыре длительности (план / уточн / факт / закр−старт) и флаг отклонения
+// факта от нормочасов (>30%).
+// ---------------------------------------------------------------------------
+const NORM_MISMATCH_THRESHOLD = 0.3;
+
+// Дополнительная подсветка строки по сопоставлению Δфакт ↔ нормочасы.
+// Возвращает { mismatch: bool, ratio: number|null } где ratio = (Δфакт − norm) / norm.
+function normVsFact(normHours, deltaFactSec) {
+  if (normHours == null || normHours <= 0) return { mismatch: false, ratio: null };
+  if (deltaFactSec == null || deltaFactSec <= 0) return { mismatch: false, ratio: null };
+  const normSec = Number(normHours) * 3600;
+  if (!Number.isFinite(normSec) || normSec <= 0) return { mismatch: false, ratio: null };
+  const ratio = (deltaFactSec - normSec) / normSec;
+  return { mismatch: Math.abs(ratio) > NORM_MISMATCH_THRESHOLD, ratio };
+}
+
+router.get('/matching/closed', authenticate, requirePermission('view_1c'), async (req, res) => {
+  try {
+    const [performed, repairs, plans] = await Promise.all([
+      deduped.getDedupedPerformedRows(),
+      deduped.getDedupedRepairRows(),
+      deduped.getDedupedPlanRows(),
+    ]);
+
+    // plan rows by documentText
+    const planByDoc = new Map();
+    for (const p of plans) {
+      const key = p.documentText || '';
+      if (!key) continue;
+      if (!planByDoc.has(key)) planByDoc.set(key, []);
+      planByDoc.get(key).push(p);
+    }
+
+    // Последняя версия repair по orderNumber (для basis/dates).
+    const latestRepairByOrder = new Map();
+    for (const r of repairs) {
+      const key = r.orderNumber;
+      if (!key) continue;
+      const cur = latestRepairByOrder.get(key);
+      const t = r.receivedAt ? new Date(r.receivedAt).getTime() : 0;
+      const tc = cur && cur.receivedAt ? new Date(cur.receivedAt).getTime() : -1;
+      if (!cur || t > tc) latestRepairByOrder.set(key, r);
+    }
+
+    // Последняя версия performed по orderNumber — берём как «представитель»
+    // закрытого ЗН (на UI-вкладке «Закрытые ЗН» отображается ровно это).
+    const latestPerformedByOrder = new Map();
+    for (const p of performed) {
+      const key = p.orderNumber;
+      if (!key) continue;
+      const cur = latestPerformedByOrder.get(key);
+      const t = p.receivedAt ? new Date(p.receivedAt).getTime() : 0;
+      const tc = cur && cur.receivedAt ? new Date(cur.receivedAt).getTime() : -1;
+      if (!cur || t > tc) latestPerformedByOrder.set(key, p);
+    }
+
+    const all = Array.from(latestPerformedByOrder.values()).map((p) => {
+      const r = latestRepairByOrder.get(p.orderNumber) || null;
+      const basis = r ? (r.basis || null) : null;
+      const planRows = basis ? (planByDoc.get(basis) || []) : [];
+      const { planStart, planEnd } = planSpan(planRows);
+
+      // uchn (basisStart/End) и fact (work_started_at/work_finished_at) — из repair-snapshot.
+      const uchnStart = r ? (r.basisStart || null) : null;
+      const uchnEnd   = r ? (r.basisEnd   || null) : null;
+      const factStart = r ? (r.workStartedAt  || null) : p.workStartedAt  || null;
+      const factEnd   = r ? (r.workFinishedAt || null) : p.workFinishedAt || null;
+      const closedAt  = p.closedAt || (r ? r.closedAt : null);
+
+      const tPlan   = durationSec(planStart, planEnd);
+      const tUchn   = durationSec(uchnStart, uchnEnd);
+      const tFact   = durationSec(factStart, factEnd);
+      const tClosed = durationSec(factStart, closedAt); // закрытие − начало
+
+      const normHours = (p.normHours != null && p.normHours !== '') ? Number(p.normHours) : null;
+      const norm = normVsFact(normHours, tFact);
+
+      return {
+        id: p.id,
+        orderNumber: p.orderNumber,
+        state: p.state || (r ? r.state : null),
+        repairKind: p.repairKind || (r ? r.repairKind : null),
+        vehicleText: p.vehicleText || (r ? r.vehicleText : null),
+        brand: p.brand || (r ? r.brand : null),
+        model: p.model || (r ? r.model : null),
+        plateNumber: p.plateNumber || (r ? (r.plateNumber1 || r.plateNumber2) : null),
+        vin: p.vin || (r ? r.vin : null),
+        master: p.master || (r ? r.master : null),
+        executor: p.executor || null,
+        causeDescription: p.causeDescription || null,
+        basis,
+        hasRepair: !!r,
+        hasPlan: planRows.length > 0,
+        closedAt,
+        normHours,
+        dates: { planStart, planEnd, uchnStart, uchnEnd, factStart, factEnd, closedAt },
+        durations: {
+          tPlan, tUchn, tFact, tClosed,
+        },
+        norm: {
+          mismatch: norm.mismatch,
+          ratio: norm.ratio, // (Δфакт − norm) / norm; >0 — превышение, <0 — экономия
+        },
+      };
+    });
+
+    // Фильтры
+    const q = req.query.q ? String(req.query.q).toLowerCase() : null;
+    const onlyMismatch = req.query.onlyMismatch === '1' || req.query.onlyMismatch === 'true';
+    const from = req.query.from ? new Date(String(req.query.from)) : null;
+    const to   = req.query.to   ? new Date(String(req.query.to))   : null;
+
+    function pass(item) {
+      if (onlyMismatch && !item.norm.mismatch) return false;
+      const d = item.closedAt ? new Date(item.closedAt) : null;
+      if (from && (!d || d < from)) return false;
+      if (to && (!d || d > to)) return false;
+      if (q) {
+        const hay = [
+          item.orderNumber, item.basis,
+          item.vehicleText, item.brand, item.model, item.plateNumber, item.vin,
+          item.master, item.executor, item.repairKind, item.state, item.causeDescription,
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }
+
+    const filtered = all.filter(pass);
+
+    // KPI
+    const kpi = {
+      total: filtered.length,
+      mismatch: filtered.filter((x) => x.norm.mismatch).length,
+      overrun:  filtered.filter((x) => x.norm.ratio != null && x.norm.ratio > NORM_MISMATCH_THRESHOLD).length,
+      saved:    filtered.filter((x) => x.norm.ratio != null && x.norm.ratio < -NORM_MISMATCH_THRESHOLD).length,
+      noNorm:   filtered.filter((x) => x.normHours == null || x.normHours <= 0).length,
+    };
+
+    // Сортировка
+    const sortBy  = req.query.sortBy || 'closedAt';
+    const sortDir = req.query.sortDir === 'asc' ? 1 : -1;
+    function getSortVal(it) {
+      switch (sortBy) {
+        case 'orderNumber': return it.orderNumber;
+        case 'closedAt':    return it.closedAt;
+        case 'normHours':   return it.normHours;
+        case 'tPlan':       return it.durations.tPlan;
+        case 'tUchn':       return it.durations.tUchn;
+        case 'tFact':       return it.durations.tFact;
+        case 'tClosed':     return it.durations.tClosed;
+        case 'ratio':       return it.norm.ratio;
+        default:            return it.closedAt;
+      }
+    }
+    function cmp(a, b) {
+      const va = getSortVal(a);
+      const vb = getSortVal(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
+      const ta = new Date(va).getTime();
+      const tb = new Date(vb).getTime();
+      if (!Number.isNaN(ta) && !Number.isNaN(tb)) return (ta - tb) * sortDir;
+      return String(va).localeCompare(String(vb)) * sortDir;
+    }
+    filtered.sort(cmp);
+
+    const take = Math.min(parseInt(req.query.take, 10) || 100, 1000);
+    const skip = Math.max(parseInt(req.query.skip, 10) || 0, 0);
+    const items = filtered.slice(skip, skip + take);
+
+    res.json({ items, total: filtered.length, kpi, take, skip, threshold: NORM_MISMATCH_THRESHOLD });
+  } catch (err) {
+    logger.error('GET /oneC/matching/closed failed', { err: err.message, stack: err.stack });
     res.status(500).json({ error: err.message });
   }
 });

@@ -1171,6 +1171,27 @@
       "allIdentical": "All {{count}} versions are identical",
       "receivedAt": "Received from 1C",
       "latest": "latest"
+    },
+    "closed": {
+      "searchPlaceholder": "Search: WO #, VIN, plate, foreman, executor…",
+      "onlyMismatch": "Mismatch >{{pct}}% only",
+      "kpi": {
+        "total": "Closed WOs",
+        "mismatch": "Mismatch >{{pct}}%",
+        "overrun": "Over norm",
+        "saved": "Under norm",
+        "noNorm": "No norm hours"
+      },
+      "col": {
+        "orderNumber": "WO #",
+        "closedAt": "Closed",
+        "normHours": "Norm hours",
+        "dPlan": "Δ plan",
+        "dUchn": "Δ adj.",
+        "dFact": "Δ fact",
+        "dClosed": "Δ closed−start"
+      },
+      "gotoZnPlan": "Open in “WO ↔ Plans” by this number"
     }
   }
 }
