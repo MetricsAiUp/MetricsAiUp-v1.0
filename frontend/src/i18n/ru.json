@@ -1107,6 +1107,18 @@
     "historyRecords": "записей истории"
   },
   "orderMatching": {
+    "title": "Сопоставления",
+    "noData": "н/д",
+    "soon": "скоро",
+    "tabs": {
+      "zn_plan": "ЗН ↔ Заявки",
+      "closed_zn_orders": "Закр. ЗН ↔ Заказ-наряды и Заявки",
+      "closed_zn_cv": "Закр. ЗН ↔ CV",
+      "payroll": "Выработка"
+    },
+    "placeholder": {
+      "notReady": "Раздел в разработке"
+    },
     "searchPlaceholder": "Поиск: ВИН, госномер, № ЗН, основание…",
     "resetFilters": "Сбросить",
     "matchStatus": "Сопоставление",

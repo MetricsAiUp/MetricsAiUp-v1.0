@@ -2378,6 +2378,298 @@ const HELP_CONTENT = {
   },
 
   // ────────────────────────────
+  // СОПОСТАВЛЕНИЯ (ЗН ↔ Заявки 1С и др.)
+  // ────────────────────────────
+  orderMatching: {
+    ru: {
+      title: 'Сопоставления — журнал связей между сущностями',
+      intro: 'Страница объединяет несколько типов матчинга в одной точке входа: «ЗН ↔ Заявки 1С» (активна сейчас) и три запланированных таба — «Закр. ЗН ↔ Заказ-наряды и Заявки», «Закр. ЗН ↔ CV», «Выработка». Источник активного таба: **OneCWorkOrderMerged** (последняя версия каждого ЗН по `(orderNumber, vehicleVin)`) + **OneCPlanRow** (актуальные заявки/планы). Связь устанавливается по совпадению `repair.basis === plan.documentText`, всё остальное (статус, отклонения, рассинхрон по времени) — производные метрики.',
+      sections: [
+        {
+          heading: 'Карта экрана',
+          items: [
+            '[eye] **Шапка** — название «Сопоставления» + горизонтальный таб-бар (4 вкладки) + кнопка «Помощь» справа.',
+            '[eye] **Полоса KPI-чипов** — 5 кликабельных чипов. Каждый чип это одновременно счётчик и фильтр (клик включает/выключает соответствующий критерий).',
+            '[eye] **Полоса фильтров** — поиск по тексту, уровень минимального отклонения, чипы состояний ЗН (формируются динамически из данных).',
+            '[eye] **Таблица** — 12 колонок, сразу под фильтрами. Слева шеврон для раскрытия истории версий ЗН.',
+            '[eye] **Подвал таблицы** — счётчик строк, индикатор загрузки, пагинация (по 100 строк).',
+          ],
+        },
+        {
+          heading: '4 вкладки (типы сопоставлений)',
+          items: [
+            '[●purple] **ЗН ↔ Заявки** — основной актуальный матчинг: для каждого ЗН из OneCWorkOrderMerged ищется заявка/план, чьё `documentText` совпадает с `basis` ЗН. Показывает связь, кто-кого и насколько сильно разошлись фактические/плановые моменты времени.',
+            '[●gray] **Закр. ЗН ↔ Заказ-наряды и Заявки** *(скоро)* — ретроспективный матчинг закрытых заказ-нарядов с историей заявок/планов: проверка, что закрытие соответствует тому, что обещали.',
+            '[●gray] **Закр. ЗН ↔ CV** *(скоро)* — закрытые ЗН против VehicleSession/PostStay: было ли авто действительно на посту в нужное время.',
+            '[●gray] **Выработка** *(скоро)* — сводка по нормочасам и фактическому времени за период с разбивкой по исполнителям.',
+            'Заглушки помечены бейджем «скоро» и приглушены — клик переключает таб, но внутри пока заготовка.',
+          ],
+        },
+        {
+          heading: 'KPI-чипы — счётчик + фильтр одновременно',
+          items: [
+            '[●gray] **Всего ЗН** — общее число дедуплицированных ЗН (по `orderNumber + vehicleVin`). Клик сбрасывает все KPI-фильтры (не трогает поиск/состояние/severity).',
+            '[●green] **Сопоставлено** — связь установлена, basis нашёл соответствующий documentText. Клик добавляет/убирает фильтр `matchStatus=matched`.',
+            '[●gray] **Без основания** — у ЗН пустое поле basis (нет привязки к плану/заявке). Клик включает фильтр `no_basis`.',
+            '[●red] **Основание не найдено** — basis заполнен, но среди актуальных заявок нет documentText, который ему соответствует. Это **критичный** случай: либо опечатка в 1С, либо план удалён.',
+            '[●orange] **Существенные расхождения** — число ЗН, у которых хотя бы одно отклонение по времени (старт/конец) попадает в категорию `orange` или `red` (см. ниже).',
+            'Активный чип подсвечен фиолетовым (`var(--accent)`) с лёгким свечением.',
+          ],
+        },
+        {
+          heading: 'Бейджи связи (колонка «Связь»)',
+          items: [
+            '[●green] **Совпадает (matched)** — basis ЗН найден в заявках, VIN/госномер тоже сходятся (либо у заявки нет авто, и проверка по авто пропущена).',
+            '[●yellow] **Авто не совпадает (matched_vehicle_mismatch)** — basis найден, но указанное в заявке авто не совпадает с авто в ЗН. Часто означает переоформление на лету.',
+            '[●gray] **Без основания (no_basis)** — поле basis пустое в исходных данных 1С.',
+            '[●red] **Основание не найдено (basis_not_found)** — basis заполнен, но среди актуальных OneCPlanRow ничего похожего нет. Возможные причины: план удалён в 1С, ошибка в номере, рассинхрон по почте.',
+          ],
+        },
+        {
+          heading: 'Колонки «Начало» и «Окончание» — три уровня времени',
+          items: [
+            'Каждая ячейка показывает три горизонтальные строки одного и того же момента (старт работ или их окончание):',
+            '**ПЛАН** — изначально запланированное в плане/заявке 1С (`OneCPlanRow.planStartTime` / `planEndTime`). Базовая линия. Подсветки нет — это просто факт планирования.',
+            '**УТОЧН.** — уточнение основания: дата старта/конца заявки (`OneCPlanRow.basisStart` / `basisEnd`), которая могла измениться после согласований. Если она ушла от ПЛАНа сильно — строка подсвечивается (см. шкалу severity).',
+            '**ФАКТ** — фактическое время из заказ-наряда (`OneCRepairOrderRow.workStartedAt` / `workFinishedAt`). Подсвечивается относительно УТОЧН.',
+            '[●gray] **«н/д»** на месте значения означает, что данных для этого уровня нет (например, ЗН ещё не закрыт — нет факта окончания). Плейсхолдер показывается серым с пониженной прозрачностью, чтобы не путать его с типографским минусом «−» в подсказках под Δ-ячейками.',
+          ],
+        },
+        {
+          heading: 'Шкала severity (цвет фона строки УТОЧН/ФАКТ)',
+          items: [
+            'Подсветка отражает абсолютную разницу относительно базовой линии (ПЛАН для УТОЧН, УТОЧН для ФАКТ):',
+            '[●gray] **Серый / без фона** — расхождение менее 1 часа или сравнивать не с чем.',
+            '[●yellow] **Жёлтый** — расхождение от 1 до 4 часов. В пределах нормы для сложных работ.',
+            '[●orange] **Оранжевый** — расхождение от 4 до 8 часов. Уже стоит разобраться: возможно, переоценили норму или плохо передали смену.',
+            '[●red] **Красный** — расхождение более 8 часов (или знак показывает, что событие сместилось на следующий день). Требует внимания.',
+            'Фильтр «Мин. отклонение» вверху отсекает строки слабее выбранного порога (все / ≥1ч / ≥4ч / >4ч).',
+          ],
+        },
+        {
+          heading: 'Колонки «Δ план» и «Δ уточн.» — длительности',
+          items: [
+            'Δ план = (факт. длительность ЗН) − (плановая длительность из заявки). Знак: «+» — факт длиннее плана, «−» — короче, «±0» — точно.',
+            'Δ уточн. = (факт. длительность ЗН) − (уточнённая длительность из заявки). По смыслу та же дельта, но относительно уточнения, а не изначального плана.',
+            'Под цифрой — мелкий хинт вида «факт Xч Yм − план Aч Bм», чтобы не приходилось считать в уме. Если одно из значений отсутствует — на его месте «н/д» (визуально серое и приглушённое), чтобы не сливалось с минусом «−» рядом.',
+            'Цвет фона повторяет шкалу severity (gray/yellow/orange/red), но применяется к величине расхождения по времени работы, а не моментов старта/конца.',
+            '[warn] Подвох: знак минус показан как «−» (типографское), плюс — обычным «+». Длительности всегда абсолютные часы:минуты. Если самой Δ-ячейки нет (например, нет факта закрытия) — она отрисуется как «н/д» вместо числа.',
+          ],
+        },
+        {
+          heading: 'Остальные колонки',
+          items: [
+            '**Авто** — марка, модель, госномер / VIN. Если все три поля пустые — берётся `vehicleText` (как пришло из 1С). Под названием — лиловая метка «Изменений: N», если у ЗН более одной версии в истории.',
+            '**№ ЗН** — номер заказ-наряда (формат `КОЛ00037873` или схожий). Моноширинный шрифт.',
+            '**Состояние** — текстовое значение из 1С: «В работе», «Закрыт», «Начать работу», «Ожидание», «Выполнен», «Окончание работ» и т.д. Влияет на чипы фильтра «Состояние» (формируются динамически по текущей странице).',
+            '**Основание** — текст basis ЗН (часто «План ремонта № … от …» или «Заявка на ремонт № … от …»). Под ним — мелкий моноширинный «№ planNumber» из связанной заявки (если она нашлась).',
+            '**Мастер / Диспетчер** — ФИО из последней версии ЗН.',
+          ],
+        },
+        {
+          heading: 'Раскрытие строки (история версий)',
+          items: [
+            'Шеврон ▶ слева есть только у ЗН, у которых **больше одной версии** в OneCRepairOrderRow (одно письмо из 1С — одна версия; merger выбирает последнюю по дате получения, остальные хранятся как история).',
+            'Развёрнутая панель показывает таблицу всех версий: время получения письма + только те колонки, у которых значения **различаются** между версиями (одинаковые поля скрываются автоматически, чтобы не зашумлять).',
+            'Последняя (актуальная) версия подсвечена фиолетовым с меткой «АКТУАЛЬНАЯ».',
+            '[ok] **Зачем смотреть** — отследить, в какой именно версии в 1С появилось/исчезло поле basis, изменился пост, переписали госномер. Полезно при разборе нестыковок.',
+          ],
+        },
+        {
+          heading: 'Фильтры в одной строке',
+          items: [
+            '**Поиск** — подстрочный поиск по ВИН, госномеру, номеру ЗН, тексту основания, плану, мастеру. Регистр игнорируется.',
+            '**Мин. отклонение** — отсекает строки, у которых нет ни одного отклонения времени уровня ≥ выбранного порога.',
+            '**Сопоставление** — мульти-чипы для `matchStatus` (matched / vehicle mismatch / no basis / basis not found). По умолчанию пустой (показываются все).',
+            '**Состояние** — мульти-чипы из реальных состояний ЗН в текущей выборке. Список перестраивается, если переключить страницу пагинации.',
+            '**Сбросить** — очищает все фильтры (включая поиск и severity).',
+          ],
+        },
+        {
+          heading: 'Дизайн (glassmorphism)',
+          items: [
+            '[eye] Все панели (KPI, фильтры, таблица, плейсхолдеры) выполнены в стилистике «стекло»: полупрозрачный фон (`--bg-glass`), `backdrop-blur`, мягкая тень.',
+            '[eye] Активный KPI-чип — фиолетовое свечение (`box-shadow accent`).',
+            '[eye] Иконки только Lucide React, без emoji. Цветовая палитра берётся из CSS-переменных темы — корректно работает и в тёмной, и в светлой.',
+          ],
+        },
+        {
+          heading: 'Источник данных и API',
+          items: [
+            '**Запрос:** `GET /api/oneC/matching?take=100&skip=N&q=...&matchStatus=...&minSeverity=...&state=...`',
+            '**Бэкенд:** `backend/src/routes/oneCMatching.js` → выбирает дедуплицированные строки через `deduped.getDedupedRepairRows()` + `deduped.getDedupedPlanRows()` (UI-фильтр documentType учитывается).',
+            '**Алгоритм матчинга:** строгое равенство `repair.basis === plan.documentText` (после `.trim()`). Никакого fuzzy — если хочешь увидеть совпадение, текст должен биться байт в байт.',
+            '**Severity для моментов:** считается на бэке через сравнение pairs (planStart↔uchnStart, uchnStart↔factStart). Пороги: 1ч → yellow, 4ч → orange, 8ч → red.',
+            '**Право доступа:** `view_1c` (просмотр). Управления здесь нет — только чтение.',
+          ],
+        },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '[ok] **Утренний разбор** — открыть страницу, активировать чип «Основание не найдено» → быстро увидеть проблемные ЗН → передать в 1С на разбор.',
+            '[ok] **Контроль норматива** — активировать «Существенные расхождения» + severity «>4ч» → пробежаться по списку, где факт сильно ушёл от плана.',
+            '[ok] **Дублирующие заявки** — найти ЗН с бейджем «Авто не совпадает» → раскрыть историю → понять, на каком шаге переоформили авто.',
+            '[ok] **Проверка изменений** — раскрыть строку с меткой «Изменений: N» → увидеть только те поля, которые менялись между версиями.',
+          ],
+        },
+        {
+          heading: 'Ограничения и подводные камни',
+          items: [
+            '[warn] Матчинг строго по строковому равенству. Если в 1С где-то скрылся неразрывный пробел или лишняя точка — связь не построится. В таком случае статус будет `basis_not_found`.',
+            '[warn] Авто в заявке (`OneCPlanRow.vehicleText`) и в ЗН (`OneCRepairOrderRow.vehicleText`) сравниваются эвристически. Если данные пришли в разных кодировках/форматах — возможен ложный `matched_vehicle_mismatch`.',
+            '[warn] История строится по сырым OneCRepairOrderRow за всё время. Если письма из 1С пришли с задержкой и нарушенным порядком — «актуальной» считается версия с самой поздней `receivedAt`, а не самой поздней `workStartedAt`.',
+            '[warn] Severity рассчитывается по абсолютной разнице в секундах. Пограничные значения (например, ровно 1ч 0м 0с) попадают в категорию «жёлтый», а не «серый».',
+            '[warn] Страница не подписана на Socket.IO — обновление списка происходит только при смене фильтра или ручном перезаходе.',
+          ],
+        },
+      ],
+    },
+    en: {
+      title: 'Matching — Relations Between Entities',
+      intro: 'The page bundles several matching kinds under one entry point: "WO ↔ Plans" (active) and three planned tabs — "Closed WO ↔ Orders & Plans", "Closed WO ↔ CV", "Payroll". Active-tab source: **OneCWorkOrderMerged** (latest version per `(orderNumber, vehicleVin)`) + **OneCPlanRow** (current plans). The link is built by `repair.basis === plan.documentText`; everything else (status, time deltas, drift) is derived.',
+      sections: [
+        {
+          heading: 'Screen Layout',
+          items: [
+            '[eye] **Header** — "Matching" title + horizontal tab bar (4 tabs) + "Help" button on the right.',
+            '[eye] **KPI chip row** — 5 clickable chips. Each chip is both a counter and a filter (click toggles its criterion).',
+            '[eye] **Filter row** — text search, minimum-severity threshold, dynamic state chips, reset.',
+            '[eye] **Table** — 12 columns, right below the filters. Leftmost chevron expands the WO history.',
+            '[eye] **Table footer** — row counter, loading indicator, pagination (100 rows per page).',
+          ],
+        },
+        {
+          heading: '4 Tabs (matching kinds)',
+          items: [
+            '[●purple] **WO ↔ Plans** — main current matching: for every WO from OneCWorkOrderMerged, find a plan/request whose `documentText` equals the WO `basis`.',
+            '[●gray] **Closed WO ↔ Orders & Plans** *(soon)* — retrospective matching of closed WOs against plan/order history.',
+            '[●gray] **Closed WO ↔ CV** *(soon)* — closed WOs vs VehicleSession/PostStay: was the car really on the post at the claimed time?',
+            '[●gray] **Payroll** *(soon)* — norm-hours vs actual time per worker over a period.',
+            'Placeholders are tagged "soon" and dimmed — clicking switches the tab, but the body is a stub.',
+          ],
+        },
+        {
+          heading: 'KPI chips — counter + filter at once',
+          items: [
+            '[●gray] **Total WOs** — total deduplicated WOs (by `orderNumber + vehicleVin`). Click resets all KPI filters (does not touch search/state/severity).',
+            '[●green] **Matched** — link established, basis found a corresponding documentText. Click toggles `matchStatus=matched`.',
+            '[●gray] **No basis** — WO `basis` field is empty (no plan link). Toggles `no_basis`.',
+            '[●red] **Basis not found** — basis is filled but no current OneCPlanRow has a matching documentText. **Critical** case.',
+            '[●orange] **Significant deltas** — WOs with at least one time delta (start/end) of severity `orange` or `red`.',
+            'Active chip — purple glow (`var(--accent)`).',
+          ],
+        },
+        {
+          heading: 'Link badges ("Link" column)',
+          items: [
+            '[●green] **matched** — basis found in plans, plate/VIN also match (or the plan has no vehicle and the check was skipped).',
+            '[●yellow] **matched_vehicle_mismatch** — basis found, but the plan vehicle does not match the WO vehicle. Often means an on-the-fly re-assignment.',
+            '[●gray] **no_basis** — WO basis field is empty.',
+            '[●red] **basis_not_found** — basis is set, but no current OneCPlanRow contains it. Possible causes: plan deleted in 1C, typo in the number, mail-import lag.',
+          ],
+        },
+        {
+          heading: 'Columns "Start" and "End" — three levels of time',
+          items: [
+            'Each cell shows three rows of the same moment (work start or work end):',
+            '**PLAN** — original planned time from the plan/request (`OneCPlanRow.planStartTime` / `planEndTime`). Baseline. No background.',
+            '**REFINED** — basis refinement: `OneCPlanRow.basisStart` / `basisEnd`. Highlighted if it drifted far from PLAN.',
+            '**ACTUAL** — actual time from the repair order (`OneCRepairOrderRow.workStartedAt` / `workFinishedAt`). Highlighted vs REFINED.',
+            '[●gray] **"n/a"** in place of a value means data for that level is missing (e.g. WO is still in progress — no actual end). Rendered in muted grey with lower opacity so it never blends with the typographic minus "−" used in delta hints below.',
+          ],
+        },
+        {
+          heading: 'Severity scale (REFINED/ACTUAL row background)',
+          items: [
+            'Highlight reflects the absolute difference vs the baseline (PLAN for REFINED, REFINED for ACTUAL):',
+            '[●gray] **Gray / no background** — delta < 1h or nothing to compare with.',
+            '[●yellow] **Yellow** — 1–4h delta. Normal for complex work.',
+            '[●orange] **Orange** — 4–8h delta. Worth a look: maybe the norm was off or the shift handover was bad.',
+            '[●red] **Red** — > 8h delta (or sign suggests a next-day slip). Needs attention.',
+            'The "Min severity" filter at the top removes rows weaker than the threshold (all / ≥1h / ≥4h / >4h).',
+          ],
+        },
+        {
+          heading: 'Columns "Δ plan" and "Δ refined" — durations',
+          items: [
+            'Δ plan = (actual WO duration) − (plan duration from the request). Sign: "+" — actual longer, "−" — shorter, "±0" — exact.',
+            'Δ refined = (actual WO duration) − (refined duration from the request).',
+            'Below the number — a tiny hint "actual Xh Ym − plan Ah Bm". If a value is missing, "n/a" is shown in its place (muted grey) so it never blends with the adjacent minus "−".',
+            'Background colour follows the same severity scale (gray/yellow/orange/red) applied to work-duration delta.',
+            '[warn] Catch: the minus is rendered as "−" (typographic), plus as plain "+". If the Δ cell itself has nothing to subtract from (e.g. no actual end yet) — it shows "n/a" instead of a number.',
+          ],
+        },
+        {
+          heading: 'Other columns',
+          items: [
+            '**Vehicle** — brand, model, plate / VIN. If all three are empty, `vehicleText` from 1C is used. A small purple "Changes: N" tag underneath indicates the WO has multiple versions.',
+            '**WO #** — order number (e.g. `КОЛ00037873`). Monospace.',
+            '**State** — textual value from 1C: "In work", "Closed", "Start work", etc. Drives the dynamic state chip filter.',
+            '**Basis** — basis text (often "Repair plan No … of …" or "Repair request No … of …"). Below — a small monospace "№ planNumber" of the linked plan.',
+            '**Master / Dispatcher** — names from the latest WO version.',
+          ],
+        },
+        {
+          heading: 'Row expansion (version history)',
+          items: [
+            'Left chevron ▶ appears only if the WO has **more than one version** in OneCRepairOrderRow (one 1C email = one version; the merger keeps the latest by `receivedAt`, the rest goes into history).',
+            'The expanded panel shows a table of all versions: email receivedAt + only those columns whose values **differ** between versions (identical fields are auto-hidden to reduce noise).',
+            'Latest (current) version — purple background + "LATEST" tag.',
+            '[ok] **Why look** — to track in which 1C version the basis appeared/disappeared, the post changed, or the plate was rewritten.',
+          ],
+        },
+        {
+          heading: 'Filter bar',
+          items: [
+            '**Search** — substring search across VIN, plate, WO #, basis, plan, master. Case-insensitive.',
+            '**Min severity** — drops rows that do not have at least one delta of the chosen threshold.',
+            '**Match** — multi-select chips for `matchStatus`. Empty = all shown.',
+            '**State** — multi-select chips built from real WO states on the current page.',
+            '**Reset** — clears all filters (including search and severity).',
+          ],
+        },
+        {
+          heading: 'Design (glassmorphism)',
+          items: [
+            '[eye] All panels (KPI, filters, table, placeholders) are styled as "glass": translucent background (`--bg-glass`), `backdrop-blur`, soft shadow.',
+            '[eye] Active KPI chip — purple glow (`box-shadow accent`).',
+            '[eye] Lucide React icons only, no emoji. Colours come from CSS variables — works in both dark and light themes.',
+          ],
+        },
+        {
+          heading: 'Data source and API',
+          items: [
+            '**Request:** `GET /api/oneC/matching?take=100&skip=N&q=...&matchStatus=...&minSeverity=...&state=...`',
+            '**Backend:** `backend/src/routes/oneCMatching.js` → reads deduplicated rows via `deduped.getDedupedRepairRows()` + `deduped.getDedupedPlanRows()` (UI documentType filter applied).',
+            '**Matching algorithm:** strict equality `repair.basis === plan.documentText` (after `.trim()`). No fuzzy — bytes must align.',
+            '**Severity for moments:** computed server-side from pairs (planStart↔uchnStart, uchnStart↔factStart). Thresholds: 1h → yellow, 4h → orange, 8h → red.',
+            '**Permission:** `view_1c` (read). No management actions on this page.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '[ok] **Morning review** — activate "Basis not found" chip → quickly see broken WOs → escalate to 1C.',
+            '[ok] **Norm check** — activate "Significant deltas" + ">4h" severity → walk the list where actual ran far off plan.',
+            '[ok] **Vehicle mismatches** — find WOs with "Vehicle mismatch" badge → expand history → identify the step where the vehicle was swapped.',
+            '[ok] **Version diff** — expand a row with "Changes: N" tag → see only the fields that actually changed between versions.',
+          ],
+        },
+        {
+          heading: 'Caveats',
+          items: [
+            '[warn] Strict string equality matching. A stray non-breaking space or extra dot in 1C breaks the link → `basis_not_found`.',
+            '[warn] Vehicle in the plan vs in the WO is compared heuristically. Different encodings/formats may yield a false `matched_vehicle_mismatch`.',
+            '[warn] History is built from raw OneCRepairOrderRow across all time. Out-of-order mail delivery means "latest" = max `receivedAt`, not max `workStartedAt`.',
+            '[warn] Severity is computed from the absolute seconds diff. Boundary values (exactly 1h 0m 0s) fall into "yellow", not "gray".',
+            '[warn] The page is not subscribed to Socket.IO — refresh on filter change or reload only.',
+          ],
+        },
+      ],
+    },
+  },
+
+  // ────────────────────────────
   // ПОЛЬЗОВАТЕЛИ
   // ────────────────────────────
   users: {

@@ -1107,6 +1107,18 @@
     "historyRecords": "history records"
   },
   "orderMatching": {
+    "title": "Matching",
+    "noData": "n/a",
+    "soon": "soon",
+    "tabs": {
+      "zn_plan": "WO ↔ Plans",
+      "closed_zn_orders": "Closed WO ↔ Orders & Plans",
+      "closed_zn_cv": "Closed WO ↔ CV",
+      "payroll": "Payroll"
+    },
+    "placeholder": {
+      "notReady": "Coming soon"
+    },
     "searchPlaceholder": "Search: VIN, plate, WO #, basis…",
     "resetFilters": "Reset",
     "matchStatus": "Match",

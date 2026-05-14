@@ -1,15 +1,19 @@
-// Страница «Сопоставление ЗН и заявок».
-// Источник: GET /api/oneC/matching — дедуплицированные данные из «Заказ-наряды» и «Планы и Заявки».
-// Алгоритм матчинга (бэк): repair.basis === plan.documentText.
+// Страница «Сопоставления» — единая точка входа для разных типов матчинга.
+//
+// Архитектура: тонкая шапка как у Data1C + тaб-бар. Каждый таб — самостоятельный
+// компонент. Сейчас активен один (ЗН ↔ Заявки 1С), остальные — заглушки.
+// Источник данных активного таба: GET /api/oneC/matching.
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ClipboardList, Search, Filter, ChevronDown, ChevronRight,
+  GitMerge, ClipboardList, Camera, Activity, Wrench,
+  Search, ChevronDown, ChevronRight,
   AlertTriangle, GitBranch,
   CheckCircle2, XCircle, MinusCircle,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import HelpButton from '../components/HelpButton';
 
 // ---------- helpers ----------
 
@@ -20,8 +24,11 @@ function fmtDt(v) {
   return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+// Возвращают null, если значения нет. На месте «нет данных» вызов-сайт
+// подставляет локализованный плейсхолдер `t('orderMatching.noData')` («н/д»/«n/a»),
+// чтобы не путать «нет данных» с типографским минусом «−».
 function fmtSignedSec(sec) {
-  if (sec == null) return '—';
+  if (sec == null) return null;
   const abs = Math.abs(sec);
   const h = Math.floor(abs / 3600);
   const m = Math.floor((abs % 3600) / 60);
@@ -31,7 +38,7 @@ function fmtSignedSec(sec) {
 }
 
 function fmtDurationSec(sec) {
-  if (sec == null) return '—';
+  if (sec == null) return null;
   const abs = Math.abs(sec);
   const h = Math.floor(abs / 3600);
   const m = Math.floor((abs % 3600) / 60);
@@ -67,26 +74,35 @@ function MatchBadge({ status, t }) {
   );
 }
 
+// Возвращает строку с описанием авто, либо null — если ничего полезного нет.
+// Плейсхолдер «н/д» подставляется на месте использования.
 function vehicleString(item) {
   const parts = [item.brand, item.model].filter(Boolean).join(' ');
   const subParts = [item.plateNumber1 || item.plateNumber2, item.vin].filter(Boolean);
   if (parts) return `${parts}${subParts.length ? ' · ' + subParts.join(' / ') : ''}`;
   if (item.vehicleText) return item.vehicleText;
-  return subParts.join(' / ') || '—';
+  return subParts.join(' / ') || null;
 }
 
 // 3-строчная ячейка моментов (план/уточн/факт) с подсветкой
 function MomentCell({ planVal, uchnVal, factVal, uchnSev, factSev, t }) {
+  const noData = t('orderMatching.noData');
   const cPlan = SEVERITY_COLORS.gray;
   const cUchn = SEVERITY_COLORS[uchnSev] || SEVERITY_COLORS.gray;
   const cFact = SEVERITY_COLORS[factSev] || SEVERITY_COLORS.gray;
-  const Row = ({ label, val, c }) => (
-    <div className="flex items-baseline gap-2 px-1 rounded whitespace-nowrap leading-tight"
-      style={{ background: c.bg }}>
-      <span className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</span>
-      <span className="text-[11px] font-mono" style={{ color: c.fg }}>{fmtDt(val) || '—'}</span>
-    </div>
-  );
+  const Row = ({ label, val, c }) => {
+    const hasData = !!fmtDt(val);
+    return (
+      <div className="flex items-baseline gap-2 px-1 rounded whitespace-nowrap leading-tight"
+        style={{ background: c.bg }}>
+        <span className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</span>
+        <span className="text-[11px] font-mono"
+          style={{ color: hasData ? c.fg : 'var(--text-muted)', opacity: hasData ? 1 : 0.6 }}>
+          {hasData ? fmtDt(val) : noData}
+        </span>
+      </div>
+    );
+  };
   return (
     <div className="space-y-0.5">
       <Row label={t('orderMatching.row.plan')}  val={planVal} c={cPlan} />
@@ -97,20 +113,90 @@ function MomentCell({ planVal, uchnVal, factVal, uchnSev, factSev, t }) {
 }
 
 // Δ ячейка длительности (со знаком и подсветкой)
-function DeltaCell({ deltaSec, severity }) {
+function DeltaCell({ deltaSec, severity, noData }) {
   const c = SEVERITY_COLORS[severity] || SEVERITY_COLORS.gray;
+  const formatted = fmtSignedSec(deltaSec);
   return (
     <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono whitespace-nowrap"
-      style={{ background: c.bg, color: c.fg }}>
-      {fmtSignedSec(deltaSec)}
+      style={{
+        background: c.bg,
+        color: formatted == null ? 'var(--text-muted)' : c.fg,
+        opacity: formatted == null ? 0.6 : 1,
+      }}>
+      {formatted ?? noData}
     </span>
   );
 }
 
-// ---------- main ----------
+// ---------- табы ----------
+
+// Описание табов: id, иконка, i18n-ключ. Component — рендерится при активации.
+// Новые типы матчинга добавляются сюда; страница больше ничего не правит.
+const MATCHING_TABS = [
+  { id: 'zn_plan',            icon: GitMerge,      Component: TabZnPlanMatching },
+  { id: 'closed_zn_orders',   icon: ClipboardList, Component: TabPlaceholder },
+  { id: 'closed_zn_cv',       icon: Camera,        Component: TabPlaceholder },
+  { id: 'payroll',            icon: Wrench,        Component: TabPlaceholder },
+];
+
+// ---------- root ----------
 
 export default function OrderMatching() {
   const { t } = useTranslation();
+  const [active, setActive] = useState('zn_plan');
+
+  const ActiveComponent = (MATCHING_TABS.find((tab) => tab.id === active) || MATCHING_TABS[0]).Component;
+
+  return (
+    <div className="p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2 border-b" style={{ borderColor: 'var(--border-glass)' }}>
+        <div className="flex items-center gap-3 flex-1 overflow-x-auto">
+          <h1 className="text-sm font-bold flex items-center gap-1.5 whitespace-nowrap pr-2"
+              style={{ color: 'var(--text-secondary)', borderRight: '1px solid var(--border-glass)' }}>
+            <Activity size={14} /> {t('orderMatching.title')}
+          </h1>
+          <div className="flex gap-1">
+            {MATCHING_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = active === tab.id;
+              const isStub = tab.Component === TabPlaceholder;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActive(tab.id)}
+                  className="px-3 py-1.5 text-sm flex items-center gap-1.5 transition-all whitespace-nowrap relative"
+                  style={{
+                    color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                    borderBottom: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+                    fontWeight: isActive ? 600 : 500,
+                    opacity: isStub && !isActive ? 0.55 : 1,
+                  }}
+                >
+                  <Icon size={14} /> {t(`orderMatching.tabs.${tab.id}`)}
+                  {isStub && (
+                    <span className="inline-flex items-center justify-center rounded text-[9px] font-semibold px-1"
+                      style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                      {t('orderMatching.soon')}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <HelpButton pageKey="orderMatching" />
+      </div>
+
+      <div>
+        <ActiveComponent t={t} tabId={active} />
+      </div>
+    </div>
+  );
+}
+
+// ---------- TAB: ЗН ↔ Заявки 1С ----------
+
+function TabZnPlanMatching({ t }) {
   const { api } = useAuth();
 
   const [items, setItems] = useState([]);
@@ -120,7 +206,6 @@ export default function OrderMatching() {
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(new Set());
 
-  // фильтры
   const [q, setQ] = useState('');
   const [matchStatus, setMatchStatus] = useState([]);
   const [minSeverity, setMinSeverity] = useState('');
@@ -167,74 +252,76 @@ export default function OrderMatching() {
     setQ(''); setMatchStatus([]); setMinSeverity(''); setStateFilter([]); setPage(0);
   }
 
-  return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center gap-3">
-        <ClipboardList className="w-6 h-6" style={{ color: 'var(--accent)' }} />
-        <h1 className="text-2xl font-semibold">{t('nav.orderMatching')}</h1>
-      </div>
+  // KPI как кликабельные chip-фильтры: тот же ряд = и счётчик, и фильтр.
+  const kpiChips = kpi ? [
+    { id: 'total', label: t('orderMatching.kpi.total'), value: kpi.total, color: 'var(--text)', active: matchStatus.length === 0 && !minSeverity, onClick: () => { setMatchStatus([]); setMinSeverity(''); setPage(0); } },
+    { id: 'matched', label: t('orderMatching.kpi.matched'), value: kpi.matched, color: '#22c55e', active: matchStatus.includes('matched'), onClick: () => { toggleMulti(setMatchStatus, 'matched', matchStatus); setPage(0); } },
+    { id: 'noBasis', label: t('orderMatching.kpi.noBasis'), value: kpi.noBasis, color: 'var(--text-muted)', active: matchStatus.includes('no_basis'), onClick: () => { toggleMulti(setMatchStatus, 'no_basis', matchStatus); setPage(0); } },
+    { id: 'basisNotFound', label: t('orderMatching.kpi.basisNotFound'), value: kpi.basisNotFound, color: '#ef4444', active: matchStatus.includes('basis_not_found'), onClick: () => { toggleMulti(setMatchStatus, 'basis_not_found', matchStatus); setPage(0); } },
+    { id: 'severity', label: t('orderMatching.kpi.severityOrangeOrRed'), value: kpi.severityOrangeOrRed, color: '#f97316', active: minSeverity === 'orange', onClick: () => { setMinSeverity(minSeverity === 'orange' ? '' : 'orange'); setPage(0); } },
+  ] : [];
 
+  return (
+    <div className="space-y-2">
+      {/* KPI как фильтр-чипы (один ряд) */}
       {kpi && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KpiCard label={t('orderMatching.kpi.total')}        value={kpi.total} />
-          <KpiCard label={t('orderMatching.kpi.matched')}      value={kpi.matched}        color="#22c55e" />
-          <KpiCard label={t('orderMatching.kpi.noBasis')}      value={kpi.noBasis}        color="var(--text-muted)" />
-          <KpiCard label={t('orderMatching.kpi.basisNotFound')} value={kpi.basisNotFound} color="#ef4444" />
-          <KpiCard label={t('orderMatching.kpi.severityOrangeOrRed')} value={kpi.severityOrangeOrRed} color="#f97316" />
+        <div className="flex flex-wrap gap-1.5">
+          {kpiChips.map((c) => (
+            <button key={c.id} onClick={c.onClick}
+              className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs transition-all backdrop-blur-md"
+              style={{
+                background: c.active ? 'var(--accent)' : 'var(--bg-glass)',
+                color: c.active ? '#fff' : 'var(--text-muted)',
+                border: '1px solid ' + (c.active ? 'var(--accent)' : 'var(--border-glass)'),
+                boxShadow: c.active ? '0 4px 12px rgba(124,58,237,0.25)' : '0 2px 8px rgba(0,0,0,0.08)',
+              }}>
+              <span>{c.label}</span>
+              <span className="font-semibold" style={{ color: c.active ? '#fff' : c.color }}>{c.value}</span>
+            </button>
+          ))}
         </div>
       )}
 
-      <div className="p-4 rounded-lg space-y-3" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 flex-1 min-w-[260px]">
-            <Search className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-            <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }}
-              placeholder={t('orderMatching.searchPlaceholder')}
-              className="flex-1 px-3 py-1.5 rounded text-sm"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-          </div>
-          <button onClick={resetFilters} className="px-3 py-1.5 text-sm rounded"
-            style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-            {t('orderMatching.resetFilters')}
-          </button>
+      {/* Поиск + фильтры одной строкой */}
+      <div className="flex items-center gap-2 flex-wrap p-2 rounded-xl backdrop-blur-md"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+        <div className="flex items-center gap-1.5 flex-1 min-w-[220px]">
+          <Search className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+          <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }}
+            placeholder={t('orderMatching.searchPlaceholder')}
+            className="flex-1 px-2 py-1 rounded text-xs"
+            style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap text-sm">
-          <Filter className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-
-          <div className="flex items-center gap-1 flex-wrap">
-            <span style={{ color: 'var(--text-muted)' }}>{t('orderMatching.matchStatus')}:</span>
-            {['matched','matched_vehicle_mismatch','no_basis','basis_not_found'].map((s) => (
-              <ChipToggle key={s} active={matchStatus.includes(s)}
-                onClick={() => { toggleMulti(setMatchStatus, s, matchStatus); setPage(0); }}
-                label={t(`orderMatching.${MATCH_BADGES[s].key}`)} />
-            ))}
-          </div>
-
-          <div className="flex items-center gap-1 flex-wrap">
-            <span style={{ color: 'var(--text-muted)' }}>{t('orderMatching.minSeverity')}:</span>
-            {['','yellow','orange','red'].map((s) => (
-              <ChipToggle key={s||'all'} active={minSeverity === s}
-                onClick={() => { setMinSeverity(s); setPage(0); }}
-                label={s ? t(`orderMatching.severity.${s}`) : t('orderMatching.severity.all')} />
-            ))}
-          </div>
-
-          {stateOptions.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <span style={{ color: 'var(--text-muted)' }}>{t('orderMatching.state')}:</span>
-              {stateOptions.map((s) => (
-                <ChipToggle key={s} active={stateFilter.includes(s)}
-                  onClick={() => { toggleMulti(setStateFilter, s, stateFilter); setPage(0); }}
-                  label={s} />
-              ))}
-            </div>
-          )}
+        <div className="flex items-center gap-1">
+          <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{t('orderMatching.minSeverity')}:</span>
+          {['','yellow','orange','red'].map((s) => (
+            <ChipToggle key={s||'all'} active={minSeverity === s}
+              onClick={() => { setMinSeverity(s); setPage(0); }}
+              label={s ? t(`orderMatching.severity.${s}`) : t('orderMatching.severity.all')} />
+          ))}
         </div>
+
+        {stateOptions.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{t('orderMatching.state')}:</span>
+            {stateOptions.map((s) => (
+              <ChipToggle key={s} active={stateFilter.includes(s)}
+                onClick={() => { toggleMulti(setStateFilter, s, stateFilter); setPage(0); }}
+                label={s} />
+            ))}
+          </div>
+        )}
+
+        <button onClick={resetFilters} className="px-2 py-1 text-[11px] rounded"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+          {t('orderMatching.resetFilters')}
+        </button>
       </div>
 
-      <div className="rounded-lg overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-        <div className="px-4 py-2 flex items-center justify-between text-sm" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="rounded-xl overflow-hidden backdrop-blur-md"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+        <div className="px-3 py-1.5 flex items-center justify-between text-[11px]" style={{ borderBottom: '1px solid var(--border-glass)' }}>
           <span style={{ color: 'var(--text-muted)' }}>{t('orderMatching.rowsCount', { count: total })}</span>
           {loading && <span style={{ color: 'var(--text-muted)' }}>…</span>}
           {error && <span style={{ color: '#ef4444' }}>{error}</span>}
@@ -275,7 +362,7 @@ export default function OrderMatching() {
         </div>
 
         {total > TAKE && (
-          <div className="px-4 py-2 flex items-center justify-between text-sm" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="px-3 py-1.5 flex items-center justify-between text-[11px]" style={{ borderTop: '1px solid var(--border-glass)' }}>
             <span style={{ color: 'var(--text-muted)' }}>
               {page * TAKE + 1}–{Math.min((page + 1) * TAKE, total)} / {total}
             </span>
@@ -294,21 +381,27 @@ export default function OrderMatching() {
   );
 }
 
-// ---------- subcomponents ----------
+// ---------- TAB: заглушка для будущих типов матчинга ----------
 
-function KpiCard({ label, value, color }) {
+function TabPlaceholder({ t, tabId }) {
   return (
-    <div className="p-3 rounded-lg" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</div>
-      <div className="text-xl font-semibold mt-1" style={{ color: color || 'var(--text)' }}>{value}</div>
+    <div className="flex flex-col items-center justify-center text-center py-16 rounded-xl backdrop-blur-md"
+      style={{ background: 'var(--bg-glass)', border: '1px dashed var(--border-glass)', color: 'var(--text-muted)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <Wrench className="w-8 h-8 mb-2 opacity-50" />
+      <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+        {t(`orderMatching.tabs.${tabId}`)}
+      </div>
+      <div className="text-xs mt-1">{t('orderMatching.placeholder.notReady')}</div>
     </div>
   );
 }
 
+// ---------- subcomponents ----------
+
 function ChipToggle({ active, onClick, label }) {
   return (
     <button onClick={onClick}
-      className="px-2 py-0.5 rounded text-xs"
+      className="px-2 py-0.5 rounded text-[11px]"
       style={{
         background: active ? 'var(--accent)' : 'var(--bg)',
         color: active ? '#fff' : 'var(--text-muted)',
@@ -324,6 +417,10 @@ function RowAndDetail({ item, isExpanded, onToggle, t }) {
   const d = item.dates || {};
   const sev = d.sev || {};
   const dur = item.durations || {};
+  const noData = t('orderMatching.noData');
+  // Локализованный плейсхолдер «н/д»; показывается серым с пониженной прозрачностью,
+  // чтобы визуально не конкурировать с минусом «−» в подсказках длительности.
+  const NoData = () => <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>;
   return (
     <>
       <tr style={{ borderTop: '1px solid var(--border)', background: isExpanded ? 'var(--bg)' : 'transparent' }}>
@@ -335,7 +432,7 @@ function RowAndDetail({ item, isExpanded, onToggle, t }) {
           ) : null}
         </td>
         <td className="px-3 py-2 align-top">
-          <div>{vehicleString(item)}</div>
+          <div>{vehicleString(item) || <NoData />}</div>
           {item.hasHistory && (
             <span className="inline-flex items-center gap-1 mt-1 text-[10px]" style={{ color: '#a855f7' }}>
               <GitBranch className="w-3 h-3" />
@@ -343,11 +440,11 @@ function RowAndDetail({ item, isExpanded, onToggle, t }) {
             </span>
           )}
         </td>
-        <td className="px-3 py-2 font-mono whitespace-nowrap align-top">{item.orderNumber}</td>
-        <td className="px-3 py-2 whitespace-nowrap align-top">{item.state || '—'}</td>
+        <td className="px-3 py-2 font-mono whitespace-nowrap align-top">{item.orderNumber || <NoData />}</td>
+        <td className="px-3 py-2 whitespace-nowrap align-top">{item.state || <NoData />}</td>
         <td className="px-3 py-2 align-top">
-          <div className="text-xs max-w-[260px] truncate" title={item.basis || ''}>
-            {item.basis || <span style={{ color: 'var(--text-muted)' }}>—</span>}
+          <div className="text-xs whitespace-normal break-words leading-snug" style={{ minWidth: '260px', maxWidth: '320px' }} title={item.basis || ''}>
+            {item.basis || <NoData />}
           </div>
           {item.planNumber && (
             <div className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--text-muted)' }}>
@@ -373,20 +470,20 @@ function RowAndDetail({ item, isExpanded, onToggle, t }) {
         </td>
 
         <td className="px-3 py-2 align-top">
-          <DeltaCell deltaSec={dur.deltaPlan} severity={dur.sevPlan} />
+          <DeltaCell deltaSec={dur.deltaPlan} severity={dur.sevPlan} noData={noData} />
           <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {t('orderMatching.col.dPlanHint', { fact: fmtDurationSec(dur.tFact), plan: fmtDurationSec(dur.tPlan) })}
+            {t('orderMatching.col.dPlanHint', { fact: fmtDurationSec(dur.tFact) ?? noData, plan: fmtDurationSec(dur.tPlan) ?? noData })}
           </div>
         </td>
         <td className="px-3 py-2 align-top">
-          <DeltaCell deltaSec={dur.deltaUchn} severity={dur.sevUchn} />
+          <DeltaCell deltaSec={dur.deltaUchn} severity={dur.sevUchn} noData={noData} />
           <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {t('orderMatching.col.dUchnHint', { fact: fmtDurationSec(dur.tFact), uchn: fmtDurationSec(dur.tUchn) })}
+            {t('orderMatching.col.dUchnHint', { fact: fmtDurationSec(dur.tFact) ?? noData, uchn: fmtDurationSec(dur.tUchn) ?? noData })}
           </div>
         </td>
 
-        <td className="px-3 py-2 text-xs align-top">{item.master || '—'}</td>
-        <td className="px-3 py-2 text-xs align-top">{item.dispatcher || '—'}</td>
+        <td className="px-3 py-2 text-xs align-top">{item.master || <NoData />}</td>
+        <td className="px-3 py-2 text-xs align-top">{item.dispatcher || <NoData />}</td>
       </tr>
 
       {isExpanded && canExpand && (
@@ -420,14 +517,15 @@ function getCellValue(row, col) {
   if (col.derive) return col.derive(row);
   return row[col.key];
 }
-function fmtCell(val, fmt) {
-  if (val == null || val === '') return '—';
-  if (fmt === 'dt') return fmtDt(val) || '—';
+function fmtCell(val, fmt, noData) {
+  if (val == null || val === '') return noData;
+  if (fmt === 'dt') return fmtDt(val) || noData;
   return String(val);
 }
 
 function HistoryTable({ history, t }) {
   if (!history.length) return null;
+  const noData = t('orderMatching.noData');
 
   // Скрываем колонки, у которых значения совпадают у всех версий
   const visibleCols = HISTORY_COLS.filter((col) => {
@@ -467,7 +565,7 @@ function HistoryTable({ history, t }) {
                     color: s.isLatest ? 'var(--accent)' : undefined,
                   }}>
                   <td className="px-2 py-1 whitespace-nowrap font-mono text-[11px]">
-                    {fmtDt(s.receivedAt) || '—'}
+                    {fmtDt(s.receivedAt) || noData}
                     {s.isLatest && (
                       <span className="ml-1 text-[9px] uppercase" style={{ color: 'var(--accent)' }}>
                         {t('orderMatching.detail.latest')}
@@ -478,7 +576,7 @@ function HistoryTable({ history, t }) {
                     const v = getCellValue(s, c);
                     return (
                       <td key={c.key} className={'px-2 py-1 whitespace-nowrap' + (c.fmt === 'mono' ? ' font-mono' : '')}>
-                        {fmtCell(v, c.fmt)}
+                        {fmtCell(v, c.fmt, noData)}
                       </td>
                     );
                   })}
