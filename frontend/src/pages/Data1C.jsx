@@ -13,7 +13,7 @@ import { useSocket } from '../hooks/useSocket';
 import {
   Database, Inbox, AlertTriangle, BarChart3, Settings, Upload, RefreshCw, Save,
   CheckCircle2, XCircle, Layers, Activity, Hourglass, ListChecks, Hash, Users, Mail, Server, FilterX,
-  BellOff, Bell,
+  BellOff, Bell, HelpCircle, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
@@ -988,6 +988,7 @@ function TabSettings({ api }) {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [pwd, setPwd] = useState('');
+  const [maskHelpOpen, setMaskHelpOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1083,7 +1084,56 @@ function TabSettings({ api }) {
       <SettingsCard title={t('data1c.settings.fromFilter')} icon={Mail}>
         <div className="space-y-3">
           {fld(t('data1c.settings.fromFilter'), 'fromFilter')}
-          {fld(t('data1c.settings.subjectMask'), 'subjectMask')}
+          <div>
+            {fld(t('data1c.settings.subjectMask'), 'subjectMask', 'text', { placeholder: 'Анализ СТО от {DD.MM.YYYY}' })}
+            <button
+              type="button"
+              onClick={() => setMaskHelpOpen((v) => !v)}
+              className="mt-1.5 flex items-center gap-1 text-xs"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {maskHelpOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              <HelpCircle size={12} />
+              {t('data1c.settings.subjectMaskHelp')}
+            </button>
+            {maskHelpOpen && (
+              <div
+                className="mt-2 p-3 rounded-md text-xs space-y-2"
+                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+              >
+                <p>{t('data1c.settings.subjectMaskHelpIntro')}</p>
+
+                <div>
+                  <div className="mb-1" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {t('data1c.settings.subjectMaskTokens')}
+                  </div>
+                  <ul className="space-y-1 ml-1">
+                    <li><code style={{ color: 'var(--accent)' }}>{'{DD.MM.YYYY}'}</code> — {t('data1c.settings.subjectMaskTokDdMmYyyy')}</li>
+                    <li><code style={{ color: 'var(--accent)' }}>{'{D.M.YYYY}'}</code> — {t('data1c.settings.subjectMaskTokDMYyyy')}</li>
+                    <li><code style={{ color: 'var(--accent)' }}>{'{YYYY-MM-DD}'}</code> — {t('data1c.settings.subjectMaskTokYyyyMmDd')}</li>
+                    <li><code style={{ color: 'var(--accent)' }}>*</code> — {t('data1c.settings.subjectMaskTokStar')}</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="mb-1" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {t('data1c.settings.subjectMaskExamples')}
+                  </div>
+                  <ul className="space-y-1 ml-1">
+                    <li><code style={{ color: 'var(--accent)' }}>Анализ СТО от {'{DD.MM.YYYY}'}</code> — {t('data1c.settings.subjectMaskEx1')}</li>
+                    <li><code style={{ color: 'var(--accent)' }}>Отчёт {'{YYYY-MM-DD}'}</code> — {t('data1c.settings.subjectMaskEx2')}</li>
+                    <li><code style={{ color: 'var(--accent)' }}>Анализ СТО*</code> — {t('data1c.settings.subjectMaskEx3')}</li>
+                    <li><code style={{ color: 'var(--accent)' }}>Сводка по сменам</code> — {t('data1c.settings.subjectMaskEx4')}</li>
+                  </ul>
+                </div>
+
+                <p style={{ color: '#f59e0b' }}>
+                  <AlertTriangle size={11} className="inline mr-1" />
+                  {t('data1c.settings.subjectMaskNote')}
+                </p>
+              </div>
+            )}
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={!!cfg.markAsRead} onChange={(e) => onChange('markAsRead', e.target.checked)} />
             {t('data1c.settings.markAsRead')}

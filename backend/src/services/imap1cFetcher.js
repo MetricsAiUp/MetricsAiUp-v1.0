@@ -20,6 +20,7 @@ const { simpleParser } = require('mailparser');
 const prisma = require('../config/database');
 const logger = require('../config/logger');
 const { decrypt } = require('../utils/crypto');
+const { compileSubjectMask } = require('../utils/subjectMask');
 const oneCImporter = require('./oneCImporter');
 
 let task = null;
@@ -71,6 +72,7 @@ async function fetchOnce({ manual = false } = {}) {
 
     let processed = 0;
     let errors = 0;
+    let skippedBySubject = 0;
     try {
       await client.connect();
       await client.mailboxOpen('INBOX');
@@ -79,10 +81,23 @@ async function fetchOnce({ manual = false } = {}) {
         ? new Date(cfg.lastFetchAt.getTime() - 60 * 60 * 1000)
         : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // первый запуск — 7 дней назад
 
+      // Маска темы (Imap1CConfig.subjectMask) — необязательная.
+      // На IMAP-сервер уходит самая длинная литеральная часть маски (это сужает
+      // выборку, но не гарантирует точного совпадения). Финальная проверка —
+      // через regex по получённому subject уже на нашей стороне.
+      const subjectFilter = compileSubjectMask(cfg.subjectMask);
+
       const searchCriteria = { from: cfg.fromFilter, since: sinceDate };
+      if (subjectFilter.literalForImap) {
+        searchCriteria.subject = subjectFilter.literalForImap;
+      }
       const uids = await client.search(searchCriteria, { uid: true });
 
-      logger.info('IMAP 1C: search results', { count: uids.length, since: sinceDate });
+      logger.info('IMAP 1C: search results', {
+        count: uids.length,
+        since: sinceDate,
+        subjectMask: cfg.subjectMask || null,
+      });
 
       for (const uid of uids) {
         try {
@@ -94,6 +109,14 @@ async function fetchOnce({ manual = false } = {}) {
           const fromAddress = (parsed.from?.value?.[0]?.address) || cfg.fromFilter;
           const subject = parsed.subject || null;
           const receivedAt = parsed.date || new Date();
+
+          // Строгая проверка темы по regex (если маска задана). Письма с
+          // несоответствующей темой не создают OneCImport — просто пропускаются.
+          if (!subjectFilter.isEmpty && !subjectFilter.regex.test(String(subject || '').trim())) {
+            skippedBySubject++;
+            logger.info('IMAP 1C: subject does not match mask, skipping', { uid, subject });
+            continue;
+          }
 
           const attachments = (parsed.attachments || []).filter((a) =>
             a.filename && /\.xlsx$/i.test(a.filename) && a.content && a.content.length > 0
@@ -169,8 +192,8 @@ async function fetchOnce({ manual = false } = {}) {
       },
     });
 
-    logger.info('IMAP 1C: cycle finished', { processed, errors });
-    return { ok: true, processed, errors };
+    logger.info('IMAP 1C: cycle finished', { processed, errors, skippedBySubject });
+    return { ok: true, processed, errors, skippedBySubject };
 
   } catch (err) {
     logger.error('IMAP 1C: fetch failed', { err: err.message, stack: err.stack });
