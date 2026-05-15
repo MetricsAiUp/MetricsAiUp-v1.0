@@ -18,6 +18,7 @@ const router = express.Router();
 const logger = require('../config/logger');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const deduped = require('../services/oneCDeduped');
+const cvEpisodes = require('../services/cvEpisodes');
 
 // Пороги подсветки (sec): ≤15м green, ≤1ч yellow, ≤4ч orange, >4ч red
 const DELTA_THRESHOLDS = { green: 15 * 60, yellow: 60 * 60, orange: 4 * 60 * 60 };
@@ -526,6 +527,299 @@ router.get('/matching/closed', authenticate, requirePermission('view_1c'), async
     res.json({ items, total: filtered.length, kpi, take, skip, threshold: NORM_MISMATCH_THRESHOLD });
   } catch (err) {
     logger.error('GET /oneC/matching/closed failed', { err: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/oneC/matching/closed-cv — «Закр. ЗН ↔ CV (история постов)»
+//
+// База — «Закрытые ЗН» (deduped performed). Для каждой строки 1С ищем
+// CV-эпизоды занятости постов в окне [workStartedAt − 12h, workFinishedAt + 12h]
+// (см. cvEpisodes.buildEpisodesInWindow), сопоставляем plate каскадом
+// (exact / core / lev1 / lev2 / last4) и считаем итоговую вероятность как
+//   probability = plateScore × (0.5 + 0.5·consensusRatio) × (0.4 + 0.6·timeOverlap)
+//
+// Ответ содержит per-эпизод-детали (пост, окно, plate-варианты, probability)
+// и общий summary (Σ времени на постах, лучший матч, посты).
+// ---------------------------------------------------------------------------
+
+// Окно поиска CV вокруг ЗН (часы). Согласовано с пользователем.
+const CV_WINDOW_HOURS = 12;
+// Минимальный plate-score эпизода, чтобы он попал в результат как «связанный».
+const CV_MIN_PLATE_SCORE = 0.30;
+// Порог classification:
+//   bestProbability ≥ STRONG → matched
+//   ≥ WEAK              → weak
+//   < WEAK              → no_match
+const CV_STRONG = 0.50;
+const CV_WEAK = 0.30;
+
+router.get('/matching/closed-cv', authenticate, requirePermission('view_1c'), async (req, res) => {
+  try {
+    const performed = await deduped.getDedupedPerformedRows();
+
+    // Последняя версия performed по orderNumber.
+    const latestPerformedByOrder = new Map();
+    for (const p of performed) {
+      const key = p.orderNumber;
+      if (!key) continue;
+      const cur = latestPerformedByOrder.get(key);
+      const t = p.receivedAt ? new Date(p.receivedAt).getTime() : 0;
+      const tc = cur && cur.receivedAt ? new Date(cur.receivedAt).getTime() : -1;
+      if (!cur || t > tc) latestPerformedByOrder.set(key, p);
+    }
+    const latest = Array.from(latestPerformedByOrder.values());
+
+    // Общее окно для построения эпизодов: [min(workStartedAt) − 12h, max(workFinishedAt) + 12h].
+    let minStart = null, maxEnd = null;
+    for (const p of latest) {
+      const ws = p.workStartedAt ? new Date(p.workStartedAt).getTime() : null;
+      const we = p.workFinishedAt ? new Date(p.workFinishedAt).getTime() : null;
+      if (Number.isFinite(ws) && (minStart == null || ws < minStart)) minStart = ws;
+      if (Number.isFinite(we) && (maxEnd == null || we > maxEnd)) maxEnd = we;
+    }
+    const windowMs = CV_WINDOW_HOURS * 60 * 60 * 1000;
+    const fromTs = minStart != null ? new Date(minStart - windowMs) : null;
+    const toTs = maxEnd != null ? new Date(maxEnd + windowMs) : null;
+
+    // Один раз строим все CV-эпизоды за общее окно.
+    const allEpisodes = (fromTs && toTs)
+      ? await cvEpisodes.buildEpisodesInWindow(fromTs, toTs)
+      : [];
+
+    // Сортируем эпизоды по startTime для бинарного поиска по окну ЗН.
+    allEpisodes.sort((a, b) => {
+      const ta = a.startTime ? new Date(a.startTime).getTime() : 0;
+      const tb = b.startTime ? new Date(b.startTime).getTime() : 0;
+      return ta - tb;
+    });
+    // Параллельный массив startTimes для бинарного поиска.
+    const epStarts = allEpisodes.map((e) => e.startTime ? new Date(e.startTime).getTime() : 0);
+
+    // Бинарный поиск нижнего индекса первого эпизода с startTime ≥ value.
+    function lowerBound(value) {
+      let lo = 0, hi = epStarts.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (epStarts[mid] < value) lo = mid + 1;
+        else hi = mid;
+      }
+      return lo;
+    }
+
+    const all = latest.map((p) => {
+      const refPlate = p.plateNumber || null;
+      const ws = p.workStartedAt ? new Date(p.workStartedAt) : null;
+      const we = p.workFinishedAt ? new Date(p.workFinishedAt) : null;
+
+      const wFrom = ws ? new Date(ws.getTime() - windowMs) : (we ? new Date(we.getTime() - windowMs) : null);
+      const wTo = we ? new Date(we.getTime() + windowMs) : (ws ? new Date(ws.getTime() + windowMs) : null);
+
+      const matchedEpisodes = [];
+      let bestProbability = 0;
+      let bestMatchType = 'none';
+
+      if (refPlate && wFrom && wTo) {
+        // Срез эпизодов по окну: startTime ∈ [wFrom − maxEpDur, wTo].
+        // Чтобы не пропустить эпизод, начавшийся до wFrom но ещё открытый,
+        // расширяем нижнюю границу на 24ч (длинных эпизодов >24ч на СТО не бывает).
+        const lo = lowerBound(wFrom.getTime() - 24 * 60 * 60 * 1000);
+        const hiTs = wTo.getTime();
+
+        for (let i = lo; i < allEpisodes.length; i++) {
+          if (epStarts[i] > hiTs) break;
+          const ep = allEpisodes[i];
+          const epEndTs = ep.endTime ? new Date(ep.endTime).getTime() : epStarts[i];
+          // Пересечение интервалов окна и эпизода: должно быть > 0.
+          if (epEndTs < wFrom.getTime()) continue;
+
+          const { plateScore, matchType, bestVariant } = cvEpisodes.scoreEpisodeAgainstRef(ep, refPlate);
+          if (plateScore < CV_MIN_PLATE_SCORE) continue;
+
+          const timeOverlap = cvEpisodes.computeTimeOverlap(ws, we, ep.startTime, ep.endTime);
+          const probability = plateScore * (0.5 + 0.5 * (ep.plateConsensusRatio || 0)) * (0.4 + 0.6 * timeOverlap);
+
+          matchedEpisodes.push({
+            zoneName: ep.zoneName,
+            postNumber: ep.postNumber,
+            startTime: ep.startTime,
+            endTime: ep.endTime,
+            durationSec: ep.durationSec,
+            plateConsensus: ep.plateConsensus,
+            plateConsensusCount: ep.plateConsensusCount,
+            plateConsensusRatio: ep.plateConsensusRatio,
+            plateVariants: ep.plateVariants,
+            totalPlateReads: ep.totalPlateReads,
+            worksInProgressSeen: ep.worksInProgressSeen,
+            // матч
+            plateScore,
+            matchType,
+            bestVariant,
+            timeOverlap,
+            probability,
+          });
+
+          if (probability > bestProbability) {
+            bestProbability = probability;
+            bestMatchType = matchType;
+          } else if (probability === bestProbability) {
+            bestMatchType = cvEpisodes.bestMatchType(bestMatchType, matchType);
+          }
+        }
+        // Сортируем эпизоды строки по startTime (хронология).
+        matchedEpisodes.sort((a, b) => {
+          const ta = a.startTime ? new Date(a.startTime).getTime() : 0;
+          const tb = b.startTime ? new Date(b.startTime).getTime() : 0;
+          return ta - tb;
+        });
+      }
+
+      // Σ длительности на всех постах (без склейки — каждый эпизод отдельно).
+      let totalCvDurationSec = 0;
+      let cvFirstSeen = null;
+      let cvLastSeen = null;
+      const postsVisited = [];
+      const seenPosts = new Set();
+      for (const ep of matchedEpisodes) {
+        totalCvDurationSec += ep.durationSec || 0;
+        const eSt = ep.startTime ? new Date(ep.startTime).getTime() : null;
+        const eEn = ep.endTime ? new Date(ep.endTime).getTime() : null;
+        if (eSt != null && (cvFirstSeen == null || eSt < cvFirstSeen)) cvFirstSeen = eSt;
+        if (eEn != null && (cvLastSeen == null || eEn > cvLastSeen)) cvLastSeen = eEn;
+        if (ep.postNumber != null && !seenPosts.has(ep.postNumber)) {
+          seenPosts.add(ep.postNumber);
+          postsVisited.push(ep.postNumber);
+        }
+      }
+      postsVisited.sort((a, b) => a - b);
+
+      const tFact = (ws && we) ? Math.max(0, Math.round((we.getTime() - ws.getTime()) / 1000)) : null;
+
+      // classification
+      let classification;
+      if (matchedEpisodes.length === 0) classification = 'no_match';
+      else if (bestProbability >= CV_STRONG) classification = 'matched';
+      else if (bestProbability >= CV_WEAK) classification = 'weak';
+      else classification = 'no_match';
+
+      return {
+        id: p.id,
+        orderNumber: p.orderNumber,
+        vehicleText: p.vehicleText,
+        brand: p.brand,
+        model: p.model,
+        plate1c: refPlate,
+        vin: p.vin,
+        master: p.master,
+        executor: p.executor,
+        normHours: (p.normHours != null && p.normHours !== '') ? Number(p.normHours) : null,
+        workStartedAt: p.workStartedAt || null,
+        workFinishedAt: p.workFinishedAt || null,
+        closedAt: p.closedAt || null,
+        receivedAt: p.receivedAt || null,
+        tFact,
+        window: {
+          from: wFrom ? wFrom.toISOString() : null,
+          to: wTo ? wTo.toISOString() : null,
+          hours: CV_WINDOW_HOURS,
+        },
+        episodes: matchedEpisodes,
+        summary: {
+          episodesCount: matchedEpisodes.length,
+          totalCvDurationSec,
+          cvFirstSeen: cvFirstSeen != null ? new Date(cvFirstSeen).toISOString() : null,
+          cvLastSeen: cvLastSeen != null ? new Date(cvLastSeen).toISOString() : null,
+          bestProbability,
+          bestMatchType,
+          postsVisited,
+        },
+        classification,
+      };
+    });
+
+    // Фильтры
+    const q = req.query.q ? String(req.query.q).toLowerCase() : null;
+    const cls = req.query.classification ? String(req.query.classification).split(',').filter(Boolean) : null;
+    const from = req.query.from ? new Date(String(req.query.from)) : null;
+    const to = req.query.to ? new Date(String(req.query.to)) : null;
+    const dateField = req.query.dateField === 'closedAt' ? 'closedAt' : 'workStartedAt';
+
+    function pass(item) {
+      if (cls && !cls.includes(item.classification)) return false;
+      const dRef = dateField === 'closedAt' ? item.closedAt : item.workStartedAt;
+      const d = dRef ? new Date(dRef) : null;
+      if (from && (!d || d < from)) return false;
+      if (to && (!d || d > to)) return false;
+      if (q) {
+        const hay = [
+          item.orderNumber, item.vehicleText, item.brand, item.model,
+          item.plate1c, item.vin, item.master, item.executor,
+          ...item.episodes.map((e) => e.bestVariant),
+          ...item.episodes.map((e) => e.plateConsensus),
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }
+
+    const filtered = all.filter(pass);
+
+    // KPI по всему отфильтрованному набору
+    const kpi = {
+      total: filtered.length,
+      matched: filtered.filter((x) => x.classification === 'matched').length,
+      weak: filtered.filter((x) => x.classification === 'weak').length,
+      noMatch: filtered.filter((x) => x.classification === 'no_match').length,
+      withPlate1c: filtered.filter((x) => x.plate1c).length,
+    };
+
+    // Сортировка
+    const sortBy = req.query.sortBy || 'workStartedAt';
+    const sortDir = req.query.sortDir === 'asc' ? 1 : -1;
+    function getSortVal(it) {
+      switch (sortBy) {
+        case 'orderNumber':         return it.orderNumber;
+        case 'workStartedAt':       return it.workStartedAt;
+        case 'workFinishedAt':      return it.workFinishedAt;
+        case 'closedAt':            return it.closedAt;
+        case 'normHours':           return it.normHours;
+        case 'tFact':               return it.tFact;
+        case 'totalCvDurationSec':  return it.summary.totalCvDurationSec;
+        case 'episodesCount':       return it.summary.episodesCount;
+        case 'probability':         return it.summary.bestProbability;
+        default:                    return it.workStartedAt;
+      }
+    }
+    function cmp(a, b) {
+      const va = getSortVal(a);
+      const vb = getSortVal(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
+      const ta = new Date(va).getTime();
+      const tb = new Date(vb).getTime();
+      if (!Number.isNaN(ta) && !Number.isNaN(tb)) return (ta - tb) * sortDir;
+      return String(va).localeCompare(String(vb)) * sortDir;
+    }
+    filtered.sort(cmp);
+
+    const take = Math.min(parseInt(req.query.take, 10) || 100, 1000);
+    const skip = Math.max(parseInt(req.query.skip, 10) || 0, 0);
+    const items = filtered.slice(skip, skip + take);
+
+    res.json({
+      items,
+      total: filtered.length,
+      kpi,
+      take,
+      skip,
+      windowHours: CV_WINDOW_HOURS,
+      thresholds: { strong: CV_STRONG, weak: CV_WEAK, minPlateScore: CV_MIN_PLATE_SCORE },
+    });
+  } catch (err) {
+    logger.error('GET /oneC/matching/closed-cv failed', { err: err.message, stack: err.stack });
     res.status(500).json({ error: err.message });
   }
 });

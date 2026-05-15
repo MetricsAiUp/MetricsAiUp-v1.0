@@ -139,7 +139,7 @@ function DeltaCell({ deltaSec, severity, noData }) {
 const MATCHING_TABS = [
   { id: 'zn_plan',            icon: GitMerge,      Component: TabZnPlanMatching },
   { id: 'closed_zn_orders',   icon: ClipboardList, Component: TabClosedZnOrders },
-  { id: 'closed_zn_cv',       icon: Camera,        Component: TabPlaceholder },
+  { id: 'closed_zn_cv',       icon: Camera,        Component: TabClosedZnCv },
   { id: 'payroll',            icon: Wrench,        Component: TabPlaceholder },
 ];
 
@@ -676,6 +676,577 @@ function TabClosedZnOrders({ t, navigateTo }) {
             onPerPageChange={(pp) => { setPerPage(pp); setPage(0); }}
           />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- TAB: Закр. ЗН ↔ CV (история постов) ----------
+//
+// База — «Закрытые ЗН» (deduped performed). Backend для каждой строки ищет
+// CV-эпизоды занятости постов в окне ±12ч с матчем plate (каскад exact/core/
+// lev1/lev2/last4) и считает probability. UI рендерит:
+//   - сводку: посты + Σ времени + лучшая вероятность + badge типа матча
+//   - детали (по клику): per-эпизод (пост, окно, plate-варианты, вероятность)
+// Источник: GET /api/oneC/matching/closed-cv.
+
+const CV_BADGES = {
+  matched:  { color: '#22c55e', icon: CheckCircle2,   key: 'orderMatching.closedCv.cls.matched' },
+  weak:     { color: '#eab308', icon: AlertTriangle,  key: 'orderMatching.closedCv.cls.weak' },
+  no_match: { color: '#ef4444', icon: XCircle,        key: 'orderMatching.closedCv.cls.noMatch' },
+};
+const MATCH_TYPE_COLOR = {
+  exact: '#22c55e', core: '#84cc16', lev1: '#eab308', lev2: '#f97316', last4: '#a855f7', none: 'var(--text-muted)',
+};
+
+function fmtPct(v) {
+  if (v == null || !Number.isFinite(v)) return null;
+  return `${Math.round(v * 100)}%`;
+}
+
+function ProbabilityChip({ probability, matchType, t }) {
+  const pct = fmtPct(probability);
+  if (pct == null) return <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{t('orderMatching.noData')}</span>;
+  // Цвет фона по probability: ≥0.7 зелёный, ≥0.5 жёлтый, ≥0.3 оранжевый, иначе красный.
+  let bg, fg;
+  if (probability >= 0.7)      { bg = 'rgba(34,197,94,0.18)';  fg = '#22c55e'; }
+  else if (probability >= 0.5) { bg = 'rgba(234,179,8,0.18)';  fg = '#eab308'; }
+  else if (probability >= 0.3) { bg = 'rgba(249,115,22,0.18)'; fg = '#f97316'; }
+  else                         { bg = 'rgba(239,68,68,0.18)';  fg = '#ef4444'; }
+  return (
+    <div className="inline-flex flex-col items-end gap-0.5">
+      <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold whitespace-nowrap"
+        style={{ background: bg, color: fg }}>
+        {pct}
+      </span>
+      {matchType && matchType !== 'none' && (
+        <span className="text-[9px] uppercase font-mono"
+          style={{ color: MATCH_TYPE_COLOR[matchType] || 'var(--text-muted)' }}>
+          {t(`orderMatching.closedCv.matchType.${matchType}`)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function PostBadge({ ep, t }) {
+  const label = ep.postNumber != null
+    ? t('orderMatching.closedCv.postLabel', { n: ep.postNumber })
+    : (ep.zoneName || t('orderMatching.noData'));
+  const dur = fmtDurationSec(ep.durationSec) || '—';
+  return (
+    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+      style={{
+        background: 'var(--bg)',
+        color: 'var(--accent)',
+        border: '1px solid var(--border)',
+        display: 'inline-block',
+        maxWidth: '100%',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        lineHeight: 1.3,
+      }}
+      title={ep.zoneName || ''}>
+      {label}
+      <span style={{ color: 'var(--text-muted)' }}> · </span>
+      <span style={{ color: 'var(--text)' }}>{dur}</span>
+    </span>
+  );
+}
+
+// Унифицированная 3-строчная ячейка авто: brand+model / plate (цветом) / VIN.
+function VehicleCell({ item, t }) {
+  const noData = t('orderMatching.noData');
+  const brandModel = [item.brand, item.model].filter(Boolean).join(' ');
+  const plate = item.plate1c;
+  const vin = item.vin;
+  if (!brandModel && !plate && !vin) {
+    if (item.vehicleText) {
+      return <div className="text-xs" style={{ color: 'var(--text)' }}>{item.vehicleText}</div>;
+    }
+    return <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>;
+  }
+  return (
+    <div className="flex flex-col gap-0.5 text-xs leading-tight">
+      <div style={{ color: 'var(--text)', fontWeight: 500 }}>
+        {brandModel || <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>}
+      </div>
+      <div className="font-mono">
+        {plate
+          ? <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{plate}</span>
+          : <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>}
+      </div>
+      <div className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>
+        {vin || ''}
+      </div>
+    </div>
+  );
+}
+
+// Агрегирует уникальные plate-варианты по всем эпизодам строки → [{plate, count, posts:[postNumber...]}]
+function aggregateCvPlates(episodes) {
+  const total = new Map();
+  for (const ep of episodes || []) {
+    const variants = ep.plateVariants || {};
+    for (const [plate, count] of Object.entries(variants)) {
+      const cur = total.get(plate) || { plate, count: 0, posts: new Set() };
+      cur.count += Number(count) || 0;
+      if (ep.postNumber != null) cur.posts.add(ep.postNumber);
+      total.set(plate, cur);
+    }
+  }
+  return Array.from(total.values())
+    .map((x) => ({ ...x, posts: Array.from(x.posts).sort((a, b) => a - b) }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// Сравнивает CV-плейт с эталонным 1С — возвращает true, если строго совпадает после нормализации.
+function plateLooksLikeRef(cvPlate, refPlate) {
+  if (!cvPlate || !refPlate) return false;
+  const norm = (s) => String(s).toUpperCase().replace(/[\s\-_.]+/g, '');
+  return norm(cvPlate) === norm(refPlate);
+}
+
+function CvPlatesCell({ item, t, onOpen }) {
+  const noData = t('orderMatching.noData');
+  const plates = aggregateCvPlates(item.episodes);
+  if (plates.length === 0) return <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>;
+  const top = plates.slice(0, 2);
+  const more = plates.length - top.length;
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      {top.map((p) => {
+        const matchRef = plateLooksLikeRef(p.plate, item.plate1c);
+        return (
+          <span key={p.plate}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono whitespace-nowrap"
+            style={{
+              background: matchRef ? 'rgba(34,197,94,0.14)' : 'var(--bg)',
+              color: matchRef ? '#22c55e' : 'var(--text)',
+              border: '1px solid ' + (matchRef ? 'rgba(34,197,94,0.4)' : 'var(--border)'),
+            }}>
+            <span style={{ fontWeight: 600 }}>{p.plate}</span>
+            <span style={{ color: 'var(--text-muted)' }}>·</span>
+            <span style={{ color: 'var(--text-muted)' }}>×{p.count}</span>
+          </span>
+        );
+      })}
+      {more > 0 && (
+        <button onClick={onOpen}
+          className="text-[10px] underline"
+          style={{ color: 'var(--accent)', cursor: 'pointer' }}>
+          {t('orderMatching.closedCv.morePlates', { count: more })}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CvPlatesModal({ item, t, onClose }) {
+  if (!item) return null;
+  const plates = aggregateCvPlates(item.episodes);
+  const totalReads = plates.reduce((s, p) => s + p.count, 0);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-xl overflow-hidden"
+        style={{ background: 'var(--card-bg)', border: '1px solid var(--border-glass)', boxShadow: '0 12px 40px rgba(0,0,0,0.4)' }}
+        onClick={(e) => e.stopPropagation()}>
+        <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div>
+            <div className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+              {t('orderMatching.closedCv.platesModal.title')}
+            </div>
+            <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              {t('orderMatching.closedCv.platesModal.subtitle', {
+                order: item.orderNumber || '—',
+                plate: item.plate1c || t('orderMatching.noData'),
+                total: totalReads,
+                variants: plates.length,
+              })}
+            </div>
+          </div>
+          <button onClick={onClose} className="px-2 py-1 text-xs rounded"
+            style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+            ✕
+          </button>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead style={{ background: 'var(--bg)', color: 'var(--text-muted)' }}>
+              <tr>
+                <th className="text-left px-3 py-2">{t('orderMatching.closedCv.platesModal.col.plate')}</th>
+                <th className="text-right px-3 py-2">{t('orderMatching.closedCv.platesModal.col.count')}</th>
+                <th className="text-left px-3 py-2">{t('orderMatching.closedCv.platesModal.col.posts')}</th>
+                <th className="text-right px-3 py-2">{t('orderMatching.closedCv.platesModal.col.share')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plates.map((p) => {
+                const matchRef = plateLooksLikeRef(p.plate, item.plate1c);
+                const share = totalReads > 0 ? p.count / totalReads : 0;
+                return (
+                  <tr key={p.plate} style={{ borderTop: '1px solid var(--border)' }}>
+                    <td className="px-3 py-1.5 font-mono">
+                      <span style={{
+                        color: matchRef ? '#22c55e' : 'var(--text)',
+                        fontWeight: matchRef ? 700 : 500,
+                      }}>{p.plate}</span>
+                      {matchRef && (
+                        <span className="ml-2 text-[9px] uppercase" style={{ color: '#22c55e' }}>
+                          {t('orderMatching.closedCv.platesModal.refMatch')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: 'var(--text)' }}>{p.count}</td>
+                    <td className="px-3 py-1.5">
+                      <div className="flex flex-wrap gap-1">
+                        {p.posts.length === 0
+                          ? <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{t('orderMatching.noData')}</span>
+                          : p.posts.map((n) => (
+                              <span key={n} className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+                                style={{ background: 'var(--bg)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
+                                {t('orderMatching.closedCv.postLabel', { n })}
+                              </span>
+                            ))}
+                      </div>
+                    </td>
+                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: 'var(--text-muted)' }}>
+                      {Math.round(share * 100)}%
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TabClosedZnCv({ t }) {
+  const { api } = useAuth();
+
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [kpi, setKpi] = useState(null);
+  const [windowHours, setWindowHours] = useState(12);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(new Set());
+  const [platesModalItem, setPlatesModalItem] = useState(null);
+
+  const [q, setQ] = useState('');
+  const [classification, setClassification] = useState([]); // ['matched','weak','no_match']
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(50);
+  const [sortBy, setSortBy] = useState('workStartedAt');
+  const [sortDir, setSortDir] = useState('desc');
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams();
+    params.set('take', String(perPage));
+    params.set('skip', String(page * perPage));
+    if (q.trim()) params.set('q', q.trim());
+    if (classification.length) params.set('classification', classification.join(','));
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortDir) params.set('sortDir', sortDir);
+
+    api.get(`/api/oneC/matching/closed-cv?${params.toString()}`)
+      .then((res) => {
+        const data = res && res.data ? res.data : {};
+        setItems(data.items || []);
+        setTotal(data.total || 0);
+        setKpi(data.kpi || null);
+        if (data.windowHours) setWindowHours(data.windowHours);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [q, classification.join(','), page, perPage, sortBy, sortDir, api]);
+
+  function onSort(key) {
+    if (sortBy === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    else { setSortBy(key); setSortDir(key === 'orderNumber' ? 'asc' : 'desc'); }
+    setPage(0);
+  }
+  function toggleExpanded(id) {
+    setExpanded((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+  function toggleCls(value) {
+    setClassification((cur) => cur.includes(value) ? cur.filter((x) => x !== value) : [...cur, value]);
+    setPage(0);
+  }
+  function resetFilters() { setQ(''); setClassification([]); setPage(0); }
+
+  const noData = t('orderMatching.noData');
+  const NoData = () => <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{noData}</span>;
+
+  const kpiChips = kpi ? [
+    { id: 'all',      label: t('orderMatching.closedCv.kpi.total'),    value: kpi.total,    color: 'var(--text)', active: classification.length === 0, onClick: () => { setClassification([]); setPage(0); } },
+    { id: 'matched',  label: t('orderMatching.closedCv.kpi.matched'),  value: kpi.matched,  color: '#22c55e',     active: classification.includes('matched'),  onClick: () => toggleCls('matched') },
+    { id: 'weak',     label: t('orderMatching.closedCv.kpi.weak'),     value: kpi.weak,     color: '#eab308',     active: classification.includes('weak'),     onClick: () => toggleCls('weak') },
+    { id: 'noMatch',  label: t('orderMatching.closedCv.kpi.noMatch'),  value: kpi.noMatch,  color: '#ef4444',     active: classification.includes('no_match'), onClick: () => toggleCls('no_match') },
+    { id: 'noPlate',  label: t('orderMatching.closedCv.kpi.noPlate'),  value: kpi.total - kpi.withPlate1c, color: 'var(--text-muted)', active: false, onClick: () => {} },
+  ] : [];
+
+  return (
+    <div className="space-y-2">
+      {kpi && (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {kpiChips.map((c) => {
+            const clickable = c.id !== 'noPlate';
+            return (
+              <button key={c.id} onClick={c.onClick} disabled={!clickable}
+                className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs transition-all backdrop-blur-md"
+                style={{
+                  background: c.active ? 'var(--accent)' : 'var(--bg-glass)',
+                  color: c.active ? '#fff' : 'var(--text-muted)',
+                  border: '1px solid ' + (c.active ? 'var(--accent)' : 'var(--border-glass)'),
+                  boxShadow: c.active ? '0 4px 12px rgba(124,58,237,0.25)' : '0 2px 8px rgba(0,0,0,0.08)',
+                  cursor: clickable ? 'pointer' : 'default',
+                  opacity: clickable ? 1 : 0.85,
+                }}>
+                <span>{c.label}</span>
+                <span className="font-semibold" style={{ color: c.active ? '#fff' : c.color }}>{c.value}</span>
+              </button>
+            );
+          })}
+          <span className="text-[11px] ml-auto" style={{ color: 'var(--text-muted)' }}>
+            {t('orderMatching.closedCv.windowHint', { h: windowHours })}
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 flex-wrap p-2 rounded-xl backdrop-blur-md"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+        <div className="flex items-center gap-1.5 flex-1 min-w-[220px]">
+          <Search className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+          <input type="text" value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }}
+            placeholder={t('orderMatching.closedCv.searchPlaceholder')}
+            className="flex-1 px-2 py-1 rounded text-xs"
+            style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+        </div>
+        <button onClick={resetFilters} className="px-2 py-1 text-[11px] rounded"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+          {t('orderMatching.resetFilters')}
+        </button>
+      </div>
+
+      <div className="rounded-xl overflow-hidden backdrop-blur-md"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+        <div className="px-3 py-1.5 flex items-center justify-between text-[11px]" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+          <span style={{ color: 'var(--text-muted)' }}>{t('orderMatching.rowsCount', { count: total })}</span>
+          {loading && <span style={{ color: 'var(--text-muted)' }}>…</span>}
+          {error && <span style={{ color: '#ef4444' }}>{error}</span>}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead style={{ background: 'var(--bg)' }}>
+              <tr style={{ color: 'var(--text-muted)' }}>
+                <th className="w-8"></th>
+                <SortableTh sortKey="orderNumber"        sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.orderNumber')}</SortableTh>
+                <th className="text-left px-3 py-2">{t('orderMatching.closedCv.col.vehicle')}</th>
+                <SortableTh sortKey="workStartedAt"      sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.workStart')}</SortableTh>
+                <SortableTh sortKey="workFinishedAt"     sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.workEnd')}</SortableTh>
+                <SortableTh sortKey="normHours"          sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.normHours')}</SortableTh>
+                <SortableTh sortKey="tFact"              sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.tFact')}</SortableTh>
+                <th className="text-left px-3 py-2" style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }}>{t('orderMatching.closedCv.col.posts')}</th>
+                <th className="text-left px-3 py-2" style={{ width: '180px', minWidth: '180px', maxWidth: '180px' }}>{t('orderMatching.closedCv.col.cvPlates')}</th>
+                <SortableTh sortKey="totalCvDurationSec" sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.totalCv')}</SortableTh>
+                <SortableTh sortKey="probability"        sortBy={sortBy} sortDir={sortDir} onSort={onSort}>{t('orderMatching.closedCv.col.probability')}</SortableTh>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => {
+                const isExpanded = expanded.has(it.id);
+                const canExpand = it.episodes && it.episodes.length > 0;
+                const cls = CV_BADGES[it.classification];
+                const ClsIcon = cls ? cls.icon : null;
+                return (
+                  <FragmentRow key={it.id}>
+                    <tr style={{ borderTop: '1px solid var(--border)', background: isExpanded ? 'var(--bg)' : 'transparent' }}>
+                      <td className="px-2 py-2 text-center align-top">
+                        {canExpand ? (
+                          <button onClick={() => toggleExpanded(it.id)} style={{ color: 'var(--text-muted)' }}>
+                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-2 font-mono whitespace-nowrap align-top text-xs">
+                        {it.orderNumber || <NoData />}
+                        {cls && (
+                          <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
+                            style={{ background: 'var(--card-bg)', color: cls.color, border: `1px solid ${cls.color}40` }}>
+                            <ClsIcon className="w-3 h-3" />
+                            {t(cls.key)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-top" style={{ minWidth: '170px', maxWidth: '230px' }}>
+                        <VehicleCell item={it} t={t} />
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap align-top text-xs">{fmtDt(it.workStartedAt) || <NoData />}</td>
+                      <td className="px-3 py-2 whitespace-nowrap align-top text-xs">{fmtDt(it.workFinishedAt) || <NoData />}</td>
+                      <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top text-xs">
+                        {fmtHoursNumber(it.normHours) || <NoData />}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top text-xs">
+                        {fmtDurationSec(it.tFact) || <NoData />}
+                      </td>
+                      <td className="px-3 py-2 align-top" style={{ width: '180px', minWidth: '180px', maxWidth: '180px', overflow: 'hidden' }}>
+                        {canExpand ? (
+                          <div className="flex flex-col gap-1" style={{ minWidth: 0 }}>
+                            {it.episodes.map((ep, i) => <PostBadge key={i} ep={ep} t={t} />)}
+                          </div>
+                        ) : <NoData />}
+                      </td>
+                      <td className="px-3 py-2 align-top" style={{ width: '180px', minWidth: '180px', maxWidth: '180px', overflow: 'hidden' }}>
+                        <CvPlatesCell item={it} t={t} onOpen={() => setPlatesModalItem(it)} />
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top text-xs">
+                        {it.summary && it.summary.totalCvDurationSec > 0 ? fmtDurationSec(it.summary.totalCvDurationSec) : <NoData />}
+                      </td>
+                      <td className="px-3 py-2 text-right align-top">
+                        <ProbabilityChip probability={it.summary && it.summary.bestProbability} matchType={it.summary && it.summary.bestMatchType} t={t} />
+                      </td>
+                    </tr>
+                    {isExpanded && canExpand && (
+                      <tr style={{ background: 'var(--bg)', borderTop: '1px dashed var(--border)' }}>
+                        <td colSpan={11} className="px-6 py-3">
+                          <CvEpisodesDetail item={it} t={t} />
+                        </td>
+                      </tr>
+                    )}
+                  </FragmentRow>
+                );
+              })}
+              {!loading && items.length === 0 && (
+                <tr><td colSpan={11} className="text-center px-4 py-8" style={{ color: 'var(--text-muted)' }}>
+                  {t('orderMatching.empty')}
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="px-3 py-1.5" style={{ borderTop: '1px solid var(--border-glass)' }}>
+          <Pagination
+            page={page + 1}
+            totalPages={Math.max(1, Math.ceil(total / perPage))}
+            totalItems={total}
+            perPage={perPage}
+            perPageOptions={[25, 50, 100]}
+            onPageChange={(p) => setPage(p - 1)}
+            onPerPageChange={(pp) => { setPerPage(pp); setPage(0); }}
+          />
+        </div>
+      </div>
+
+      {platesModalItem && (
+        <CvPlatesModal item={platesModalItem} t={t} onClose={() => setPlatesModalItem(null)} />
+      )}
+    </div>
+  );
+}
+
+// React.Fragment shortcut для повторного использования key=
+function FragmentRow({ children }) { return <>{children}</>; }
+
+// Развёрнутая детализация: список эпизодов с per-episode probability + plate-варианты.
+function CvEpisodesDetail({ item, t }) {
+  const noData = t('orderMatching.noData');
+  return (
+    <div className="space-y-2">
+      <div className="text-xs flex items-center gap-3" style={{ color: 'var(--text-muted)' }}>
+        <span>{t('orderMatching.closedCv.detail.window', {
+          from: fmtDt(item.window && item.window.from) || noData,
+          to: fmtDt(item.window && item.window.to) || noData,
+        })}</span>
+        {item.summary && item.summary.cvFirstSeen && (
+          <span>{t('orderMatching.closedCv.detail.cvFirstLast', {
+            first: fmtDt(item.summary.cvFirstSeen) || noData,
+            last:  fmtDt(item.summary.cvLastSeen) || noData,
+          })}</span>
+        )}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="text-xs w-full">
+          <thead style={{ color: 'var(--text-muted)' }}>
+            <tr>
+              <th className="text-left px-2 py-1 whitespace-nowrap">{t('orderMatching.closedCv.detail.col.post')}</th>
+              <th className="text-left px-2 py-1 whitespace-nowrap">{t('orderMatching.closedCv.detail.col.start')}</th>
+              <th className="text-left px-2 py-1 whitespace-nowrap">{t('orderMatching.closedCv.detail.col.end')}</th>
+              <th className="text-right px-2 py-1 whitespace-nowrap">{t('orderMatching.closedCv.detail.col.duration')}</th>
+              <th className="text-left px-2 py-1">{t('orderMatching.closedCv.detail.col.consensus')}</th>
+              <th className="text-left px-2 py-1">{t('orderMatching.closedCv.detail.col.variants')}</th>
+              <th className="text-right px-2 py-1 whitespace-nowrap">{t('orderMatching.closedCv.detail.col.formula')}</th>
+              <th className="text-right px-2 py-1 whitespace-nowrap">{t('orderMatching.closedCv.detail.col.probability')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(item.episodes || []).map((ep, idx) => {
+              // Список вариантов (отсортирован по убыванию count), для UI компактно.
+              const variantPairs = Object.entries(ep.plateVariants || {})
+                .sort((a, b) => b[1] - a[1]);
+              const consensusRatioPct = ep.plateConsensusRatio != null ? Math.round(ep.plateConsensusRatio * 100) : null;
+              const overlapPct = ep.timeOverlap != null ? Math.round(ep.timeOverlap * 100) : null;
+              const plateScorePct = ep.plateScore != null ? Math.round(ep.plateScore * 100) : null;
+              return (
+                <tr key={idx} style={{ borderTop: '1px solid var(--border)' }}>
+                  <td className="px-2 py-1 whitespace-nowrap font-mono">
+                    {ep.postNumber != null
+                      ? t('orderMatching.closedCv.postLabel', { n: ep.postNumber })
+                      : (ep.zoneName || '—')}
+                  </td>
+                  <td className="px-2 py-1 whitespace-nowrap">{fmtDt(ep.startTime) || noData}</td>
+                  <td className="px-2 py-1 whitespace-nowrap">{fmtDt(ep.endTime) || noData}</td>
+                  <td className="px-2 py-1 whitespace-nowrap text-right font-mono">{fmtDurationSec(ep.durationSec) || noData}</td>
+                  <td className="px-2 py-1 font-mono">
+                    <span>{ep.plateConsensus || noData}</span>
+                    {consensusRatioPct != null && (
+                      <span className="ml-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                        ({ep.plateConsensusCount}× / {consensusRatioPct}%)
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-2 py-1">
+                    <div className="flex flex-wrap gap-1" style={{ maxWidth: '320px' }}>
+                      {variantPairs.slice(0, 8).map(([variant, cnt]) => (
+                        <span key={variant} className="px-1 py-0.5 rounded text-[10px] font-mono whitespace-nowrap"
+                          style={{
+                            background: variant === ep.bestVariant ? 'rgba(34,197,94,0.18)' : 'var(--card-bg)',
+                            color: variant === ep.bestVariant ? '#22c55e' : 'var(--text-muted)',
+                            border: variant === ep.bestVariant ? '1px solid #22c55e60' : '1px solid var(--border)',
+                          }}
+                          title={variant === ep.bestVariant ? t('orderMatching.closedCv.detail.bestVariantHint') : ''}>
+                          {variant} <span style={{ opacity: 0.6 }}>×{cnt}</span>
+                        </span>
+                      ))}
+                      {variantPairs.length > 8 && (
+                        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                          {t('orderMatching.closedCv.detail.moreVariants', { count: variantPairs.length - 8 })}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-2 py-1 whitespace-nowrap text-right font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    {plateScorePct != null && consensusRatioPct != null && overlapPct != null
+                      ? `${plateScorePct}% × ${consensusRatioPct}% × ${overlapPct}%`
+                      : noData}
+                  </td>
+                  <td className="px-2 py-1 text-right">
+                    <ProbabilityChip probability={ep.probability} matchType={ep.matchType} t={t} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

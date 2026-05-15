@@ -1226,6 +1226,71 @@
         "dClosed": "Δ закр.−факт"
       },
       "gotoZnPlan": "Перейти в «ЗН ↔ Заявки» по этому номеру"
+    },
+    "closedCv": {
+      "cls": {
+        "matched": "Сопоставлено",
+        "weak": "Слабое",
+        "noMatch": "Нет совпадения"
+      },
+      "kpi": {
+        "total": "Всего закр. ЗН",
+        "matched": "Сопоставлено",
+        "weak": "Слабые",
+        "noMatch": "Нет совпадения",
+        "noPlate": "Без госномера в 1С"
+      },
+      "windowHint": "Окно поиска: ±{{h}}ч от начала/окончания работ",
+      "searchPlaceholder": "Поиск: № ЗН, ВИН, госномер, пост…",
+      "postLabel": "Пост {{n}}",
+      "col": {
+        "orderNumber": "№ ЗН",
+        "vehicle": "Авто",
+        "plate1c": "Госномер 1С",
+        "workStart": "Начало работ",
+        "workEnd": "Окончание работ",
+        "normHours": "Нормочасы",
+        "tFact": "Факт",
+        "posts": "Посты CV",
+        "cvPlates": "Госномера CV",
+        "totalCv": "Сумма CV",
+        "probability": "Вероятность"
+      },
+      "morePlates": "+ ещё {{count}}",
+      "platesModal": {
+        "title": "Распознанные госномера CV",
+        "subtitle": "ЗН {{order}} · 1С: {{plate}} · {{total}} распознаваний / {{variants}} уникальных",
+        "refMatch": "= 1С",
+        "col": {
+          "plate": "Госномер CV",
+          "count": "Распознаваний",
+          "posts": "Посты",
+          "share": "Доля"
+        }
+      },
+      "matchType": {
+        "exact": "точное",
+        "core": "без региона",
+        "lev1": "Lev=1",
+        "lev2": "Lev=2",
+        "last4": "посл. 4"
+      },
+      "detail": {
+        "window": "Окно поиска: {{from}} — {{to}}",
+        "cvFirstLast": "CV: первое {{first}} → последнее {{last}}",
+        "bestVariantHint": "Лучший вариант для матча",
+        "moreVariants": "+ ещё {{count}}",
+        "col": {
+          "post": "Пост / Зона",
+          "start": "Начало",
+          "end": "Окончание",
+          "duration": "Длит.",
+          "consensus": "Consensus",
+          "variants": "Варианты plate",
+          "formula": "Формула",
+          "probability": "Вероятность"
+        }
+      }
     }
   }
 }

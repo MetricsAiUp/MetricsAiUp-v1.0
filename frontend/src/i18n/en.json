@@ -1226,6 +1226,71 @@
         "dClosed": "Δ closed−end"
       },
       "gotoZnPlan": "Open in “WO ↔ Plans” by this number"
+    },
+    "closedCv": {
+      "cls": {
+        "matched": "Matched",
+        "weak": "Weak",
+        "noMatch": "No match"
+      },
+      "kpi": {
+        "total": "Closed WOs",
+        "matched": "Matched",
+        "weak": "Weak",
+        "noMatch": "No match",
+        "noPlate": "No plate in 1C"
+      },
+      "windowHint": "Search window: ±{{h}}h around work start/end",
+      "searchPlaceholder": "Search: WO #, VIN, plate, post…",
+      "postLabel": "Post {{n}}",
+      "col": {
+        "orderNumber": "WO #",
+        "vehicle": "Vehicle",
+        "plate1c": "Plate (1C)",
+        "workStart": "Work start",
+        "workEnd": "Work end",
+        "normHours": "Norm hours",
+        "tFact": "Actual",
+        "posts": "CV posts",
+        "cvPlates": "CV plates",
+        "totalCv": "CV total",
+        "probability": "Probability"
+      },
+      "morePlates": "+ {{count}} more",
+      "platesModal": {
+        "title": "CV-recognized plates",
+        "subtitle": "WO {{order}} · 1C: {{plate}} · {{total}} reads / {{variants}} unique",
+        "refMatch": "= 1C",
+        "col": {
+          "plate": "CV plate",
+          "count": "Reads",
+          "posts": "Posts",
+          "share": "Share"
+        }
+      },
+      "matchType": {
+        "exact": "exact",
+        "core": "no region",
+        "lev1": "Lev=1",
+        "lev2": "Lev=2",
+        "last4": "last 4"
+      },
+      "detail": {
+        "window": "Search window: {{from}} — {{to}}",
+        "cvFirstLast": "CV: first {{first}} → last {{last}}",
+        "bestVariantHint": "Best variant for the match",
+        "moreVariants": "+ {{count}} more",
+        "col": {
+          "post": "Post / Zone",
+          "start": "Start",
+          "end": "End",
+          "duration": "Duration",
+          "consensus": "Consensus",
+          "variants": "Plate variants",
+          "formula": "Formula",
+          "probability": "Probability"
+        }
+      }
     }
   }
 }
