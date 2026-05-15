@@ -73,8 +73,8 @@ describe('PostTableView', () => {
 
   it('renders post rows', () => {
     render(<PostTableView posts={samplePosts} navigate={mockNavigate} />);
-    expect(screen.getByText('posts.post01')).toBeInTheDocument();
-    expect(screen.getByText('posts.post02')).toBeInTheDocument();
+    expect(screen.getByText('posts.post1')).toBeInTheDocument();
+    expect(screen.getByText('posts.post2')).toBeInTheDocument();
   });
 
   it('shows post type badges', () => {

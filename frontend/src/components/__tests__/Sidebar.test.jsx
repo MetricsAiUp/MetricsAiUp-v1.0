@@ -41,6 +41,7 @@ vi.mock('lucide-react', () => {
     BarChart3: icon, Camera: icon, Focus: icon, Database: icon, CalendarClock: icon, Columns: icon,
     ChevronDown: icon, Users: icon, PenTool: icon, MapPin: icon, Clock: icon, Shield: icon,
     Wrench: icon, Activity: icon, FileSpreadsheet: icon, BookOpen: icon, Bug: icon,
+    AlertTriangle: icon,
   };
 });
 

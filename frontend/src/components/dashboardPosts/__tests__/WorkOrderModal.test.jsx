@@ -34,7 +34,7 @@ vi.mock('lucide-react', () => {
 import WorkOrderModal from '../WorkOrderModal';
 
 describe('WorkOrderModal', () => {
-  const mockT = (k) => k;
+  const mockT = (k, opts) => (opts && opts.defaultValue) ? opts.defaultValue : k;
   const defaultItem = {
     id: 'wo-1',
     workOrderNumber: 'WO-2026-001',
@@ -91,7 +91,7 @@ describe('WorkOrderModal', () => {
 
   it('shows status badge', () => {
     render(<WorkOrderModal item={defaultItem} post={defaultPost} onClose={onClose} t={mockT} />);
-    expect(screen.getByText('workOrders.completed')).toBeInTheDocument();
+    expect(screen.getByText('completed')).toBeInTheDocument();
   });
 
   it('close button calls onClose', () => {
@@ -119,7 +119,7 @@ describe('WorkOrderModal', () => {
 
   it('shows post name', () => {
     render(<WorkOrderModal item={defaultItem} post={defaultPost} onClose={onClose} t={mockT} />);
-    expect(screen.getByText('posts.post05')).toBeInTheDocument();
+    expect(screen.getByText('posts.post5')).toBeInTheDocument();
   });
 
   it('returns null when item is null', () => {

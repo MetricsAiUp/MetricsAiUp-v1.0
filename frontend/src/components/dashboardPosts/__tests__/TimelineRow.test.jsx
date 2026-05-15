@@ -73,7 +73,7 @@ describe('TimelineRow', () => {
 
   it('renders post name', () => {
     render(<TimelineRow {...defaultProps} />);
-    expect(screen.getByText('posts.post01')).toBeInTheDocument();
+    expect(screen.getByText('posts.post1')).toBeInTheDocument();
   });
 
   it('shows free status when no current vehicle', () => {
