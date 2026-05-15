@@ -11,6 +11,8 @@ const SETTINGS_FILE = path.join(__dirname, '../../data/app-settings.json');
 const DEFAULT_SETTINGS = {
   mode: 'demo', // 'demo' | 'live'
   timezone: 'Europe/Moscow', // IANA TZ для интерпретации shiftStart/shiftEnd и дневных границ
+  oneCSourceTimezone: 'Europe/Moscow', // IANA TZ, в которой 1С выгружает даты/время в XLSX
+  oneCTimezoneShiftFixedAt: null, // ISO-метка, когда был выполнен админ-фикс старых данных (anti-replay)
   // Ретеншн исторических таблиц. 0 = таблица не чистится (хранить всё).
   // Кулер запускается раз в сутки и удаляет записи старше N дней (для счётчика — сверх лимита).
   retention: {
@@ -77,7 +79,7 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
   }
 
   const current = readSettings();
-  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd, timezone, retention } = req.body;
+  const { mode, weekSchedule, postsCount, shiftStart, shiftEnd, timezone, oneCSourceTimezone, retention } = req.body;
 
   if (mode && ['demo', 'live'].includes(mode)) {
     current.mode = mode;
@@ -91,6 +93,12 @@ router.put('/', authenticate, asyncHandler(async (req, res) => {
       return res.status(400).json({ error: `Invalid timezone: ${timezone}` });
     }
     current.timezone = timezone;
+  }
+  if (oneCSourceTimezone !== undefined) {
+    if (!isValidTimezone(oneCSourceTimezone)) {
+      return res.status(400).json({ error: `Invalid oneCSourceTimezone: ${oneCSourceTimezone}` });
+    }
+    current.oneCSourceTimezone = oneCSourceTimezone;
   }
   if (retention !== undefined) {
     if (retention === null || typeof retention !== 'object' || Array.isArray(retention)) {

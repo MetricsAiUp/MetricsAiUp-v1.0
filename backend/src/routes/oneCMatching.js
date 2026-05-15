@@ -349,7 +349,7 @@ router.get('/matching', authenticate, requirePermission('view_1c'), async (req, 
 // База — «Закрытые ЗН» (deduped performed). Для каждой строки по orderNumber
 // подтягиваем последний repair-snapshot (для basis/uchn-дат и фактических
 // меток работы) и через basis → plan-rows (охватывающий интервал). Считаем
-// четыре длительности (план / уточн / факт / закр−старт) и флаг отклонения
+// четыре длительности (план / уточн / факт / закр−факт) и флаг отклонения
 // факта от нормочасов (>30%).
 // ---------------------------------------------------------------------------
 const NORM_MISMATCH_THRESHOLD = 0.3;
@@ -421,7 +421,7 @@ router.get('/matching/closed', authenticate, requirePermission('view_1c'), async
       const tPlan   = durationSec(planStart, planEnd);
       const tUchn   = durationSec(uchnStart, uchnEnd);
       const tFact   = durationSec(factStart, factEnd);
-      const tClosed = durationSec(factStart, closedAt); // закрытие − начало
+      const tClosed = durationSec(factEnd, closedAt); // закрытие − окончание работ (факт)
 
       const normHours = (p.normHours != null && p.normHours !== '') ? Number(p.normHours) : null;
       const norm = normVsFact(normHours, tFact);
@@ -443,6 +443,7 @@ router.get('/matching/closed', authenticate, requirePermission('view_1c'), async
         hasRepair: !!r,
         hasPlan: planRows.length > 0,
         closedAt,
+        receivedAt: p.receivedAt || null,
         normHours,
         dates: { planStart, planEnd, uchnStart, uchnEnd, factStart, factEnd, closedAt },
         durations: {

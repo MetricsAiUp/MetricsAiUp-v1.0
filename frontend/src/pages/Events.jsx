@@ -5,6 +5,7 @@ import { usePolling } from '../hooks/useSocket';
 import { translateZone, translatePost } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
+import { getAppTimezone } from '../utils/appTimezone';
 import {
   Car, LogOut, Move, Clock, Square, SquareCheck, UserCheck, UserX,
   Wrench, Pause,
@@ -114,7 +115,7 @@ export default function Events() {
   const formatTime = (t) => {
     if (!t) return '—';
     const d = new Date(t);
-    return d.toLocaleTimeString(isRu ? 'ru-RU' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleTimeString(isRu ? 'ru-RU' : 'en-US', { timeZone: getAppTimezone(), hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
   const formatDate = (t) => {
@@ -124,7 +125,7 @@ export default function Events() {
     if (d.toDateString() === today.toDateString()) return isRu ? 'Сегодня' : 'Today';
     const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
     if (d.toDateString() === yesterday.toDateString()) return isRu ? 'Вчера' : 'Yesterday';
-    return d.toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { day: '2-digit', month: '2-digit' });
+    return d.toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { timeZone: getAppTimezone(), day: '2-digit', month: '2-digit' });
   };
 
   if (isLive) {

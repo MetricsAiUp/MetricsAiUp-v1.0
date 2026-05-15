@@ -26,6 +26,8 @@ import ImportStatusBadge from '../components/data1c/ImportStatusBadge';
 import KpiCard from '../components/data1c/KpiCard';
 import RepairKindChips from '../components/data1c/RepairKindChips';
 import useTableSort from '../hooks/useTableSort';
+import { getAppTimezone, dateStrInAppTz } from '../utils/appTimezone';
+import { TIMEZONE_OPTIONS } from '../constants/timezones';
 
 const TAB_DEFS = [
   { id: 'current',  icon: Database,       perm: 'view_1c' },
@@ -39,7 +41,7 @@ const TAB_DEFS = [
 // ---------- helpers ----------
 function fmtDt(s) {
   if (!s) return null;
-  try { return new Date(s).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  try { return new Date(s).toLocaleString('ru-RU', { timeZone: getAppTimezone(), day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
   catch { return String(s); }
 }
 
@@ -47,14 +49,17 @@ function fmtDtRel(s) {
   if (!s) return null;
   try {
     const d = new Date(s);
+    const tz = getAppTimezone();
+    // Сравнение «сегодня/вчера» — по календарю TZ Location, а не TZ браузера.
+    const dStr = dateStrInAppTz(d, tz);
     const now = new Date();
-    const sameDay = d.toDateString() === now.toDateString();
-    const yest = new Date(now); yest.setDate(yest.getDate() - 1);
-    const isYest = d.toDateString() === yest.toDateString();
-    const time = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    if (sameDay) return `сегодня, ${time}`;
-    if (isYest) return `вчера, ${time}`;
-    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const todayStr = dateStrInAppTz(now, tz);
+    const yest = new Date(now.getTime() - 86400000);
+    const yestStr = dateStrInAppTz(yest, tz);
+    const time = d.toLocaleTimeString('ru-RU', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+    if (dStr === todayStr) return `сегодня, ${time}`;
+    if (dStr === yestStr) return `вчера, ${time}`;
+    return d.toLocaleString('ru-RU', { timeZone: tz, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   } catch { return String(s); }
 }
 
@@ -557,7 +562,7 @@ function TabRaw({ api }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
-  const fmtCell = (val, fmt, row) => {
+  const fmtCell = (val, fmt, row, key) => {
     // Синтетическая колонка-примечание: статус по содержимому исходного «Рабочее место».
     // «*приемка*» (без учёта регистра) → "Приемка", иначе → "Работа".
     if (fmt === 'note') {
@@ -604,7 +609,29 @@ function TabRaw({ api }) {
       return <span className="block truncate" style={{ maxWidth: 260 }} title={cleaned}>{cleaned}</span>;
     }
     if (val == null || val === '') return <Dash />;
-    if (fmt === 'dt') return <span className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{fmtDt(val)}</span>;
+    if (fmt === 'dt') {
+      // Аномалия из 1С: «дата закрытия» позже фактического получения письма (или вообще в будущем) —
+      // оператор 1С проставил плановое/будущее время. Подсвечиваем оранжевым с tooltip.
+      if (key === 'closedAt') {
+        const closedMs = new Date(val).getTime();
+        const receivedMs = row?.receivedAt ? new Date(row.receivedAt).getTime() : null;
+        const isFuture = Number.isFinite(closedMs) && closedMs > Date.now();
+        const isAfterReceived = Number.isFinite(closedMs) && Number.isFinite(receivedMs) && closedMs > receivedMs;
+        if (isFuture || isAfterReceived) {
+          return (
+            <span
+              className="whitespace-nowrap inline-flex items-center gap-1"
+              title={t('data1c.raw.col.closedFutureHint')}
+              style={{ color: '#f59e0b', fontWeight: 600 }}
+            >
+              <AlertTriangle size={12} />
+              {fmtDt(val)}
+            </span>
+          );
+        }
+      }
+      return <span className="whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{fmtDt(val)}</span>;
+    }
     if (fmt === 'bool') return val ? <span style={{ color: '#f59e0b' }}>✓</span> : <Dash />;
     if (fmt === 'mono') return <span className="font-mono text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{val}</span>;
     if (fmt === 'num') return <span className="font-mono">{val}</span>;
@@ -676,7 +703,7 @@ function TabRaw({ api }) {
           ) : sorted.map((r, idx) => (
             <tr key={r.id} className={TR_CLASS} style={{ ...tdStyle(idx), borderTop: '1px solid var(--border-glass)' }}>
               {cols.map((c) => (
-                <td key={c.key} className={`px-3 py-2 ${c.align === 'right' ? 'text-right' : ''}`}>{fmtCell(r[c.key], c.fmt, r)}</td>
+                <td key={c.key} className={`px-3 py-2 ${c.align === 'right' ? 'text-right' : ''}`}>{fmtCell(r[c.key], c.fmt, r, c.key)}</td>
               ))}
             </tr>
           ))}
@@ -982,6 +1009,8 @@ function SettingsCard({ title, icon: Icon, children }) {
 function TabSettings({ api }) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [cfg, setCfg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -989,11 +1018,18 @@ function TabSettings({ api }) {
   const [testResult, setTestResult] = useState(null);
   const [pwd, setPwd] = useState('');
   const [maskHelpOpen, setMaskHelpOpen] = useState(false);
+  const [appSettings, setAppSettings] = useState(null);
+  const [savingTz, setSavingTz] = useState(false);
+  const [migrating, setMigrating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await api.get('/api/oneC/config');
+    const [r, s] = await Promise.all([
+      api.get('/api/oneC/config'),
+      api.get('/api/settings').catch(() => ({ data: null })),
+    ]);
     setCfg(r.data || null);
+    setAppSettings(s?.data || null);
     setLoading(false);
   }, [api]);
 
@@ -1022,6 +1058,40 @@ function TabSettings({ api }) {
       toast.error(t('data1c.common.error') + ': ' + e.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onSaveTz = async (nextTz) => {
+    if (!isAdmin || savingTz || !nextTz) return;
+    setSavingTz(true);
+    try {
+      const r = await api.put('/api/settings', { oneCSourceTimezone: nextTz });
+      setAppSettings(r.data);
+      toast.success(t('data1c.common.saved'));
+    } catch (e) {
+      toast.error(e?.response?.data?.error || e.message);
+    } finally {
+      setSavingTz(false);
+    }
+  };
+
+  const onRunTzFix = async () => {
+    if (!isAdmin || migrating) return;
+    if (!window.confirm(t('data1c.settings.tz.fixConfirm'))) return;
+    setMigrating(true);
+    try {
+      const r = await api.post('/api/oneC/admin/fix-tz-shift', { shiftHours: -3 });
+      toast.success(t('data1c.settings.tz.fixDone'));
+      // обновляем appSettings, чтобы кнопка ушла
+      const s = await api.get('/api/settings').catch(() => null);
+      if (s?.data) setAppSettings(s.data);
+      // полная перезагрузка — пересчёт TZ-форматтеров и кэшей таблиц
+      setTimeout(() => window.location.reload(), 400);
+      return r;
+    } catch (e) {
+      toast.error(e?.response?.data?.error || e.message);
+    } finally {
+      setMigrating(false);
     }
   };
 
@@ -1182,6 +1252,55 @@ function TabSettings({ api }) {
             {cfg.lastFetchError ? ` (${cfg.lastFetchError})` : ''}
           </div>
         )}
+      </SettingsCard>
+
+      <SettingsCard title={t('data1c.settings.tz.cardTitle')} icon={Hourglass}>
+        <div className="space-y-3">
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {t('data1c.settings.tz.intro')}
+          </p>
+          <label className="block">
+            <span className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>
+              {t('data1c.settings.tz.sourceLabel')}
+            </span>
+            <select
+              value={appSettings?.oneCSourceTimezone || 'Europe/Moscow'}
+              onChange={(e) => onSaveTz(e.target.value)}
+              disabled={!isAdmin || savingTz}
+              className="w-full px-2 py-1.5 rounded-md text-sm"
+              style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
+            >
+              {TIMEZONE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value} style={{ background: 'var(--bg)', color: 'var(--text-primary)' }}>
+                  {t(`timezones.${o.key}`)} (UTC{o.offset})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
+            <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+              {t('data1c.settings.tz.fixIntro')}
+            </div>
+            {appSettings?.oneCTimezoneShiftFixedAt ? (
+              <div className="text-xs flex items-center gap-1" style={{ color: '#10b981' }}>
+                <CheckCircle2 size={12} />
+                {t('data1c.settings.tz.fixApplied')}: {fmtDt(appSettings.oneCTimezoneShiftFixedAt)}
+              </div>
+            ) : (
+              <button
+                onClick={onRunTzFix}
+                disabled={!isAdmin || migrating}
+                className="px-3 py-1.5 rounded-md text-sm flex items-center gap-1.5"
+                style={{ background: '#f59e0b', color: 'white', opacity: (!isAdmin || migrating) ? 0.6 : 1 }}
+                title={!isAdmin ? t('data1c.settings.tz.adminOnly') : ''}
+              >
+                <RefreshCw size={14} className={migrating ? 'animate-spin' : ''} />
+                {t('data1c.settings.tz.fixButton')}
+              </button>
+            )}
+          </div>
+        </div>
       </SettingsCard>
     </div>
   );

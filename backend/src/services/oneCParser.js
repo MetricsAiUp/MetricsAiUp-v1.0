@@ -11,20 +11,54 @@
 // откуда importer вызывает парсер.
 
 const XLSX = require('xlsx');
+const { parseInTz, DEFAULT_TZ } = require('../utils/dateUtils');
+const settingsReader = require('../routes/settings');
 
 // ----------- date parsing helpers ------------
 
 // xlsx с raw:true + cellDates:true превращает date-cells в Date.
 // Но в фактических файлах даты часто записаны как строки "DD.MM.YYYY HH:mm:ss"
 // (т.к. 1С не всегда задаёт numFmt). Парсим оба варианта.
+//
+// Даты в xlsx из 1С — это wall-clock в часовом поясе Location (Минск/Москва),
+// без timezone-индикатора. Поэтому интерпретируем их в TZ из настроек
+// и приводим к UTC через parseInTz().
+function getOneCTz() {
+  try {
+    const s = settingsReader.readSettings();
+    // Приоритет: oneCSourceTimezone (TZ источника 1С) → timezone (общесистемный) → DEFAULT_TZ.
+    if (s && s.oneCSourceTimezone) return s.oneCSourceTimezone;
+    if (s && s.timezone) return s.timezone;
+    return DEFAULT_TZ;
+  } catch {
+    return DEFAULT_TZ;
+  }
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
 function parseDate(v) {
   if (v == null || v === '') return null;
-  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  const tz = getOneCTz();
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return null;
+    // xlsx с cellDates:true укладывает wall-clock в UTC-компоненты Date.
+    // Переинтерпретируем UTC-компоненты как wall-clock в TZ Location.
+    const dateStr = `${v.getUTCFullYear()}-${pad2(v.getUTCMonth() + 1)}-${pad2(v.getUTCDate())}`;
+    const timeStr = `${pad2(v.getUTCHours())}:${pad2(v.getUTCMinutes())}`;
+    const baseMs = parseInTz(dateStr, timeStr, tz);
+    if (!Number.isFinite(baseMs)) return null;
+    return new Date(baseMs + v.getUTCSeconds() * 1000);
+  }
   if (typeof v === 'number') {
-    // Excel serial date
+    // Excel serial date — компоненты — это wall-clock в TZ Location.
     const d = XLSX.SSF.parse_date_code(v);
     if (!d) return null;
-    return new Date(Date.UTC(d.y, d.m - 1, d.d, d.H || 0, d.M || 0, Math.floor(d.S || 0)));
+    const dateStr = `${d.y}-${pad2(d.m)}-${pad2(d.d)}`;
+    const timeStr = `${pad2(d.H || 0)}:${pad2(d.M || 0)}`;
+    const ms = parseInTz(dateStr, timeStr, tz);
+    if (!Number.isFinite(ms)) return null;
+    return new Date(ms + Math.floor(d.S || 0) * 1000);
   }
   if (typeof v === 'string') {
     const s = v.trim();
@@ -33,12 +67,13 @@ function parseDate(v) {
     const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
     if (m) {
       const [, dd, mm, yyyy, hh, mi, ss] = m;
-      // Локальное время → UTC: используем new Date(year, month-1, ...) и берём .toISOString()
-      // Считаем что в xlsx — локальное московское время; но для целей сравнения с CV используем как есть.
-      // Чтобы избежать сдвига при сериализации — формируем UTC напрямую.
-      return new Date(Date.UTC(+yyyy, +mm - 1, +dd, +(hh || 0), +(mi || 0), +(ss || 0)));
+      const dateStr = `${yyyy}-${pad2(+mm)}-${pad2(+dd)}`;
+      const timeStr = `${pad2(+(hh || 0))}:${pad2(+(mi || 0))}`;
+      const baseMs = parseInTz(dateStr, timeStr, tz);
+      if (!Number.isFinite(baseMs)) return null;
+      return new Date(baseMs + (+(ss || 0)) * 1000);
     }
-    // ISO-строка
+    // ISO-строка (с явным TZ-маркером) — пускаем как есть.
     const d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
   }

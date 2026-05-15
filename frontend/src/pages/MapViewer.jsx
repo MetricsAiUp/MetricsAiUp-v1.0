@@ -30,6 +30,7 @@ import { translateWorksDesc } from '../utils/translate';
 import { useCameraStatus } from '../hooks/useCameraStatus';
 import { PostHistoryModal } from './PostHistory';
 import ReplayPanel from '../components/ReplayPanel';
+import { getAppTimezone } from '../utils/appTimezone';
 
 const ALL_CAMERAS = [
   { num: '00', loc: { ru: 'Шлагбаум', en: 'Barrier' }, covers: { ru: 'Шлагбаум', en: 'Barrier' } },
@@ -123,7 +124,7 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
         )}
         {car.firstSeen && (
           <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-            {t('mapView.firstSeen')}: {new Date(car.firstSeen).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+            {t('mapView.firstSeen')}: {new Date(car.firstSeen).toLocaleString('ru-RU', { timeZone: getAppTimezone(), day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </div>
         )}
       </div>
@@ -157,7 +158,7 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
           <Clock size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.lastUpdate')}</div>
           <div className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>
-            {liveItem.lastUpdate ? new Date(liveItem.lastUpdate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+            {liveItem.lastUpdate ? new Date(liveItem.lastUpdate).toLocaleTimeString('ru-RU', { timeZone: getAppTimezone(), hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
           </div>
         </div>
       </div>
@@ -278,7 +279,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                   </div>
                   <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {currentWO?.startTime
-                      ? new Date(currentWO.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                      ? new Date(currentWO.startTime).toLocaleTimeString('ru-RU', { timeZone: getAppTimezone(), hour: '2-digit', minute: '2-digit' })
                       : '---'}
                   </div>
                 </div>
@@ -289,7 +290,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                   </div>
                   <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {currentWO?.endTime
-                      ? new Date(currentWO.endTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                      ? new Date(currentWO.endTime).toLocaleTimeString('ru-RU', { timeZone: getAppTimezone(), hour: '2-digit', minute: '2-digit' })
                       : '---'}
                   </div>
                 </div>
@@ -708,7 +709,7 @@ export default function MapViewer() {
     pdf.setFontSize(14);
     pdf.text(isRu ? 'Карта СТО' : 'STO Map', pageW / 2, 10, { align: 'center' });
     pdf.setFontSize(8);
-    pdf.text(new Date().toLocaleString(), pageW / 2, 16, { align: 'center' });
+    pdf.text(new Date().toLocaleString('ru-RU', { timeZone: getAppTimezone() }), pageW / 2, 16, { align: 'center' });
     const imgW = pageW - 20;
     const imgH = pageH - 30;
     pdf.addImage(uri, 'PNG', 10, 22, imgW, imgH);

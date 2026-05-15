@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
 import { POST_STATUS_COLORS } from '../constants';
+import { getAppTimezone } from '../utils/appTimezone';
 
 // hex → rgba для цветных подложек KPI-плиток
 function hexA(hex, a) {
@@ -432,7 +433,7 @@ export default function DashboardPosts() {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <Calendar size={14} style={{ color: 'var(--accent)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
+              {new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { timeZone: getAppTimezone(), weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
           <button

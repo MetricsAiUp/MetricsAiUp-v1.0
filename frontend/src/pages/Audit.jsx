@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Shield, Search, Download } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
+import { getAppTimezone } from '../utils/appTimezone';
 
 const ACTION_COLORS = {
   create: '#10b981',
@@ -117,6 +118,7 @@ export default function Audit() {
   }
 
   const formatDate = (d) => new Date(d).toLocaleDateString(isRu ? 'ru-RU' : 'en-US', {
+    timeZone: getAppTimezone(),
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 

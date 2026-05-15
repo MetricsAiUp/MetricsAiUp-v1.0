@@ -13,6 +13,7 @@ import ResourceBar from '../components/health/ResourceBar';
 import ServiceRow from '../components/health/ServiceRow';
 import StatusBadge from '../components/health/StatusBadge';
 import MetricRow from '../components/health/MetricRow';
+import { getAppTimezone } from '../utils/appTimezone';
 import {
   formatBytes, formatUptime, formatAge, statusToLevel,
   LEVEL_COLOR, pctToLevel,
@@ -241,6 +242,7 @@ export default function Health() {
                 label: t('health.lastSync'),
                 value: data.sync1c?.lastSyncAt
                   ? new Date(data.sync1c.lastSyncAt).toLocaleString(isRu ? 'ru-RU' : 'en-US', {
+                      timeZone: getAppTimezone(),
                       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
                     })
                   : '—',
@@ -271,6 +273,7 @@ export default function Health() {
                 ? [{
                     label: t('health.internal.expiresIn'),
                     value: new Date(data.ssl.expiresAt).toLocaleDateString(isRu ? 'ru-RU' : 'en-US', {
+                      timeZone: getAppTimezone(),
                       day: '2-digit', month: '2-digit', year: 'numeric',
                     }),
                   }]

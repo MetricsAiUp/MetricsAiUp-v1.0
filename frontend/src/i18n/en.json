@@ -3,6 +3,28 @@
     "title": "MetricsAiUp",
     "subtitle": "Service Center Monitoring"
   },
+  "layout": {
+    "tz": {
+      "title": "System timezone",
+      "saved": "Timezone saved",
+      "saveError": "Failed to save timezone"
+    }
+  },
+  "timezones": {
+    "utc": "UTC",
+    "kaliningrad": "Kaliningrad",
+    "minsk": "Minsk",
+    "moscow": "Moscow",
+    "samara": "Samara",
+    "yekaterinburg": "Yekaterinburg",
+    "omsk": "Omsk",
+    "krasnoyarsk": "Krasnoyarsk",
+    "irkutsk": "Irkutsk",
+    "yakutsk": "Yakutsk",
+    "vladivostok": "Vladivostok",
+    "magadan": "Magadan",
+    "kamchatka": "Kamchatka"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "map": "STO Map",
@@ -512,6 +534,7 @@
         "workStartFact": "Start date (fact)",
         "workEndFact": "End date (fact)",
         "closedFact": "Closed date (fact)",
+        "closedFutureHint": "Close date in 1C is later than when the data was actually received — likely a planned/future time set by the operator.",
         "basisStartPlanned": "Plan start (refined)",
         "basisEndPlanned": "Plan end (refined)",
         "noBasis": "no request/plan",
@@ -636,7 +659,18 @@
       "enterPasswordForTest": "Enter password for test",
       "lastFetch": "Last fetch",
       "ok": "OK",
-      "testFailed": "failed"
+      "testFailed": "failed",
+      "tz": {
+        "cardTitle": "1C source timezone",
+        "intro": "Timezone in which 1C produces dates/times in emails. Used when parsing xlsx. The system UI timezone is set in the header.",
+        "sourceLabel": "Source timezone",
+        "fixIntro": "If older emails were parsed in a wrong timezone — shift historical dates in OneCPlanRow / OneCRepairSnapshot / OneCWorkPerformed by −3 hours and rebuild merged tables and discrepancies. Idempotent — runs once.",
+        "fixButton": "Re-shift legacy data (−3h)",
+        "fixConfirm": "Shift all historical 1C dates by −3h and rebuild merged tables? Runs once.",
+        "fixDone": "Migration complete. Merged tables and discrepancies rebuilt.",
+        "fixApplied": "Migration already applied",
+        "adminOnly": "Admin only"
+      }
     }
   },
   "discrepancies": {
@@ -1189,7 +1223,7 @@
         "dPlan": "Δ plan",
         "dUchn": "Δ adj.",
         "dFact": "Δ fact",
-        "dClosed": "Δ closed−start"
+        "dClosed": "Δ closed−end"
       },
       "gotoZnPlan": "Open in “WO ↔ Plans” by this number"
     }

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
 import DateRangePicker from '../components/DateRangePicker';
+import { formatInAppTz } from '../utils/appTimezone';
 
 export default function WorkOrders() {
   const { t, i18n } = useTranslation();
@@ -200,7 +201,7 @@ export default function WorkOrders() {
             {paginated.map(wo => (
               <tr key={wo.id} className="hover:opacity-80 transition-opacity" style={{ borderBottom: '1px solid var(--border-glass)' }}>
                 <td className="px-4 py-3 font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{wo.orderNumber}</td>
-                <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{new Date(wo.scheduledTime).toLocaleString()}</td>
+                <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{formatInAppTz(wo.scheduledTime)}</td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{wo.plateNumber || '—'}</td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{wo.workType || '—'}</td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{wo.normHours || '—'}</td>

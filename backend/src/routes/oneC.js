@@ -16,6 +16,10 @@ const { encrypt } = require('../utils/crypto');
 const merger = require('../services/oneCMerger');
 const oneCImporter = require('../services/oneCImporter');
 const imap1cFetcher = require('../services/imap1cFetcher');
+const discrepancyDetector = require('../services/discrepancyDetector');
+const fs = require('fs');
+const path = require('path');
+const settingsReader = require('./settings');
 const { imap1cConfigUpdateSchema, testConnectionSchema, resolveUnmappedPostSchema } = require('../schemas/oneC');
 
 const MASK = '****';
@@ -586,5 +590,103 @@ router.post(
     }
   }
 );
+
+// /admin/fix-tz-shift --------------------------------------------------------
+//
+// Одноразовая миграция для старых писем 1С: до фикса парсера значения дат из
+// XLSX интерпретировались как UTC, тогда как 1С шлёт их wall-clock в Минск+3.
+// В итоге все DateTime-поля в raw-таблицах оказались сдвинуты на +3 часа вперёд.
+//
+// Эндпоинт:
+//   • идемпотентный — повторный вызов вернёт 200 с alreadyApplied:true
+//     (anti-replay через settings.oneCTimezoneShiftFixedAt);
+//   • сдвигает на −N часов (по умолчанию −3) только raw-таблицы (план/repair/
+//     performed), потому что merged таблицы пересоберём заново;
+//   • затем удаляет merged-таблицы, прогоняет merger.mergeAll() и
+//     discrepancyDetector.detectAll() для пересчёта.
+//
+// Доступ — только admin (role).
+router.post('/admin/fix-tz-shift', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+
+    const settings = settingsReader.readSettings();
+    if (settings.oneCTimezoneShiftFixedAt) {
+      return res.json({
+        alreadyApplied: true,
+        fixedAt: settings.oneCTimezoneShiftFixedAt,
+        message: 'Migration already applied; skipped.',
+      });
+    }
+
+    // Сдвиг по умолчанию: −3 часа (Минск/Москва = UTC+3). Может быть переопределён
+    // в body для других TZ-источников.
+    const shiftHours = typeof req.body?.shiftHours === 'number' ? req.body.shiftHours : -3;
+    const shiftMs = shiftHours * 3600 * 1000;
+
+    // Поля для сдвига по таблицам.
+    const TZ_FIELDS = {
+      OneCPlanRow:        ['scheduledStart', 'scheduledEnd'],
+      OneCRepairSnapshot: ['workStartedAt', 'workFinishedAt', 'closedAt', 'basisStart', 'basisEnd'],
+      OneCWorkPerformed:  ['workStartedAt', 'workFinishedAt', 'closedAt', 'orderDate'],
+    };
+
+    const counts = {};
+    for (const [model, fields] of Object.entries(TZ_FIELDS)) {
+      const delegate = prisma[model.charAt(0).toLowerCase() + model.slice(1)];
+      const rows = await delegate.findMany({ select: Object.fromEntries([['id', true], ...fields.map(f => [f, true])]) });
+      let updated = 0;
+      for (const r of rows) {
+        const patch = {};
+        for (const f of fields) {
+          if (r[f]) patch[f] = new Date(new Date(r[f]).getTime() + shiftMs);
+        }
+        if (Object.keys(patch).length > 0) {
+          await delegate.update({ where: { id: r.id }, data: patch });
+          updated++;
+        }
+      }
+      counts[model] = { total: rows.length, updated };
+    }
+
+    // Удаляем merged-таблицы — пересоберём ниже через merger.mergeAll().
+    const mergedWoBefore = await prisma.oneCWorkOrderMerged.count();
+    const mergedStBefore = await prisma.oneCStageMerged.count();
+    await prisma.oneCWorkOrderMerged.deleteMany({});
+    await prisma.oneCStageMerged.deleteMany({});
+
+    // Перестраиваем merged
+    const mergeResult = await merger.mergeAll();
+
+    // Пересчитываем дискрепансы за всю историю
+    const detectResult = await discrepancyDetector.detectAll({});
+
+    // Зафиксировать факт миграции в settings.json
+    const SETTINGS_FILE = path.join(__dirname, '../../data/app-settings.json');
+    const nextSettings = {
+      ...settings,
+      oneCTimezoneShiftFixedAt: new Date().toISOString(),
+    };
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(nextSettings, null, 2));
+
+    res.json({
+      alreadyApplied: false,
+      shiftHours,
+      rawShift: counts,
+      mergedRebuilt: {
+        workOrderMergedBefore: mergedWoBefore,
+        stageMergedBefore: mergedStBefore,
+        result: mergeResult,
+      },
+      discrepancies: detectResult,
+      fixedAt: nextSettings.oneCTimezoneShiftFixedAt,
+    });
+  } catch (err) {
+    logger.error('POST /oneC/admin/fix-tz-shift failed', { err: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

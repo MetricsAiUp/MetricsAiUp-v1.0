@@ -19,27 +19,31 @@ describe('oneCParser — _parseDate', () => {
     expect(parseDate('')).toBeNull();
     expect(parseDate('   ')).toBeNull();
   });
-  it('passes through Date instance', () => {
+  it('reinterprets Date instance (xlsx UTC components) as wall-clock in TZ', () => {
+    // xlsx с cellDates:true укладывает wall-clock в UTC-компоненты.
+    // 10:00 UTC-компоненты ↔ 10:00 Минск/Москва → 07:00 UTC.
     const d = new Date('2026-04-14T10:00:00Z');
-    expect(parseDate(d)).toBe(d);
+    expect(parseDate(d).toISOString()).toBe('2026-04-14T07:00:00.000Z');
   });
   it('rejects invalid Date', () => {
     expect(parseDate(new Date('garbage'))).toBeNull();
   });
-  it('parses DD.MM.YYYY HH:mm:ss', () => {
+  it('parses DD.MM.YYYY HH:mm:ss as wall-clock in TZ', () => {
+    // 10:30:45 Минск/Москва = 07:30:45 UTC
     const d = parseDate('14.04.2026 10:30:45');
     expect(d).toBeInstanceOf(Date);
-    expect(d.toISOString()).toBe('2026-04-14T10:30:45.000Z');
+    expect(d.toISOString()).toBe('2026-04-14T07:30:45.000Z');
   });
-  it('parses DD.MM.YYYY HH:mm', () => {
+  it('parses DD.MM.YYYY HH:mm as wall-clock in TZ', () => {
     const d = parseDate('14.04.2026 10:30');
-    expect(d.toISOString()).toBe('2026-04-14T10:30:00.000Z');
+    expect(d.toISOString()).toBe('2026-04-14T07:30:00.000Z');
   });
-  it('parses DD.MM.YYYY (date only)', () => {
+  it('parses DD.MM.YYYY (date only) as midnight wall-clock in TZ', () => {
+    // 00:00 14.04 Минск = 21:00 13.04 UTC
     const d = parseDate('14.04.2026');
-    expect(d.toISOString()).toBe('2026-04-14T00:00:00.000Z');
+    expect(d.toISOString()).toBe('2026-04-13T21:00:00.000Z');
   });
-  it('parses ISO string', () => {
+  it('parses ISO string (TZ-aware) as-is', () => {
     const d = parseDate('2026-04-14T10:00:00Z');
     expect(d.toISOString()).toBe('2026-04-14T10:00:00.000Z');
   });
@@ -134,8 +138,9 @@ describe('oneCParser — parsePlan', () => {
       durationSec: 7200,
       isOutdated: false,
     });
-    expect(out[0].scheduledStart.toISOString()).toBe('2026-04-14T08:00:00.000Z');
-    expect(out[0].scheduledEnd.toISOString()).toBe('2026-04-14T10:00:00.000Z');
+    // 08:00 / 10:00 wall-clock в Минск/Москва (UTC+3) → 05:00 / 07:00 UTC.
+    expect(out[0].scheduledStart.toISOString()).toBe('2026-04-14T05:00:00.000Z');
+    expect(out[0].scheduledEnd.toISOString()).toBe('2026-04-14T07:00:00.000Z');
   });
   it('skips rows missing required fields', () => {
     const wb = buildWorkbook(HEADER, [

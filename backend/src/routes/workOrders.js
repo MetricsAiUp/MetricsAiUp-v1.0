@@ -5,6 +5,8 @@ const { validate } = require('../middleware/validate');
 const { importCsvSchema, assignSchema, scheduleSchema } = require('../schemas/workOrders');
 const { parse } = require('csv-parse/sync');
 const fs = require('fs');
+const { tzOf, getDayBoundsInTz } = require('../utils/dateUtils');
+const settingsReader = require('./settings');
 
 /**
  * @openapi
@@ -54,9 +56,11 @@ router.get('/', authenticate, async (req, res) => {
     const where = {};
     if (status) where.status = status;
     if (dateFrom || dateTo) {
+      // dateFrom/dateTo приходят как YYYY-MM-DD; интерпретируем границы дня в TZ Location.
+      const tz = tzOf(settingsReader.readSettings());
       where.scheduledTime = {};
-      if (dateFrom) where.scheduledTime.gte = new Date(dateFrom);
-      if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59, 999); where.scheduledTime.lte = end; }
+      if (dateFrom) where.scheduledTime.gte = getDayBoundsInTz(dateFrom, tz).start;
+      if (dateTo) where.scheduledTime.lt = getDayBoundsInTz(dateTo, tz).end;
     }
 
     const [orders, total] = await Promise.all([

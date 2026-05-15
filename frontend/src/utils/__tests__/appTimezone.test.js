@@ -94,3 +94,58 @@ describe('appTimezone — formatDateTimeInAppTz()', () => {
     expect(mod.formatDateTimeInAppTz('not-a-date')).toBeDefined();
   });
 });
+
+describe('appTimezone — formatInAppTz()', () => {
+  it('returns em-dash for empty input', () => {
+    expect(mod.formatInAppTz(null)).toBe('—');
+    expect(mod.formatInAppTz('')).toBe('—');
+  });
+
+  it('uses default opts (date+time) when options omitted', () => {
+    const out = mod.formatInAppTz('2026-04-14T10:30:00Z', null, 'ru-RU', 'Europe/Moscow');
+    expect(out).toMatch(/14\.04\.2026/);
+    expect(out).toMatch(/13:30/);
+  });
+
+  it('honors override options (time-only)', () => {
+    const out = mod.formatInAppTz(
+      '2026-04-14T10:30:00Z',
+      { hour: '2-digit', minute: '2-digit' },
+      'ru-RU',
+      'Europe/Moscow',
+    );
+    expect(out).toBe('13:30');
+  });
+
+  it('accepts Date instance directly', () => {
+    const out = mod.formatInAppTz(
+      new Date('2026-04-14T10:30:00Z'),
+      { hour: '2-digit', minute: '2-digit' },
+      'ru-RU',
+      'Europe/Moscow',
+    );
+    expect(out).toBe('13:30');
+  });
+
+  it('falls back to string for invalid date', () => {
+    expect(mod.formatInAppTz('garbage')).toBe('garbage');
+  });
+});
+
+describe('appTimezone — formatDateInAppTz / formatTimeInAppTz / formatTimeSecInAppTz', () => {
+  it('formatDateInAppTz produces DD.MM.YYYY in TZ', () => {
+    const out = mod.formatDateInAppTz('2026-04-14T22:30:00Z', 'ru-RU', 'Europe/Moscow');
+    // 22:30 UTC = 01:30 Москва (15 апр)
+    expect(out).toBe('15.04.2026');
+  });
+
+  it('formatTimeInAppTz produces HH:MM in TZ', () => {
+    const out = mod.formatTimeInAppTz('2026-04-14T10:30:00Z', 'ru-RU', 'Europe/Moscow');
+    expect(out).toBe('13:30');
+  });
+
+  it('formatTimeSecInAppTz includes seconds', () => {
+    const out = mod.formatTimeSecInAppTz('2026-04-14T10:30:45Z', 'ru-RU', 'Europe/Moscow');
+    expect(out).toBe('13:30:45');
+  });
+});

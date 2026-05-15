@@ -97,3 +97,39 @@ export function formatDateTimeInAppTz(s, locale = 'ru-RU', tz = getAppTimezone()
     return String(s);
   }
 }
+
+/**
+ * Универсальный форматтер: всегда применяет TZ Location.
+ * Принимает любые Intl.DateTimeFormatOptions (override дефолтов).
+ *   formatInAppTz(iso, { hour: '2-digit', minute: '2-digit' }) — только время
+ *   formatInAppTz(iso) — дата + время по умолчанию (как formatDateTimeInAppTz)
+ */
+export function formatInAppTz(s, options = null, locale = 'ru-RU', tz = getAppTimezone()) {
+  if (s == null || s === '') return '—';
+  try {
+    const d = s instanceof Date ? s : new Date(s);
+    if (isNaN(d.getTime())) return String(s);
+    const opts = options || {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    };
+    return d.toLocaleString(locale, { timeZone: tz, ...opts });
+  } catch {
+    return String(s);
+  }
+}
+
+/** Только дата (DD.MM.YYYY) в TZ Location. */
+export function formatDateInAppTz(s, locale = 'ru-RU', tz = getAppTimezone()) {
+  return formatInAppTz(s, { day: '2-digit', month: '2-digit', year: 'numeric' }, locale, tz);
+}
+
+/** Только время (HH:MM) в TZ Location. */
+export function formatTimeInAppTz(s, locale = 'ru-RU', tz = getAppTimezone()) {
+  return formatInAppTz(s, { hour: '2-digit', minute: '2-digit' }, locale, tz);
+}
+
+/** Время с секундами (HH:MM:SS) в TZ Location. */
+export function formatTimeSecInAppTz(s, locale = 'ru-RU', tz = getAppTimezone()) {
+  return formatInAppTz(s, { hour: '2-digit', minute: '2-digit', second: '2-digit' }, locale, tz);
+}

@@ -6,6 +6,7 @@ import Pagination from '../components/Pagination';
 import { translateZone, translatePost } from '../utils/translate';
 import HelpButton from '../components/HelpButton';
 import QRBadge from '../components/QRBadge';
+import { formatInAppTz } from '../utils/appTimezone';
 
 // Mock plate image — SVG генерирует "фото номера"
 function PlatePreview({ plate, small = false }) {
@@ -149,7 +150,7 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Время въезда' : 'Entry Time'}</p>
             <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>
-              {new Date(session.entryTime).toLocaleString()}
+              {formatInAppTz(session.entryTime)}
             </p>
           </div>
           <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
@@ -385,7 +386,7 @@ export default function Sessions() {
                   </div>
                 </td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
-                  {new Date(s.entryTime).toLocaleString()}
+                  {formatInAppTz(s.entryTime)}
                 </td>
                 <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
                   {translateZone(s.zoneStays?.[0]?.zone?.name, isRu) || '—'}

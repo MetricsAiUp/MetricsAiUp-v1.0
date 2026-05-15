@@ -5,6 +5,7 @@ import { usePolling } from '../hooks/useSocket';
 import { Car, CircleCheck, Wrench, Lightbulb } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import { translateZone } from '../utils/translate';
+import { formatTimeSecInAppTz } from '../utils/appTimezone';
 import HelpButton from '../components/HelpButton';
 import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 import PredictionWidget from '../components/PredictionWidget';
@@ -220,7 +221,7 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {new Date(ev.createdAt).toLocaleTimeString()}
+                      {formatTimeSecInAppTz(ev.createdAt)}
                     </span>
                   </div>
                 ))}

@@ -31,7 +31,7 @@ const STATE_FILE = path.join(__dirname, '../../data/discrepancy-scheduler.json')
 const DEFAULT_STATE = {
   enabled: true,
   time: '08:00',
-  timezone: 'Europe/Minsk',
+  timezone: 'Europe/Moscow',
   sinceWindow: '7d',
   lastRunAt: null,
   lastFinishAt: null,

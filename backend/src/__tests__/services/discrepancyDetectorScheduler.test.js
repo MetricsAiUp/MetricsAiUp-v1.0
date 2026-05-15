@@ -25,7 +25,7 @@ describe('discrepancyDetectorScheduler — state helpers', () => {
     const state = scheduler._readState();
     expect(state.enabled).toBe(true);
     expect(state.time).toBe('08:00');
-    expect(state.timezone).toBe('Europe/Minsk');
+    expect(state.timezone).toBe('Europe/Moscow');
     expect(state.sinceWindow).toBe('7d');
     expect(state.lastRunAt).toBeNull();
   });

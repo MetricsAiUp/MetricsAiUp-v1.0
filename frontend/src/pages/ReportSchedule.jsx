@@ -5,6 +5,7 @@ import {
   FileSpreadsheet, Plus, Trash2, Play, ToggleLeft, ToggleRight, X, Clock,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import { formatInAppTz } from '../utils/appTimezone';
 
 const DAYS_OF_WEEK_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 const DAYS_OF_WEEK_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -151,7 +152,7 @@ export default function ReportSchedule() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {s.lastRunAt ? new Date(s.lastRunAt).toLocaleString(isRu ? 'ru-RU' : 'en-US') : '-'}
+                    {s.lastRunAt ? formatInAppTz(s.lastRunAt, null, isRu ? 'ru-RU' : 'en-US') : '-'}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-2">

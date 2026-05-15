@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
+import { getAppTimezone } from '../utils/appTimezone';
 
 // ---------- helpers ----------
 
@@ -24,7 +25,7 @@ function fmtDt(v) {
   if (!v) return null;
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString('ru-RU', { timeZone: getAppTimezone(), day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 // Возвращают null, если значения нет. На месте «нет данных» вызов-сайт
@@ -438,7 +439,7 @@ function TabZnPlanMatching({ t, focusOrderNumber, clearFocus }) {
 // ---------- TAB: Закр. ЗН ↔ Заказ-наряды и Заявки ----------
 //
 // База — «Закрытые ЗН» (deduped performed). К каждой строке backend подтягивает
-// длительности из repair/plan: Δплан, Δуточн, Δфакт, Δзакр−старт.
+// длительности из repair/plan: Δплан, Δуточн, Δфакт, Δзакр−факт.
 // Цвета фона колонок отличают семантику (нормо vs 4 разницы), но НЕ зависят
 // от severity — это самостоятельные «жёсткие» цвета.
 // Подсветка строки: |Δфакт − нормочасы| / нормочасы > 30%.
@@ -448,7 +449,7 @@ const CLOSED_COL_BG = {
   dPlan:   'rgba(56, 189, 248, 0.10)', // sky    — Δ план
   dUchn:   'rgba(234, 179, 8, 0.10)',  // amber  — Δ уточн
   dFact:   'rgba(34, 197, 94, 0.10)',  // emerald — Δ факт
-  dClosed: 'rgba(244, 114, 182, 0.10)',// pink   — Δ закр−старт
+  dClosed: 'rgba(244, 114, 182, 0.10)',// pink   — Δ закр−факт
 };
 const CLOSED_COL_HEADER = {
   norm:    '#a78bfa',
@@ -605,7 +606,29 @@ function TabClosedZnOrders({ t, navigateTo }) {
                         </button>
                       ) : <NoData />}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap align-top text-xs">{fmtDt(it.closedAt) || <NoData />}</td>
+                    <td className="px-3 py-2 whitespace-nowrap align-top text-xs">
+                      {(() => {
+                        const formatted = fmtDt(it.closedAt);
+                        if (!formatted) return <NoData />;
+                        // Аномалия: «дата закрытия» позже фактического получения письма из 1С
+                        // (или вообще в будущем) — оператор 1С проставил плановое/будущее время.
+                        const closedMs = new Date(it.closedAt).getTime();
+                        const receivedMs = it.receivedAt ? new Date(it.receivedAt).getTime() : null;
+                        const isFuture = Number.isFinite(closedMs) && closedMs > Date.now();
+                        const isAfterReceived = Number.isFinite(closedMs) && Number.isFinite(receivedMs) && closedMs > receivedMs;
+                        if (isFuture || isAfterReceived) {
+                          return (
+                            <span className="inline-flex items-center gap-1"
+                              title={t('data1c.raw.col.closedFutureHint')}
+                              style={{ color: '#f59e0b', fontWeight: 600 }}>
+                              <AlertTriangle className="w-3 h-3" />
+                              {formatted}
+                            </span>
+                          );
+                        }
+                        return formatted;
+                      })()}
+                    </td>
                     <td className="px-3 py-2 text-right font-mono whitespace-nowrap align-top" style={{ background: CLOSED_COL_BG.norm }}>
                       {fmtHoursNumber(it.normHours) || <NoData />}
                     </td>

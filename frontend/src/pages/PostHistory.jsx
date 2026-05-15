@@ -11,6 +11,7 @@ import {
 import HelpButton from '../components/HelpButton';
 import { translateWorksDesc } from '../utils/translate';
 import { POST_STATUS_COLORS } from '../constants';
+import { getAppTimezone } from '../utils/appTimezone';
 
 // ── Status helpers ──────────────────────────────────────────────────
 const CONFIDENCE_COLORS = { HIGH: '#10b981', MEDIUM: '#f59e0b', LOW: '#ef4444' };
@@ -340,6 +341,7 @@ export default function PostHistory() {
     if (!ts) return '---';
     const d = new Date(ts);
     return d.toLocaleString(isRu ? 'ru-RU' : 'en-US', {
+      timeZone: getAppTimezone(),
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
   };
@@ -770,7 +772,7 @@ export function ZoneHistory() {
 
   const formatTime = (ts) => {
     if (!ts) return '---';
-    return new Date(ts).toLocaleString(isRu ? 'ru-RU' : 'en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return new Date(ts).toLocaleString(isRu ? 'ru-RU' : 'en-US', { timeZone: getAppTimezone(), day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
   const PERIOD_OPTIONS = [
@@ -1005,6 +1007,7 @@ export function PostHistoryModal({ postNumber, historyData, onClose, onOpenFullP
     if (!ts) return '---';
     const d = new Date(ts);
     return d.toLocaleString(isRu ? 'ru-RU' : 'en-US', {
+      timeZone: getAppTimezone(),
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
   };

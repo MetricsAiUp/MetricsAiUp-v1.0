@@ -8,6 +8,7 @@ import {
   FileText, MapPin,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
+import { getAppTimezone } from '../utils/appTimezone';
 
 // fetchApi removed — data loaded via api.get() from AuthContext
 
@@ -373,7 +374,7 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
           <div className="flex justify-between text-sm">
             <span style={{ color: 'var(--text-muted)' }}>{isRu ? 'Дата' : 'Date'}</span>
             <span style={{ color: 'var(--text-primary)' }}>
-              {new Date(shift.date + 'T00:00:00').toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date(shift.date + 'T00:00:00Z').toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
           </div>
           <div className="flex justify-between text-sm">
@@ -618,14 +619,16 @@ export default function Shifts() {
   const weekLabel = useMemo(() => {
     const end = new Date(weekStart);
     end.setDate(end.getDate() + 6);
-    const opts = { day: 'numeric', month: 'short' };
+    const tz = getAppTimezone();
+    const opts = { timeZone: tz, day: 'numeric', month: 'short' };
     const locale = isRu ? 'ru-RU' : 'en-US';
     return `${weekStart.toLocaleDateString(locale, opts)} - ${end.toLocaleDateString(locale, opts)} ${end.getFullYear()}`;
   }, [weekStart, isRu]);
 
   const dayNames = useMemo(() => {
+    const tz = getAppTimezone();
     return weekDays.map(d =>
-      d.toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { weekday: 'short' })
+      d.toLocaleDateString(isRu ? 'ru-RU' : 'en-US', { timeZone: tz, weekday: 'short' })
     );
   }, [weekDays, isRu]);
 

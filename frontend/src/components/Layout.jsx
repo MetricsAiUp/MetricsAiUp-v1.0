@@ -7,6 +7,7 @@ import { Sun, Moon, Globe, LogOut, Wifi, WifiOff, Menu, X, PanelLeftClose, Panel
 import { useSocketStatus } from '../hooks/useSocket';
 import Sidebar from './Sidebar';
 import NotificationCenter from './NotificationCenter';
+import TimezoneSelector from './TimezoneSelector';
 
 function SocketIndicator() {
   const connected = useSocketStatus();
@@ -114,6 +115,9 @@ function Header({ onToggleSidebar, onToggleCollapse, collapsed }) {
           <Globe size={14} />
           <span className="hidden md:inline">{isRu ? 'English' : 'Русский'}</span>
         </button>
+
+        {/* Timezone selector */}
+        <TimezoneSelector />
 
         {/* App mode */}
         <ModeBadge />

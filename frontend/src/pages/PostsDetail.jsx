@@ -9,6 +9,7 @@ import StaleDataBanner from '../components/StaleDataBanner';
 import PostCardsView from '../components/postsDetail/PostCardsView';
 import PostTableView from '../components/postsDetail/PostTableView';
 import PostDetailPanel from '../components/postsDetail/PostDetailPanel';
+import { getAppTimezone } from '../utils/appTimezone';
 
 const STATUS_COLORS = {
   completed: 'var(--success)',
@@ -19,7 +20,7 @@ const SEVERITY_COLORS = { warning: 'var(--warning)', danger: 'var(--danger)', in
 
 function formatTime(t) {
   if (!t) return '—';
-  return new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return new Date(t).toLocaleTimeString('ru-RU', { timeZone: getAppTimezone(), hour: '2-digit', minute: '2-digit' });
 }
 
 function ListModal({ title, children, onClose }) {

@@ -6,6 +6,7 @@ import { RefreshCw, History, Radio, ChevronDown, ChevronRight, Clock, Car, Eye, 
 import HelpButton from '../components/HelpButton';
 import CameraStreamModal from '../components/CameraStreamModal';
 import { translateWorksDesc } from '../utils/translate';
+import { getAppTimezone } from '../utils/appTimezone';
 
 const AUTO_REFRESH_INTERVAL = 10000;
 
@@ -44,8 +45,9 @@ function formatDate(iso) {
   if (!iso) return '—';
   try {
     const d = new Date(iso);
-    const date = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-    const time = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const tz = getAppTimezone();
+    const date = d.toLocaleDateString('ru-RU', { timeZone: tz, day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('ru-RU', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     return `${date} ${time}`;
   } catch { return iso; }
 }

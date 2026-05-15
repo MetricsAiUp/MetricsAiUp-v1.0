@@ -1,6 +1,8 @@
 const prisma = require('../config/database');
 const logger = require('../config/logger');
 const registry = require('./_serviceRegistry');
+const { tzOf, getDayBoundsInTz } = require('../utils/dateUtils');
+const settingsReader = require('../routes/settings');
 
 let bot = null;
 
@@ -106,8 +108,10 @@ function initTelegramBot() {
     bot.onText(/\/report/, async (msg) => {
       try {
         const sessions = await prisma.vehicleSession.count({ where: { status: 'active' } });
+        const tz = tzOf(settingsReader.readSettings());
+        const { start: dayStart } = getDayBoundsInTz(new Date(), tz);
         const completed = await prisma.vehicleSession.count({
-          where: { status: 'completed', exitTime: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+          where: { status: 'completed', exitTime: { gte: dayStart } },
         });
         const recs = await prisma.recommendation.findMany({
           where: { status: 'active' },
