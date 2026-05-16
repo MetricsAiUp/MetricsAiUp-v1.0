@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { X, User, AlertTriangle } from 'lucide-react';
+import { X, User, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import HelpButton from '../components/HelpButton';
 import ShowDiscrepanciesToggle from '../components/ShowDiscrepanciesToggle';
 import StaleDataBanner from '../components/StaleDataBanner';
@@ -166,6 +167,16 @@ export default function PostsDetail() {
                     </div>
                   )}
                 </div>
+                {/* Сводный отчёт — переход на /utilization с текущим периодом */}
+                <Link
+                  to={`/utilization?entity=posts&period=${period}${period === 'custom' && customFrom ? `&from=${customFrom}` : ''}${period === 'custom' && customTo ? `&to=${customTo}` : ''}`}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+                  title={t('utilization.openReport')}
+                >
+                  <BarChart3 size={12} />
+                  <span>{t('utilization.openReport')}</span>
+                </Link>
                 {/* View toggle */}
                 <div className="flex gap-1" style={{ borderLeft: '1px solid var(--border-glass)', paddingLeft: 8 }}>
                   {[{ key: 'cards', label: isRu ? 'Плитки' : 'Cards' }, { key: 'table', label: isRu ? 'Таблица' : 'Table' }].map(v => (

@@ -20,6 +20,7 @@ const navItems = [
   { path: '/shifts', icon: Clock, labelKey: 'nav.shifts', pageId: 'shifts' },
   { path: '/events', icon: ScrollText, labelKey: 'nav.events', pageId: 'events' },
   { path: '/analytics', icon: BarChart3, labelKey: 'nav.analytics', pageId: 'analytics' },
+  { path: '/utilization', icon: BarChart3, labelKey: 'nav.utilization', pageId: 'utilization' },
   { path: '/cameras', icon: Camera, labelKey: 'nav.cameras', pageId: 'cameras' },
   { path: '/data-1c', icon: Database, labelKey: 'nav.data1c', pageId: 'data-1c' },
   { path: '/order-matching', icon: ClipboardList, labelKey: 'nav.orderMatching', pageId: 'order-matching' },

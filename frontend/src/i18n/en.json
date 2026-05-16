@@ -32,6 +32,7 @@
     "workOrders": "Work Orders",
     "events": "Event Log",
     "analytics": "Analytics",
+    "utilization": "Utilization report",
     "cameras": "Cameras",
     "data1c": "1C Data",
     "dashboardPosts": "Posts Dashboard",
@@ -1292,5 +1293,89 @@
         }
       }
     }
+  },
+  "utilization": {
+    "title": "Utilization report",
+    "subtitle": "Occupancy in hours and load of posts/zones within working hours",
+    "tabs": {
+      "posts": "Posts",
+      "zones": "Zones"
+    },
+    "period": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "7d": "7 days",
+      "30d": "30 days",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To"
+    },
+    "compare": "Compare with previous period",
+    "settings": {
+      "title": "Report settings",
+      "rate": "Hourly rate",
+      "rateUnit": "/h",
+      "error": "Margin of error",
+      "errorUnit": "%",
+      "errorNote": "Margin note",
+      "workStart": "Work start",
+      "workEnd": "Work end",
+      "workDays": "Working days",
+      "save": "Save",
+      "saved": "Settings saved"
+    },
+    "kpi": {
+      "shiftFund": "Work fund",
+      "busy": "Occupancy",
+      "loadPct": "Load",
+      "potential": "Potential",
+      "earned": "Earned",
+      "lost": "Lost revenue",
+      "currency": ""
+    },
+    "heatmap": {
+      "title": "Occupancy calendar",
+      "tooltipBusy": "Occupancy: {{busy}} h",
+      "tooltipLoad": "Load: {{pct}}%",
+      "tooltipEarned": "Earned: {{val}}",
+      "tooltipLost": "Lost: {{val}}"
+    },
+    "top": {
+      "title": "Top losses",
+      "loss": "Loss"
+    },
+    "table": {
+      "title": "Per post",
+      "titleZones": "Per zone",
+      "number": "#",
+      "name": "Name",
+      "type": "Type",
+      "shiftFund": "Fund, h",
+      "busy": "Busy, h",
+      "idle": "Idle, h",
+      "loadPct": "Load, %",
+      "earned": "Earned",
+      "lost": "Lost",
+      "total": "TOTAL"
+    },
+    "trend": {
+      "title": "Daily trend",
+      "hoursAxis": "Hours",
+      "pctAxis": "Load, %"
+    },
+    "errorNotice": "Report margin of error ±{{pct}}%.",
+    "drillDown": {
+      "title": "Details for {{date}}",
+      "openHistory": "Open history",
+      "noData": "No data for this day"
+    },
+    "export": {
+      "xlsx": "XLSX",
+      "pdf": "PDF",
+      "png": "PNG"
+    },
+    "empty": "No data for the selected period",
+    "loading": "Loading report…",
+    "openReport": "Utilization report"
   }
 }

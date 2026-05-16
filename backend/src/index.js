@@ -126,6 +126,7 @@ app.use('/api/monitoring', require('./routes/monitoring'));
 app.use('/api/oneC', require('./routes/oneC'));
 app.use('/api/oneC', require('./routes/oneCMatching'));
 app.use('/api/discrepancies', require('./routes/discrepancies'));
+app.use('/api/reports', require('./routes/reports'));
 app.use('/predict', predictRoutes); // backward compat with ML service URL
 
 // Health check

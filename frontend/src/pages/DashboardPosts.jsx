@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   Clock, AlertTriangle, Settings, Save, Check,
   CircleDot, Timer, FileText, Calendar, ArrowRight, Car,
-  MapPin, HelpCircle, CheckCircle2, Square, Zap, Wrench,
+  MapPin, HelpCircle, CheckCircle2, Square, Zap, Wrench, BarChart3,
 } from 'lucide-react';
 import { getShiftBounds, percentToTime, detectConflicts } from '../components/dashboardPosts/constants';
 import { POST_STATUS_COLORS } from '../constants';
@@ -436,6 +436,15 @@ export default function DashboardPosts() {
               {new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { timeZone: getAppTimezone(), weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
+          <Link
+            to={`/utilization?entity=posts&period=today`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            title={t('utilization.openReport')}
+          >
+            <BarChart3 size={14} />
+            <span>{t('utilization.openReport')}</span>
+          </Link>
           <button
             onClick={() => setShowSettings(true)}
             className="p-2 rounded-xl hover:opacity-80 transition-opacity"

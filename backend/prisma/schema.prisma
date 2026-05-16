@@ -488,6 +488,19 @@ model Location {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Окно работы СТО (для расчёта ШBF зон и отчёта /utilization)
+  workStart        String  @default("08:00")        @map("work_start")        // "HH:mm" в Location.timezone
+  workEnd          String  @default("20:00")        @map("work_end")          // "HH:mm" в Location.timezone
+  workDays         String  @default("1,2,3,4,5,6")  @map("work_days")         // ISO дни недели через запятую (1=Пн...7=Вс)
+
+  // Финансовые поля для отчёта /utilization
+  hourlyRate       Decimal? @map("hourly_rate")                                // ₽/ч, единая ставка СТО
+  currency         String   @default("RUB")
+
+  // Ручная погрешность для отчёта /utilization
+  errorMarginPct   Float?   @map("error_margin_pct")                           // ±%
+  errorMarginNote  String?  @map("error_margin_note")                          // примечание
+
   @@map("locations")
 }
 
