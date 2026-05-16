@@ -146,6 +146,14 @@ function externalUpdateDate(item) {
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+// CV API v2.1.0: рядом с каждой датой есть сиблинг `<X>Tz` ("UTC" / null).
+// Кладём как есть — null трактуется как «значение есть, но TZ не указан», не как «поля нет».
+function carFirstSeenTz(item) {
+  return item?.car?.firstSeen ? (item?.car?.firstSeenTz ?? null) : null;
+}
+function externalUpdateTz(item) {
+  return item?.lastUpdate ? (item?.lastUpdateTz ?? null) : null;
+}
 function openPartsJson(item) {
   const arr = Array.isArray(item?.openParts) ? item.openParts : [];
   return arr.length ? JSON.stringify(arr) : null;
@@ -178,12 +186,14 @@ async function persistToDb(rawState) {
       carMake: item.car?.make || null,
       carBody: item.car?.body || null,
       carFirstSeen: carFirstSeenDate(item),
+      carFirstSeenTz: carFirstSeenTz(item),
       worksInProgress: works,
       worksDescription: item.worksDescription || null,
       peopleCount,
       openParts: openPartsStr,
       confidence,
       externalUpdate: externalUpdateDate(item),
+      externalUpdateTz: externalUpdateTz(item),
     };
 
     upsertOps.push(
@@ -451,6 +461,9 @@ async function backfillHistoryToDb(fullHistory) {
       if (!ts || Number.isNaN(ts.getTime())) continue;
       if (existingMs.has(ts.getTime())) continue;
       const car = h.car || null;
+      // CV API v2.1.0: для каждой даты в HistoryEntry есть сиблинг `<X>Tz`.
+      // В backfill `externalUpdate` заполняется тем же ts что и `timestamp`,
+      // поэтому externalUpdateTz берём из h.timestampTz (это один момент времени).
       toCreate.push({
         zoneName: item.zone,
         externalType: item.type || null,
@@ -461,13 +474,16 @@ async function backfillHistoryToDb(fullHistory) {
         carMake: car?.make || null,
         carBody: car?.body || null,
         carFirstSeen: car?.firstSeen ? (() => { const d = new Date(car.firstSeen); return Number.isNaN(d.getTime()) ? null : d; })() : null,
+        carFirstSeenTz: car?.firstSeen ? (car?.firstSeenTz ?? null) : null,
         worksInProgress: !!h.worksInProgress,
         worksDescription: h.worksDescription || null,
         peopleCount: h.peopleCount || 0,
         openParts: Array.isArray(h.openParts) && h.openParts.length ? JSON.stringify(h.openParts) : null,
         confidence: h.confidence || null,
         externalUpdate: ts,
+        externalUpdateTz: h.timestampTz ?? null,
         timestamp: ts,
+        timestampTz: h.timestampTz ?? null,
       });
     }
     if (toCreate.length) {

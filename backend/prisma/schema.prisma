@@ -554,13 +554,16 @@ model MonitoringSnapshot {
   carMake          String?  @map("car_make")
   carBody          String?  @map("car_body")
   carFirstSeen     DateTime? @map("car_first_seen")
+  carFirstSeenTz   String?  @map("car_first_seen_tz") // TZ of car.firstSeen from external API v2.1.0; null when source date is null
   worksInProgress  Boolean  @default(false) @map("works_in_progress")
   worksDescription String?  @map("works_description")
   peopleCount      Int      @default(0) @map("people_count")
   openParts        String?  @map("open_parts") // JSON array as string (SQLite)
   confidence       String?
   externalUpdate   DateTime? @map("external_update") // lastUpdate from external API
+  externalUpdateTz String?  @map("external_update_tz") // TZ of lastUpdate from external API v2.1.0
   timestamp        DateTime @default(now())
+  timestampTz      String?  @map("timestamp_tz") // TZ of history[].timestamp from external API v2.1.0; null for live writes (server-side now())
 
   @@index([zoneName, timestamp])
   @@index([timestamp])
@@ -579,12 +582,14 @@ model MonitoringCurrent {
   carMake          String?  @map("car_make")
   carBody          String?  @map("car_body")
   carFirstSeen     DateTime? @map("car_first_seen")
+  carFirstSeenTz   String?  @map("car_first_seen_tz") // TZ of car.firstSeen from external API v2.1.0
   worksInProgress  Boolean  @default(false) @map("works_in_progress")
   worksDescription String?  @map("works_description")
   peopleCount      Int      @default(0) @map("people_count")
   openParts        String?  @map("open_parts")
   confidence       String?
   externalUpdate   DateTime? @map("external_update")
+  externalUpdateTz String?  @map("external_update_tz") // TZ of lastUpdate from external API v2.1.0
   fetchedAt        DateTime @default(now()) @map("fetched_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
