@@ -236,7 +236,6 @@ function SettingsModal({ open, settings, onClose, onSave, canEdit }) {
 function DrillDownPanel({ open, date, data, entity, hourlyRate, currency, onClose }) {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  if (!open) return null;
 
   const dayRows = useMemo(() => {
     if (!data || !date) return [];
@@ -248,6 +247,8 @@ function DrillDownPanel({ open, date, data, entity, hourlyRate, currency, onClos
       .filter(Boolean)
       .sort((a, b) => (b.loadPct ?? -1) - (a.loadPct ?? -1));
   }, [data, date]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-[420px] flex flex-col"

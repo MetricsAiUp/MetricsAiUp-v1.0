@@ -24,6 +24,24 @@
 // Связь Zone ↔ MonitoringSnapshot.zoneName: regex /Свободная\s+зона\s+0?(\d+)/i → Zone "Зона 0N".
 
 const prisma = require('../config/database');
+const settingsRoute = require('../routes/settings');
+
+// JS Date#getDay() → 0..6 (вс,пн,...,сб). ISO дни 1..7 (пн..вс).
+// weekSchedule в app-settings.json: { mon, tue, wed, thu, fri, sat, sun }.
+const ISO_DOW_TO_KEY = { 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat', 7: 'sun' };
+
+// Возвращает расписание из «Настроек дашборда» (app-settings.json → weekSchedule).
+// Это единственный источник правды для рабочих окон отчёта «Занятость и загрузка»:
+// у пользователя там per-day start/end + чекбокс «Вых». Location.workDays/workStart/workEnd
+// больше не используем для построения окон — финансовые поля (hourlyRate/currency/
+// errorMarginPct/errorMarginNote) по-прежнему берутся из Location.
+function getWeekScheduleFromAppSettings() {
+  try {
+    const s = settingsRoute.readSettings();
+    if (s && s.weekSchedule && typeof s.weekSchedule === 'object') return s.weekSchedule;
+  } catch { /* ignore */ }
+  return null;
+}
 
 // ── helpers: TZ-aware ─────────────────────────────────────────────────────
 
@@ -116,19 +134,37 @@ function mergeWindows(windows) {
 
 // ── окна работы СТО (общий фонд) ──────────────────────────────────────────
 
+// Расписание берём из «Настроек дашборда» (app-settings.json → weekSchedule):
+// для каждого дня {start, end, dayOff}. Дни с dayOff=true исключаются из окна.
+// Fallback на Location.workStart/workEnd/workDays — если weekSchedule отсутствует
+// (старый бэк-каталог без app-settings.json).
 function buildWorkWindows(location, fromMs, toMs) {
   const tz = location.timezone || 'Europe/Moscow';
-  const workDays = new Set(
-    String(location.workDays || '1,2,3,4,5,6').split(',').map(s => Number(s.trim())).filter(Boolean)
-  );
+  const ws = getWeekScheduleFromAppSettings();
   const out = [];
   const days = listDays(new Date(fromMs), new Date(toMs), tz);
   for (const dateStr of days) {
     const dummyMidday = localToUtc(dateStr, '12:00', tz);
     const dow = isoDowInTz(dummyMidday, tz);
-    if (!workDays.has(dow)) continue;
-    const startMs = localToUtc(dateStr, location.workStart || '08:00', tz).getTime();
-    let endMs = localToUtc(dateStr, location.workEnd || '20:00', tz).getTime();
+    let dayStart, dayEnd, dayOff;
+    if (ws) {
+      const key = ISO_DOW_TO_KEY[dow];
+      const d = ws[key];
+      if (!d) continue;
+      dayOff = !!d.dayOff;
+      dayStart = d.start || '08:00';
+      dayEnd = d.end || '20:00';
+    } else {
+      const workDays = new Set(
+        String(location.workDays || '1,2,3,4,5,6').split(',').map(s => Number(s.trim())).filter(Boolean)
+      );
+      dayOff = !workDays.has(dow);
+      dayStart = location.workStart || '08:00';
+      dayEnd = location.workEnd || '20:00';
+    }
+    if (dayOff) continue;
+    const startMs = localToUtc(dateStr, dayStart, tz).getTime();
+    let endMs = localToUtc(dateStr, dayEnd, tz).getTime();
     if (endMs <= startMs) endMs += 86400000;
     out.push({ start: startMs, end: endMs, dateStr });
   }
@@ -354,7 +390,7 @@ async function computePosts({ fromMs, toMs, location }) {
     zoneByPostNumber.get(n).push(zn);
   }
 
-  // Окно работы СТО — единое для всех постов.
+  // Окно работы СТО — единое для всех постов, источник — weekSchedule из «Настроек дашборда».
   const workWindows = buildWorkWindows(location, fromMs, toMs);
   const tz = location.timezone;
 
