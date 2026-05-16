@@ -14,14 +14,14 @@ const XLSX = require('xlsx');
 
 // ----------- date parsing helpers ------------
 
-// Даты в xlsx из 1С — это wall-clock в TZ +3 (Минск/Москва). Никаких пересчётов
-// TZ не делаем: компоненты даты/времени из файла собираем в UTC «как есть».
-// В БД дата хранится как UTC-метка, чьи компоненты совпадают с wall-clock из 1С.
+// Даты в xlsx из 1С — это wall-clock в TZ +3 (Минск/Москва) без TZ-маркера.
+// В БД храним как настоящий UTC (минус 3 часа) — фронт сам прибавит +3
+// при отображении и покажет ровно то время, что было в файле 1С.
 //
+// Никаких Intl/LMT-фокусов — фиксированный сдвиг -3ч.
 // Отсев: год < 2000 — мусор/заглушки 1С (пустые даты "01.01.0001" и т.п.) → null.
-//
-// xlsx с cellDates:true превращает date-cells в Date с wall-clock в UTC-компонентах.
-// Если 1С выгружает дату строкой ("DD.MM.YYYY HH:mm:ss") — парсим регекспом.
+
+const ONEC_TZ_OFFSET_HOURS = 3; // +3 Минск/Москва, без DST
 
 function parseDate(v) {
   if (v == null || v === '') return null;
@@ -29,6 +29,7 @@ function parseDate(v) {
 
   if (v instanceof Date) {
     if (isNaN(v.getTime())) return null;
+    // xlsx с cellDates:true укладывает wall-clock в UTC-компоненты Date.
     y = v.getUTCFullYear();
     mo = v.getUTCMonth();
     d = v.getUTCDate();
@@ -70,7 +71,8 @@ function parseDate(v) {
   // Отсев заглушек 1С (пустая дата = 01.01.0001) и прочего мусора.
   if (y < 2000) return null;
 
-  return new Date(Date.UTC(y, mo, d, h, mi, sec));
+  // Wall-clock +3 → UTC: вычитаем 3 часа. JS Date нормализует переход через сутки.
+  return new Date(Date.UTC(y, mo, d, h - ONEC_TZ_OFFSET_HOURS, mi, sec));
 }
 
 // SheetJS с raw:false форматирует числа по en-US локали (запятая = разделитель тысяч):
