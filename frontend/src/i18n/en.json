@@ -425,7 +425,6 @@
       "imports": "Imports",
       "raw": "1C files",
       "unmapped": "Unmapped",
-      "payroll": "Payroll",
       "settings": "Settings"
     },
     "period": {
@@ -459,12 +458,6 @@
         "unresolved": "Unresolved",
         "tracked": "Tracked",
         "skipped": "Not our post"
-      },
-      "payroll": {
-        "executors": "Executors",
-        "normHours": "Norm hours",
-        "orders": "Orders",
-        "avg": "Avg / executor"
       }
     },
     "filterByPeriod": "By date",
@@ -616,16 +609,6 @@
       "resolvedNotOurPost": "not our post",
       "resolved": "resolved",
       "unresolved": "unresolved"
-    },
-    "payroll": {
-      "from": "From:",
-      "to": "To:",
-      "totalHours": "Total",
-      "hoursUnit": "h",
-      "colExecutor": "Executor",
-      "colNormHours": "Norm hours",
-      "colOrders": "Orders",
-      "colRepairKinds": "Repair kinds"
     },
     "settings": {
       "host": "IMAP host",
@@ -1293,6 +1276,35 @@
         }
       }
     }
+  },
+  "payroll": {
+    "title": "Productivity",
+    "role": {
+      "executor": "Executor",
+      "master": "Master",
+      "dispatcher": "Dispatcher"
+    },
+    "kpi": {
+      "persons": "Persons",
+      "normHours": "Norm hours",
+      "orders": "Orders",
+      "cvHours": "CV hours",
+      "avg": "Avg per person"
+    },
+    "col": {
+      "executor": "Executor",
+      "master": "Master",
+      "dispatcher": "Dispatcher",
+      "normHours": "Norm hours",
+      "orders": "Orders",
+      "cvHours": "CV hours",
+      "repairKinds": "Repair kinds"
+    },
+    "filterByClosed": "By closed date",
+    "hoursUnit": "h",
+    "refresh": "Refresh",
+    "loading": "Loading…",
+    "noData": "No data"
   },
   "utilization": {
     "title": "Utilization report",

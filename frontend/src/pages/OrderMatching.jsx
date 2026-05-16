@@ -13,10 +13,16 @@ import {
   CheckCircle2, XCircle, MinusCircle,
   TrendingUp, TrendingDown,
   ArrowUp, ArrowDown, ArrowUpDown,
+  Users, Hourglass, ListChecks, BarChart3,
+  RefreshCw, UserCog, Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import HelpButton from '../components/HelpButton';
 import Pagination from '../components/Pagination';
+import PeriodPresets from '../components/data1c/PeriodPresets';
+import KpiCard from '../components/data1c/KpiCard';
+import RepairKindChips from '../components/data1c/RepairKindChips';
+import useTableSort from '../hooks/useTableSort';
 import { getAppTimezone } from '../utils/appTimezone';
 
 // ---------- helpers ----------
@@ -140,7 +146,7 @@ const MATCHING_TABS = [
   { id: 'zn_plan',            icon: GitMerge,      Component: TabZnPlanMatching },
   { id: 'closed_zn_orders',   icon: ClipboardList, Component: TabClosedZnOrders },
   { id: 'closed_zn_cv',       icon: Camera,        Component: TabClosedZnCv },
-  { id: 'payroll',            icon: Wrench,        Component: TabPlaceholder },
+  { id: 'payroll',            icon: Wrench,        Component: TabPayroll },
 ];
 
 // ---------- root ----------
@@ -1247,6 +1253,158 @@ function CvEpisodesDetail({ item, t }) {
             })}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+// ---------- TAB: Выработка ----------
+// 3 ролевых среза (исполнитель / мастер / диспетчер).
+// Данные: GET /api/payroll?role=...&from=&to= → { items, totalNorm, totalCvHours }
+//   - нормочасы и заказы — последняя версия OneCWorkPerformed на orderNumber,
+//   - CV-часы по ЗН — через OneCCvMatch → PostStay.activeTime,
+//   - в каждом срезе CV-время засчитывается ПОЛНОСТЬЮ человеку соответствующей роли.
+
+const PAYROLL_ROLES = [
+  { id: 'executor',   icon: Wrench,    labelKey: 'payroll.role.executor' },
+  { id: 'master',     icon: UserCog,   labelKey: 'payroll.role.master' },
+  { id: 'dispatcher', icon: Briefcase, labelKey: 'payroll.role.dispatcher' },
+];
+
+function payrollTdStyle(idx) {
+  return { background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' };
+}
+
+function TabPayroll({ t }) {
+  const { api } = useAuth();
+  const [role, setRole] = useState('executor');
+  const [data, setData] = useState({ items: [], totalNorm: 0, totalCvHours: 0 });
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState(() => {
+    const now = new Date();
+    const m = new Date(now); m.setDate(m.getDate() - 29); m.setHours(0, 0, 0, 0);
+    const e = new Date(now); e.setHours(23, 59, 59, 999);
+    return { preset: 'month', from: m.toISOString(), to: e.toISOString() };
+  });
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('role', role);
+      if (period.from) params.set('from', period.from);
+      if (period.to) params.set('to', period.to);
+      const r = await api.get(`/api/payroll?${params.toString()}`);
+      setData(r.data || { items: [], totalNorm: 0, totalCvHours: 0 });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [role, period.from, period.to]);
+  useEffect(() => { setPage(1); }, [role, period.preset, period.from, period.to]);
+
+  const { sorted, sortKey, sortDir, toggle } = useTableSort(data.items || [], 'normHours', 'desc');
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
+  const pageItems = sorted.slice((page - 1) * perPage, page * perPage);
+
+  const items = data.items || [];
+  const totalOrders = items.reduce((s, r) => s + (r.orders || 0), 0);
+  const avgNorm = items.length ? Math.round((data.totalNorm / items.length) * 10) / 10 : 0;
+
+  return (
+    <div className="space-y-3">
+      {/* Sub-tabs ролей */}
+      <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: 'var(--border-glass)' }}>
+        {PAYROLL_ROLES.map((r) => {
+          const Icon = r.icon;
+          const isActive = role === r.id;
+          return (
+            <button
+              key={r.id}
+              onClick={() => setRole(r.id)}
+              className="px-3 py-1.5 text-sm flex items-center gap-1.5 transition-all whitespace-nowrap"
+              style={{
+                color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                borderBottom: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+                fontWeight: isActive ? 600 : 500,
+              }}
+            >
+              <Icon size={14} /> {t(r.labelKey)}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* KPI */}
+      <div className="flex flex-wrap gap-3">
+        <KpiCard label={t('payroll.kpi.persons')}   value={items.length}      icon={Users}      tone="default" />
+        <KpiCard label={t('payroll.kpi.normHours')} value={data.totalNorm}    icon={Hourglass}  tone="accent"  hint={t('payroll.hoursUnit')} />
+        <KpiCard label={t('payroll.kpi.orders')}    value={totalOrders}       icon={ListChecks} tone="info" />
+        <KpiCard label={t('payroll.kpi.cvHours')}   value={data.totalCvHours || 0} icon={Activity} tone="warning" hint={t('payroll.hoursUnit')} />
+        <KpiCard label={t('payroll.kpi.avg')}       value={avgNorm}           icon={BarChart3}  tone="success" hint={t('payroll.hoursUnit')} />
+      </div>
+
+      {/* Период */}
+      <div className="rounded-xl p-3 flex items-center gap-3 flex-wrap"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          {t('payroll.filterByClosed')}
+        </span>
+        <PeriodPresets value={period} onChange={setPeriod} allowAll={false} />
+        <button onClick={load} disabled={loading}
+          className="ml-auto px-2.5 py-1 rounded-md text-xs flex items-center gap-1"
+          style={{ background: 'var(--accent)', color: 'white' }}>
+          <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> {t('payroll.refresh')}
+        </button>
+      </div>
+
+      {/* Таблица */}
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead style={{ background: 'rgba(0,0,0,0.12)', position: 'sticky', top: 0, zIndex: 1 }}>
+              <tr>
+                <SortableTh sortKey="person"    sortBy={sortKey} sortDir={sortDir} onSort={toggle}>{t(`payroll.col.${role}`)}</SortableTh>
+                <SortableTh sortKey="normHours" sortBy={sortKey} sortDir={sortDir} onSort={toggle} align="right">{t('payroll.col.normHours')}</SortableTh>
+                <SortableTh sortKey="orders"    sortBy={sortKey} sortDir={sortDir} onSort={toggle} align="right">{t('payroll.col.orders')}</SortableTh>
+                <SortableTh sortKey="cvHours"   sortBy={sortKey} sortDir={sortDir} onSort={toggle} align="right">{t('payroll.col.cvHours')}</SortableTh>
+                <th className="text-left px-3 py-2">{t('payroll.col.repairKinds')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} className="px-3 py-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('payroll.loading')}</td></tr>
+              ) : pageItems.length === 0 ? (
+                <tr><td colSpan={5} className="px-3 py-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('payroll.noData')}</td></tr>
+              ) : pageItems.map((r, idx) => {
+                const globalRank = (page - 1) * perPage + idx;
+                const medal = sortKey === 'normHours' && sortDir === 'desc' ? globalRank : -1;
+                const stripe = medal === 0 ? '#fbbf24' : medal === 1 ? '#cbd5e1' : medal === 2 ? '#d97706' : 'transparent';
+                return (
+                  <tr key={r.person} className="transition-colors hover:bg-[var(--bg-glass-hover)]"
+                      style={{ ...payrollTdStyle(idx), borderTop: '1px solid var(--border-glass)', boxShadow: stripe !== 'transparent' ? `inset 4px 0 0 ${stripe}` : undefined }}>
+                    <td className="px-3 py-2 font-medium">{r.person}</td>
+                    <td className="px-3 py-2 text-right font-mono font-semibold">{r.normHours}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.orders}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.cvHours}</td>
+                    <td className="px-3 py-2"><RepairKindChips kinds={r.repairKinds} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {sorted.length > 0 && (
+          <div className="px-3 py-2 border-t" style={{ borderColor: 'var(--border-glass)' }}>
+            <Pagination
+              page={page} totalPages={totalPages} totalItems={sorted.length}
+              perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

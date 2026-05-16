@@ -425,7 +425,6 @@
       "imports": "Импорты",
       "raw": "Файлы 1С",
       "unmapped": "Несопоставленные",
-      "payroll": "Выработка",
       "settings": "Настройки"
     },
     "period": {
@@ -459,12 +458,6 @@
         "unresolved": "Не решено",
         "tracked": "Отслеживается",
         "skipped": "Не наш пост"
-      },
-      "payroll": {
-        "executors": "Исполнителей",
-        "normHours": "Нормочасов",
-        "orders": "Заказов",
-        "avg": "Средн. на исп."
       }
     },
     "filterByPeriod": "По дате",
@@ -616,16 +609,6 @@
       "resolvedNotOurPost": "не наш пост",
       "resolved": "сопоставлено",
       "unresolved": "не сопоставлено"
-    },
-    "payroll": {
-      "from": "С:",
-      "to": "По:",
-      "totalHours": "Итого",
-      "hoursUnit": "ч",
-      "colExecutor": "Исполнитель",
-      "colNormHours": "Нормочасы",
-      "colOrders": "Заказов",
-      "colRepairKinds": "Виды работ"
     },
     "settings": {
       "host": "IMAP host",
@@ -1293,6 +1276,35 @@
         }
       }
     }
+  },
+  "payroll": {
+    "title": "Выработка",
+    "role": {
+      "executor": "Исполнитель",
+      "master": "Мастер",
+      "dispatcher": "Диспетчер"
+    },
+    "kpi": {
+      "persons": "Человек",
+      "normHours": "Нормочасов",
+      "orders": "Заказов",
+      "cvHours": "CV-часов",
+      "avg": "Средн. на чел."
+    },
+    "col": {
+      "executor": "Исполнитель",
+      "master": "Мастер",
+      "dispatcher": "Диспетчер",
+      "normHours": "Нормочасы",
+      "orders": "Заказов",
+      "cvHours": "CV-часы",
+      "repairKinds": "Виды работ"
+    },
+    "filterByClosed": "По закрытию",
+    "hoursUnit": "ч",
+    "refresh": "Обновить",
+    "loading": "Загрузка…",
+    "noData": "Нет данных"
   },
   "utilization": {
     "title": "Сводный отчёт: занятость и загрузка",

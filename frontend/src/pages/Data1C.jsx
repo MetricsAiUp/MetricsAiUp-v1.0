@@ -1,4 +1,5 @@
-// Данные 1С — экран на 6 вкладок (Сейчас / Импорты / Сырые таблицы / Несопоставленные / Выработка / Настройки).
+// Данные 1С — экран на 5 вкладок (Сейчас / Импорты / Сырые таблицы / Несопоставленные / Настройки).
+// «Выработка» вынесена в отдельную страницу /payroll (3 ролевых среза).
 // Под капотом — REST /api/oneC/*.
 //
 // Редизайн: KPI-карточки, унифицированный FilterBar (период + поиск + доп.фильтры),
@@ -24,7 +25,6 @@ import StateBadge from '../components/data1c/StateBadge';
 import ImportTypeBadge from '../components/data1c/ImportTypeBadge';
 import ImportStatusBadge from '../components/data1c/ImportStatusBadge';
 import KpiCard from '../components/data1c/KpiCard';
-import RepairKindChips from '../components/data1c/RepairKindChips';
 import useTableSort from '../hooks/useTableSort';
 import { getAppTimezone, dateStrInAppTz } from '../utils/appTimezone';
 import { TIMEZONE_OPTIONS } from '../constants/timezones';
@@ -34,7 +34,6 @@ const TAB_DEFS = [
   { id: 'imports',  icon: Inbox,          perm: 'view_1c' },
   { id: 'raw',      icon: Layers,         perm: 'view_1c' },
   { id: 'unmapped', icon: AlertTriangle,  perm: 'manage_1c_import' },
-  { id: 'payroll',  icon: BarChart3,      perm: 'view_1c' },
   { id: 'settings', icon: Settings,       perm: 'manage_1c_config' },
 ];
 
@@ -889,108 +888,6 @@ function TabUnmapped({ api, canManage, onMutate }) {
   );
 }
 
-// ---------- Tab: Payroll ----------
-function TabPayroll({ api }) {
-  const { t } = useTranslation();
-  const [data, setData] = useState({ items: [], totalNorm: 0 });
-  const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState({ preset: 'month', ...(() => {
-    const now = new Date();
-    const m = new Date(now); m.setDate(m.getDate() - 29); m.setHours(0,0,0,0);
-    const e = new Date(now); e.setHours(23,59,59,999);
-    return { from: m.toISOString(), to: e.toISOString() };
-  })() });
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (period.from) params.set('from', period.from);
-      if (period.to) params.set('to', period.to);
-      const r = await api.get(`/api/oneC/payroll?${params.toString()}`);
-      setData(r.data || { items: [], totalNorm: 0 });
-    } finally {
-      setLoading(false);
-    }
-  }, [api, period.from, period.to]);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [period.preset, period.from, period.to]);
-
-  const { sorted, sortKey, sortDir, toggle } = useTableSort(data.items || [], 'normHours', 'desc');
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
-  const pageItems = sorted.slice((page - 1) * perPage, page * perPage);
-
-  const kpi = useMemo(() => {
-    const items = data.items || [];
-    const orders = items.reduce((s, r) => s + (r.orders || 0), 0);
-    const avg = items.length ? Math.round((data.totalNorm / items.length) * 10) / 10 : 0;
-    return { executors: items.length, normHours: data.totalNorm, orders, avg };
-  }, [data]);
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
-        <KpiCard label={t('data1c.kpi.payroll.executors')} value={kpi.executors} icon={Users}    tone="default" />
-        <KpiCard label={t('data1c.kpi.payroll.normHours')} value={kpi.normHours} icon={Hourglass} tone="accent" hint={t('data1c.payroll.hoursUnit')} />
-        <KpiCard label={t('data1c.kpi.payroll.orders')}    value={kpi.orders}    icon={ListChecks} tone="info" />
-        <KpiCard label={t('data1c.kpi.payroll.avg')}       value={kpi.avg}       icon={BarChart3} tone="success" hint={t('data1c.payroll.hoursUnit')} />
-      </div>
-
-      <div className="rounded-xl p-3 flex items-center gap-3 flex-wrap"
-        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-        <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-          {t('data1c.filterByClosed')}
-        </span>
-        <PeriodPresets value={period} onChange={setPeriod} allowAll={false} />
-        <button onClick={load} disabled={loading}
-          className="ml-auto px-2.5 py-1 rounded-md text-xs flex items-center gap-1"
-          style={{ background: 'var(--accent)', color: 'white' }}>
-          <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> {t('data1c.common.refresh')}
-        </button>
-      </div>
-
-      <TableShell>
-        <thead style={{ background: 'rgba(0,0,0,0.12)', position: 'sticky', top: 0, zIndex: 1 }}>
-          <tr>
-            <SortableTh sortKey="executor"  current={sortKey} dir={sortDir} onToggle={toggle}>{t('data1c.payroll.colExecutor')}</SortableTh>
-            <SortableTh sortKey="normHours" current={sortKey} dir={sortDir} onToggle={toggle} align="right">{t('data1c.payroll.colNormHours')}</SortableTh>
-            <SortableTh sortKey="orders"    current={sortKey} dir={sortDir} onToggle={toggle} align="right">{t('data1c.payroll.colOrders')}</SortableTh>
-            <SortableTh                     current={sortKey} dir={sortDir}>{t('data1c.payroll.colRepairKinds')}</SortableTh>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={4} className="px-3 py-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.loading')}</td></tr>
-          ) : pageItems.length === 0 ? (
-            <tr><td colSpan={4} className="px-3 py-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.noData')}</td></tr>
-          ) : pageItems.map((r, idx) => {
-            // Глобальный ранг (с учётом всей сортировки): первая страница и сорт по normHours desc → топ-3 цветной маркер.
-            const globalRank = (page - 1) * perPage + idx;
-            const medal = sortKey === 'normHours' && sortDir === 'desc' ? globalRank : -1;
-            const stripe = medal === 0 ? '#fbbf24' : medal === 1 ? '#cbd5e1' : medal === 2 ? '#d97706' : 'transparent';
-            return (
-              <tr key={r.executor} className={TR_CLASS} style={{ ...tdStyle(idx), borderTop: '1px solid var(--border-glass)', boxShadow: stripe !== 'transparent' ? `inset 4px 0 0 ${stripe}` : undefined }}>
-                <td className="px-3 py-2 font-medium">{r.executor}</td>
-                <td className="px-3 py-2 text-right font-mono font-semibold">{r.normHours}</td>
-                <td className="px-3 py-2 text-right font-mono">{r.orders}</td>
-                <td className="px-3 py-2"><RepairKindChips kinds={r.repairKinds} /></td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </TableShell>
-
-      <Pagination
-        page={page} totalPages={totalPages} totalItems={sorted.length}
-        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
-      />
-    </div>
-  );
-}
 
 // ---------- Tab: Settings ----------
 function SettingsCard({ title, icon: Icon, children }) {
@@ -1399,7 +1296,6 @@ export default function Data1C() {
         {active === 'imports'  && <TabImports  api={api} canImport={canImport} onMutate={reloadBadges} />}
         {active === 'raw'      && <TabRaw      api={api} />}
         {active === 'unmapped' && <TabUnmapped api={api} canManage={canImport} onMutate={reloadBadges} />}
-        {active === 'payroll'  && <TabPayroll  api={api} />}
         {active === 'settings' && <TabSettings api={api} />}
       </div>
     </div>

@@ -470,56 +470,6 @@ router.get('/raw/:type', authenticate, requirePermission('view_1c'), async (req,
   }
 });
 
-// /payroll — агрегация выработки исполнителей по OneCWorkPerformed (current)
-// Формула: по последнему performed-снимку для каждого orderNumber суммируем normHours
-// в разбивке executor + период.
-router.get('/payroll', authenticate, requirePermission('view_1c'), async (req, res) => {
-  try {
-    const from = req.query.from ? new Date(String(req.query.from)) : null;
-    const to = req.query.to ? new Date(String(req.query.to)) : null;
-
-    // Берём latest performed per orderNumber через raw SQL
-    const sql = `
-      SELECT * FROM (
-        SELECT *, ROW_NUMBER() OVER (PARTITION BY order_number ORDER BY received_at DESC) AS rn
-        FROM one_c_work_performed
-      ) WHERE rn = 1
-    `;
-    const rows = await prisma.$queryRawUnsafe(sql);
-    const filtered = rows.filter((r) => {
-      const closed = r.closed_at ? new Date(r.closed_at) : null;
-      if (from && (!closed || closed < from)) return false;
-      if (to && (!closed || closed > to)) return false;
-      return true;
-    });
-
-    const byExecutor = new Map();
-    for (const r of filtered) {
-      const key = r.executor || '— не указан —';
-      if (!byExecutor.has(key)) byExecutor.set(key, { executor: key, normHours: 0, orders: 0, repairs: new Map() });
-      const acc = byExecutor.get(key);
-      acc.normHours += Number(r.norm_hours) || 0;
-      acc.orders += 1;
-      const rk = r.repair_kind || '—';
-      acc.repairs.set(rk, (acc.repairs.get(rk) || 0) + 1);
-    }
-    const items = [...byExecutor.values()]
-      .map((x) => ({
-        executor: x.executor,
-        normHours: Math.round(x.normHours * 10) / 10,
-        orders: x.orders,
-        repairKinds: [...x.repairs.entries()].map(([k, v]) => ({ kind: k, count: v })),
-      }))
-      .sort((a, b) => b.normHours - a.normHours);
-
-    const totalNorm = items.reduce((s, x) => s + x.normHours, 0);
-    res.json({ items, totalNorm: Math.round(totalNorm * 10) / 10, from, to });
-  } catch (err) {
-    logger.error('GET /oneC/payroll failed', { err: err.message });
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // /unmapped-posts ------------------------------------------------------------
 
 router.get('/unmapped-posts', authenticate, requirePermission('manage_1c_import'), async (req, res) => {
