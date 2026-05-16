@@ -11,73 +11,66 @@
 // откуда importer вызывает парсер.
 
 const XLSX = require('xlsx');
-const { parseInTz, DEFAULT_TZ } = require('../utils/dateUtils');
-const settingsReader = require('../routes/settings');
 
 // ----------- date parsing helpers ------------
 
-// xlsx с raw:true + cellDates:true превращает date-cells в Date.
-// Но в фактических файлах даты часто записаны как строки "DD.MM.YYYY HH:mm:ss"
-// (т.к. 1С не всегда задаёт numFmt). Парсим оба варианта.
+// Даты в xlsx из 1С — это wall-clock в TZ +3 (Минск/Москва). Никаких пересчётов
+// TZ не делаем: компоненты даты/времени из файла собираем в UTC «как есть».
+// В БД дата хранится как UTC-метка, чьи компоненты совпадают с wall-clock из 1С.
 //
-// Даты в xlsx из 1С — это wall-clock в часовом поясе Location (Минск/Москва),
-// без timezone-индикатора. Поэтому интерпретируем их в TZ из настроек
-// и приводим к UTC через parseInTz().
-function getOneCTz() {
-  try {
-    const s = settingsReader.readSettings();
-    // Приоритет: oneCSourceTimezone (TZ источника 1С) → timezone (общесистемный) → DEFAULT_TZ.
-    if (s && s.oneCSourceTimezone) return s.oneCSourceTimezone;
-    if (s && s.timezone) return s.timezone;
-    return DEFAULT_TZ;
-  } catch {
-    return DEFAULT_TZ;
-  }
-}
-
-function pad2(n) { return String(n).padStart(2, '0'); }
+// Отсев: год < 2000 — мусор/заглушки 1С (пустые даты "01.01.0001" и т.п.) → null.
+//
+// xlsx с cellDates:true превращает date-cells в Date с wall-clock в UTC-компонентах.
+// Если 1С выгружает дату строкой ("DD.MM.YYYY HH:mm:ss") — парсим регекспом.
 
 function parseDate(v) {
   if (v == null || v === '') return null;
-  const tz = getOneCTz();
+  let y, mo, d, h = 0, mi = 0, sec = 0;
+
   if (v instanceof Date) {
     if (isNaN(v.getTime())) return null;
-    // xlsx с cellDates:true укладывает wall-clock в UTC-компоненты Date.
-    // Переинтерпретируем UTC-компоненты как wall-clock в TZ Location.
-    const dateStr = `${v.getUTCFullYear()}-${pad2(v.getUTCMonth() + 1)}-${pad2(v.getUTCDate())}`;
-    const timeStr = `${pad2(v.getUTCHours())}:${pad2(v.getUTCMinutes())}`;
-    const baseMs = parseInTz(dateStr, timeStr, tz);
-    if (!Number.isFinite(baseMs)) return null;
-    return new Date(baseMs + v.getUTCSeconds() * 1000);
-  }
-  if (typeof v === 'number') {
-    // Excel serial date — компоненты — это wall-clock в TZ Location.
-    const d = XLSX.SSF.parse_date_code(v);
-    if (!d) return null;
-    const dateStr = `${d.y}-${pad2(d.m)}-${pad2(d.d)}`;
-    const timeStr = `${pad2(d.H || 0)}:${pad2(d.M || 0)}`;
-    const ms = parseInTz(dateStr, timeStr, tz);
-    if (!Number.isFinite(ms)) return null;
-    return new Date(ms + Math.floor(d.S || 0) * 1000);
-  }
-  if (typeof v === 'string') {
+    y = v.getUTCFullYear();
+    mo = v.getUTCMonth();
+    d = v.getUTCDate();
+    h = v.getUTCHours();
+    mi = v.getUTCMinutes();
+    sec = v.getUTCSeconds();
+  } else if (typeof v === 'number') {
+    const dd = XLSX.SSF.parse_date_code(v);
+    if (!dd) return null;
+    y = dd.y;
+    mo = (dd.m || 1) - 1;
+    d = dd.d || 1;
+    h = dd.H || 0;
+    mi = dd.M || 0;
+    sec = Math.floor(dd.S || 0);
+  } else if (typeof v === 'string') {
     const s = v.trim();
     if (!s) return null;
     // "DD.MM.YYYY HH:mm:ss" or "DD.MM.YYYY HH:mm" or "DD.MM.YYYY"
     const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
     if (m) {
-      const [, dd, mm, yyyy, hh, mi, ss] = m;
-      const dateStr = `${yyyy}-${pad2(+mm)}-${pad2(+dd)}`;
-      const timeStr = `${pad2(+(hh || 0))}:${pad2(+(mi || 0))}`;
-      const baseMs = parseInTz(dateStr, timeStr, tz);
-      if (!Number.isFinite(baseMs)) return null;
-      return new Date(baseMs + (+(ss || 0)) * 1000);
+      d = +m[1];
+      mo = +m[2] - 1;
+      y = +m[3];
+      h = +(m[4] || 0);
+      mi = +(m[5] || 0);
+      sec = +(m[6] || 0);
+    } else {
+      // ISO-строка с явным TZ-маркером — пускаем как есть, отсеваем по году.
+      const iso = new Date(s);
+      if (isNaN(iso.getTime())) return null;
+      if (iso.getUTCFullYear() < 2000) return null;
+      return iso;
     }
-    // ISO-строка (с явным TZ-маркером) — пускаем как есть.
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
+  } else {
+    return null;
   }
-  return null;
+
+  // Отсев заглушек 1С (пустая дата = 01.01.0001) и прочего мусора.
+  if (y < 2000) return null;
+
+  return new Date(Date.UTC(y, mo, d, h, mi, sec));
 }
 
 // SheetJS с raw:false форматирует числа по en-US локали (запятая = разделитель тысяч):

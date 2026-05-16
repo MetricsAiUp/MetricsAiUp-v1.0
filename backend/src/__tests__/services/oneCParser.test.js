@@ -19,29 +19,27 @@ describe('oneCParser — _parseDate', () => {
     expect(parseDate('')).toBeNull();
     expect(parseDate('   ')).toBeNull();
   });
-  it('reinterprets Date instance (xlsx UTC components) as wall-clock in TZ', () => {
-    // xlsx с cellDates:true укладывает wall-clock в UTC-компоненты.
-    // 10:00 UTC-компоненты ↔ 10:00 Минск/Москва → 07:00 UTC.
+  it('keeps Date instance UTC components as-is (no TZ shift)', () => {
+    // Даты в 1С уже в TZ +3 (Минск). xlsx с cellDates:true укладывает
+    // wall-clock в UTC-компоненты — берём как есть, без пересчёта.
     const d = new Date('2026-04-14T10:00:00Z');
-    expect(parseDate(d).toISOString()).toBe('2026-04-14T07:00:00.000Z');
+    expect(parseDate(d).toISOString()).toBe('2026-04-14T10:00:00.000Z');
   });
   it('rejects invalid Date', () => {
     expect(parseDate(new Date('garbage'))).toBeNull();
   });
-  it('parses DD.MM.YYYY HH:mm:ss as wall-clock in TZ', () => {
-    // 10:30:45 Минск/Москва = 07:30:45 UTC
+  it('parses DD.MM.YYYY HH:mm:ss as-is (no TZ shift)', () => {
     const d = parseDate('14.04.2026 10:30:45');
     expect(d).toBeInstanceOf(Date);
-    expect(d.toISOString()).toBe('2026-04-14T07:30:45.000Z');
+    expect(d.toISOString()).toBe('2026-04-14T10:30:45.000Z');
   });
-  it('parses DD.MM.YYYY HH:mm as wall-clock in TZ', () => {
+  it('parses DD.MM.YYYY HH:mm as-is (no TZ shift)', () => {
     const d = parseDate('14.04.2026 10:30');
-    expect(d.toISOString()).toBe('2026-04-14T07:30:00.000Z');
+    expect(d.toISOString()).toBe('2026-04-14T10:30:00.000Z');
   });
-  it('parses DD.MM.YYYY (date only) as midnight wall-clock in TZ', () => {
-    // 00:00 14.04 Минск = 21:00 13.04 UTC
+  it('parses DD.MM.YYYY (date only) as midnight as-is', () => {
     const d = parseDate('14.04.2026');
-    expect(d.toISOString()).toBe('2026-04-13T21:00:00.000Z');
+    expect(d.toISOString()).toBe('2026-04-14T00:00:00.000Z');
   });
   it('parses ISO string (TZ-aware) as-is', () => {
     const d = parseDate('2026-04-14T10:00:00Z');
@@ -49,6 +47,17 @@ describe('oneCParser — _parseDate', () => {
   });
   it('returns null for unparseable string', () => {
     expect(parseDate('not a date')).toBeNull();
+  });
+  it('rejects 1C empty-date placeholder "01.01.0001"', () => {
+    expect(parseDate('01.01.0001')).toBeNull();
+    expect(parseDate('01.01.0001 23:00:00')).toBeNull();
+  });
+  it('rejects any year < 2000 as garbage/legacy', () => {
+    expect(parseDate('31.12.1999')).toBeNull();
+    expect(parseDate(new Date(Date.UTC(1899, 11, 30)))).toBeNull();
+  });
+  it('accepts year >= 2000', () => {
+    expect(parseDate('01.01.2000').toISOString()).toBe('2000-01-01T00:00:00.000Z');
   });
 });
 
@@ -138,9 +147,9 @@ describe('oneCParser — parsePlan', () => {
       durationSec: 7200,
       isOutdated: false,
     });
-    // 08:00 / 10:00 wall-clock в Минск/Москва (UTC+3) → 05:00 / 07:00 UTC.
-    expect(out[0].scheduledStart.toISOString()).toBe('2026-04-14T05:00:00.000Z');
-    expect(out[0].scheduledEnd.toISOString()).toBe('2026-04-14T07:00:00.000Z');
+    // Даты в 1С уже в TZ +3 — пишем компоненты as-is, без сдвига.
+    expect(out[0].scheduledStart.toISOString()).toBe('2026-04-14T08:00:00.000Z');
+    expect(out[0].scheduledEnd.toISOString()).toBe('2026-04-14T10:00:00.000Z');
   });
   it('skips rows missing required fields', () => {
     const wb = buildWorkbook(HEADER, [
