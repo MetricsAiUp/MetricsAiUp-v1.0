@@ -354,6 +354,7 @@
     "agoMinutes": "{{n}}m",
     "loading": "Loading...",
     "error": "Error",
+    "unknownVehicle": "Unknown",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { POST_STATUS_COLORS, MAP_FONT_FAMILY, MAP_FONT_MONO, MAP_TEXT_COLORS, MAP_LETTER_SPACING } from '../constants';
 import { getZoneColors, MAP_BG, GRID_STROKE, BUILDING_STROKE, CAMERA_FOV_OPACITY } from '../constants/mapTheme';
 import { usePostTimerText } from './PostTimer';
+import { formatCarName } from '../utils/carName';
 
 const STATUS_LABELS = {
   free: { ru: 'Свободен', en: 'Free' },
@@ -212,7 +213,7 @@ function PostRect({ layout, post, isDark, onClick, isRu, dashPost }) {
           <Text
             x={pad} y={58}
             width={W - pad * 2}
-            text={`${currentVehicle.brand || ''} ${currentVehicle.model || ''}`.trim().replace(/\b\w/g, c => c.toUpperCase())}
+            text={formatCarName({ make: currentVehicle.brand, model: currentVehicle.model }) ?? (isRu ? 'Неизвестная' : 'Unknown')}
             fontSize={9}
             fontFamily={MAP_FONT_FAMILY}
             fontStyle="500"

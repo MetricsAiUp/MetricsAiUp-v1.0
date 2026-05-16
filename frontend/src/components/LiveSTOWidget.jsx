@@ -37,13 +37,13 @@ function SummaryPill({ icon: Icon, color, value, label }) {
     <span
       className="inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full text-xs font-medium transition-all"
       style={{
-        background: hexA(color, 0.12),
-        border: `1px solid ${hexA(color, 0.28)}`,
-        color,
+        background: 'var(--bg-glass)',
+        border: '1px solid var(--border-glass)',
+        color: 'var(--text-secondary)',
       }}
     >
-      <Icon size={11} strokeWidth={2.5} />
-      <span style={{ fontWeight: 700 }}>{value}</span>
+      <Icon size={11} strokeWidth={2.5} style={{ color }} />
+      <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{value}</span>
       <span style={{ opacity: 0.85 }}>{label}</span>
     </span>
   );
@@ -111,8 +111,9 @@ export default function LiveSTOWidget() {
             {t('liveWidget.title')}
           </h3>
           {isLive && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
-              style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444' }}>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+              style={{ background: 'transparent', border: '1px solid rgba(239,68,68,0.35)', color: '#ef4444' }}>
+              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: '#ef4444' }} />
               LIVE
             </span>
           )}
@@ -174,10 +175,8 @@ export default function LiveSTOWidget() {
               title={isNoData ? noDataTitle : undefined}
               className="relative flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-lg overflow-hidden transition-all hover:translate-y-[-1px]"
               style={{
-                background: isNoData
-                  ? 'var(--bg-glass)'
-                  : `linear-gradient(90deg, ${hexA(dotColor, 0.10)} 0%, var(--bg-glass) 60%)`,
-                border: `1px solid ${isNoData ? 'var(--border-glass)' : hexA(dotColor, 0.28)}`,
+                background: 'var(--bg-glass)',
+                border: '1px solid var(--border-glass)',
                 opacity: isNoData ? 0.55 : 1,
                 fontStyle: isNoData ? 'italic' : 'normal',
               }}
@@ -186,7 +185,7 @@ export default function LiveSTOWidget() {
               {!isNoData && (
                 <span
                   className="absolute left-0 top-0 bottom-0 w-[3px]"
-                  style={{ background: dotColor }}
+                  style={{ background: dotColor, opacity: 0.85 }}
                 />
               )}
               <StatusDot color={dotColor} dashed={isNoData} />
@@ -202,11 +201,8 @@ export default function LiveSTOWidget() {
               </div>
               {!isNoData && (post.startTime || post.carFirstSeen) && (
                 <span
-                  className="text-[10px] flex-shrink-0 px-1.5 py-0.5 rounded font-medium"
-                  style={{
-                    background: hexA(dotColor, 0.14),
-                    color: dotColor,
-                  }}
+                  className="text-[10px] flex-shrink-0 font-semibold"
+                  style={{ color: dotColor }}
                 >
                   {timeSince(post.startTime || post.carFirstSeen)}
                 </span>
@@ -234,13 +230,13 @@ export default function LiveSTOWidget() {
                   key={zone.id}
                   className="relative flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-lg overflow-hidden transition-all hover:translate-y-[-1px]"
                   style={{
-                    background: `linear-gradient(90deg, ${hexA(dotColor, 0.10)} 0%, var(--bg-glass) 60%)`,
-                    border: `1px solid ${hexA(dotColor, 0.28)}`,
+                    background: 'var(--bg-glass)',
+                    border: '1px solid var(--border-glass)',
                   }}
                 >
                   <span
                     className="absolute left-0 top-0 bottom-0 w-[3px]"
-                    style={{ background: dotColor }}
+                    style={{ background: dotColor, opacity: 0.85 }}
                   />
                   <StatusDot color={dotColor} />
                   <div className="min-w-0 flex-1">

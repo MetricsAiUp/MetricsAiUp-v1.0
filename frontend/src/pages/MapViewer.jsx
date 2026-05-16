@@ -12,7 +12,6 @@ import {
   MAP_TEXT_COLORS,
   MAP_LETTER_SPACING,
   mapFontSizes,
-  toTitleCase,
 } from '../constants';
 import CameraStreamModal from '../components/CameraStreamModal';
 import HelpButton from '../components/HelpButton';
@@ -27,6 +26,7 @@ import jsPDF from 'jspdf';
 import PostTimer from '../components/PostTimer';
 import { ZONE_FILL_OPACITY, CAMERA_FOV_OPACITY, DRIVEWAY_FILL } from '../constants/mapTheme';
 import { translateWorksDesc } from '../utils/translate';
+import { formatCarName } from '../utils/carName';
 import { useCameraStatus } from '../hooks/useCameraStatus';
 import { PostHistoryModal } from './PostHistory';
 import ReplayPanel from '../components/ReplayPanel';
@@ -114,7 +114,7 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
           <div>
             <span className="text-sm font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{car.plate}</span>
             <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-              {[car.make, car.model].filter(Boolean).join(' ')}
+              {formatCarName({ make: car.make, model: car.model }) ?? t('common.unknownVehicle')}
             </span>
             {car.color && <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>({isRu ? trMap(COLOR_RU, car.color) : car.color})</span>}
             {car.body && <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>{isRu ? trMap(BODY_RU, car.body) : car.body}</span>}
@@ -884,7 +884,7 @@ export default function MapViewer() {
 
   const allElements = layout?.elements || [];
   const elements = allElements.filter(el => visibleLayers[el.type] !== false);
-  const bgFill = isDark ? '#0f172a' : '#f0f4f8';
+  const bgFill = isDark ? '#0b1220' : '#f6f8fb';
   const textFill = isDark ? '#e2e8f0' : '#1e293b';
   const mutedFill = isDark ? '#94a3b8' : '#64748b';
 
@@ -1001,13 +1001,17 @@ export default function MapViewer() {
 
               // ── Polygon mode for area types (building, zone) — NOT driveway/wall/door/infozone/post ──
               if (isPolygon && !['post', 'wall', 'door', 'infozone', 'driveway'].includes(el.type)) {
-                const fillOpacity = el.type === 'building' ? 0 : 0.08;
-                const dash = el.type === 'building' ? [8, 4] : undefined;
-                const stroke = el.color || '#22c55e';
+                const fillOpacity = el.type === 'building' ? 0 : 0.06;
+                const dash = el.type === 'building' ? [6, 4] : undefined;
+                const isBuildingShape = el.type === 'building';
+                const stroke = isBuildingShape
+                  ? (isDark ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.45)')
+                  : (el.color || '#22c55e');
+                const sw = isBuildingShape ? 1.5 : 1.5;
                 return (
                   <Group key={el.id} x={el.x} y={el.y}>
                     <Line points={el.points} closed fill={stroke} opacity={fillOpacity}
-                      stroke={stroke} strokeWidth={2} dash={dash} />
+                      stroke={stroke} strokeWidth={sw} dash={dash} />
                   </Group>
                 );
               }
@@ -1032,18 +1036,19 @@ export default function MapViewer() {
               }
 
               if (el.type === 'building') {
+                const buildingStroke = isDark ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.45)';
                 // Legacy building: polygon without shapeMode OR rectangle
                 if (el.points && el.points.length >= 4) {
                   return (
                     <Group key={el.id} x={el.x} y={el.y}>
                       <Line points={el.points} closed fill="transparent"
-                        stroke="#22c55e" strokeWidth={2} dash={[8, 4]} />
+                        stroke={buildingStroke} strokeWidth={1.5} dash={[6, 4]} />
                     </Group>
                   );
                 }
                 return (
                   <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height}
-                    stroke="#22c55e" strokeWidth={2} fill="transparent" dash={[8, 4]} />
+                    stroke={buildingStroke} strokeWidth={1.5} fill="transparent" dash={[6, 4]} />
                 );
               }
               if (el.type === 'driveway') return (
@@ -1266,6 +1271,8 @@ function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, i
   const narrow = w < 90;
   const headerH = narrow ? 28 : 22;
   const innerW = w - pad * 2;
+  const accentH = 3;
+  const borderColor = isDark ? 'rgba(148,163,184,0.16)' : 'rgba(15,23,42,0.08)';
 
   // Адаптивные размеры — единая формула из constants
   const fs = mapFontSizes(w);
@@ -1284,11 +1291,11 @@ function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, i
   const items = [];
   // Plate number — uppercase mono
   if (plate) items.push({ type: 'plate', text: String(plate).toUpperCase(), size: fs.plate });
-  // Make + Model — Title Case ("kia kia" → "Kia Kia")
+  // Make + Model — нормализация дублей ("Bmw Bmw" → "Bmw") и плейсхолдера "Other"
   if (currentVehicle) {
-    const brandRaw = `${currentVehicle.brand || ''} ${currentVehicle.model || ''}`.trim();
-    const carLabel = toTitleCase(brandRaw);
-    if (carLabel) items.push({ type: 'text', text: carLabel, size: fs.body, bold: true, color: primaryColor, align: 'center' });
+    const carLabel = formatCarName({ make: currentVehicle.brand, model: currentVehicle.model })
+      ?? (isRu ? 'Неизвестная' : 'Unknown');
+    items.push({ type: 'text', text: carLabel, size: fs.body, bold: true, color: primaryColor, align: 'center' });
   }
   // Color + Body (compact line) — lowercase
   if (currentVehicle?.color || currentVehicle?.body) {
@@ -1337,41 +1344,48 @@ function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, i
 
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} onClick={onClick} onTap={onClick}>
+      {/* Soft drop shadow + neutral border */}
       <Rect width={w} height={h} fill={fillBg}
-        stroke={color}
-        strokeWidth={status === 'active_work' ? 2 : 1.5}
-        cornerRadius={6}
-        shadowBlur={status === 'active_work' ? 10 : 3}
-        shadowColor={color}
-        shadowOpacity={status === 'active_work' ? 0.4 : 0.15} />
+        stroke={borderColor}
+        strokeWidth={1}
+        cornerRadius={8}
+        shadowBlur={status === 'active_work' ? 16 : 12}
+        shadowColor={status === 'active_work' ? color : '#000'}
+        shadowOpacity={status === 'active_work' ? 0.35 : 0.32}
+        shadowOffsetY={3} />
 
-      {/* Color header bar */}
-      <Rect x={0} y={0} width={w} height={headerH} fill={color}
-        cornerRadius={[6, 6, 0, 0]} opacity={0.9} />
+      {/* Thin top accent strip */}
+      <Rect x={0} y={0} width={w} height={accentH} fill={color}
+        cornerRadius={[8, 8, 0, 0]} opacity={0.9} />
+
+      {/* Subtle divider under header */}
+      <Rect x={pad} y={headerH} width={innerW} height={0.5}
+        fill={borderColor} />
+
       {narrow ? (<>
-        <Text x={pad} y={2} text={postLabel}
-          width={innerW} height={13}
-          fontSize={fs.header} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+        <Text x={pad} y={accentH + 2} text={postLabel}
+          width={innerW} height={12}
+          fontSize={fs.header} fontStyle="600" fill={primaryColor}
           fontFamily={MAP_FONT_FAMILY} letterSpacing={MAP_LETTER_SPACING.header}
           wrap="none" ellipsis={true} />
-        <Text x={pad} y={14} text={statusLabel}
+        <Text x={pad} y={accentH + 14} text={statusLabel}
           width={innerW} height={11}
-          fontSize={fs.status} fill={MAP_TEXT_COLORS.onColorMuted}
-          fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+          fontSize={fs.status} fill={color}
+          fontFamily={MAP_FONT_FAMILY} fontStyle="600"
           letterSpacing={MAP_LETTER_SPACING.header}
           wrap="none" ellipsis={true} />
       </>) : (<>
-        <Text x={pad} y={2} text={postLabel}
-          width={w * 0.44} height={headerH - 2}
-          fontSize={fs.header} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+        <Text x={pad} y={accentH} text={postLabel}
+          width={w * 0.44} height={headerH - accentH}
+          fontSize={fs.header} fontStyle="600" fill={primaryColor}
           verticalAlign="middle" fontFamily={MAP_FONT_FAMILY}
           letterSpacing={MAP_LETTER_SPACING.header}
           wrap="none" ellipsis={true} />
-        <Text x={w * 0.44} y={2} text={statusLabel}
-          width={w * 0.56 - pad} height={headerH - 2}
-          fontSize={fs.status} fill={MAP_TEXT_COLORS.onColorMuted}
+        <Text x={w * 0.44} y={accentH} text={statusLabel}
+          width={w * 0.56 - pad} height={headerH - accentH}
+          fontSize={fs.status} fill={color}
           align="right" verticalAlign="middle"
-          fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+          fontFamily={MAP_FONT_FAMILY} fontStyle="600"
           letterSpacing={MAP_LETTER_SPACING.header}
           wrap="none" ellipsis={true} />
       </>)}
@@ -1386,8 +1400,8 @@ function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, i
         {positioned.map((item, i) => item.type === 'plate' ? (
           <Group key={i}>
             <Rect x={pad} y={item.y} width={innerW} height={item.h}
-              fill={isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)'}
-              cornerRadius={3} />
+              fill={isDark ? 'rgba(99,102,241,0.07)' : 'rgba(99,102,241,0.05)'}
+              cornerRadius={4} />
             <Text x={pad} y={item.y} width={innerW} height={item.h}
               text={item.text}
               fontSize={item.size} fontStyle="700" fontFamily={MAP_FONT_MONO}
@@ -1410,8 +1424,8 @@ function PostEl({ el, isDark, status, plate, statusLabel, postLabel, dashPost, i
           <Group>
             {/* «Простой» = occupied_no_work = красный (#ef4444) — единая палитра карты СТО */}
             <Rect x={pad} y={h - 16} width={innerW} height={13}
-              fill={isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)'}
-              cornerRadius={3} stroke="rgba(239,68,68,0.3)" strokeWidth={1} />
+              fill={isDark ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)'}
+              cornerRadius={4} />
             <Text x={pad} y={h - 15} width={innerW} height={11}
               text={isRu ? 'Простой' : 'Idle'}
               fontSize={fs.detail} fontStyle="600" fill="#ef4444"
@@ -1488,8 +1502,9 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
   const items = [];
   if (zoneInfo && isOccupied) {
     if (zoneInfo.plateNumber) items.push({ text: String(zoneInfo.plateNumber).toUpperCase(), bold: true, mono: true, size: fs.plate, color: textPrimary, align: 'center' });
-    const carText = toTitleCase([zoneInfo.carMake, zoneInfo.carModel].filter(Boolean).join(' '));
-    if (carText) items.push({ text: carText, size: fs.body, bold: true, color: textPrimary, align: 'center' });
+    const carText = formatCarName({ make: zoneInfo.carMake, model: zoneInfo.carModel })
+      ?? (isRuLang ? 'Неизвестная' : 'Unknown');
+    items.push({ text: carText, size: fs.body, bold: true, color: textPrimary, align: 'center' });
     const detail = [
       isRuLang ? trMap(COLOR_RU, zoneInfo.carColor) : zoneInfo.carColor,
       isRuLang ? trMap(BODY_RU, zoneInfo.carBody) : zoneInfo.carBody,
@@ -1518,30 +1533,41 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
     return { ...item, y, h: ih };
   });
 
+  const zoneBg = isDark ? 'rgba(15, 23, 42, 0.78)' : 'rgba(255,255,255,0.86)';
+  const zoneBorder = isDark ? 'rgba(148,163,184,0.16)' : 'rgba(15,23,42,0.08)';
+  const accentH = 3;
+
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0}
       onClick={() => rawZoneName && onClick?.(rawZoneName)}
       onTap={() => rawZoneName && onClick?.(rawZoneName)}>
-      <Rect width={w} height={h} fill={occupiedStroke}
-        opacity={isDark ? 0.08 : 0.06}
-        stroke={occupiedStroke} strokeWidth={isOccupied ? 1.5 : 1} cornerRadius={3}
-        dash={isOccupied ? undefined : [6, 3]}
-        shadowBlur={isOccupied ? 6 : 0} shadowColor={occupiedStroke} shadowOpacity={0.3} />
+      {/* Card body — neutral glass */}
+      <Rect width={w} height={h} fill={zoneBg}
+        stroke={zoneBorder} strokeWidth={1} cornerRadius={8}
+        shadowBlur={isOccupied ? 12 : 8}
+        shadowColor={isOccupied ? occupiedStroke : '#000'}
+        shadowOpacity={isOccupied ? 0.25 : 0.22}
+        shadowOffsetY={3} />
 
-      {/* Header */}
-      <Rect x={0} y={0} width={w} height={headerH} fill={occupiedStroke}
-        cornerRadius={[3, 3, 0, 0]} opacity={isOccupied ? 0.7 : 0.4} />
-      <Text x={pad} y={1} text={el.name}
-        width={w * 0.5} height={headerH - 1}
-        fontSize={fs.header} fontStyle="600" fill={MAP_TEXT_COLORS.onColor}
+      {/* Thin top accent strip */}
+      <Rect x={0} y={0} width={w} height={accentH} fill={occupiedStroke}
+        cornerRadius={[8, 8, 0, 0]} opacity={isOccupied ? 0.9 : 0.55} />
+
+      {/* Subtle divider under header */}
+      <Rect x={pad} y={headerH} width={innerW} height={0.5}
+        fill={zoneBorder} />
+
+      <Text x={pad} y={accentH} text={el.name}
+        width={w * 0.5} height={headerH - accentH}
+        fontSize={fs.header} fontStyle="600" fill={textPrimary}
         verticalAlign="middle" fontFamily={MAP_FONT_FAMILY}
         letterSpacing={MAP_LETTER_SPACING.header}
         wrap="none" ellipsis={true} />
-      <Text x={w * 0.5} y={1} text={statusLabel}
-        width={w * 0.5 - pad} height={headerH - 1}
-        fontSize={fs.status} fill={MAP_TEXT_COLORS.onColorMuted}
+      <Text x={w * 0.5} y={accentH} text={statusLabel}
+        width={w * 0.5 - pad} height={headerH - accentH}
+        fontSize={fs.status} fill={occupiedStroke}
         align="right" verticalAlign="middle"
-        fontFamily={MAP_FONT_FAMILY} fontStyle="500"
+        fontFamily={MAP_FONT_FAMILY} fontStyle="600"
         letterSpacing={MAP_LETTER_SPACING.header}
         wrap="none" ellipsis={true} />
 
@@ -1571,8 +1597,10 @@ function ZoneEl({ el, isDark, zonesData, monitoringData, rawState, onClick }) {
 
 function CameraEl({ el, isDark, onClick, online }) {
   const dotColor = online === true ? '#10b981' : online === false ? '#94a3b8' : '#ef4444';
-  const labelColor = isDark ? '#e2e8f0' : '#1e293b';
-  const groupOpacity = online === false ? 0.5 : 1;
+  const labelColor = isDark ? '#cbd5e1' : '#334155';
+  const labelBg = isDark ? 'rgba(15,23,42,0.78)' : 'rgba(255,255,255,0.92)';
+  const labelBorder = isDark ? 'rgba(148,163,184,0.18)' : 'rgba(15,23,42,0.08)';
+  const groupOpacity = online === false ? 0.55 : 1;
   const w = el.width || 24, h = el.height || 24;
   const cx = w / 2, cy = h / 2;
   const dir = (el.data?.direction || 0) * Math.PI / 180;
@@ -1585,23 +1613,37 @@ function CameraEl({ el, isDark, onClick, online }) {
   const mx = cx + Math.cos(dir) * range;
   const my = cy + Math.sin(dir) * range;
   const rot = el.rotation || 0;
+  const labelText = el.name || '';
+  const labelFontSize = 9;
+  const labelPadX = 6;
+  // Грубая оценка ширины с запасом — кириллица шире латиницы (≈0.78 от fontSize).
+  // Без ellipsis: если pill окажется чуть уже текста — текст выезжает, а не режется.
+  const labelW = Math.max(22, labelText.length * labelFontSize * 0.78 + labelPadX * 2);
+  const labelH = 14;
   return (
     <Group x={el.x} y={el.y} rotation={rot}
       onClick={onClick} onTap={onClick} opacity={groupOpacity}>
-      {/* Light FOV cone */}
+      {/* Soft FOV cone — solid translucent, без дашей */}
       <Line points={[cx, cy, lx, ly, mx, my, rx, ry]} closed
         fill={dotColor} opacity={isDark ? 0.08 : 0.06}
-        stroke={dotColor} strokeWidth={0.5} dash={[4, 3]} />
+        stroke={dotColor} strokeWidth={0.5} />
       {/* Invisible hit area for easier clicking */}
       <Circle x={cx} y={cy} radius={18} fill="transparent" />
-      {/* Camera dot */}
-      <Circle x={cx} y={cy} radius={5} fill={dotColor} opacity={0.85} />
-      <Circle x={cx} y={cy} radius={1.5} fill="#fff" />
-      {/* Label — counter-rotated so text is always horizontal */}
+      {/* Camera dot — minimalist halo */}
+      <Circle x={cx} y={cy} radius={7} fill={dotColor} opacity={0.15} />
+      <Circle x={cx} y={cy} radius={4} fill={dotColor} opacity={0.95} />
+      <Circle x={cx} y={cy} radius={1.4} fill="#fff" />
+      {/* Label pill — counter-rotated, glass background для читаемости */}
       <Group x={cx} y={cy} rotation={-rot}>
-        <Text x={8} y={-5} text={el.name || ''} fontSize={9}
+        <Rect x={8} y={-labelH / 2} width={labelW} height={labelH}
+          fill={labelBg} stroke={labelBorder} strokeWidth={0.5}
+          cornerRadius={labelH / 2}
+          shadowBlur={4} shadowColor="#000" shadowOpacity={0.18} shadowOffsetY={1} />
+        <Text x={8 + labelPadX} y={-labelH / 2} height={labelH}
+          text={labelText} fontSize={labelFontSize}
           fill={labelColor} fontStyle="600" fontFamily={MAP_FONT_FAMILY}
-          letterSpacing={MAP_LETTER_SPACING.header} />
+          letterSpacing={MAP_LETTER_SPACING.header}
+          verticalAlign="middle" wrap="none" />
       </Group>
     </Group>
   );
@@ -1668,11 +1710,10 @@ function isRealMapElement(e) {
 }
 
 function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
-  const bgFill = isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.92)';
+  const bgFill = isDark ? 'rgba(15,23,42,0.55)' : 'rgba(255,255,255,0.72)';
   const textColor = isDark ? '#e2e8f0' : '#1e293b';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
-  const accentColor = isDark ? '#818cf8' : '#6366f1';
-  const borderColor = isDark ? '#334155' : '#cbd5e1';
+  const borderColor = isDark ? 'rgba(148,163,184,0.10)' : 'rgba(15,23,42,0.06)';
 
   const w = el.width || 200, h = el.height || 150;
 
@@ -1692,30 +1733,33 @@ function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
   ];
 
   // Fixed font sizes — don't scale with element size
-  const fs = 10;
-  const pad = 10;
-  const lineH = 16;
-  const titleFs = 12;
+  const fs = 11;
+  const pad = 12;
+  const lineH = 17;
+  const titleFs = 11;
   const contentW = w - pad * 2;
-  const dotR = 3.5;
+  const dotR = 2.5;
 
-  const sepY = pad + titleFs + 5;
-  const rowsStartY = sepY + 7;
+  const titleY = pad - 2;
+  const sepY = titleY + titleFs + 6;
+  const rowsStartY = sepY + 8;
 
   return (
     <Group x={el.x} y={el.y} rotation={el.rotation || 0} clipX={0} clipY={0} clipWidth={w} clipHeight={h}>
-      <Rect width={w} height={h} fill={bgFill} cornerRadius={5}
+      {/* Card body — minimalist soft glass, без акцентной полосы */}
+      <Rect width={w} height={h} fill={bgFill} cornerRadius={10}
         stroke={borderColor} strokeWidth={1}
-        shadowBlur={6} shadowColor="rgba(0,0,0,0.15)" shadowOpacity={0.3} />
+        shadowBlur={10} shadowColor="#000" shadowOpacity={0.16}
+        shadowOffsetY={2} />
 
-      {/* Title */}
-      <Text x={pad} y={pad} text={title} fontSize={titleFs}
-        fontStyle="700" fill={accentColor} width={contentW}
+      {/* Title — uppercase muted label вместо жирного заголовка */}
+      <Text x={pad} y={titleY} text={title} fontSize={titleFs}
+        fontStyle="600" fill={mutedColor} width={contentW}
         fontFamily={MAP_FONT_FAMILY}
-        letterSpacing={MAP_LETTER_SPACING.header} />
+        letterSpacing={0.6} />
 
-      {/* Separator */}
-      <Rect x={pad} y={sepY} width={contentW} height={0.5} fill={accentColor} opacity={0.3} />
+      {/* Separator — ещё тоньше */}
+      <Rect x={pad} y={sepY} width={contentW} height={0.5} fill={borderColor} />
 
       {/* Rows */}
       {rows.map((row, i) => {
@@ -1723,11 +1767,11 @@ function InfoZoneEl({ el, isDark, isRu, layoutName, allElements }) {
         if (ry + fs > h - 4) return null;
         return (
           <Group key={i}>
-            <Circle x={pad + dotR} y={ry + fs * 0.45} radius={dotR} fill={row.color} />
-            <Text x={pad + dotR * 3} y={ry} text={row.label} fontSize={fs}
+            <Circle x={pad + dotR} y={ry + fs * 0.45} radius={dotR} fill={row.color} opacity={0.85} />
+            <Text x={pad + dotR * 3 + 4} y={ry} text={row.label} fontSize={fs}
               fill={mutedColor} fontFamily={MAP_FONT_FAMILY} fontStyle="500" />
             <Text x={pad} y={ry} text={String(row.value)} fontSize={fs}
-              fontStyle="700" fill={textColor} width={contentW} align="right"
+              fontStyle="600" fill={textColor} width={contentW} align="right"
               fontFamily={MAP_FONT_FAMILY} />
           </Group>
         );

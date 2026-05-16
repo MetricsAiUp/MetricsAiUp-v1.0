@@ -11,6 +11,7 @@ import {
 import CollapsibleSection from './CollapsibleSection';
 import CameraStreamModal from '../CameraStreamModal';
 import HelpButton from '../HelpButton';
+import { formatCarName } from '../../utils/carName';
 
 // Real camera mapping per post/zone (cam number → location/covers)
 const POST_CAMERAS = {
@@ -204,7 +205,7 @@ function EventLogSection({ events, total, onShowAll }) {
       <div className="space-y-1 max-h-80 overflow-auto">
         {visible.map(ev => {
           const car = ev.car || {};
-          const carInfo = [car.make, car.model].filter(Boolean).join(' ');
+          const carInfo = formatCarName({ make: car.make, model: car.model });
           const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
           return (
             <div key={ev.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)' }}>

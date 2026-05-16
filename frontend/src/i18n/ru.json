@@ -354,6 +354,7 @@
     "agoMinutes": "{{n}} мин",
     "loading": "Загрузка...",
     "error": "Ошибка",
+    "unknownVehicle": "Неизвестная",
     "save": "Сохранить",
     "cancel": "Отмена",
     "delete": "Удалить",
