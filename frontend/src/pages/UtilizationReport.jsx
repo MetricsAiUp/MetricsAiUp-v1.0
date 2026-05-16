@@ -13,8 +13,8 @@ import { useAuth } from '../contexts/AuthContext';
 import UtilizationHeatmap from '../components/UtilizationHeatmap';
 import HelpButton from '../components/HelpButton';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { exportUtilizationPdf } from '../utils/utilizationPdf';
 
 // ─── helpers ──────────────────────────────────────────────────────────────
 
@@ -28,9 +28,9 @@ function periodFromKey(key) {
   switch (key) {
     case 'today':     start.setHours(0,0,0,0); break;
     case 'yesterday': start.setDate(start.getDate() - 1); start.setHours(0,0,0,0); end.setDate(end.getDate()-1); end.setHours(23,59,59,999); break;
-    case '7d':        start.setDate(start.getDate() - 7); start.setHours(0,0,0,0); break;
-    case '30d':       start.setDate(start.getDate() - 30); start.setHours(0,0,0,0); break;
-    default:          start.setDate(start.getDate() - 7); start.setHours(0,0,0,0);
+    case '7d':        start.setDate(start.getDate() - 6); start.setHours(0,0,0,0); break;
+    case '30d':       start.setDate(start.getDate() - 29); start.setHours(0,0,0,0); break;
+    default:          start.setDate(start.getDate() - 6); start.setHours(0,0,0,0);
   }
   return { from: start, to: end };
 }
@@ -501,7 +501,7 @@ export default function UtilizationReport() {
     const rows = byEntity.map(e => ({
       [isRu ? '#' : '#']: e.number ?? '',
       [isRu ? 'Имя' : 'Name']: e.name,
-      [isRu ? 'Тип' : 'Type']: e.type,
+      [isRu ? 'Тип' : 'Type']: e.type ? t(`posts.${e.type}`, e.type) : '',
       [isRu ? 'Раб. фонд, ч' : 'Fund, h']: e.shiftFund,
       [isRu ? 'Занят., ч' : 'Busy, h']: e.busy,
       [isRu ? 'Простой, ч' : 'Idle, h']: e.idle,
@@ -539,14 +539,14 @@ export default function UtilizationReport() {
   };
 
   const exportPdf = async () => {
-    const el = document.getElementById('utilization-report-root');
-    if (!el) return;
-    const canvas = await html2canvas(el, { backgroundColor: '#0a0e1a', scale: 1.2 });
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-    const w = pdf.internal.pageSize.getWidth();
-    const h = (canvas.height * w) / canvas.width;
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, h);
-    pdf.save(`utilization-${entity}-${isoDate(from)}-${isoDate(to)}.pdf`);
+    if (!data) return;
+    await exportUtilizationPdf({
+      from, to, entity, isPosts, isRu,
+      totals, byEntity, aggregatedByDay,
+      hourlyRate, currency,
+      errorPct, errorNote,
+      deltaPct,
+    });
   };
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -764,7 +764,7 @@ export default function UtilizationReport() {
                         <Link to={`/zone-history/${encodeURIComponent(e.name)}`} className="hover:underline" style={{ color: 'var(--text-primary)' }}>{e.name}</Link>
                       ) : e.name}
                     </td>
-                    <td className="px-2 py-1.5" style={{ color: 'var(--text-muted)' }}>{e.type}</td>
+                    <td className="px-2 py-1.5" style={{ color: 'var(--text-muted)' }}>{e.type ? t(`posts.${e.type}`, e.type) : ''}</td>
                     <td className="px-2 py-1.5 text-right font-mono" style={{ color: 'var(--text-primary)' }}>{fmtNumber(e.shiftFund)}</td>
                     <td className="px-2 py-1.5 text-right font-mono" style={{ color: 'var(--accent)' }}>{fmtNumber(e.busy)}</td>
                     <td className="px-2 py-1.5 text-right font-mono" style={{ color: 'var(--text-muted)' }}>{fmtNumber(e.idle)}</td>
