@@ -8,6 +8,12 @@ const { tzOf, parseInTz, dateStrInTz, dayKeyInTz } = require('../utils/dateUtils
 // замораживаются на моменте последнего реального события (а не дотягиваются до now).
 const STALE_DATA_MS = 60 * 60 * 1000; // 1 час
 
+// Хвост `today.eventLog` в /api/posts-analytics: фронт лог событий собирает
+// из /api/monitoring/post-history/:n, а здесь поле осталось для совместимости.
+// Без лимита один ответ раздувался до 50+ МБ (10 постов × 7 зон × тысячи событий)
+// и валил сервер. 50 последних записей хватает для legacy-потребителей.
+const EVENT_LOG_TAIL = 50;
+
 // CV-система пингует каждые 10 секунд. Если между соседними записями истории
 // проходит больше этого порога — считаем это «провалом» данных: предыдущее
 // состояние не должно «протягиваться» через провал в метрики и таймлайн,
@@ -207,8 +213,18 @@ function getPeriodRange(period, from, to, settings) {
       return { dateFrom: shiftDate(todayStr, -6), dateTo: todayStr };
     case 'month':
       return { dateFrom: shiftDate(todayStr, -29), dateTo: todayStr };
-    case 'custom':
-      return { dateFrom: from || todayStr, dateTo: to || todayStr };
+    case 'custom': {
+      // Защита от мусорных значений (например, 0002-04-21 от <input type="date">
+      // во время набора года): принимаем только реалистичные годы 2000..2100.
+      const ok = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && (() => {
+        const y = parseInt(s.slice(0, 4), 10);
+        return y >= 2000 && y <= 2100;
+      })();
+      return {
+        dateFrom: ok(from) ? from : todayStr,
+        dateTo: ok(to) ? to : todayStr,
+      };
+    }
     default: // today
       return { dateFrom: todayStr, dateTo: todayStr };
   }
@@ -225,19 +241,39 @@ router.get('/posts-analytics', async (req, res) => {
     // Compute daily breakdown from monitoring history.
     // dailyCutoffMs ограничивает «сейчас» для текущего дня (чтобы при потере данных
     // последний столбик не считался по полной смене).
+    //
+    // Покрываем ВЕСЬ диапазон от первой записи в истории до сегодня. Раньше тут жёстко
+    // строилось 7 дней — это значило, что апрель и начало мая в календаре были пустыми,
+    // хотя данные в MonitoringSnapshot есть с 15 апреля 2026.
     function computeDailyFromHistory(history, settings, dailyCutoffMs = Date.now()) {
+      const sortedAll = [...(history || [])]
+        .filter(h => h.timestamp || h.lastUpdate)
+        .map(h => ({ h, ts: new Date(h.timestamp || h.lastUpdate).getTime() }))
+        .filter(x => Number.isFinite(x.ts))
+        .sort((a, b) => a.ts - b.ts);
+      if (sortedAll.length === 0) return [];
+
+      const tz = tzOf(settings);
+      const earliestStr = dateStrInTz(new Date(sortedAll[0].ts), tz);
+      const todayStr = dateStrInTz(new Date(dailyCutoffMs), tz);
+
       const days = [];
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const sb = getShiftBoundsForDate(settings, d);
-        const dayHistory = (history || []).filter(h => {
-          const ts = new Date(h.timestamp || h.lastUpdate).getTime();
-          return ts >= sb.shiftStart && ts <= sb.shiftEnd;
-        });
-        const m = calcMetricsForBounds(dayHistory, sb, dailyCutoffMs);
+      // Идём от earliestStr к todayStr включительно, шагом 1 календарный день в TZ.
+      let cursorStr = earliestStr;
+      let guard = 0;
+      while (cursorStr <= todayStr && guard < 730) { // safety cap 2 года
+        const dRef = new Date(parseInTz(cursorStr, '12:00', tz));
+        const sb = getShiftBoundsForDate(settings, dRef);
+        const dayHistory = sortedAll.filter(x => x.ts >= sb.shiftStart && x.ts <= sb.shiftEnd).map(x => x.h);
+        // Anchor: последнее состояние строго ДО начала смены. Используем для
+        // persist-состояния: если статус «occupied» зафиксирован 15.04 и не менялся
+        // несколько дней, anchor донесёт его до начала каждого следующего дня.
+        const anchorEntry = sortedAll.filter(x => x.ts < sb.shiftStart).slice(-1)[0];
+        const anchor = anchorEntry ? { ...anchorEntry.h, timestamp: new Date(sb.shiftStart).toISOString() } : null;
+        const effective = anchor ? [anchor, ...dayHistory] : dayHistory;
+        const m = calcMetricsForBounds(effective, sb, dailyCutoffMs);
         days.push({
-          date: d.toISOString().slice(0, 10),
+          date: cursorStr,
           occupancy: m.loadPercent,
           efficiency: m.efficiency,
           vehicles: dayHistory.filter(h => h.status !== 'free').length,
@@ -245,6 +281,10 @@ router.get('/posts-analytics', async (req, res) => {
           activeHours: m.workHours,
           idleHours: Math.round(Math.max(0, sb.maxH - m.factHours) * 10) / 10,
         });
+        // Следующий день в TZ
+        const nextMs = parseInTz(cursorStr, '12:00', tz) + 86400000;
+        cursorStr = dateStrInTz(new Date(nextMs), tz);
+        guard++;
       }
       return days;
     }
@@ -253,6 +293,11 @@ router.get('/posts-analytics', async (req, res) => {
     // cutoffMs — верхняя граница «сейчас» (момент последнего реального события CV).
     // Если данных нет — не дотягиваем до Date.now(), иначе посты «работают» весь день
     // даже когда мониторинг лежит.
+    //
+    // ВАЖНО: для дневной разбивки НЕ применяем GAP_THRESHOLD_MS — MonitoringSnapshot
+    // пишется только при изменении состояния (dedup), и persist-состояние между
+    // соседними записями должно сохраняться. Иначе день, в котором было одно
+    // изменение статуса в 09:00, схлопывался бы до ~5 минут занятости.
     function calcMetricsForBounds(history, bounds, cutoffMs = Date.now()) {
       const { shiftStart, shiftEnd, maxMs, maxH } = bounds;
       const now = Math.min(cutoffMs, shiftEnd);
@@ -265,10 +310,7 @@ router.get('/posts-analytics', async (req, res) => {
         const next = sorted[i + 1];
         const start = new Date(cur.timestamp || cur.lastUpdate).getTime();
         const rawEnd = next ? new Date(next.timestamp || next.lastUpdate).getTime() : now;
-        // Защита от «протяжки» через провалы данных: ограничиваем длительность
-        // сегмента порогом GAP_THRESHOLD_MS. Если CV молчит >5 мин — состояние
-        // «cur» больше не подтверждается и не должно считаться занятостью.
-        const end = Math.min(rawEnd, start + GAP_THRESHOLD_MS);
+        const end = rawEnd;
         const cs = Math.max(start, shiftStart);
         const ce = Math.min(end, now);
         const dur = Math.max(0, ce - cs);
@@ -403,7 +445,7 @@ router.get('/posts-analytics', async (req, res) => {
             workers: [],
             workOrders: [],
             alerts: [],
-            eventLog: history.map((h, i) => ({
+            eventLog: history.slice(-EVENT_LOG_TAIL).map((h, i) => ({
               id: `evt-${mp.postNumber}-${i}`,
               timestamp: h.timestamp || h.lastUpdate,
               type: h.status === 'occupied' ? 'post_occupied' : 'post_vacated',
@@ -474,7 +516,7 @@ router.get('/posts-analytics', async (req, res) => {
             workers: [],
             workOrders: [],
             alerts: [],
-            eventLog: history.map((h, i) => ({
+            eventLog: history.slice(-EVENT_LOG_TAIL).map((h, i) => ({
               id: `evt-z${mz.zoneNumber}-${i}`,
               timestamp: h.timestamp || h.lastUpdate,
               type: h.status === 'occupied' ? 'post_occupied' : 'post_vacated',

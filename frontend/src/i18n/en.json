@@ -1338,7 +1338,8 @@
       "tooltipBusy": "Occupancy: {{busy}} h",
       "tooltipLoad": "Load: {{pct}}%",
       "tooltipEarned": "Earned: {{val}}",
-      "tooltipLost": "Lost: {{val}}"
+      "tooltipLost": "Lost: {{val}}",
+      "noData": "no data"
     },
     "top": {
       "title": "Top losses",

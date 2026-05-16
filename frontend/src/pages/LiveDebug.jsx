@@ -273,8 +273,8 @@ function RawDataRow({ item, t, isRu, coveringCameras, onOpenStream, onOpenSnapsh
         <td className="px-1.5 py-1"><OpenPartsBadge parts={item.openParts} isRu={isRu} /></td>
         <td className="px-1.5 py-1"><ConfidenceBadge level={item.confidence} isRu={isRu} /></td>
         <td className="px-1.5 py-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{formatDate(item.lastUpdate)}</td>
-        <td className="px-1.5 py-1 text-center text-xs" style={{ color: hasHistory ? 'var(--accent)' : 'var(--text-muted)' }}>
-          {history.length}
+        <td className="px-1.5 py-1 text-center text-xs" style={{ color: (item.historyCount ?? history.length) > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>
+          {item.historyCount ?? history.length}
         </td>
       </tr>
       {expanded && (
@@ -328,7 +328,8 @@ export default function LiveDebug() {
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/monitoring/full-history');
+      // Ограничиваем последними 500 записями на зону — иначе ответ ~50 МБ и браузер виснет.
+      const res = await api.get('/api/monitoring/full-history?limit=500');
       if (res.data) setFullHistory(Array.isArray(res.data) ? res.data : []);
     } catch {}
     setLoading(false);
@@ -343,16 +344,20 @@ export default function LiveDebug() {
     setLoading(false);
   }, [api]);
 
-  // Загрузка current-состояния из нашей БД (MonitoringCurrent) + сводной статистики.
+  // Загрузка current-состояния из нашей БД (MonitoringCurrent) + сводной статистики
+  // + полной истории (cachedFullHistory читается из нашей БД после rehydrate).
   const fetchDb = useCallback(async () => {
     setLoading(true);
     try {
-      const [curRes, statsRes] = await Promise.all([
+      const [curRes, statsRes, histRes] = await Promise.all([
         api.get('/api/monitoring/db-current'),
         api.get('/api/monitoring/db-stats'),
+        // limit=200: последние 200 снимков на зону. Полное число — в historyCount из dbStats.
+        api.get('/api/monitoring/full-history?limit=200'),
       ]);
       if (curRes.data) setDbCurrent(Array.isArray(curRes.data) ? curRes.data : []);
       if (statsRes.data) setDbStats(statsRes.data);
+      if (histRes.data) setFullHistory(Array.isArray(histRes.data) ? histRes.data : []);
     } catch {}
     setLoading(false);
   }, [api]);
@@ -404,6 +409,12 @@ export default function LiveDebug() {
   }
 
   // Преобразуем dbCurrent в формат, совместимый с RawDataRow (zone, car, history, …).
+  // Кол-во снимков по каждой зоне берём из dbStats.perZone (агрегат из MonitoringSnapshot).
+  // Полную историю по каждой зоне берём из fullHistory (cachedFullHistory из нашей БД).
+  const snapshotsByZone = {};
+  (dbStats?.perZone || []).forEach(p => { snapshotsByZone[p.zoneName] = p.snapshots || 0; });
+  const historyByZone = {};
+  (fullHistory || []).forEach(z => { if (z?.zone) historyByZone[z.zone] = z.history || []; });
   const dbCurrentAsRaw = dbCurrent.map(r => ({
     zone: r.zoneName,
     type: r.externalType,
@@ -422,7 +433,8 @@ export default function LiveDebug() {
     openParts: r.openParts || [],
     confidence: r.confidence,
     lastUpdate: r.externalUpdate || r.fetchedAt,
-    history: [],
+    history: historyByZone[r.zoneName] || [],
+    historyCount: snapshotsByZone[r.zoneName] || 0,
   }));
 
   const displayData = viewMode === 'cameras'
@@ -448,7 +460,9 @@ export default function LiveDebug() {
     });
   });
 
-  const totalHistory = displayData.reduce((sum, d) => sum + (d.history?.length || 0), 0);
+  const totalHistory = viewMode === 'db'
+    ? displayData.reduce((sum, d) => sum + (d.historyCount || 0), 0)
+    : displayData.reduce((sum, d) => sum + (d.history?.length || 0), 0);
 
   return (
     <div className="p-4 space-y-4">
@@ -591,6 +605,16 @@ export default function LiveDebug() {
             </div>
             <div className="text-xs mt-1 space-y-0.5" style={{ color: 'var(--text-muted)' }}>
               <div>{isRu ? 'Текущих зон' : 'Current zones'}: <span style={{ color: 'var(--text-secondary)' }}>{dbStats.currentTotal ?? 0}</span></div>
+              {(dbStats.earliestSnapshot || dbStats.earliestExternal) && (
+                <div title={dbStats.earliestSnapshotZone || ''}>
+                  {isRu ? 'Первая запись' : 'First record'}: <span style={{ color: 'var(--text-secondary)' }}>{formatDate(dbStats.earliestSnapshot || dbStats.earliestExternal)}</span>
+                  {dbStats.earliestExternal && dbStats.earliestSnapshot && dbStats.earliestExternal < dbStats.earliestSnapshot && (
+                    <span className="ml-1" style={{ color: 'var(--text-muted)' }}>
+                      ({isRu ? 'в CV с' : 'CV since'} {formatDate(dbStats.earliestExternal)})
+                    </span>
+                  )}
+                </div>
+              )}
               {dbStats.latestFetch && (
                 <div>{isRu ? 'Последняя запись' : 'Last fetch'}: <span style={{ color: 'var(--text-secondary)' }}>{formatDate(dbStats.latestFetch)}</span></div>
               )}

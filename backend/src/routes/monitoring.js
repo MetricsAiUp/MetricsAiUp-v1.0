@@ -146,6 +146,8 @@ router.get('/post-history/:postNumber', authenticate, asyncHandler(async (req, r
 }));
 
 // GET /api/monitoring/full-history — full cached history (all zones with history arrays)
+// Query: ?limit=N — обрезать history по каждой зоне до последних N записей
+// (полный объём — ~50 МБ JSON и >200k записей, тормозит браузер).
 router.get('/full-history', authenticate, asyncHandler(async (req, res) => {
   const proxy = req.app.get('monitoringProxy');
   if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
@@ -153,6 +155,14 @@ router.get('/full-history', authenticate, asyncHandler(async (req, res) => {
   const fullHistory = proxy.getFullHistory();
   if (!fullHistory) {
     return res.json([]);
+  }
+  const limit = Number.parseInt(req.query.limit, 10);
+  if (Number.isFinite(limit) && limit > 0) {
+    const trimmed = fullHistory.map(z => ({
+      ...z,
+      history: Array.isArray(z.history) ? z.history.slice(-limit) : [],
+    }));
+    return res.json(trimmed);
   }
   res.json(fullHistory);
 }));

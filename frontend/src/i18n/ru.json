@@ -1338,7 +1338,8 @@
       "tooltipBusy": "Занятость: {{busy}} ч",
       "tooltipLoad": "Загрузка: {{pct}}%",
       "tooltipEarned": "Заработано: {{val}} ₽",
-      "tooltipLost": "Упущено: {{val}} ₽"
+      "tooltipLost": "Упущено: {{val}} ₽",
+      "noData": "нет данных"
     },
     "top": {
       "title": "Топ потерь",

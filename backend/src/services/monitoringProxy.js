@@ -430,23 +430,26 @@ async function backfillHistoryToDb(fullHistory) {
   let inserted = 0;
   for (const item of fullHistory) {
     if (!item.zone || !Array.isArray(item.history) || item.history.length === 0) continue;
-    let latestTs = null;
+    // Раньше тут была проверка `ts <= latestTs` — она блокировала подтягивание
+    // записей СТАРШЕ текущего earliest в БД. В итоге, если write-through стартовал
+    // 22.04, записи CV за 15–21.04 никогда не попадали в нашу БД. Берём множество
+    // всех timestamps зоны и пропускаем только настоящие дубликаты.
+    let existingMs;
     try {
-      const latest = await prisma.monitoringSnapshot.findFirst({
+      const existing = await prisma.monitoringSnapshot.findMany({
         where: { zoneName: item.zone },
-        orderBy: { timestamp: 'desc' },
         select: { timestamp: true },
       });
-      latestTs = latest?.timestamp || null;
+      existingMs = new Set(existing.map(e => e.timestamp.getTime()));
     } catch (err) {
-      logger.error('Backfill: failed to read latest snapshot', { zone: item.zone, error: err.message });
+      logger.error('Backfill: failed to read existing snapshots', { zone: item.zone, error: err.message });
       continue;
     }
     const toCreate = [];
     for (const h of item.history) {
       const ts = h.timestamp ? new Date(h.timestamp) : null;
       if (!ts || Number.isNaN(ts.getTime())) continue;
-      if (latestTs && ts <= latestTs) continue;
+      if (existingMs.has(ts.getTime())) continue;
       const car = h.car || null;
       toCreate.push({
         zoneName: item.zone,
@@ -488,16 +491,70 @@ async function loadFullHistory() {
     logger.info('Loading full monitoring history', { from, to });
     const raw = await fetchMonitoringState(from, to);
     if (raw && Array.isArray(raw)) {
-      cachedFullHistory = dropEmptyDuplicates(raw);
-      const totalHistory = cachedFullHistory.reduce((sum, z) => sum + (z.history?.length || 0), 0);
-      logger.info('Full history loaded', { zones: cachedFullHistory.length, historyRecords: totalHistory });
-      // Сохранить недостающие записи в нашу БД (write-through истории).
-      const inserted = await backfillHistoryToDb(cachedFullHistory);
+      const cvHistory = dropEmptyDuplicates(raw);
+      const totalHistory = cvHistory.reduce((sum, z) => sum + (z.history?.length || 0), 0);
+      logger.info('Full history loaded from CV', { zones: cvHistory.length, historyRecords: totalHistory });
+      // Write-through: подтянуть недостающие записи из CV в нашу БД.
+      const inserted = await backfillHistoryToDb(cvHistory);
       if (inserted > 0) logger.info('Backfilled history into DB', { inserted });
     }
+
+    // ВАЖНО: после backfill перечитываем cachedFullHistory из НАШЕЙ БД, а не из CV.
+    // Все расчёты в проекте идут через cachedFullHistory → значит читают из БД.
+    // dropEmptyDuplicates выкидывает «голые» дубли вида «Пост 04» при наличии
+    // «Пост 04 — легковое/грузовое», а также мусор типа «Стоянка»/«Подьемник 1»,
+    // которые остались в БД с прошлых polls, но не относятся к 10 постам + 7 зонам.
+    const rawFromDb = await loadFullHistoryFromDb();
+    cachedFullHistory = dropEmptyDuplicates(rawFromDb).filter(item => {
+      // оставляем только то, у чего извлекается номер поста ИЛИ номер свободной зоны
+      return extractPostNumber(item.zone) || extractFreeZoneNumber(item.zone);
+    });
+    const dbTotal = cachedFullHistory.reduce((sum, z) => sum + (z.history?.length || 0), 0);
+    logger.info('Full history rehydrated from DB', { zones: cachedFullHistory.length, historyRecords: dbTotal });
   } catch (err) {
     logger.error('Failed to load full history', { error: err.message });
   }
+}
+
+// Перечитать всю историю мониторинга из нашей БД (MonitoringSnapshot).
+// Возвращает массив в формате CV API: [{ zone, history: [...] }].
+async function loadFullHistoryFromDb() {
+  const rows = await prisma.monitoringSnapshot.findMany({
+    orderBy: [{ zoneName: 'asc' }, { timestamp: 'asc' }],
+    select: {
+      zoneName: true, externalType: true, timestamp: true, status: true,
+      plateNumber: true, carColor: true, carModel: true, carMake: true, carBody: true,
+      carFirstSeen: true, worksInProgress: true, worksDescription: true,
+      peopleCount: true, openParts: true, confidence: true,
+    },
+  });
+  const byZone = new Map();
+  for (const r of rows) {
+    let entry = byZone.get(r.zoneName);
+    if (!entry) {
+      entry = { zone: r.zoneName, type: r.externalType || null, history: [] };
+      byZone.set(r.zoneName, entry);
+    }
+    const car = (r.plateNumber || r.carModel || r.carMake || r.carColor || r.carBody) ? {
+      plate: r.plateNumber || null,
+      color: r.carColor || null,
+      model: r.carModel || null,
+      make: r.carMake || null,
+      body: r.carBody || null,
+      firstSeen: r.carFirstSeen ? r.carFirstSeen.toISOString() : null,
+    } : null;
+    entry.history.push({
+      timestamp: r.timestamp.toISOString(),
+      status: r.status,
+      car,
+      worksInProgress: r.worksInProgress,
+      worksDescription: r.worksDescription,
+      peopleCount: r.peopleCount,
+      openParts: r.openParts ? safeJsonArray(r.openParts) : [],
+      confidence: r.confidence,
+    });
+  }
+  return [...byZone.values()];
 }
 
 let historyTimer = null;
@@ -678,9 +735,13 @@ async function getZoneNamesFromDB() {
 // Статистика БД мониторинга для LiveDebug.
 async function getDbStats() {
   try {
-    const [snapshotsTotal, currentTotal, latestSnapshot, latestCurrent, perZoneRaw] = await Promise.all([
+    const [snapshotsTotal, currentTotal, earliestSnapshot, latestSnapshot, latestCurrent, perZoneRaw] = await Promise.all([
       prisma.monitoringSnapshot.count(),
       prisma.monitoringCurrent.count(),
+      prisma.monitoringSnapshot.findFirst({
+        orderBy: { timestamp: 'asc' },
+        select: { timestamp: true, zoneName: true },
+      }),
       prisma.monitoringSnapshot.findFirst({
         orderBy: { timestamp: 'desc' },
         select: { timestamp: true },
@@ -693,18 +754,39 @@ async function getDbStats() {
         by: ['zoneName'],
         _count: { _all: true },
         _max: { timestamp: true },
+        _min: { timestamp: true },
       }),
     ]);
     const perZone = perZoneRaw
       .map(r => ({
         zoneName: r.zoneName,
         snapshots: r._count._all,
+        earliest: r._min.timestamp ? r._min.timestamp.toISOString() : null,
         latest: r._max.timestamp ? r._max.timestamp.toISOString() : null,
       }))
       .sort((a, b) => a.zoneName.localeCompare(b.zoneName, 'ru'));
+
+    // Самая ранняя запись, известная во внешнем CV API (полная история).
+    // Может быть раньше нашей БД — мы пишем только с момента старта write-through,
+    // а CV хранит историю дольше.
+    let earliestExternal = null;
+    if (cachedFullHistory) {
+      let minTs = Infinity;
+      for (const item of cachedFullHistory) {
+        for (const h of (item.history || [])) {
+          const ts = new Date(h.timestamp || h.lastUpdate).getTime();
+          if (Number.isFinite(ts) && ts < minTs) minTs = ts;
+        }
+      }
+      if (Number.isFinite(minTs)) earliestExternal = new Date(minTs).toISOString();
+    }
+
     return {
       snapshotsTotal,
       currentTotal,
+      earliestSnapshot: earliestSnapshot?.timestamp?.toISOString() || null,
+      earliestSnapshotZone: earliestSnapshot?.zoneName || null,
+      earliestExternal,
       latestSnapshot: latestSnapshot?.timestamp?.toISOString() || null,
       latestFetch: latestCurrent?.fetchedAt?.toISOString() || null,
       perZone,

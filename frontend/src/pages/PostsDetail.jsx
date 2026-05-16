@@ -70,6 +70,19 @@ export default function PostsDetail() {
   const selectedZoneId = searchParams.get('zone') || null;
 
   useEffect(() => {
+    // <input type="date"> на каждое нажатие выдаёт промежуточные значения вида
+    // 0002-04-21 (пока пользователь печатает год). Без валидации это бомбит
+    // тяжёлый запрос /api/posts-analytics на каждый набранный символ и валит
+    // сервер. Принимаем только полностью валидную ISO-дату с реалистичным годом.
+    const isValidYmd = (s) => {
+      if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+      const y = parseInt(s.slice(0, 4), 10);
+      return y >= 2000 && y <= 2100;
+    };
+    if (period === 'custom') {
+      if (customFrom && !isValidYmd(customFrom)) return;
+      if (customTo && !isValidYmd(customTo)) return;
+    }
     setLoading(true);
     const params = new URLSearchParams();
     if (period) params.set('period', period);

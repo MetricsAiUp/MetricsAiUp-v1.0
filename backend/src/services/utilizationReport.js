@@ -1,23 +1,29 @@
 // Сервис расчёта сводного отчёта /api/reports/utilization.
 //
 // ИСТОЧНИК ДАННЫХ:
-//   • Занятость (busy)   — MonitoringSnapshot (как у /api/posts-analytics и /api/monitoring/post-history)
-//                          таймлайн снапшотов CV по zoneName, занятость = интервалы со status !== 'free',
-//                          с защитой от провалов данных GAP_THRESHOLD_MS.
+//   • Занятость (busy)   — MonitoringSnapshot (он же источник post-history и posts-analytics).
+//                          Снапшот пишется ТОЛЬКО при изменении состояния (dedup по
+//                          status+plate+works+people+openParts+confidence — см. monitoringProxy.js).
+//                          Поэтому между снапшотами одной зоны статус «протягивается».
 //   • Рабочий фонд       — окно работы СТО из Location.workStart/workEnd × workDays
 //                          (одинаково для постов и зон, не зависит от Shift-записей).
 //   • Загрузка %         — busy / shiftFund × 100  (capped at 100% для табличной читабельности)
 //   • Финблок (только посты) — Location.hourlyRate × фонд/занятость/простой.
 //
+// АЛГОРИТМ:
+//   1) Для каждой зоны грузим: (a) все снапшоты в [from, to] и (b) ЯКОРЬ — последний
+//      снапшот строго до `from` (он определяет состояние на начало периода).
+//   2) Строим timeline снапшотов и итерируем сегменты [snap_i, snap_{i+1}].
+//      Для последнего сегмента end = min(now, toMs).
+//   3) Если snap_i.status !== 'free' — считаем пересечение сегмента с work-windows.
+//   4) НЕТ GAP_THRESHOLD: при стабильном состоянии CV не пишет новые снапшоты — это
+//      нормально. Если CV «лёг», у других зон тоже не будет снапшотов, что отразится
+//      во всех метриках равномерно (это не задача отчёта чинить outage CV).
+//
 // Связь Post ↔ MonitoringSnapshot.zoneName: regex /Пост\s+0?(\d+)/i → совпадение с post.number.
-// Связь Zone ↔ MonitoringSnapshot.zoneName: regex /Свободная\s+зона\s+0?(\d+)/i → Zone "Зона 0N"
-//   (плюс fallback по подстроке для специфичных имён).
+// Связь Zone ↔ MonitoringSnapshot.zoneName: regex /Свободная\s+зона\s+0?(\d+)/i → Zone "Зона 0N".
 
 const prisma = require('../config/database');
-
-// Порог разрыва: если CV молчит дольше — состояние «cur» не подтверждено.
-// Совпадает с postsData.js (там GAP_THRESHOLD_MS = 5 мин).
-const GAP_THRESHOLD_MS = 5 * 60 * 1000;
 
 // ── helpers: TZ-aware ─────────────────────────────────────────────────────
 
@@ -156,12 +162,19 @@ function extractDbZoneNumber(name) {
 
 /**
  * Считает занятость (busyMin) за пересечение таймлайна снапшотов c work-windows.
- * @param {Array<{timestamp: Date, status: string}>} snapshots — сортируется внутри
+ * Снапшоты должны быть отсортированы по времени (включая якорный, если есть).
+ *
+ * Алгоритм: сегмент [cur, next] наследует status от cur. Если cur.status !== 'free',
+ * длительность сегмента (пересечённая с windows) идёт в busy. Для последнего сегмента
+ * end = min(now, toMs) — состояние протягивается до настоящего момента в пределах периода.
+ *
+ * @param {Array<{timestamp: Date, status: string}>} snapshots
  * @param {Array<{start, end}>} windows — окна работы (UTC ms)
- * @param {number} toMs — конец периода (UTC ms), нужен как «сейчас» для последнего сегмента
+ * @param {number} fromMs — начало периода (UTC ms)
+ * @param {number} toMs — конец периода (UTC ms)
  * @returns {number} минуты занятости
  */
-function busyMinFromSnapshots(snapshots, windows, toMs) {
+function busyMinFromSnapshots(snapshots, windows, fromMs, toMs) {
   if (!snapshots || snapshots.length === 0 || windows.length === 0) return 0;
   const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   const nowMs = Math.min(Date.now(), toMs);
@@ -169,9 +182,12 @@ function busyMinFromSnapshots(snapshots, windows, toMs) {
   for (let i = 0; i < sorted.length; i++) {
     const cur = sorted[i];
     const next = sorted[i + 1];
-    const start = new Date(cur.timestamp).getTime();
+    const rawStart = new Date(cur.timestamp).getTime();
     const rawEnd = next ? new Date(next.timestamp).getTime() : nowMs;
-    const end = Math.min(rawEnd, start + GAP_THRESHOLD_MS);
+    // Якорный снапшот (cur.timestamp < fromMs) — обрезаем start по fromMs.
+    const start = Math.max(rawStart, fromMs);
+    const end = Math.min(rawEnd, toMs);
+    if (end <= start) continue;
     if (cur.status === 'free') continue;
     busyMin += sumOverlapMin(start, end, windows);
   }
@@ -261,24 +277,48 @@ async function computeCore({ fromMs, toMs, entity, location }) {
 // ── общая загрузка снапшотов за период ───────────────────────────────────
 
 /**
- * Грузим снапшоты + «якорный» снапшот ПЕРЕД периодом, чтобы корректно покрыть
- * левый край (если последний переход status случился раньше from, состояние
- * перед периодом известно).
+ * Грузим снапшоты в [from, to] + «якорный» (последний снапшот строго до `from`
+ * для каждой зоны), чтобы корректно определить состояние на начало периода.
+ * Якорь критичен: машина могла встать на пост за неделю до начала периода и
+ * стоять до сих пор — без якоря отчёт это пропустит.
  */
 async function loadSnapshotsByZoneNames(zoneNames, fromMs, toMs) {
   if (zoneNames.length === 0) return new Map();
-  // Расширим окно влево на 1 час — этого хватит для якоря.
-  const anchorMs = fromMs - 3600000;
-  const rows = await prisma.monitoringSnapshot.findMany({
-    where: {
-      zoneName: { in: zoneNames },
-      timestamp: { gte: new Date(anchorMs), lte: new Date(toMs) },
-    },
-    select: { zoneName: true, timestamp: true, status: true },
-    orderBy: { timestamp: 'asc' },
-  });
+  const [inWindow, anchorsRaw] = await Promise.all([
+    prisma.monitoringSnapshot.findMany({
+      where: {
+        zoneName: { in: zoneNames },
+        timestamp: { gte: new Date(fromMs), lte: new Date(toMs) },
+      },
+      select: { zoneName: true, timestamp: true, status: true },
+      orderBy: { timestamp: 'asc' },
+    }),
+    // Один SQL: последний снапшот строго до fromMs по каждой зоне.
+    // Через raw — у Prisma нет «window functions» в обычном API.
+    prisma.$queryRaw`
+      SELECT s.zone_name as zoneName, s.timestamp as timestamp, s.status as status
+      FROM monitoring_snapshots s
+      INNER JOIN (
+        SELECT zone_name, MAX(timestamp) as max_ts
+        FROM monitoring_snapshots
+        WHERE timestamp < ${new Date(fromMs)}
+        GROUP BY zone_name
+      ) m ON m.zone_name = s.zone_name AND m.max_ts = s.timestamp
+    `,
+  ]);
+
   const byZone = new Map(zoneNames.map(z => [z, []]));
-  for (const r of rows) {
+  const allowed = new Set(zoneNames);
+  // Якоря сначала (они раньше по времени).
+  for (const r of anchorsRaw) {
+    if (!allowed.has(r.zoneName)) continue;
+    byZone.get(r.zoneName).push({
+      zoneName: r.zoneName,
+      timestamp: r.timestamp instanceof Date ? r.timestamp : new Date(Number(r.timestamp)),
+      status: r.status,
+    });
+  }
+  for (const r of inWindow) {
     byZone.get(r.zoneName)?.push(r);
   }
   return byZone;
@@ -334,14 +374,14 @@ async function computePosts({ fromMs, toMs, location }) {
     allSnaps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     const shiftFundMin = workWindows.reduce((s, w) => s + Math.round((w.end - w.start) / 60000), 0);
-    const busyMin = busyMinFromSnapshots(allSnaps, workWindows, toMs);
+    const busyMin = busyMinFromSnapshots(allSnaps, workWindows, fromMs, toMs);
 
     const byDay = days.map(dateStr => {
       const dayStart = localToUtc(dateStr, '00:00', tz).getTime();
       const dayEnd = dayStart + 86400000;
       const dayWindows = clipWindows(workWindows, dayStart, dayEnd);
       const dayShiftFundMin = dayWindows.reduce((s, w) => s + Math.round((w.end - w.start) / 60000), 0);
-      const dayBusyMin = busyMinFromSnapshots(allSnaps, dayWindows, dayEnd);
+      const dayBusyMin = busyMinFromSnapshots(allSnaps, dayWindows, dayStart, dayEnd);
       return {
         date: dateStr,
         shiftFund: round1(dayShiftFundMin / 60),
@@ -432,14 +472,14 @@ async function computeZones({ fromMs, toMs, location }) {
     }
     allSnaps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    const busyMin = busyMinFromSnapshots(allSnaps, workWindows, toMs);
+    const busyMin = busyMinFromSnapshots(allSnaps, workWindows, fromMs, toMs);
 
     const byDay = days.map(dateStr => {
       const dayStart = localToUtc(dateStr, '00:00', tz).getTime();
       const dayEnd = dayStart + 86400000;
       const dayWindows = clipWindows(workWindows, dayStart, dayEnd);
       const dayShiftFundMin = dayWindows.reduce((s, w) => s + Math.round((w.end - w.start) / 60000), 0);
-      const dayBusyMin = busyMinFromSnapshots(allSnaps, dayWindows, dayEnd);
+      const dayBusyMin = busyMinFromSnapshots(allSnaps, dayWindows, dayStart, dayEnd);
       return {
         date: dateStr,
         shiftFund: round1(dayShiftFundMin / 60),

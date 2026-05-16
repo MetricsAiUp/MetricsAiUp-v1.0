@@ -346,7 +346,15 @@ export default function UtilizationReport() {
 
   // Computed dates
   const { from, to } = useMemo(() => {
-    if (periodKey === 'custom' && customFrom && customTo) {
+    // <input type="date"> на каждое нажатие отдаёт промежуточные значения
+    // (например, 0002-04-21 во время набора года). Принимаем только полностью
+    // валидную ISO-дату с реалистичным годом, иначе откатываемся на periodKey.
+    const isValidYmd = (s) => {
+      if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+      const y = parseInt(s.slice(0, 4), 10);
+      return y >= 2000 && y <= 2100;
+    };
+    if (periodKey === 'custom' && isValidYmd(customFrom) && isValidYmd(customTo)) {
       const f = new Date(customFrom); f.setHours(0,0,0,0);
       const tt = new Date(customTo); tt.setHours(23,59,59,999);
       return { from: f, to: tt };
