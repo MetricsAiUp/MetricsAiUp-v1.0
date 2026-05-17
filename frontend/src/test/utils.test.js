@@ -3,11 +3,11 @@ import { translateZone, translatePost } from '../utils/translate';
 
 describe('translateZone', () => {
   it('returns Russian zone names when isRu=true', () => {
-    expect(translateZone('Ремонтная зона (посты 5-9)', true)).toBe('Ремонтная зона (посты 5-9)');
+    expect(translateZone('Зона 01', true)).toBe('Зона 01');
   });
 
   it('translates zone names to English when isRu=false', () => {
-    expect(translateZone('Ремонтная зона (посты 5-9)', false)).toContain('Repair');
+    expect(translateZone('Зона 05', false)).toBe('Zone 05');
   });
 
   it('returns original name for unknown zones', () => {

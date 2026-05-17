@@ -60,13 +60,18 @@ const WORK_TYPES = [
 async function main() {
   console.log('[SeedDemo] Starting database seed...');
 
-  // Create zones if they don't exist
+  // Create zones if they don't exist — каждая зона 1:1 с постом
   const ZONE_DEFS = [
-    { name: 'Ремонтная зона (посты 1-4)', type: 'repair', description: 'Нижний ряд, 2-х стоечные подъёмники', postNums: [1,2,3,4] },
-    { name: 'Ремонтная зона (посты 5-8, 11)', type: 'repair', description: 'Верхний ряд, 2-х стоечные подъёмники', postNums: [5,6,7,8,11] },
-    { name: 'Диагностика (посты 9-10)', type: 'repair', description: 'Правая часть СТО, диагностические посты', postNums: [9,10] },
-    { name: 'Зона Въезд/Выезд', type: 'entry', description: 'Ворота въезда и выезда', postNums: [] },
-    { name: 'Зона Ожидания / Парковка', type: 'waiting', description: 'Зона ожидания и парковка готовых авто', postNums: [] },
+    { name: 'Зона 01', type: 'repair', description: 'Пост 01', postNums: [1] },
+    { name: 'Зона 02', type: 'repair', description: 'Пост 02', postNums: [2] },
+    { name: 'Зона 03', type: 'repair', description: 'Пост 03', postNums: [3] },
+    { name: 'Зона 04', type: 'repair', description: 'Пост 04', postNums: [4] },
+    { name: 'Зона 05', type: 'repair', description: 'Пост 05', postNums: [5] },
+    { name: 'Зона 06', type: 'repair', description: 'Пост 06 (+ Пост 11)', postNums: [6, 11] },
+    { name: 'Зона 07', type: 'repair', description: 'Пост 07', postNums: [7] },
+    { name: 'Зона 08', type: 'repair', description: 'Пост 08', postNums: [8] },
+    { name: 'Зона 09', type: 'repair', description: 'Пост 09', postNums: [9] },
+    { name: 'Зона 10', type: 'repair', description: 'Пост 10', postNums: [10] },
   ];
 
   let zones = await prisma.zone.findMany();

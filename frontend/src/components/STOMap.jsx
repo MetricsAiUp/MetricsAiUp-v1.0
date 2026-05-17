@@ -32,15 +32,15 @@ const MAP_LAYOUT = {
   height: 460,
   building: { x: 10, y: 10, w: 840, h: 440 },
   zones: [
-    // Верхний ремонт: посты 5,6,7,8,9
+    // Верхний ряд постов
     { key: 'repair_upper', type: 'repair', x: 145, y: 15, w: 700, h: 165,
-      label: 'Ремонтная зона (посты 5-9)', labelEN: 'Repair zone (posts 5-9)' },
+      label: 'Ремонтная зона', labelEN: 'Repair zone' },
     // Зона проезда
     { key: 'driveway', type: 'driveway', x: 145, y: 185, w: 700, h: 55,
       label: 'Проезд', labelEN: 'Driveway' },
-    // Нижний ремонт: посты 1,2,3,4,10
+    // Нижний ряд постов
     { key: 'repair_lower', type: 'repair', x: 145, y: 245, w: 700, h: 165,
-      label: 'Ремонтная зона (посты 1-4, 10)', labelEN: 'Repair zone (posts 1-4, 10)' },
+      label: 'Ремонтная зона', labelEN: 'Repair zone' },
     // Парковка верх (слева сверху от въезда)
     { key: 'parking_top', type: 'parking', x: 15, y: 15, w: 125, h: 165,
       label: 'Парковка', labelEN: 'Parking' },

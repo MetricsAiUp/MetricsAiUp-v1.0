@@ -12,7 +12,7 @@
     "stays": [],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-      "name": "Ремонтная зона (посты 1-4)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Нижний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -34,7 +34,7 @@
     "stays": [],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-      "name": "Ремонтная зона (посты 1-4)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Нижний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -56,7 +56,7 @@
     "stays": [],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-      "name": "Ремонтная зона (посты 1-4)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Нижний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -78,7 +78,7 @@
     "stays": [],
     "zone": {
       "id": "31cb8e33-ced8-62fc-56de-862fb6b1edf1",
-      "name": "Ремонтная зона (посты 1-4)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Нижний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -100,7 +100,7 @@
     "stays": [],
     "zone": {
       "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-      "name": "Ремонтная зона (посты 5-8)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Верхний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -122,7 +122,7 @@
     "stays": [],
     "zone": {
       "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-      "name": "Ремонтная зона (посты 5-8)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Верхний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -144,7 +144,7 @@
     "stays": [],
     "zone": {
       "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-      "name": "Ремонтная зона (посты 5-8)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Верхний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -166,7 +166,7 @@
     "stays": [],
     "zone": {
       "id": "8b416cdc-f285-e894-9378-3be648996ef6",
-      "name": "Ремонтная зона (посты 5-8)",
+      "name": "Ремонтная зона",
       "type": "repair",
       "description": "Верхний ряд, 2-х стоечные подъёмники",
       "coordinates": null,
@@ -188,7 +188,7 @@
     "stays": [],
     "zone": {
       "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-      "name": "Диагностика (посты 9-10)",
+      "name": "Диагностика",
       "type": "repair",
       "description": "Правая часть СТО, диагностические посты",
       "coordinates": null,
@@ -210,7 +210,7 @@
     "stays": [],
     "zone": {
       "id": "ac8832d5-7cc7-bf7f-bf57-cf08d8f134ea",
-      "name": "Диагностика (посты 9-10)",
+      "name": "Диагностика",
       "type": "repair",
       "description": "Правая часть СТО, диагностические посты",
       "coordinates": null,

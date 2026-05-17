@@ -1,11 +1,5 @@
 // Маппинг русских названий из БД на английские
-const ZONE_NAMES = {
-  'Зона Въезд/Выезд': 'Entry/Exit Zone',
-  'Зона Ожидания / Парковка': 'Waiting / Parking Zone',
-  'Ремонтная зона (посты 1-4)': 'Repair Zone (posts 1-4)',
-  'Ремонтная зона (посты 5-8)': 'Repair Zone (posts 5-8)',
-  'Диагностика (посты 9-10)': 'Diagnostics (posts 9-10)',
-};
+const ZONE_NAMES = {};
 
 const POST_NAMES = {
   'Пост 1': 'Post 1',
@@ -22,9 +16,7 @@ const POST_NAMES = {
 
 export function translateZone(name, isRu) {
   if (isRu || !name) return name;
-  return ZONE_NAMES[name] || name.replace('Зона', 'Zone').replace('Ремонтная зона', 'Repair Zone')
-    .replace('Диагностика', 'Diagnostics').replace('Ожидания', 'Waiting')
-    .replace('Парковка', 'Parking').replace('посты', 'posts');
+  return ZONE_NAMES[name] || name.replace('Зона', 'Zone');
 }
 
 export function translatePost(nameOrPost, isRu) {

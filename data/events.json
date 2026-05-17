@@ -15,7 +15,7 @@
       "createdAt": "2026-04-09T00:52:00",
       "zone": {
         "id": "a7100bdd-80fa-2fc6-53c6-5f087d5f67d2",
-        "name": "Зона Въезд/Выезд",
+        "name": "Въезд/Выезд",
         "type": "entry",
         "description": "Ворота въезда и выезда",
         "coordinates": null,
@@ -50,7 +50,7 @@
       "createdAt": "2026-04-09T00:36:00",
       "zone": {
         "id": "a7100bdd-80fa-2fc6-53c6-5f087d5f67d2",
-        "name": "Зона Въезд/Выезд",
+        "name": "Въезд/Выезд",
         "type": "entry",
         "description": "Ворота въезда и выезда",
         "coordinates": null,

@@ -3,17 +3,12 @@ import { translateZone, translatePost, translateWorksDesc } from '../translate.j
 
 describe('translateZone', () => {
   it('returns RU name as-is when isRu=true', () => {
-    expect(translateZone('Зона Ожидания / Парковка', true)).toBe('Зона Ожидания / Парковка');
+    expect(translateZone('Зона 01', true)).toBe('Зона 01');
   });
 
-  it('maps known RU zone names to EN', () => {
-    expect(translateZone('Зона Въезд/Выезд', false)).toBe('Entry/Exit Zone');
-    expect(translateZone('Ремонтная зона (посты 1-4)', false)).toBe('Repair Zone (posts 1-4)');
-    expect(translateZone('Диагностика (посты 9-10)', false)).toBe('Diagnostics (posts 9-10)');
-  });
-
-  it('falls back to word replacement for unknown zone names', () => {
-    expect(translateZone('Ремонтная зона альфа', false)).toContain('Repair Zone');
+  it('replaces "Зона" → "Zone" when isRu=false', () => {
+    expect(translateZone('Зона 01', false)).toBe('Zone 01');
+    expect(translateZone('Зона 10', false)).toBe('Zone 10');
   });
 
   it('handles falsy input', () => {

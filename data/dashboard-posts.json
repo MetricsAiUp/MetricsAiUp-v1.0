@@ -11,7 +11,7 @@
       "number": 1,
       "name": "Пост 1",
       "type": "heavy",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "status": "active_work",
       "currentVehicle": {
         "plateNumber": "Т345ВК77",
@@ -119,7 +119,7 @@
       "number": 2,
       "name": "Пост 2",
       "type": "heavy",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "status": "active_work",
       "currentVehicle": {
         "plateNumber": "О456РС77",
@@ -202,7 +202,7 @@
       "number": 3,
       "name": "Пост 3",
       "type": "heavy",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "status": "active_work",
       "currentVehicle": {
         "plateNumber": "Х901ОН97",
@@ -285,7 +285,7 @@
       "number": 4,
       "name": "Пост 4",
       "type": "heavy",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "status": "occupied_no_work",
       "currentVehicle": {
         "plateNumber": "Т678АР97",
@@ -385,7 +385,7 @@
       "number": 5,
       "name": "Пост 5",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "status": "active_work",
       "currentVehicle": {
         "plateNumber": "В567ЕК99",
@@ -468,7 +468,7 @@
       "number": 6,
       "name": "Пост 6",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "status": "active_work",
       "currentVehicle": {
         "plateNumber": "О789ТК99",
@@ -551,7 +551,7 @@
       "number": 7,
       "name": "Пост 7",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "status": "free",
       "currentVehicle": null,
       "timeline": [
@@ -630,7 +630,7 @@
       "number": 8,
       "name": "Пост 8",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "status": "active_work",
       "currentVehicle": {
         "plateNumber": "Р012ВС50",
@@ -713,7 +713,7 @@
       "number": 9,
       "name": "Пост 9",
       "type": "special",
-      "zone": "Диагностика (посты 9-10)",
+      "zone": "Диагностика",
       "status": "occupied_no_work",
       "currentVehicle": {
         "plateNumber": "О456РС77",
@@ -779,7 +779,7 @@
       "number": 10,
       "name": "Пост 10",
       "type": "special",
-      "zone": "Диагностика (посты 9-10)",
+      "zone": "Диагностика",
       "status": "free",
       "currentVehicle": null,
       "timeline": [

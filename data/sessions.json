@@ -19,7 +19,7 @@
           "duration": null,
           "zone": {
             "id": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
-            "name": "Зона Ожидания / Парковка",
+            "name": "Парковка",
             "type": "waiting",
             "description": "Зона ожидания и парковка готовых авто",
             "coordinates": null,
@@ -50,7 +50,7 @@
           "duration": null,
           "zone": {
             "id": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
-            "name": "Зона Ожидания / Парковка",
+            "name": "Парковка",
             "type": "waiting",
             "description": "Зона ожидания и парковка готовых авто",
             "coordinates": null,

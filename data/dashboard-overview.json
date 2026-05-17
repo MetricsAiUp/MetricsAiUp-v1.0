@@ -3,7 +3,7 @@
   "zonesWithVehicles": [
     {
       "zoneId": "cd19474e-9cb4-f33a-c7d9-2c0d847e46fa",
-      "zoneName": "Зона Ожидания / Парковка",
+      "zoneName": "Парковка",
       "zoneType": "waiting",
       "vehicleCount": 2
     }

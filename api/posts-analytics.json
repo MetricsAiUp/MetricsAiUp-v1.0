@@ -5,7 +5,7 @@
       "number": 1,
       "name": "Пост 1",
       "type": "light",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 8,
@@ -637,7 +637,7 @@
       "number": 2,
       "name": "Пост 2",
       "type": "light",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 6,
@@ -1212,7 +1212,7 @@
       "number": 3,
       "name": "Пост 3",
       "type": "light",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 10,
@@ -1773,7 +1773,7 @@
       "number": 4,
       "name": "Пост 4",
       "type": "heavy",
-      "zone": "Ремонтная зона (посты 1-4)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 11,
@@ -2342,7 +2342,7 @@
       "number": 5,
       "name": "Пост 5",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 7.5,
@@ -2909,7 +2909,7 @@
       "number": 6,
       "name": "Пост 6",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 4,
@@ -3476,7 +3476,7 @@
       "number": 7,
       "name": "Пост 7",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 7,
@@ -4037,7 +4037,7 @@
       "number": 8,
       "name": "Пост 8",
       "type": "light",
-      "zone": "Ремонтная зона (посты 5-8)",
+      "zone": "Ремонтная зона",
       "maxCapacityHours": 12,
       "today": {
         "planHours": 2,
@@ -4556,7 +4556,7 @@
       "number": 9,
       "name": "Пост 9",
       "type": "diagnostics",
-      "zone": "Диагностика (посты 9-10)",
+      "zone": "Диагностика",
       "maxCapacityHours": 10,
       "today": {
         "planHours": 5,
@@ -5118,7 +5118,7 @@
       "number": 10,
       "name": "Пост 10",
       "type": "diagnostics",
-      "zone": "Диагностика (посты 9-10)",
+      "zone": "Диагностика",
       "maxCapacityHours": 10,
       "today": {
         "planHours": 3,

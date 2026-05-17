@@ -75,14 +75,8 @@ function translatePostName(name, t, type) {
   return name;
 }
 
-function translateZoneName(zone, t) {
+function translateZoneName(zone) {
   if (!zone) return '';
-  if (zone.includes('5-9') || zone.includes('5-8')) return t('posts.repairZone59');
-  if (zone.includes('1-4')) return t('posts.repairZone1410');
-  if (zone.includes('Ремонтная') || zone.includes('Repair')) return t('posts.repairZone');
-  if (zone.includes('Проезд') || zone.includes('Driveway')) return t('posts.driveway');
-  if (zone.includes('Парковка') || zone.includes('Parking')) return t('posts.parking');
-  if (zone.includes('Въезд') || zone.includes('Entry')) return t('posts.entryExit');
   return zone;
 }
 
@@ -735,7 +729,7 @@ export default function PostDetailPanel({ selectedPost, dashData, period, setPer
               </span>
               <HelpButton pageKey="postsDetail" />
             </h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{translateZoneName(selectedPost.zone, t)}</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{translateZoneName(selectedPost.zone)}</p>
           </div>
         </div>
         {/* Period selector */}

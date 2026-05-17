@@ -8,7 +8,7 @@ const { createZoneSchema, updateZoneSchema } = require('../schemas/zones');
 router.get('/', authenticate, async (req, res) => {
   try {
     const zones = await prisma.zone.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deleted: false },
       include: {
         posts: true,
         cameras: { include: { camera: true } },

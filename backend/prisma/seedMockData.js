@@ -19,32 +19,29 @@ async function main() {
   await prisma.post.deleteMany();
   await prisma.zone.deleteMany();
 
-  // ======= ЗОНЫ (по реальной схеме) =======
-  const [z1, z2, z3, z4, z5] = await Promise.all([
-    prisma.zone.create({ data: { name: 'Зона Въезд/Выезд', type: 'entry', description: 'Ворота въезда и выезда' } }),
-    prisma.zone.create({ data: { name: 'Зона Ожидания / Парковка', type: 'waiting', description: 'Зона ожидания и парковка готовых авто' } }),
-    prisma.zone.create({ data: { name: 'Ремонтная зона (посты 1-4)', type: 'repair', description: 'Нижний ряд, 2-х стоечные подъёмники' } }),
-    prisma.zone.create({ data: { name: 'Ремонтная зона (посты 5-8)', type: 'repair', description: 'Верхний ряд, 2-х стоечные подъёмники' } }),
-    prisma.zone.create({ data: { name: 'Диагностика (посты 9-10)', type: 'parking', description: 'Правая часть СТО, диагностические посты' } }),
-  ]);
-  console.log('5 zones');
+  // ======= ЗОНЫ (1:1 с постами) =======
+  const zonesArr = await Promise.all(
+    Array.from({ length: 10 }, (_, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      return prisma.zone.create({ data: { name: `Зона ${num}`, type: 'repair', description: `Пост ${num}` } });
+    })
+  );
+  const [z1, z2, z3, z4, z5, z6, z7, z8, z9, z10] = zonesArr;
+  console.log('10 zones');
 
   // ======= 10 ПОСТОВ (по реальной схеме) =======
-  const posts = await Promise.all([
-    // Нижний ряд — Посты 1-4 (2-х ст. <2.5т)
-    prisma.post.create({ data: { zoneId: z3.id, name: 'Пост 1', type: 'light', status: 'active_work' } }),
-    prisma.post.create({ data: { zoneId: z3.id, name: 'Пост 2', type: 'light', status: 'occupied_no_work' } }),
-    prisma.post.create({ data: { zoneId: z3.id, name: 'Пост 3', type: 'light', status: 'active_work' } }),
-    prisma.post.create({ data: { zoneId: z3.id, name: 'Пост 4', type: 'heavy', status: 'occupied' } }),
-    // Верхний ряд — Посты 5-8
-    prisma.post.create({ data: { zoneId: z4.id, name: 'Пост 5', type: 'light', status: 'active_work' } }),
-    prisma.post.create({ data: { zoneId: z4.id, name: 'Пост 6', type: 'light', status: 'free' } }),
-    prisma.post.create({ data: { zoneId: z4.id, name: 'Пост 7', type: 'light', status: 'occupied' } }),
-    prisma.post.create({ data: { zoneId: z4.id, name: 'Пост 8', type: 'light', status: 'free' } }),
-    // Диагностика — Посты 9-10
-    prisma.post.create({ data: { zoneId: z5.id, name: 'Пост 9', type: 'special', status: 'active_work' } }),
-    prisma.post.create({ data: { zoneId: z5.id, name: 'Пост 10', type: 'special', status: 'free' } }),
-  ]);
+  const POST_TYPES = ['heavy','heavy','heavy','heavy','light','light','light','light','special','special'];
+  const POST_STATUSES = ['active_work','occupied_no_work','active_work','occupied','active_work','free','occupied','free','active_work','free'];
+  const posts = await Promise.all(
+    Array.from({ length: 10 }, (_, i) => prisma.post.create({
+      data: {
+        zoneId: zonesArr[i].id,
+        name: `Пост ${i + 1}`,
+        type: POST_TYPES[i],
+        status: POST_STATUSES[i],
+      },
+    }))
+  );
   const [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10] = posts;
   console.log('10 posts');
 
@@ -54,17 +51,10 @@ async function main() {
       data: { name: `CAM ${String(i + 1).padStart(2, '0')}`, rtspUrl: `rtsp://cam${i + 1}` },
     }))
   );
-  // Привязка камер к зонам
-  await prisma.cameraZone.create({ data: { cameraId: cams[0].id, zoneId: z3.id, priority: 10 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[1].id, zoneId: z4.id, priority: 10 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[2].id, zoneId: z3.id, priority: 5 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[3].id, zoneId: z3.id, priority: 5 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[4].id, zoneId: z4.id, priority: 5 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[5].id, zoneId: z4.id, priority: 5 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[6].id, zoneId: z5.id, priority: 10 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[7].id, zoneId: z5.id, priority: 8 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[8].id, zoneId: z1.id, priority: 10 } });
-  await prisma.cameraZone.create({ data: { cameraId: cams[9].id, zoneId: z5.id, priority: 5 } });
+  // Привязка камер к зонам 1:1 (камера N → зона N)
+  for (let i = 0; i < 10; i++) {
+    await prisma.cameraZone.create({ data: { cameraId: cams[i].id, zoneId: zonesArr[i].id, priority: 10 } });
+  }
   console.log('10 cameras');
 
   // ======= СЕССИИ АВТО (10 активных + 4 завершённых) =======
@@ -151,7 +141,7 @@ async function main() {
     'work_idle', 'work_idle',
   ];
   const allPostIds = posts.map(p => p.id);
-  const allZoneIds = [z1.id, z2.id, z3.id, z4.id, z5.id];
+  const allZoneIds = [z1.id, z2.id, z3.id, z4.id, z5.id, z6.id, z7.id, z8.id, z9.id, z10.id];
   for (let i = 0; i < eventTypes.length; i++) {
     const eType = eventTypes[i];
     const needsPost = !eType.includes('zone') && !eType.includes('moving') && !eType.includes('waiting');
@@ -174,17 +164,17 @@ async function main() {
     { type: 'vehicle_idle', postId: p2.id, message: 'Авто В456КМ50 на Посту 2 без работника более 45 минут. Возможен простой.', messageEn: 'Vehicle В456КМ50 at Post 2 without worker for over 45 minutes. Possible idle time.' },
     { type: 'vehicle_idle', postId: p7.id, message: 'Авто К111АА99 на Посту 7 — работник присутствует, но активности нет 40 мин.', messageEn: 'Vehicle К111АА99 at Post 7 — worker present but no activity for 40 min.' },
     { type: 'no_show', message: 'Клиент не приехал: ЗН-2026-0310 (АВ55577), запись была 5 часов назад.', messageEn: 'Client no-show: WO-2026-0310 (АВ55577), appointment was 5 hours ago.' },
-    { type: 'capacity_available', zoneId: z4.id, message: 'Ремонтная зона (посты 5-8): Посты 6 и 8 свободны, можно принять ещё 2 авто.', messageEn: 'Repair zone (posts 5-8): Posts 6 and 8 are free, can accept 2 more vehicles.' },
+    { type: 'capacity_available', zoneId: z6.id, message: 'Посты 6 и 8 свободны, можно принять ещё 2 авто.', messageEn: 'Posts 6 and 8 are free, can accept 2 more vehicles.' },
     { type: 'work_overtime', postId: p1.id, message: 'ТО-2 на Посту 1 (А123ВС77) превышает норму: 2.3ч из 3.0ч запланированных.', messageEn: 'Service TO-2 at Post 1 (А123ВС77) exceeds norm: 2.3h out of 3.0h planned.' },
     { type: 'post_free', postId: p6.id, message: 'Пост 6 свободен более 2 часов при наличии записанных клиентов.', messageEn: 'Post 6 has been free for over 2 hours while there are scheduled clients.' },
-    { type: 'post_free', postId: p10.id, message: 'Пост 10 (Диагностика) свободен. Есть 2 авто в зоне ожидания.', messageEn: 'Post 10 (Diagnostics) is free. 2 vehicles in waiting zone.' },
-    { type: 'capacity_available', zoneId: z5.id, message: 'Диагностика: Пост 10 свободен, в очереди 1 авто на компьютерную диагностику.', messageEn: 'Diagnostics: Post 10 is free, 1 vehicle queued for computer diagnostics.' },
+    { type: 'post_free', postId: p10.id, message: 'Пост 10 свободен. Есть 2 авто в зоне ожидания.', messageEn: 'Post 10 is free. 2 vehicles in waiting zone.' },
+    { type: 'capacity_available', zoneId: z10.id, message: 'Пост 10 свободен, в очереди 1 авто.', messageEn: 'Post 10 is free, 1 vehicle in queue.' },
   ];
   for (const r of recs) await prisma.recommendation.create({ data: r });
   console.log('8 recommendations (RU + EN)');
 
   console.log('\n✅ Mock data seeded!');
-  console.log('  Zones: 5, Posts: 10, Cameras: 10');
+  console.log('  Zones: 10, Posts: 10, Cameras: 10');
   console.log('  Sessions: 14 (10 active, 4 completed)');
   console.log('  Work Orders: 12, Events: 35, Recommendations: 8');
 }
