@@ -66,6 +66,10 @@ router.put('/utilization/settings', authenticate, requirePermission('manage_sett
   if (hourlyRate != null && (typeof hourlyRate !== 'number' || hourlyRate < 0)) {
     return res.status(400).json({ error: 'hourlyRate должен быть числом ≥ 0' });
   }
+  const ALLOWED_CURRENCIES = ['BYN', 'RUB', 'USD', 'EUR', 'KZT'];
+  if (currency != null && !ALLOWED_CURRENCIES.includes(currency)) {
+    return res.status(400).json({ error: `currency должна быть одной из: ${ALLOWED_CURRENCIES.join(', ')}` });
+  }
   if (errorMarginPct != null && (typeof errorMarginPct !== 'number' || errorMarginPct < 0 || errorMarginPct > 100)) {
     return res.status(400).json({ error: 'errorMarginPct в диапазоне 0..100' });
   }
@@ -118,7 +122,7 @@ router.get('/utilization/settings', authenticate, requirePermission('view_analyt
   if (!location) {
     return res.json({
       workStart: '08:00', workEnd: '20:00', workDays: '1,2,3,4,5,6',
-      hourlyRate: null, currency: 'RUB',
+      hourlyRate: null, currency: 'BYN',
       errorMarginPct: null, errorMarginNote: null,
       timezone: 'Europe/Moscow',
     });

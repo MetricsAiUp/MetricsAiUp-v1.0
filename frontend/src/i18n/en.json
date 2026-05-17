@@ -1325,7 +1325,8 @@
     "settings": {
       "title": "Report settings",
       "rate": "Hourly rate",
-      "rateUnit": "/h",
+      "rateUnit": "{{cur}}/h",
+      "currency": "Currency",
       "error": "Margin of error",
       "errorUnit": "%",
       "errorNote": "Margin note",
@@ -1334,6 +1335,13 @@
       "workDays": "Working days",
       "save": "Save",
       "saved": "Settings saved"
+    },
+    "currencies": {
+      "BYN": "Belarusian ruble (Br)",
+      "RUB": "Russian ruble (₽)",
+      "USD": "US dollar ($)",
+      "EUR": "Euro (€)",
+      "KZT": "Tenge (₸)"
     },
     "kpi": {
       "shiftFund": "Work fund",

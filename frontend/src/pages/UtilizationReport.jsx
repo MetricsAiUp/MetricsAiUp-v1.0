@@ -45,6 +45,13 @@ function fmtMoney(n, currency = '₽') {
   return Number(n).toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ' + currency;
 }
 
+// Поддерживаемые валюты: код ISO 4217 → символ для отображения.
+const CURRENCY_OPTIONS = ['BYN', 'RUB', 'USD', 'EUR', 'KZT'];
+const CURRENCY_SYMBOLS = { BYN: 'Br', RUB: '₽', USD: '$', EUR: '€', KZT: '₸' };
+function currencySymbol(code) {
+  return CURRENCY_SYMBOLS[code] || code || 'Br';
+}
+
 function pctRange(value, marginPct) {
   if (value == null || marginPct == null) return null;
   const delta = value * (marginPct / 100);
@@ -96,6 +103,7 @@ function SettingsModal({ open, settings, onClose, onSave, canEdit }) {
         workEnd: form.workEnd,
         workDays: form.workDays,
         hourlyRate: form.hourlyRate === '' || form.hourlyRate == null ? null : Number(form.hourlyRate),
+        currency: form.currency || 'BYN',
         errorMarginPct: form.errorMarginPct === '' || form.errorMarginPct == null ? null : Number(form.errorMarginPct),
         errorMarginNote: form.errorMarginNote || null,
       });
@@ -128,17 +136,34 @@ function SettingsModal({ open, settings, onClose, onSave, canEdit }) {
         </div>
 
         <div className="space-y-3">
-          {/* Hourly rate */}
-          <div>
-            <label className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              {t('utilization.settings.rate')} ({t('utilization.settings.rateUnit')})
-            </label>
-            <input type="number" min="0" step="50"
-              value={form.hourlyRate ?? ''}
-              disabled={!canEdit}
-              onChange={e => setForm({ ...form, hourlyRate: e.target.value })}
-              className="w-full mt-1 px-3 py-1.5 rounded-lg text-sm"
-              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} />
+          {/* Currency + Hourly rate */}
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {t('utilization.settings.currency')}
+              </label>
+              <select
+                value={form.currency || 'BYN'}
+                disabled={!canEdit}
+                onChange={e => setForm({ ...form, currency: e.target.value })}
+                className="w-full mt-1 px-2 py-1.5 rounded-lg text-sm"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
+                {CURRENCY_OPTIONS.map(code => (
+                  <option key={code} value={code}>{code} — {t(`utilization.currencies.${code}`)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {t('utilization.settings.rate')} ({t('utilization.settings.rateUnit', { cur: currencySymbol(form.currency) })})
+              </label>
+              <input type="number" min="0" step="50"
+                value={form.hourlyRate ?? ''}
+                disabled={!canEdit}
+                onChange={e => setForm({ ...form, hourlyRate: e.target.value })}
+                className="w-full mt-1 px-3 py-1.5 rounded-lg text-sm"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }} />
+            </div>
           </div>
 
           {/* Work window */}
@@ -338,7 +363,7 @@ export default function UtilizationReport() {
   const [data, setData] = useState(null);
   const [settings, setSettings] = useState({
     workStart: '08:00', workEnd: '20:00', workDays: '1,2,3,4,5,6',
-    hourlyRate: null, currency: '₽',
+    hourlyRate: null, currency: 'BYN',
     errorMarginPct: null, errorMarginNote: null,
   });
   const [loading, setLoading] = useState(true);
@@ -384,7 +409,7 @@ export default function UtilizationReport() {
         workEnd: s.workEnd || '20:00',
         workDays: s.workDays || '1,2,3,4,5,6',
         hourlyRate: s.hourlyRate,
-        currency: s.currency === 'RUB' ? '₽' : (s.currency || '₽'),
+        currency: s.currency || 'BYN',
         errorMarginPct: s.errorMarginPct,
         errorMarginNote: s.errorMarginNote,
       });
@@ -426,7 +451,7 @@ export default function UtilizationReport() {
   const errorPct = data?.errorMargin?.pct;
   const errorNote = data?.errorMargin?.note;
   const hourlyRate = data?.hourlyRate;
-  const currency = data?.currency === 'RUB' ? '₽' : (data?.currency || '₽');
+  const currency = currencySymbol(data?.currency || 'BYN');
   const isPosts = entity === 'posts';
 
   // Aggregated byDay across all entities — для хитмапа
@@ -486,7 +511,7 @@ export default function UtilizationReport() {
       [isRu ? 'Простой, ч' : 'Idle, h']: totals?.idle,
       [isRu ? 'Загрузка, %' : 'Load, %']: totals?.loadPct,
       ...(isPosts ? {
-        [isRu ? 'Ставка, ₽/ч' : 'Rate']: hourlyRate ?? '',
+        [isRu ? `Ставка, ${currency}/ч` : `Rate, ${currency}/h`]: hourlyRate ?? '',
         [isRu ? 'Потенциал' : 'Potential']: totals?.potential,
         [isRu ? 'Заработано' : 'Earned']: totals?.earned,
         [isRu ? 'Потери' : 'Lost']: totals?.lost,

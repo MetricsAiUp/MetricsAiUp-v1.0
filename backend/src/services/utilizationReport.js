@@ -238,7 +238,7 @@ const DEFAULT_LOCATION = {
   workEnd: '20:00',
   workDays: '1,2,3,4,5,6',
   hourlyRate: null,
-  currency: 'RUB',
+  currency: 'BYN',
   errorMarginPct: null,
   errorMarginNote: null,
 };
