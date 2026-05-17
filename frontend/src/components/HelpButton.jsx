@@ -4640,6 +4640,449 @@ const HELP_CONTENT = {
       ],
     },
   },
+  // ────────────────────────────
+  // ОТЧЁТ «ЗАНЯТОСТЬ И ЗАГРУЗКА»
+  // ────────────────────────────
+  utilization: {
+    ru: {
+      title: 'Отчёт «Занятость и загрузка»',
+      intro: 'Сводный отчёт по эффективности использования СТО за выбранный период: фактическое рабочее время постов и зон, простой, загрузка в процентах, потенциальная и фактическая выручка, потери. Поддерживает сравнение с предыдущим периодом, два разреза (по постам и по зонам), heatmap по дням/часам и три формата экспорта.',
+      sections: [
+        {
+          heading: 'Зачем этот отчёт',
+          items: [
+            'Главный вопрос: **насколько эффективно** используется ресурс СТО (посты и зоны) за период.',
+            'Сравнивает фактическую занятость со **сменным фондом** (рабочее время × количество постов/зон).',
+            'Считает **потенциал** в рублях (фонд × ставка ₽/ч), фактически **заработано** (занятость × ставка) и **потери** (потенциал − заработано).',
+            '[●green]{green:Зелёный} индикатор загрузки = выше нормы (для большинства СТО хорошо ≥ 60%).',
+            '[●orange]{orange:Оранжевый}/{red:красный} — низкая загрузка, потенциал теряется.',
+            'Используйте отчёт для разговора с собственником, планирования смен и аргументации найма работников.',
+          ],
+        },
+        {
+          heading: 'Карта экрана',
+          items: [
+            '**Шапка** — заголовок, кнопки: «Ставка / ±%» (открывает настройки), refresh, экспорт XLSX/PDF/PNG.',
+            '**Фильтры** — период (Сегодня / Вчера / 7д / 30д / свой), чекбокс «Сравнить с предыдущим», переключатель «По постам / По зонам».',
+            '**Полоса KPI** — 5-7 карточек: рабочий фонд, занятость, простой, загрузка %, и для постов — потенциал/заработано/потери.',
+            '**Тренд** (ComposedChart) — столбцы занятости + линия загрузки % по дням периода.',
+            '**Heatmap** — двухмерная карта «день недели × час» — где провалы и пики загрузки.',
+            '**Таблица «По сущностям»** — построчно посты или зоны: фонд, занятость, простой, загрузка %, для постов — заработано/потери.',
+            '**Топ-3 потерь** (только для постов) — кто больше всего простаивает в деньгах.',
+          ],
+        },
+        {
+          heading: 'KPI-карточки — как читать',
+          items: [
+            '**Раб. фонд, ч** — теоретическое рабочее время за период: (часов в смену) × (рабочих дней) × (количество постов/зон).',
+            '**Занятость, ч** — суммарное время, когда пост был в статусе **active_work** или **occupied_no_work**.',
+            '**Простой, ч** = фонд − занятость. Логически это «потерянное» время в рабочие часы.',
+            '**Загрузка, %** = занятость / фонд × 100. [●green]≥ 60% — хорошо, [●orange] 30-60% — средне, [●red] < 30% — низко.',
+            '**Потенциал, ₽** = фонд × ставка ₽/ч. Сколько могли бы заработать, если бы пост был занят 100% рабочего времени.',
+            '**Заработано, ₽** = занятость × ставка. Фактическая выручка по этим постам (грубая оценка).',
+            '**Потери, ₽** = потенциал − заработано. Сколько недозаработали из-за простоев.',
+            '**Дельта-бейдж** появляется при включённом «Сравнить» — показывает рост/падение по сравнению с предыдущим равным периодом.',
+            '**Погрешность ±%** — рядом с цифрами в скобках диапазон (низ — верх). Учитывает ошибки CV-системы.',
+          ],
+        },
+        {
+          heading: 'Период и сравнение',
+          items: [
+            '**Сегодня** — с 00:00 до 23:59 сегодня.',
+            '**Вчера** — полный вчерашний день.',
+            '**7 дней** — последние 7 календарных дней включая сегодня.',
+            '**30 дней** — последние 30 календарных дней включая сегодня.',
+            '**Свой** — два input[type=date], любой диапазон. Параметры сохраняются в URL (`?from=...&to=...`).',
+            '**Сравнить с предыдущим** — чекбокс справа от фильтров. Подтягивает данные за предыдущий равный период (для 7д — −7 дней, для 30д — −30 дней). На KPI появляются дельты с %.',
+          ],
+        },
+        {
+          heading: 'Посты vs Зоны',
+          items: [
+            '**Посты** — основной разрез: 10 рабочих позиций с механиком и оборудованием. Считаются деньги (потенциал/заработано/потери) — только посты приносят выручку.',
+            '**Зоны** — служебный разрез: ремонт, ожидание, въезд, парковка, свободная. Денежных метрик нет — зоны не создают выручку, но показывают логистическую загрузку территории.',
+            '[tip] **Совет:** начните с «По постам» для финансовой картины, затем перейдите на «По зонам» для оценки потоков машин.',
+          ],
+        },
+        {
+          heading: 'Настройки расчёта',
+          items: [
+            'Открыть: кнопка с иконкой шестерёнки в шапке (показывает текущую ставку и погрешность).',
+            '**Рабочее время** — `workStart` / `workEnd` (по умолчанию 09:00–18:00). Определяет смену.',
+            '**Рабочие дни** — массив [пн, вт, …, вс] чекбоксами. Выходные исключаются из фонда.',
+            '**Ставка ₽/ч** — `hourlyRate`. Базовая ставка для расчёта потенциала и потерь. Только для постов.',
+            '**Валюта** — символ (₽, $, €) или код. Влияет только на отображение.',
+            '**Погрешность ±%** — `errorMarginPct`. Учитывает ошибки CV (например, 5% значит, что цифры округлены ±5%). Отображается в скобках под каждой KPI-карточкой.',
+            '**Примечание к погрешности** — свободный текст, например «Без камеры на посту 5 в апреле».',
+            'Все настройки хранятся в `app_settings.weekSchedule` на бэкенде и применяются ко всем пользователям СТО.',
+            'Право редактирования — `manage_settings` (admin/director).',
+          ],
+        },
+        {
+          heading: 'Heatmap «день × час»',
+          items: [
+            'Двумерная сетка: **строки** — дни недели (пн–вс), **столбцы** — часы суток (0–23).',
+            'Цвет ячейки = средняя загрузка % в эту комбинацию (дн+час) по всему выбранному периоду.',
+            '[●green]{green:зелёный} насыщенный = высокая загрузка, [●gray] серый = низкая или нет данных.',
+            'Видно пики (например, утро понедельника) и провалы (вечер пятницы, выходные).',
+            'Используется для перепланировки смен — если по понедельникам с 9 до 11 пик, имеет смысл вывести больше механиков.',
+          ],
+        },
+        {
+          heading: 'Тренд по дням',
+          items: [
+            'ComposedChart: **столбцы** — занятость, ч; **линия** — загрузка %.',
+            'При включённом «Сравнить» — вторая полупрозрачная серия для предыдущего периода.',
+            'Подсказка над точкой — точные значения и дельта.',
+            'Кнопка PNG в шапке — экспорт именно этого графика в виде картинки 2× resolution.',
+          ],
+        },
+        {
+          heading: 'Таблица «По сущностям»',
+          items: [
+            'Сортируется по умолчанию по загрузке (от большей к меньшей).',
+            'Клик по заголовку столбца — пересортировка по этому полю.',
+            'Кликабельный номер поста/зоны — переход на детальную страницу «Посты» или «Зоны».',
+            'Подсветка [●red] строки — загрузка ниже порога (по умолчанию < 30%).',
+            'В конце таблицы — итоги (фонд, занятость, заработано, потери).',
+          ],
+        },
+        {
+          heading: 'Топ-3 потерь (только посты)',
+          items: [
+            'Три поста с наибольшими потерями в рублях за период.',
+            'Помогает мастеру сразу увидеть «болевые точки» — куда направить внимание.',
+            'Клик по карточке — переход в «История поста» с тем же периодом → анализ причин.',
+          ],
+        },
+        {
+          heading: 'Экспорт',
+          items: [
+            '**XLSX** — три листа: «Сводка» (KPI), «По постам/зонам» (детали по строкам), «По дням» (агрегированный тренд).',
+            '**PDF** — многостраничный отчёт через `exportUtilizationPdf` — обложка, KPI, таблица, графики. Подходит для отправки собственнику.',
+            '**PNG** — только график-тренд в высоком разрешении (для презентаций, отчётов в Word).',
+            'Имя файла: `utilization-{entity}-{from}-{to}.xlsx` (entity = posts или zones).',
+            'Все экспорты учитывают текущие фильтры и язык интерфейса.',
+          ],
+        },
+        {
+          heading: 'Источник данных',
+          items: [
+            'API: **GET /api/utilization?from=...&to=...&entity=posts|zones&compare=1**.',
+            'Бэкенд собирает данные из **MonitoringSnapshot** (live-режим) или **PostStay** + **ZoneStay** (demo-режим).',
+            'Учитываются только периоды в **рабочие часы** согласно настройкам `app_settings.weekSchedule`.',
+            'Статусы **occupied** + **active_work** + **occupied_no_work** считаются занятостью; **free** + **no_data** — простоем.',
+            '[●orange] Авто на посту вне рабочих часов (например, оставили на ночь) — **не учитывается** как занятость.',
+          ],
+        },
+        {
+          heading: 'Типичные сценарии',
+          items: [
+            '[ok] **Месячный отчёт собственнику:** период «30 дней» → «Сравнить» → экспорт PDF → отправить.',
+            '[ok] **Поиск провалов:** период «7 дней» → heatmap → найти ячейки с низкой загрузкой → обсудить причины.',
+            '[ok] **Аргументация повышения ставки:** «Загрузка 75%, потери 80к ₽/мес — нужно повысить ставку или взять второго механика».',
+            '[ok] **Спор с механиком о ставке:** топ-3 потерь → исследовать конкретный пост в «История поста» → конкретные пробелы.',
+            '[ok] **Планирование смен:** heatmap → выявить пиковые часы → перестроить расписание в «Смены».',
+          ],
+        },
+        {
+          heading: 'Доступ и роли',
+          items: [
+            'Просмотр: `view_dashboard` или `view_analytics` (manager, director, admin).',
+            'Изменение настроек (ставка, погрешность, рабочее время): `manage_settings` (admin, director).',
+            'В Sidebar — пункт «Утилизация» в разделе «Аналитика».',
+          ],
+        },
+      ],
+    },
+    en: {
+      title: 'Utilization & Load Report',
+      intro: 'Aggregated STO efficiency report for a selected period: actual busy time of posts and zones, idle time, load %, potential and earned revenue, losses. Supports comparison with previous period, two views (posts/zones), heatmap, and three export formats.',
+      sections: [
+        {
+          heading: 'Why this report',
+          items: [
+            'Main question: **how efficiently** is the STO resource (posts and zones) used in the period.',
+            'Compares actual busy time with **shift fund** (work hours × number of posts/zones).',
+            'Calculates **potential** in money (fund × hourly rate), actual **earned** (busy × rate), and **lost** (potential − earned).',
+            '[●green]{green:Green} load indicator = above norm (≥ 60% is good for most STOs).',
+            '[●orange]/{red:red} — low load, potential is lost.',
+            'Use this report for talks with the owner, shift planning, and arguing hiring of additional workers.',
+          ],
+        },
+        {
+          heading: 'Screen Map',
+          items: [
+            '**Header** — title, buttons: "Rate / ±%" (opens settings), refresh, XLSX/PDF/PNG export.',
+            '**Filters** — period (Today / Yesterday / 7d / 30d / Custom), "Compare with previous" checkbox, "Posts / Zones" switcher.',
+            '**KPI strip** — 5-7 cards: shift fund, busy, idle, load %, and for posts — potential/earned/lost.',
+            '**Trend** (ComposedChart) — busy bars + load % line per day.',
+            '**Heatmap** — 2D map "day × hour" — load gaps and peaks.',
+            '**Per-entity table** — posts or zones row-by-row: fund, busy, idle, load %, earned/lost (posts only).',
+            '**Top-3 losses** (posts only) — biggest idle in money.',
+          ],
+        },
+        {
+          heading: 'KPI Cards — How to Read',
+          items: [
+            '**Fund, h** — theoretical work time: (shift hours) × (work days) × (number of posts/zones).',
+            '**Busy, h** — total time when post was in **active_work** or **occupied_no_work**.',
+            '**Idle, h** = fund − busy. Effectively "lost" time during work hours.',
+            '**Load, %** = busy / fund × 100. [●green]≥ 60% — good, [●orange] 30-60% — average, [●red] < 30% — low.',
+            '**Potential, ₽** = fund × hourly rate. What could be earned at 100% occupancy.',
+            '**Earned, ₽** = busy × rate. Approximate actual revenue from these posts.',
+            '**Lost, ₽** = potential − earned. Under-earned due to idle time.',
+            '**Delta badge** appears with "Compare" — growth/decline vs previous equal period.',
+            '**Margin ±%** — bracketed range under each KPI. Accounts for CV system errors.',
+          ],
+        },
+        {
+          heading: 'Period and Compare',
+          items: [
+            '**Today** — 00:00 to 23:59 today.',
+            '**Yesterday** — full previous day.',
+            '**7 days** — last 7 days including today.',
+            '**30 days** — last 30 days including today.',
+            '**Custom** — two date inputs. Persisted in URL (`?from=...&to=...`).',
+            '**Compare with previous** — checkbox on the right. Fetches data for the previous equal period (7d → −7d, 30d → −30d). KPI cards show % deltas.',
+          ],
+        },
+        {
+          heading: 'Posts vs Zones',
+          items: [
+            '**Posts** — main view: 10 work bays with mechanic and equipment. Money metrics (potential/earned/lost) — only posts produce revenue.',
+            '**Zones** — service view: repair, waiting, entry, parking, free. No money metrics — zones don\'t make money, but show logistic load.',
+            '[tip] **Tip:** start with "Posts" for financial view, then switch to "Zones" for vehicle flow analysis.',
+          ],
+        },
+        {
+          heading: 'Calculation Settings',
+          items: [
+            'Open: gear icon in header (shows current rate and margin).',
+            '**Work hours** — `workStart` / `workEnd` (default 09:00–18:00).',
+            '**Work days** — [Mon, Tue, …, Sun] checkboxes. Weekends excluded from fund.',
+            '**Rate ₽/h** — `hourlyRate`. Base rate for potential and losses. Posts only.',
+            '**Currency** — symbol (₽, $, €) or code. Display only.',
+            '**Margin ±%** — `errorMarginPct`. Accounts for CV errors (e.g., 5% means values rounded ±5%). Shown under each KPI.',
+            '**Margin note** — free text, e.g., "No camera on post 5 in April".',
+            'All settings stored in `app_settings.weekSchedule` server-side and apply to all STO users.',
+            'Edit permission: `manage_settings` (admin/director).',
+          ],
+        },
+        {
+          heading: 'Heatmap (day × hour)',
+          items: [
+            '2D grid: **rows** — days of week (Mon–Sun), **columns** — hours (0–23).',
+            'Cell color = average load % for that (day+hour) combo over the period.',
+            '[●green]{green:Saturated green} = high load, [●gray] gray = low or no data.',
+            'See peaks (e.g., Monday morning) and gaps (Friday evening, weekends).',
+            'Use for shift replanning — if Monday 9-11 is a peak, schedule more mechanics.',
+          ],
+        },
+        {
+          heading: 'Trend by Day',
+          items: [
+            'ComposedChart: **bars** — busy, h; **line** — load %.',
+            'With "Compare" on — a second translucent series for the previous period.',
+            'Hover tooltip — exact values and delta.',
+            'PNG button in header — exports just this chart at 2× resolution.',
+          ],
+        },
+        {
+          heading: 'Per-Entity Table',
+          items: [
+            'Sorted by load (descending) by default.',
+            'Click column header — sort by that field.',
+            'Clickable post/zone number — jump to detail page.',
+            '[●red] highlighted row — load below threshold (default < 30%).',
+            'End of table — totals (fund, busy, earned, lost).',
+          ],
+        },
+        {
+          heading: 'Top-3 Losses (Posts only)',
+          items: [
+            'Three posts with the biggest losses in money for the period.',
+            'Helps owner see "pain points" — where to focus.',
+            'Click card — jump to PostHistory with the same period → root cause.',
+          ],
+        },
+        {
+          heading: 'Export',
+          items: [
+            '**XLSX** — three sheets: Summary (KPI), Per posts/zones (row details), Per day (aggregated trend).',
+            '**PDF** — multi-page report via `exportUtilizationPdf` — cover, KPI, table, charts. Good for owner.',
+            '**PNG** — just the trend chart at 2× resolution (for presentations).',
+            'Filename: `utilization-{entity}-{from}-{to}.xlsx` (entity = posts or zones).',
+            'All exports respect current filters and UI language.',
+          ],
+        },
+        {
+          heading: 'Data Source',
+          items: [
+            'API: **GET /api/utilization?from=...&to=...&entity=posts|zones&compare=1**.',
+            'Backend pulls from **MonitoringSnapshot** (live) or **PostStay** + **ZoneStay** (demo).',
+            'Only **work hours** per `app_settings.weekSchedule` are counted.',
+            'Statuses **occupied** + **active_work** + **occupied_no_work** count as busy; **free** + **no_data** as idle.',
+            '[●orange] Vehicle on post outside work hours (e.g., parked overnight) is **not** counted as busy.',
+          ],
+        },
+        {
+          heading: 'Common Workflows',
+          items: [
+            '[ok] **Monthly owner report:** "30d" → "Compare" → export PDF → send.',
+            '[ok] **Find gaps:** "7d" → heatmap → spot low-load cells → discuss causes.',
+            '[ok] **Argue rate increase:** "Load 75%, losses 80k ₽/mo — raise rate or hire second mechanic".',
+            '[ok] **Mechanic rate dispute:** Top-3 losses → drill into PostHistory → identify gaps.',
+            '[ok] **Shift planning:** heatmap → identify peak hours → adjust schedule in Shifts.',
+          ],
+        },
+        {
+          heading: 'Access and Roles',
+          items: [
+            'View: `view_dashboard` or `view_analytics` (manager, director, admin).',
+            'Edit settings (rate, margin, work hours): `manage_settings` (admin, director).',
+            'Sidebar: "Utilization" in "Analytics" section.',
+          ],
+        },
+      ],
+    },
+  },
+  techDocs: {
+    ru: {
+      title: 'Техническая документация',
+      intro: 'Единый справочник по архитектуре, API, БД и фронту MetricsAiUp. 26 разделов: от обзора и инфраструктуры до RBAC, Telegram-бота и системы аудита.',
+      sections: [
+        {
+          heading: 'Что здесь есть',
+          items: [
+            '[●indigo]**Архитектура** — стек, слои, потоки данных (CV → API → БД → UI).',
+            '[●blue]**API (26 модулей, 80+ эндпоинтов)** — auth, dashboard, posts, work-orders, oneC, discrepancies и т.д.',
+            '[●green]**База данных** — 39 моделей Prisma/SQLite, включая блок 1С v2 и Discrepancy.',
+            '[●orange]**Backend Services (13)** — eventProcessor, monitoringProxy, IMAP-парсер 1С, матчер CV↔1С, детектор нестыковок, Telegram-бот.',
+            '[●violet]**Frontend** — 25 страниц, 34 компонента, контексты Auth/Theme/Toast, хуки, утилиты i18n.',
+            '[●teal]**RBAC** — 5 ролей, 15 permissions, 3 уровня доступа (роль / страница / элемент).',
+            '[●cyan]**Интеграции** — 1С (XLSX через IMAP), CV API v2.1.0 (*Tz/*Msk), HLS-стриминг, Telegram, push.',
+          ],
+        },
+        {
+          heading: 'Как пользоваться',
+          items: [
+            '[click]**Левый сайдбар** — TOC из 26 разделов, активный подсвечивается при скролле.',
+            '[search]**Поиск** в шапке — фильтрует TOC по подстроке (RU/EN, регистронезависимо).',
+            '[●indigo]**Печать / PDF** — кнопка «Печать» открывает системный диалог (CSS print-стили скрывают TOC и шапку).',
+            '[●blue]**Скачать XLSX/Markdown** — экспорт документации одним файлом.',
+            '[●green]**Кнопка «Наверх»** — появляется после прокрутки на 500px, плавный скролл.',
+            '[●violet]**Подзаголовки SectionTitle** — кликабельны (anchor через `id`), можно делиться ссылкой `/#/tech-docs#api`.',
+          ],
+        },
+        {
+          heading: 'Ключевые разделы',
+          items: [
+            '**1. Обзор системы** — кратко, для кого и зачем (4 роли пользователей).',
+            '**2. Архитектура** — Frontend (React 19 + Vite + Konva), Backend (Express + Prisma), ML (FastAPI), сервисы.',
+            '**4. БД** — RBAC, зоны/посты, сессии, заказ-наряды, смены, 1С v2 (OneCImport, OneCPlanRow, OneCWorkOrderMerged, Discrepancy и др.).',
+            '**5. API** — таблица эндпоинтов с методами, путями, телами запросов и кодами ответов.',
+            '**6. Сервисы** — eventProcessor, recommendationEngine, monitoringProxy, imap1cFetcher, oneCParser, oneCMerger, oneCCvMatcher, discrepancyDetector, discrepancyNotifier, discrepancyDigest, cameraHealthCheck, telegramBot, reportScheduler.',
+            '**14. RBAC** — таблицы ролей × permissions, страницы × роли, hiddenElements.',
+            '**18. Интеграция с 1С** — поток IMAP → парсер → merger → matcher → discrepancyDetector → UI.',
+            '**24. Мониторинг и Live-режим** — Demo vs Live, monitoringProxy, кэш, CV API v2.1.0 (поля *Tz/*Msk).',
+          ],
+        },
+        {
+          heading: 'Версионирование документации',
+          items: [
+            '[tip]**Версия** и **дата генерации** — в шапке под заголовком.',
+            'Документация обновляется вручную после крупных изменений (новые сервисы, модели БД, страницы).',
+            'Источник истины: `CLAUDE.md` в корне проекта + код. При расхождении доверять коду.',
+          ],
+        },
+        {
+          heading: 'Связанные страницы',
+          items: [
+            '[●blue]**Health** — runtime-статус компонентов (БД, камеры, диск, память).',
+            '[●green]**Audit** — журнал действий пользователей (что/кто/когда).',
+            '[●orange]**Settings → Mode** — переключение Demo/Live.',
+            '[●violet]Каждая страница имеет свою справку — кнопка [●cyan]**?** рядом с заголовком.',
+          ],
+        },
+        {
+          heading: 'Доступ и роли',
+          items: [
+            '**Просмотр**: все авторизованные пользователи.',
+            '**Редактирование текста**: только через коммит в git (frontend/src/pages/TechDocs.jsx).',
+            'Сайдбар: «Документация» в нижней секции.',
+          ],
+        },
+      ],
+    },
+    en: {
+      title: 'Technical Documentation',
+      intro: 'Single reference for MetricsAiUp architecture, API, DB and frontend. 26 sections: from overview and infrastructure to RBAC, Telegram bot and audit system.',
+      sections: [
+        {
+          heading: 'What is here',
+          items: [
+            '[●indigo]**Architecture** — stack, layers, data flows (CV → API → DB → UI).',
+            '[●blue]**API (26 modules, 80+ endpoints)** — auth, dashboard, posts, work-orders, oneC, discrepancies, etc.',
+            '[●green]**Database** — 39 Prisma/SQLite models including 1C v2 and Discrepancy.',
+            '[●orange]**Backend Services (13)** — eventProcessor, monitoringProxy, 1C IMAP parser, CV↔1C matcher, discrepancy detector, Telegram bot.',
+            '[●violet]**Frontend** — 25 pages, 34 components, Auth/Theme/Toast contexts, hooks, i18n utilities.',
+            '[●teal]**RBAC** — 5 roles, 15 permissions, 3 levels of access (role / page / element).',
+            '[●cyan]**Integrations** — 1C (XLSX via IMAP), CV API v2.1.0 (*Tz/*Msk), HLS streaming, Telegram, push.',
+          ],
+        },
+        {
+          heading: 'How to use',
+          items: [
+            '[click]**Left sidebar** — TOC of 26 sections, the active one highlights as you scroll.',
+            '[search]**Search** in header — filters TOC by substring (RU/EN, case-insensitive).',
+            '[●indigo]**Print / PDF** — "Print" button opens the system dialog (print CSS hides TOC and header).',
+            '[●blue]**Download XLSX/Markdown** — export the whole documentation as a single file.',
+            '[●green]**"Back to top" button** — appears after 500px scroll, smooth scroll.',
+            '[●violet]**SectionTitle subheadings** — clickable (`id` anchor), share links like `/#/tech-docs#api`.',
+          ],
+        },
+        {
+          heading: 'Key sections',
+          items: [
+            '**1. System overview** — briefly, for whom and why (4 user roles).',
+            '**2. Architecture** — Frontend (React 19 + Vite + Konva), Backend (Express + Prisma), ML (FastAPI), services.',
+            '**4. Database** — RBAC, zones/posts, sessions, work orders, shifts, 1C v2 (OneCImport, OneCPlanRow, OneCWorkOrderMerged, Discrepancy, etc.).',
+            '**5. API** — table of endpoints with methods, paths, request bodies and response codes.',
+            '**6. Services** — eventProcessor, recommendationEngine, monitoringProxy, imap1cFetcher, oneCParser, oneCMerger, oneCCvMatcher, discrepancyDetector, discrepancyNotifier, discrepancyDigest, cameraHealthCheck, telegramBot, reportScheduler.',
+            '**14. RBAC** — tables roles × permissions, pages × roles, hiddenElements.',
+            '**18. 1C integration** — IMAP → parser → merger → matcher → discrepancyDetector → UI flow.',
+            '**24. Monitoring & Live mode** — Demo vs Live, monitoringProxy, cache, CV API v2.1.0 (*Tz/*Msk fields).',
+          ],
+        },
+        {
+          heading: 'Documentation versioning',
+          items: [
+            '[tip]**Version** and **generation date** are shown in the header under the title.',
+            'Documentation is updated manually after major changes (new services, DB models, pages).',
+            'Source of truth: `CLAUDE.md` in project root + code. If they disagree, trust the code.',
+          ],
+        },
+        {
+          heading: 'Related pages',
+          items: [
+            '[●blue]**Health** — runtime status of components (DB, cameras, disk, memory).',
+            '[●green]**Audit** — log of user actions (what/who/when).',
+            '[●orange]**Settings → Mode** — Demo/Live switch.',
+            '[●violet]Every page has its own help — the [●cyan]**?** button next to the title.',
+          ],
+        },
+        {
+          heading: 'Access and roles',
+          items: [
+            '**View**: any authenticated user.',
+            '**Edit text**: only via git commit (frontend/src/pages/TechDocs.jsx).',
+            'Sidebar: "Documentation" in the bottom section.',
+          ],
+        },
+      ],
+    },
+  },
 };
 
 // ═══════════════════════════════════════════════

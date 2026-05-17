@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileDown, Search, ChevronUp, BookOpen, Printer, Loader2 } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 const SECTIONS = [
   { id: 'overview', titleRu: '1. Обзор системы', titleEn: '1. System Overview' },
   { id: 'architecture', titleRu: '2. Архитектура', titleEn: '2. Architecture' },
   { id: 'infrastructure', titleRu: '3. Инфраструктура и деплой', titleEn: '3. Infrastructure & Deploy' },
-  { id: 'database', titleRu: '4. База данных (29 моделей)', titleEn: '4. Database (29 models)' },
-  { id: 'api', titleRu: '5. Backend API (26 модулей, 80+ эндпоинтов)', titleEn: '5. Backend API (26 modules, 80+ endpoints)' },
-  { id: 'services', titleRu: '6. Backend Services (12 сервисов)', titleEn: '6. Backend Services (12 services)' },
+  { id: 'database', titleRu: '4. База данных (39 моделей)', titleEn: '4. Database (39 models)' },
+  { id: 'api', titleRu: '5. Backend API (25 модулей, 75+ эндпоинтов)', titleEn: '5. Backend API (25 modules, 75+ endpoints)' },
+  { id: 'services', titleRu: '6. Backend Services (13 сервисов)', titleEn: '6. Backend Services (13 services)' },
   { id: 'middleware', titleRu: '7. Middleware', titleEn: '7. Middleware' },
   { id: 'socketio', titleRu: '8. Socket.IO', titleEn: '8. Socket.IO' },
-  { id: 'pages', titleRu: '9. Frontend — Страницы (22)', titleEn: '9. Frontend — Pages (22)' },
+  { id: 'pages', titleRu: '9. Frontend — Страницы (25)', titleEn: '9. Frontend — Pages (25)' },
   { id: 'components', titleRu: '10. Frontend — Компоненты (34)', titleEn: '10. Frontend — Components (34)' },
   { id: 'contexts', titleRu: '11. Контексты (Auth, Theme, Toast)', titleEn: '11. Contexts (Auth, Theme, Toast)' },
   { id: 'hooks', titleRu: '12. Хуки', titleEn: '12. Hooks' },
@@ -29,6 +30,9 @@ const SECTIONS = [
   { id: 'monitoring', titleRu: '24. Мониторинг и Live-режим', titleEn: '24. Monitoring & Live Mode' },
   { id: 'telegram', titleRu: '25. Telegram-бот', titleEn: '25. Telegram Bot' },
   { id: 'audit', titleRu: '26. Система аудита', titleEn: '26. Audit System' },
+  { id: 'onec_v2', titleRu: '27. 1С v2 — IMAP, парсинг, сопоставление, нестыковки', titleEn: '27. 1C v2 — IMAP, parsing, matching, discrepancies' },
+  { id: 'cv_api_v21', titleRu: '28. CV API v2.1.0 (поля *Tz / *Msk)', titleEn: '28. CV API v2.1.0 (*Tz / *Msk fields)' },
+  { id: 'yeldra', titleRu: '29. Yeldra-style редизайн карты и виджета', titleEn: '29. Yeldra-style map & widget redesign' },
 ];
 
 function TocItem({ section, isRu, isActive, onClick }) {
@@ -278,9 +282,12 @@ export default function TechDocs() {
       <div ref={contentRef} className="flex-1 overflow-y-auto p-6 print:p-2" style={{ background: 'var(--bg-primary)' }}>
         {/* Header */}
         <div className="mb-6 pb-4 border-b" style={{ borderColor: 'var(--border-glass)' }}>
-          <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-            MetricsAiUp — {isRu ? 'Техническая документация' : 'Technical Documentation'}
-          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              MetricsAiUp — {isRu ? 'Техническая документация' : 'Technical Documentation'}
+            </h1>
+            <HelpButton pageKey="techDocs" />
+          </div>
           <div className="flex gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
             <span>{isRu ? 'Версия' : 'Version'}: 3.0</span>
             <span>{isRu ? 'Дата' : 'Date'}: {generatedDate}</span>
@@ -520,7 +527,7 @@ cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузит�
         {/* ============================================================ */}
         {/* Section 4 — Database */}
         {/* ============================================================ */}
-        <SectionTitle id="database">{isRu ? '4. База данных (Prisma + SQLite, 29 моделей)' : '4. Database (Prisma + SQLite, 29 models)'}</SectionTitle>
+        <SectionTitle id="database">{isRu ? '4. База данных (Prisma + SQLite, 39 моделей)' : '4. Database (Prisma + SQLite, 39 models)'}</SectionTitle>
         <P>{isRu
           ? 'Система использует Prisma 5.20 как ORM с SQLite. Файл БД: backend/prisma/dev.db. SQLite выбран за простоту (один файл, без сервера), достаточную производительность для single-node установки, и совместимость с Prisma. Миграции через prisma migrate, seed-данные через prisma db seed (backend/prisma/seed.js). При старте бэкенда выставляется PRAGMA journal_mode=WAL для конкурентного чтения и записи -- это важно для одновременной работы EventProcessor, MonitoringProxy и пользовательских запросов через API.'
           : 'The system uses Prisma 5.20 as ORM with SQLite. DB file: backend/prisma/dev.db. SQLite was chosen for simplicity (single file, no server), sufficient performance for single-node installations, and Prisma compatibility. Migrations via prisma migrate, seed data via prisma db seed (backend/prisma/seed.js). On backend start, PRAGMA journal_mode=WAL is set for concurrent reads/writes -- important for simultaneous work of EventProcessor, MonitoringProxy and user API requests.'
@@ -548,7 +555,7 @@ cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузит�
           ]}
         />
 
-        <Sub>{isRu ? 'Все 29 моделей' : 'All 29 Models'}</Sub>
+        <Sub>{isRu ? 'Базовые 29 моделей (ядро)' : 'Core 29 models'}</Sub>
         <Table
           headers={[isRu ? 'Модель' : 'Model', isRu ? 'Ключевые поля' : 'Key Fields', isRu ? 'Связи' : 'Relations', isRu ? 'Назначение' : 'Purpose']}
           rows={[
@@ -584,6 +591,33 @@ cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузит�
           ]}
         />
 
+        <Sub>{isRu ? '1С v2 — 10 дополнительных моделей (IMAP, парсер, дедуп, сопоставление, нестыковки)' : '1C v2 — 10 additional models (IMAP, parser, dedup, matching, discrepancies)'}</Sub>
+        <P>{isRu
+          ? 'Блок 1С v2 — это «второй стек» интеграции, заменивший прежний oneCImport-фид. Письма с XLSX-вложениями от 1С поступают по IMAP в Imap1CConfig, фиксируются как OneCImport (дедуп по contentHash), парсятся в OneCPlanRow / OneCRepairOrderRow / OneCStageRow, потом сводятся в OneCWorkOrderMerged / OneCStageMerged через ROW_NUMBER OVER (документ + дата). Дальше oneCCvMatcher строит WorkOrderLink, а discrepancyDetector сравнивает план/факт и пишет в Discrepancy.'
+          : '1C v2 block is the "second stack" of integration that replaced the previous oneCImport feed. Emails with XLSX attachments from 1C arrive via IMAP into Imap1CConfig, are recorded as OneCImport (dedup by contentHash), parsed into OneCPlanRow / OneCRepairOrderRow / OneCStageRow, then merged into OneCWorkOrderMerged / OneCStageMerged via ROW_NUMBER OVER (document + date). Next oneCCvMatcher builds WorkOrderLink, and discrepancyDetector compares plan/actual into Discrepancy.'
+        }</P>
+        <Table
+          headers={[isRu ? 'Модель' : 'Model', isRu ? 'Ключевые поля' : 'Key Fields', isRu ? 'Связи' : 'Relations', isRu ? 'Назначение' : 'Purpose']}
+          rows={[
+            ['Imap1CConfig', 'host, port, useSSL, login, passwordEnc (AES-GCM), mailbox, pollIntervalSec, isActive, lastSuccessAt, lastError', isRu ? 'Нет связей' : 'No relations', isRu ? 'Настройки IMAP для опроса почтового ящика 1С (пароль шифруется AES-GCM)' : 'IMAP settings for polling 1C mailbox (password encrypted via AES-GCM)'],
+            ['OneCImport', 'messageId, subject, fromEmail, receivedAt, contentHash (unique), fileName, sizeBytes, status (parsed/error), errorMessage', '→ OneCPlanRow[], OneCRepairOrderRow[], OneCStageRow[]', isRu ? 'Письмо с XLSX из 1С; contentHash гарантирует дедуп' : 'Email with XLSX from 1C; contentHash ensures dedup'],
+            ['OneCPlanRow', 'importId, documentNumber (план), orderDate, vehiclePlate, vehicleVin, brand, model, customerName, postNameRaw, normHours, masterName, rowIndex', '→ OneCImport', isRu ? 'Сырая строка из «плана» (заявки повторяются — идентичность = композит)' : 'Raw row from "plan" (orders repeat — identity = composite)'],
+            ['OneCRepairOrderRow', 'importId, orderNumber (КОЛ…), orderDate, vehiclePlate, vehicleVin, brand, model, customerName, normHours, statusRaw, masterName, rowIndex', '→ OneCImport', isRu ? 'Сырая строка из «заказ-нарядов» (КОЛ…) — отдельная сущность' : 'Raw row from "repair orders" (КОЛ…) — separate entity'],
+            ['OneCStageRow', 'importId, orderNumber, stageDate, stageNameRaw, postNameRaw, workerName, actualHours, normHours, rowIndex', '→ OneCImport', isRu ? 'Сырая строка из «выполненных работ»' : 'Raw row from "performed works"'],
+            ['OneCWorkOrderMerged', 'orderNumber, orderDate, vehiclePlate, vehicleVin, brand, model, customerName, normHours, statusRaw, masterName, sourceImportId', '→ OneCStageMerged[], Discrepancy[]', isRu ? 'Сводка последней версии заказа (ROW_NUMBER OVER окно по orderNumber + orderDate)' : 'Last-version summary of order (ROW_NUMBER OVER window over orderNumber + orderDate)'],
+            ['OneCStageMerged', 'orderNumber, stageDate, stageName, postId (resolved), workerName, actualHours, normHours, sourceImportId', '→ OneCWorkOrderMerged, Post?', isRu ? 'Сводка последней версии этапа работы (с резолвом postId через PostNameMapping)' : 'Last-version stage summary (with postId resolved via PostNameMapping)'],
+            ['PostNameMapping', 'rawName (unique), postId, createdAt, updatedAt', '→ Post', isRu ? 'Маппинг сырых имён постов из XLSX («Пост 1», «П1», «Heavy 1») в реальный Post.id' : 'Mapping of raw post names from XLSX ("Post 1", "P1", "Heavy 1") to real Post.id'],
+            ['Discrepancy', 'type (6 types), severity (info/warning/critical), orderNumber, postId, vehicleSessionId, normHours, actualHours, gapMinutes, message, status (open/acknowledged/resolved/dismissed), unique(type+orderNumber+postId+vehicleSessionId)', '→ Post?, VehicleSession?', isRu ? 'Нестыковка 1С↔CV; 6 типов: no_show_in_cv, no_show_in_1c, wrong_post, overstated_norm_hours, understated_actual_time, time_mismatch' : '1C↔CV discrepancy; 6 types: no_show_in_cv, no_show_in_1c, wrong_post, overstated_norm_hours, understated_actual_time, time_mismatch'],
+            ['DiscrepancyDigestState', 'lastDigestAt, lastTopPostId, lastCounts (JSON)', isRu ? 'Нет связей' : 'No relations', isRu ? 'Состояние дайджест-уведомлений (раз в N часов в Telegram)' : 'Digest notification state (every N hours into Telegram)'],
+          ]}
+        />
+
+        <Sub>{isRu ? '1С — три номерных пространства (важно для идентичности)' : '1C — three number spaces (important for identity)'}</Sub>
+        <P>{isRu
+          ? 'В 1С разные сущности номеруются независимо: (1) Заявка/план — номер повторяется в каждой выгрузке, идентичность = композит (orderNumber + orderDate + vehiclePlate); (2) Заказ-наряд (КОЛ…) — отдельная сущность с уникальным номером; (3) Этап работы — пара (orderNumber + stageDate + stageName). Поэтому всё хранится в трёх таблицах OneCPlanRow / OneCRepairOrderRow / OneCStageRow, а сводки строятся через ROW_NUMBER OVER.'
+          : 'In 1C, different entities are numbered independently: (1) Plan/request — the number repeats in every export, identity = composite (orderNumber + orderDate + vehiclePlate); (2) Repair order (КОЛ…) — separate entity with unique number; (3) Work stage — pair (orderNumber + stageDate + stageName). That is why everything is stored in three tables OneCPlanRow / OneCRepairOrderRow / OneCStageRow, and summaries are built via ROW_NUMBER OVER.'
+        }</P>
+
         <Sub>{isRu ? 'WorkOrder -- жизненный цикл и оптимистичная блокировка' : 'WorkOrder -- Lifecycle & Optimistic Locking'}</Sub>
         <P>{isRu
           ? 'Заказ-наряд проходит через состояния: pending (создан/импортирован) -> scheduled (назначен на пост/время через Gantt) -> in_progress (механик начал) -> paused (пауза) -> in_progress (возобновлён) -> completed. Поле version обеспечивает оптимистичную блокировку: при batch-обновлении через POST /api/work-orders/schedule бэкенд проверяет version каждого ЗН в транзакции. При несовпадении -- HTTP 409 с массивом conflicts[]. pausedAt + totalPausedMs обеспечивают точный учёт рабочего времени без пауз.'
@@ -611,7 +645,7 @@ cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузит�
         {/* ============================================================ */}
         {/* Section 5 — Backend API */}
         {/* ============================================================ */}
-        <SectionTitle id="api">{isRu ? '5. Backend API (27 модулей, 80+ эндпоинтов)' : '5. Backend API (27 modules, 80+ endpoints)'}</SectionTitle>
+        <SectionTitle id="api">{isRu ? '5. Backend API (25 модулей, 75+ эндпоинтов)' : '5. Backend API (25 modules, 75+ endpoints)'}</SectionTitle>
         <P>{isRu
           ? 'Бэкенд реализован на Express 4.21 с 27 модулями маршрутов, организованными по доменным областям. Каждый модуль -- отдельный файл в backend/src/routes/, экспортирующий Express Router. Все маршруты монтируются в index.js с префиксом /api/. Swagger UI доступен на /api-docs (OpenAPI 3.0 спецификация генерируется из JSDoc). Полный список модулей: auth, dashboard, posts, zones, events, sessions, workOrders, recommendations, cameras, users, shifts, data1c, mapLayout, auditLog, predict, postsData, workers, health, push, photos, locations, reportSchedule, monitoring, settings, backup, replay.'
           : 'The backend is implemented on Express 4.21 with 27 route modules organized by domain areas. Each module is a separate file in backend/src/routes/, exporting an Express Router. All routes are mounted in index.js with /api/ prefix. Swagger UI available at /api-docs (OpenAPI 3.0 spec generated from JSDoc). Full module list: auth, dashboard, posts, zones, events, sessions, workOrders, recommendations, cameras, users, shifts, data1c, mapLayout, auditLog, predict, postsData, workers, health, push, photos, locations, reportSchedule, monitoring, settings, backup, replay.'
@@ -745,10 +779,10 @@ cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузит�
         {/* ============================================================ */}
         {/* Section 6 — Backend Services */}
         {/* ============================================================ */}
-        <SectionTitle id="services">{isRu ? '6. Backend Services (11 фоновых сервисов)' : '6. Backend Services (11 background services)'}</SectionTitle>
+        <SectionTitle id="services">{isRu ? '6. Backend Services (13 фоновых сервисов)' : '6. Backend Services (13 background services)'}</SectionTitle>
         <P>{isRu
-          ? 'Одиннадцать фоновых сервисов запускаются при старте бэкенда (index.js) и работают параллельно с Express. Каждый сервис работает автономно со своим интервалом или триггером. Запуск некоторых сервисов условный: TelegramBot стартует только при наличии TELEGRAM_BOT_TOKEN, MonitoringProxy -- при заданном MONITORING_API_URL, ReportScheduler -- при наличии активных ReportSchedule.'
-          : 'Eleven background services start with the backend (index.js) and run in parallel with Express. Each service operates autonomously with its own interval or trigger. Some services start conditionally: TelegramBot only when TELEGRAM_BOT_TOKEN is set, MonitoringProxy when MONITORING_API_URL is configured, ReportScheduler when active ReportSchedules exist.'
+          ? 'Тринадцать фоновых сервисов запускаются при старте бэкенда (index.js) и работают параллельно с Express. Каждый сервис работает автономно со своим интервалом или триггером. Запуск некоторых сервисов условный: TelegramBot стартует только при наличии TELEGRAM_BOT_TOKEN, MonitoringProxy -- при заданном MONITORING_API_URL, ReportScheduler -- при наличии активных ReportSchedule, IMAP-сервисы 1С v2 — при заполненном Imap1CConfig.'
+          : 'Thirteen background services start with the backend (index.js) and run in parallel with Express. Each service operates autonomously with its own interval or trigger. Some services start conditionally: TelegramBot only when TELEGRAM_BOT_TOKEN is set, MonitoringProxy when MONITORING_API_URL is configured, ReportScheduler when active ReportSchedules exist, 1C v2 IMAP services when Imap1CConfig is filled.'
         }</P>
         <Table
           headers={[isRu ? 'Сервис' : 'Service', isRu ? 'Файл' : 'File', 'LOC', isRu ? 'Триггер' : 'Trigger', isRu ? 'Что делает' : 'What it does']}
@@ -805,6 +839,43 @@ cd /project/backend && npx prisma db seed          # ${isRu ? 'загрузит�
           : 'BackupScheduler runs SQLite VACUUM INTO on cron schedule, creating a consistent DB snapshot even under load (without blocking writers thanks to WAL). Snapshots are stored in /project/backend/prisma/backups/ with timestamp in filename. Rotation: when exceeding count or total size limit, old files are deleted. RetentionCleaner works in tandem: periodically deletes MonitoringSnapshot records older than N days (config-dependent) and old Event records, so the DB does not grow infinitely. These two services work independently and ensure system longevity in continuous live mode operation.'
         }</P>
 
+
+        <Sub>{isRu ? '1С v2 / Discrepancy — сервисы (7)' : '1C v2 / Discrepancy — services (7)'}</Sub>
+        <P>{isRu
+          ? 'Семь сервисов реализуют пайплайн «IMAP → парсинг → дедуп → сводка → сопоставление с CV → детекция нестыковок → уведомления». Цепочка асинхронная: каждый шаг работает в свой такт, общий стейт — в БД (OneCImport, OneCPlanRow/RepairOrderRow/StageRow, OneCWorkOrderMerged/StageMerged, WorkOrderLink, Discrepancy).'
+          : 'Seven services implement the pipeline "IMAP → parse → dedup → merge → match with CV → detect discrepancies → notify". The chain is asynchronous: each step runs at its own tick, common state lives in DB (OneCImport, OneCPlanRow/RepairOrderRow/StageRow, OneCWorkOrderMerged/StageMerged, WorkOrderLink, Discrepancy).'
+        }</P>
+        <Table
+          headers={[isRu ? 'Сервис' : 'Service', isRu ? 'Файл' : 'File', isRu ? 'Триггер' : 'Trigger', isRu ? 'Что делает' : 'What it does']}
+          rows={[
+            ['Imap1CFetcher', 'imap1cFetcher.js', isRu ? 'Polling (pollIntervalSec)' : 'Polling (pollIntervalSec)', isRu ? 'Подключение IMAP по Imap1CConfig (пароль AES-GCM), забор писем, дедуп по contentHash → OneCImport. Ошибки в lastError.' : 'IMAP connect via Imap1CConfig (AES-GCM password), fetch emails, dedup by contentHash → OneCImport. Errors into lastError.'],
+            ['OneCParser', 'oneCParser.js', isRu ? 'После Imap1CFetcher' : 'After Imap1CFetcher', isRu ? 'Распознавание XLSX (план/заявка/выполненные работы) → OneCPlanRow / OneCRepairOrderRow / OneCStageRow. status=parsed/error.' : 'XLSX detection (plan/repair-order/stages) → OneCPlanRow / OneCRepairOrderRow / OneCStageRow. status=parsed/error.'],
+            ['OneCMerger', 'oneCMerger.js', isRu ? 'После OneCParser' : 'After OneCParser', isRu ? 'ROW_NUMBER OVER (orderNumber + orderDate) → OneCWorkOrderMerged; для этапов — (orderNumber + stageDate + stageName) → OneCStageMerged. Резолв postId через PostNameMapping.' : 'ROW_NUMBER OVER (orderNumber + orderDate) → OneCWorkOrderMerged; for stages — (orderNumber + stageDate + stageName) → OneCStageMerged. postId resolved via PostNameMapping.'],
+            ['OneCCvMatcher', 'oneCCvMatcher.js', isRu ? 'После OneCMerger' : 'After OneCMerger', isRu ? 'Каскад VIN → exact_plate → fuzzy_plate (Левенштейн). Привязывает ЗН к VehicleSession через WorkOrderLink (confidence, matchType).' : 'Cascade VIN → exact_plate → fuzzy_plate (Levenshtein). Binds WO to VehicleSession via WorkOrderLink (confidence, matchType).'],
+            ['DiscrepancyDetector', 'discrepancyDetector.js', isRu ? 'После OneCCvMatcher (или по кнопке Force)' : 'After OneCCvMatcher (or Force button)', isRu ? '6 правил: no_show_in_cv, no_show_in_1c, wrong_post, overstated_norm_hours, understated_actual_time, time_mismatch. Запись в Discrepancy (unique по type+orderNumber+postId+vehicleSessionId).' : '6 rules: no_show_in_cv, no_show_in_1c, wrong_post, overstated_norm_hours, understated_actual_time, time_mismatch. Writes to Discrepancy (unique by type+orderNumber+postId+vehicleSessionId).'],
+            ['DiscrepancyNotifier', 'discrepancyNotifier.js', isRu ? 'На каждое critical' : 'On each critical', isRu ? 'Мгновенное уведомление critical в Telegram + Socket.IO событие discrepancy:new.' : 'Instant critical notification in Telegram + Socket.IO discrepancy:new event.'],
+            ['DiscrepancyDigest', 'discrepancyDigest.js', isRu ? 'Раз в N часов' : 'Every N hours', isRu ? 'Дайджест в Telegram (top-3 проблемных постов, разбивка по severity). Состояние — DiscrepancyDigestState.' : 'Telegram digest (top-3 problem posts, severity breakdown). State in DiscrepancyDigestState.'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Алгоритм сопоставления (OneCCvMatcher)' : 'Matching algorithm (OneCCvMatcher)'}</Sub>
+        <P>{isRu
+          ? 'Каскад: (1) точное совпадение VIN — самый сильный сигнал (confidence=1.0, matchType=vin); (2) точное совпадение plate (после нормализации — верхний регистр, без пробелов, кириллица→латиница) — confidence=0.9, matchType=exact_plate; (3) Левенштейн ≤ 2 символов на нормализованных plate — confidence по дистанции 0.5–0.8, matchType=fuzzy_plate. Если ни один шаг не сработал — ЗН остаётся «несопоставленным» и виден в табе «Несопоставленные» в Data1C.'
+          : 'Cascade: (1) exact VIN match — strongest signal (confidence=1.0, matchType=vin); (2) exact plate match (after normalization — uppercase, no spaces, Cyrillic→Latin) — confidence=0.9, matchType=exact_plate; (3) Levenshtein ≤ 2 chars on normalized plates — confidence by distance 0.5–0.8, matchType=fuzzy_plate. If nothing matches, WO stays "unmatched" and is visible in "Unmatched" tab in Data1C.'
+        }</P>
+
+        <Sub>{isRu ? '6 типов нестыковок (Discrepancy.type)' : '6 discrepancy types (Discrepancy.type)'}</Sub>
+        <Table
+          headers={[isRu ? 'Тип' : 'Type', isRu ? 'Описание' : 'Description', isRu ? 'Severity' : 'Severity']}
+          rows={[
+            ['no_show_in_cv', isRu ? 'В 1С есть заказ, в CV нет посещения автомобиля' : 'Order in 1C but no vehicle visit in CV', 'warning'],
+            ['no_show_in_1c', isRu ? 'CV видит авто на посту, но в 1С нет соответствующего заказа' : 'CV sees vehicle at post but no matching 1C order', 'info'],
+            ['wrong_post', isRu ? 'В 1С — пост A, в CV — пост B' : '1C says post A, CV says post B', 'warning'],
+            ['overstated_norm_hours', isRu ? 'Норма-часы в 1С завышены относительно фактического active_work' : 'Norm hours in 1C overstated vs actual active_work', 'warning'],
+            ['understated_actual_time', isRu ? 'Фактическое active_work меньше нормы (риск приписки)' : 'Actual active_work less than norm (risk of overreport)', 'critical'],
+            ['time_mismatch', isRu ? 'Временные окна 1С и CV не пересекаются' : '1C and CV time windows do not overlap', 'critical'],
+          ]}
+        />
 
         {/* ============================================================ */}
         {/* Section 7 — Middleware */}
@@ -904,7 +975,7 @@ const io = new Server(httpServer, {
         {/* ============================================================ */}
         {/* Section 9 — Frontend Pages */}
         {/* ============================================================ */}
-        <SectionTitle id="pages">{isRu ? '9. Frontend -- Страницы (22)' : '9. Frontend -- Pages (22)'}</SectionTitle>
+        <SectionTitle id="pages">{isRu ? '9. Frontend -- Страницы (25)' : '9. Frontend -- Pages (25)'}</SectionTitle>
         <P>{isRu
           ? 'Все 22 страницы загружаются лениво через React.lazy() и Suspense. Каждая страница -- отдельный файл в frontend/src/pages/. Маршрутизация через HashRouter (React Router v7). Доступ к страницам определяется массивом user.pages[] и проверяется через ProtectedRoute. Файл PostHistory.jsx экспортирует две страницы (default = PostHistory, именованный экспорт ZoneHistory) -- удобный приём чтобы переиспользовать общую логику истории между ракурсами "по посту" и "по зоне" без дублирования кода.'
           : 'All 22 pages are lazy-loaded via React.lazy() and Suspense. Each page is a separate file in frontend/src/pages/. Routing via HashRouter (React Router v7). Page access is determined by user.pages[] array and checked via ProtectedRoute. PostHistory.jsx exports two pages (default = PostHistory, named export ZoneHistory) -- a convenient pattern to reuse common history logic between "by-post" and "by-zone" perspectives without duplicating code.'
@@ -933,7 +1004,10 @@ const io = new Server(httpServer, {
             ['Login', 'Login.jsx', '~150', '/login', isRu ? 'Страница авторизации: email + password, ошибки валидации, перенаправление на Dashboard после входа' : 'Auth page: email + password, validation errors, redirect to Dashboard after login', '/api/auth/login'],
             ['LiveDebug', 'LiveDebug.jsx', '~150', '/live-debug', isRu ? 'Отладка live-режима: состояние MonitoringProxy, ответы от внешнего CV API, маппинг статусов, таймстемпы, статистика БД (db-stats)' : 'Live mode debug: MonitoringProxy state, external CV API responses, status mapping, timestamps, DB stats', '/api/monitoring/*'],
             ['PostHistory', 'PostHistory.jsx', '~250', '/post-history/:postNumber, /zone-history/:zoneName', isRu ? 'История поста или зоны: timeline событий, периоды занятости/свободы, агрегаты за период. Один файл, два маршрута через именованный экспорт ZoneHistory' : 'History of a post or zone: events timeline, occupied/free periods, period aggregates. One file, two routes via named export ZoneHistory', '/api/monitoring/post-history/*, /api/monitoring/zone-history/*'],
-            ['TechDocs', 'TechDocs.jsx', '~1700', '/tech-docs', isRu ? 'Техническая документация: 26 секций, TOC sidebar, поиск, PDF-экспорт (jsPDF + html2canvas, чанки по 2500px), печать, скролл-трекинг' : 'Technical documentation: 26 sections, TOC sidebar, search, PDF export (jsPDF + html2canvas, 2500px chunks), print, scroll tracking', isRu ? 'Нет API (статический контент)' : 'No API (static content)'],
+            ['TechDocs', 'TechDocs.jsx', '~1800', '/tech-docs', isRu ? 'Техническая документация: 29 секций, TOC sidebar, поиск, PDF-экспорт (jsPDF + html2canvas, чанки по 2500px), печать, скролл-трекинг' : 'Technical documentation: 29 sections, TOC sidebar, search, PDF export (jsPDF + html2canvas, 2500px chunks), print, scroll tracking', isRu ? 'Нет API (статический контент)' : 'No API (static content)'],
+            ['Discrepancies', 'Discrepancies.jsx', '~315', '/discrepancies', isRu ? 'Нестыковки 1С↔CV: KPI-карты, 6 типов (no_show_in_cv/in_1c, wrong_post, overstated_norm, understated_actual, time_mismatch), 4 статуса (open/acknowledged/resolved/dismissed), двухпанельный детальный вид, force-detect 7 дней' : '1C↔CV discrepancies: KPI cards, 6 types, 4 statuses, two-pane detail view, force-detect 7 days', '/api/discrepancies/*'],
+            ['OrderMatching', 'OrderMatching.jsx', '~600', '/order-matching', isRu ? 'Сопоставления заказов 1С с CV: табы «Сейчас на СТО», «Импорты», «Несопоставленные», «Выработка», «Настройки IMAP». Резолюция неизвестных постов через PostNameMapping' : '1C↔CV order matching: tabs "On STO now", "Imports", "Unmatched", "Production", "IMAP settings". Resolves unknown posts via PostNameMapping', '/api/oneC/*'],
+            ['UtilizationReport', 'UtilizationReport.jsx', '~620', '/utilization', isRu ? 'Отчёт «Занятость и загрузка»: heatmap, тренд по дням, KPI (busy/idle/loadPct/lost/earned), посты vs зоны, рабочие часы, ставка, маржа погрешности, экспорт XLSX/PDF/PNG' : 'Utilization & Load report: heatmap, daily trend, KPI (busy/idle/loadPct/lost/earned), posts vs zones, work hours, rate, error margin, XLSX/PDF/PNG export', '/api/dashboard/utilization'],
           ]}
         />
 
@@ -1765,11 +1839,147 @@ test: {
         }</P>
 
 
+        {/* ============================================================ */}
+        {/* Section 27 — 1C v2 — IMAP, parsing, matching, discrepancies */}
+        {/* ============================================================ */}
+        <SectionTitle id="onec_v2">{isRu ? '27. 1С v2 — IMAP, парсинг, сопоставление, нестыковки' : '27. 1C v2 — IMAP, parsing, matching, discrepancies'}</SectionTitle>
+        <P>{isRu
+          ? '1С v2 — отдельный (второй) стек интеграции, заменяющий ручной импорт через drag-drop. Цепочка работает автономно после первоначальной настройки IMAP-ящика: письма поступают, парсятся, сводятся, сопоставляются с CV и проверяются на 6 типов нестыковок. Управление — на странице OrderMatching (5 табов) и Discrepancies (KPI, фильтры, действия со статусами).'
+          : '1C v2 is a separate (second) integration stack that replaces manual drag-drop import. After initial IMAP configuration, the chain runs autonomously: emails arrive, are parsed, merged, matched with CV and checked for 6 types of discrepancies. Controlled via OrderMatching page (5 tabs) and Discrepancies (KPI, filters, status actions).'
+        }</P>
+
+        <Sub>{isRu ? 'Поток данных' : 'Data flow'}</Sub>
+        <Code>{`IMAP (Imap1CConfig) ──▶ Imap1CFetcher
+                       │ contentHash дедуп
+                       ▼
+                  OneCImport
+                       │
+                       ▼
+                 OneCParser
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+  OneCPlanRow  OneCRepairOrderRow  OneCStageRow
+        │              │              │
+        └──────────────┼──────────────┘
+                       ▼
+                 OneCMerger (ROW_NUMBER OVER)
+        ┌──────────────┴──────────────┐
+        ▼                             ▼
+  OneCWorkOrderMerged       OneCStageMerged
+        │                             │
+        ▼                             │
+  OneCCvMatcher ◀──── VehicleSession  │
+        │ (VIN → plate → fuzzy)       │
+        ▼                             ▼
+  WorkOrderLink                   PostNameMapping
+        │                             │
+        └──────────────┬──────────────┘
+                       ▼
+            DiscrepancyDetector (6 rules)
+                       │
+                       ▼
+                  Discrepancy
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+DiscrepancyNotifier  Socket.IO   DiscrepancyDigest
+   (Telegram)     (discrepancy:new)   (Telegram)`}</Code>
+
+        <Sub>{isRu ? 'IMAP-настройки и безопасность' : 'IMAP settings & security'}</Sub>
+        <P>{isRu
+          ? 'Imap1CConfig хранит host, port, useSSL, login, mailbox, pollIntervalSec, isActive, lastSuccessAt, lastError. Пароль шифруется AES-GCM (ключ — переменная окружения IMAP1C_KEY, 32 байта). Никогда не возвращается в API в открытом виде. Кнопка «Тест соединения» делает реальный IMAP-логин и закрывает соединение без забора писем.'
+          : 'Imap1CConfig stores host, port, useSSL, login, mailbox, pollIntervalSec, isActive, lastSuccessAt, lastError. Password is encrypted with AES-GCM (key — env var IMAP1C_KEY, 32 bytes). Never returned to API in plaintext. "Test connection" button performs a real IMAP login and closes the connection without fetching emails.'
+        }</P>
+
+        <Sub>{isRu ? 'Permissions' : 'Permissions'}</Sub>
+        <Table
+          headers={[isRu ? 'Ключ' : 'Key', isRu ? 'Что разрешает' : 'What it allows', isRu ? 'Роли по умолчанию' : 'Default roles']}
+          rows={[
+            ['view_1c', isRu ? 'Чтение страниц Data1C / OrderMatching / Discrepancies' : 'Read Data1C / OrderMatching / Discrepancies pages', 'admin, director, manager'],
+            ['manage_1c_import', isRu ? 'Ручная загрузка XLSX, резолюция unmapped постов' : 'Manual XLSX upload, resolve unmapped posts', 'admin, manager'],
+            ['manage_1c_config', isRu ? 'Настройки IMAP, тестовое соединение' : 'IMAP settings, test connection', 'admin'],
+            ['manage_discrepancies', isRu ? 'Изменение статусов нестыковок, force-detect' : 'Change discrepancy statuses, force-detect', 'admin, manager'],
+          ]}
+        />
+
+        <Sub>{isRu ? 'Ключевые эндпоинты' : 'Key endpoints'}</Sub>
+        <Table
+          headers={[isRu ? 'Метод' : 'Method', isRu ? 'Путь' : 'Path', isRu ? 'Описание' : 'Description']}
+          rows={[
+            ['GET', '/api/oneC/current', isRu ? 'Текущая сводка (OneCWorkOrderMerged + OneCStageMerged последней версии)' : 'Current summary (latest-version OneCWorkOrderMerged + OneCStageMerged)'],
+            ['GET', '/api/oneC/imports', isRu ? 'Список писем (OneCImport) с фильтрами' : 'Email list (OneCImport) with filters'],
+            ['POST', '/api/oneC/imports/upload', isRu ? 'Ручная загрузка XLSX (drag-drop в UI)' : 'Manual XLSX upload (drag-drop in UI)'],
+            ['POST', '/api/oneC/imports/run', isRu ? 'Force-fetch IMAP сейчас (для отладки/демо)' : 'Force-fetch IMAP now (debugging/demo)'],
+            ['GET', '/api/oneC/unmapped-posts', isRu ? 'Список сырых имён постов без маппинга в PostNameMapping' : 'Raw post names with no mapping in PostNameMapping'],
+            ['POST', '/api/oneC/unmapped-posts/resolve', isRu ? 'Создать запись в PostNameMapping (rawName → postId)' : 'Create PostNameMapping entry (rawName → postId)'],
+            ['GET', '/api/oneC/payroll', isRu ? 'Выработка (нормочасы / заказы / CV-часы по ролям)' : 'Production (norm hours / orders / CV hours by roles)'],
+            ['GET', '/api/oneC/config', isRu ? 'Imap1CConfig (без пароля)' : 'Imap1CConfig (without password)'],
+            ['PUT', '/api/oneC/config', isRu ? 'Сохранение настроек IMAP (пароль шифруется на бэкенде)' : 'Save IMAP settings (password encrypted server-side)'],
+            ['POST', '/api/oneC/config/test', isRu ? 'Тест IMAP-соединения' : 'IMAP connection test'],
+            ['GET', '/api/discrepancies', isRu ? 'Список нестыковок с фильтрами (type, severity, status, period)' : 'Discrepancy list with filters (type, severity, status, period)'],
+            ['GET', '/api/discrepancies/stats', isRu ? 'KPI (counts по type / severity / status)' : 'KPI (counts by type / severity / status)'],
+            ['GET', '/api/discrepancies/:id', isRu ? 'Детали + связанный заказ + сессия CV' : 'Details + linked order + CV session'],
+            ['PUT', '/api/discrepancies/:id/status', isRu ? 'Перевод статуса (acknowledge / resolve / dismiss)' : 'Status change (acknowledge / resolve / dismiss)'],
+            ['POST', '/api/discrepancies/run', isRu ? 'Force-detect нестыковок за последние 7 дней' : 'Force-detect discrepancies for last 7 days'],
+          ]}
+        />
+
+        {/* ============================================================ */}
+        {/* Section 28 — CV API v2.1.0 */}
+        {/* ============================================================ */}
+        <SectionTitle id="cv_api_v21">{isRu ? '28. CV API v2.1.0 (поля *Tz / *Msk)' : '28. CV API v2.1.0 (*Tz / *Msk fields)'}</SectionTitle>
+        <P>{isRu
+          ? 'Внешний CV API (zone-mapper) с версии v2.1.0 рядом с каждой датой возвращает её "tz"-вариант (ISO-строка с явным смещением) и "msk"-вариант (предпросчитанное локальное минское время). Это позволяет фронту и бэкенду работать без догадок о таймзоне сервера CV. Спецификация: см. /api/docs хоста CV.'
+          : 'External CV API (zone-mapper) since v2.1.0 returns next to each date its "tz" variant (ISO string with explicit offset) and "msk" variant (precomputed local Minsk time). This allows frontend and backend to work without guessing the CV server timezone. Spec: see /api/docs of the CV host.'
+        }</P>
+        <Sub>{isRu ? 'Поля' : 'Fields'}</Sub>
+        <Table
+          headers={[isRu ? 'Базовое поле' : 'Base field', '*Tz', '*Msk', isRu ? 'Где использовать' : 'Where to use']}
+          rows={[
+            ['startTime', 'startTimeTz', 'startTimeMsk', isRu ? 'Карта СТО, виджет «Сейчас на СТО», таблицы постов' : 'STO map, "Now at STO" widget, post tables'],
+            ['carFirstSeen', 'carFirstSeenTz', 'carFirstSeenMsk', isRu ? 'Таймер timeSince() для давности заезда' : 'timeSince() timer for visit age'],
+            ['lastEventAt', 'lastEventAtTz', 'lastEventAtMsk', isRu ? 'Stale-баннер, индикаторы свежести данных' : 'Stale banner, data freshness indicators'],
+            ['entryTime / exitTime', '*Tz', '*Msk', isRu ? 'ZoneStay / PostStay, история постов и зон' : 'ZoneStay / PostStay, post and zone history'],
+          ]}
+        />
+        <Sub>{isRu ? 'Хранение' : 'Storage'}</Sub>
+        <P>{isRu
+          ? 'monitoringProxy сохраняет *Tz и *Msk-варианты рядом с базовой датой в payload MonitoringSnapshot / MonitoringCurrent. На фронте предпочитаем *Msk для отображения времени пользователю (он в Минске), *Tz — для diff/расчётов длительности.'
+          : 'monitoringProxy stores *Tz and *Msk variants next to the base date in MonitoringSnapshot / MonitoringCurrent payload. Frontend prefers *Msk for displaying time to user (user in Minsk), *Tz for diff/duration calculations.'
+        }</P>
+
+        {/* ============================================================ */}
+        {/* Section 29 — Yeldra-style redesign */}
+        {/* ============================================================ */}
+        <SectionTitle id="yeldra">{isRu ? '29. Yeldra-style редизайн карты и виджета' : '29. Yeldra-style map & widget redesign'}</SectionTitle>
+        <P>{isRu
+          ? 'В мае 2026 проведён редизайн карты СТО (MapViewer) и виджета «Сейчас на СТО» (LiveSTOWidget) под референс yeldra.com: минималистичные акценты, нейтральные границы, мягкие тени, тонкие 3px цветовые полоски-индикаторы статуса вместо плотных рамок.'
+          : 'In May 2026, STO map (MapViewer) and "Now at STO" widget (LiveSTOWidget) were redesigned following yeldra.com reference: minimalist accents, neutral borders, soft shadows, thin 3px color strips as status indicators instead of dense frames.'
+        }</P>
+        <Sub>{isRu ? 'Ключевые принципы' : 'Key principles'}</Sub>
+        <Table
+          headers={[isRu ? 'Параметр' : 'Parameter', isRu ? 'Старое значение' : 'Old value', isRu ? 'Новое значение' : 'New value']}
+          rows={[
+            [isRu ? 'Граница карточки/поста' : 'Card/post border', isRu ? 'Толстая цветная по статусу' : 'Thick colored by status', isRu ? 'Нейтральная rgba(148,163,184,0.16) тёмная / rgba(15,23,42,0.08) светлая' : 'Neutral rgba(148,163,184,0.16) dark / rgba(15,23,42,0.08) light'],
+            [isRu ? 'Цветной акцент статуса' : 'Status color accent', isRu ? 'Заголовок-плашка + фон' : 'Header pill + background', isRu ? 'Тонкая 3px полоска слева/сверху, opacity 0.85' : 'Thin 3px left/top strip, opacity 0.85'],
+            [isRu ? 'Корпус (background)' : 'Body (background)', isRu ? 'Сплошной цветной' : 'Solid colored', 'var(--bg-glass) + glassmorphism'],
+            [isRu ? 'Тень' : 'Shadow', isRu ? 'Резкая, без блюра' : 'Sharp, no blur', isRu ? 'Мягкая, offsetY=3, blur 10-16, opacity 0.16' : 'Soft, offsetY=3, blur 10-16, opacity 0.16'],
+            [isRu ? 'Радиус скругления' : 'Corner radius', '4-6px', '8-10px'],
+            [isRu ? 'Фон карты' : 'Map background', '#0f172a (dark)', '#0b1220 (dark) / #f6f8fb (light)'],
+            [isRu ? 'Стены/двери здания' : 'Building walls/doors', '#22c55e', 'rgba(148,163,184,0.35) — нейтральный графит / neutral graphite'],
+            [isRu ? 'LIVE-бейдж' : 'LIVE badge', isRu ? 'Заполненный красный' : 'Solid red fill', isRu ? 'Outline + пульсирующая точка 1.5px' : 'Outline + pulsing 1.5px dot'],
+          ]}
+        />
+        <Sub>{isRu ? 'Затронутые файлы' : 'Affected files'}</Sub>
+        <P>{isRu
+          ? 'frontend/src/pages/MapViewer.jsx (PostEl, ZoneEl, CameraEl, InfoZoneEl, фон), frontend/src/components/LiveSTOWidget.jsx (SummaryPill, карточки постов и зон, LIVE-бейдж), frontend/src/components/STOMap.jsx (рендер на Dashboard), frontend/src/components/postsDetail/PostDetailPanel.jsx, frontend/src/utils/carName.js (новый — нормализация имени машины). После сборки — бамп CACHE_NAME в frontend/public/sw.js.'
+          : 'frontend/src/pages/MapViewer.jsx (PostEl, ZoneEl, CameraEl, InfoZoneEl, background), frontend/src/components/LiveSTOWidget.jsx (SummaryPill, post and zone cards, LIVE badge), frontend/src/components/STOMap.jsx (Dashboard rendering), frontend/src/components/postsDetail/PostDetailPanel.jsx, frontend/src/utils/carName.js (new — car name normalization). After build — bump CACHE_NAME in frontend/public/sw.js.'
+        }</P>
+
         {/* Footer */}
         <div className="mt-10 pt-4 border-t text-center" style={{ borderColor: 'var(--border-glass)' }}>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            MetricsAiUp — {isRu ? 'Техническая документация v3.0 | ' : 'Technical Documentation v3.0 | '}{generatedDate}
-            {' | '}{isRu ? '26 секций' : '26 sections'}
+            MetricsAiUp — {isRu ? 'Техническая документация v3.1 | ' : 'Technical Documentation v3.1 | '}{generatedDate}
+            {' | '}{isRu ? '29 секций' : '29 sections'}
           </p>
         </div>
       </div>
