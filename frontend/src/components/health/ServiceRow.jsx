@@ -25,10 +25,12 @@ export default function ServiceRow({ service }) {
   ].filter(Boolean).join(' • ');
 
   return (
-    <div className="glass p-2.5 space-y-1.5">
+    <div className="relative glass p-2.5 pl-3 space-y-1.5 overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: color, opacity: 0.85 }} />
       <div className="flex items-center gap-2 min-w-0">
         <span className="inline-block rounded-full flex-shrink-0"
-          style={{ width: 7, height: 7, background: color, boxShadow: `0 0 5px ${color}` }} />
+          style={{ width: 6, height: 6, background: color }} />
         <span className="text-xs font-semibold truncate flex-1" style={{ color: 'var(--text-primary)' }}>
           {service.name}
         </span>

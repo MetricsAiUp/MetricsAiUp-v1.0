@@ -27,19 +27,22 @@ function ModeBadge() {
   const isAdmin = user?.role === 'admin';
   const isDemo = appMode === 'demo';
 
+  const dotColor = isDemo ? 'var(--warning)' : 'var(--success)';
+  const textColor = isDemo ? 'var(--warning)' : 'var(--success)';
+
   if (isAdmin) {
     return (
       <button
         onClick={() => toggleAppMode(isDemo ? 'live' : 'demo')}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:opacity-80"
         style={{
-          background: isDemo ? 'rgba(234, 179, 8, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-          color: isDemo ? 'var(--warning)' : 'var(--success)',
-          border: `1px solid ${isDemo ? 'rgba(234, 179, 8, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`,
+          background: 'var(--bg-glass)',
+          color: textColor,
+          border: '1px solid var(--border-glass)',
         }}
         title={t(isDemo ? 'settings.switchToLive' : 'settings.switchToDemo')}
       >
-        <span className="w-1.5 h-1.5 rounded-full" style={{ background: isDemo ? 'var(--warning)' : 'var(--success)' }} />
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: dotColor }} />
         {isDemo ? 'DEMO' : 'LIVE'}
       </button>
     );
@@ -50,11 +53,12 @@ function ModeBadge() {
     <span
       className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium"
       style={{
-        background: isDemo ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-        color: isDemo ? 'var(--warning)' : 'var(--success)',
+        background: 'var(--bg-glass)',
+        color: textColor,
+        border: '1px solid var(--border-glass)',
       }}
     >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: isDemo ? 'var(--warning)' : 'var(--success)' }} />
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: dotColor }} />
       {isDemo ? 'DEMO' : 'LIVE'}
     </span>
   );
@@ -134,7 +138,11 @@ function Header({ onToggleSidebar, onToggleCollapse, collapsed }) {
         {/* User */}
         <div className="flex items-center gap-2 md:gap-3">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+            style={{
+              background: 'var(--bg-glass)',
+              color: 'var(--accent)',
+              border: '1px solid var(--border-glass)',
+            }}>
             {user?.firstName?.[0]}{user?.lastName?.[0]}
           </div>
           <div className="hidden md:block">

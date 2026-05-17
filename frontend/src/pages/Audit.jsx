@@ -139,7 +139,13 @@ export default function Audit() {
           {t('audit.title')}
         </h2>
         <HelpButton pageKey="audit" />
-        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+        <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full"
+          style={{
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border-glass)',
+            color: 'var(--text-secondary)',
+          }}>
+          <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: 'var(--accent)' }} />
           {total} {isRu ? 'записей' : 'entries'}
         </span>
       </div>
@@ -243,8 +249,16 @@ function LogRow({ log, expanded, onToggle, isRu, formatDate, formatJson }) {
           {log.userName || '—'}
         </td>
         <td className="px-3 py-2">
-          <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
-            style={{ background: (ACTION_COLORS[log.action] || '#94a3b8') + '18', color: ACTION_COLORS[log.action] || '#94a3b8' }}>
+          <span className="inline-flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded-full font-medium"
+            style={{
+              background: 'var(--bg-glass)',
+              border: '1px solid var(--border-glass)',
+              color: ACTION_COLORS[log.action] || '#94a3b8',
+            }}>
+            <span className="inline-block rounded-full" style={{
+              width: 6, height: 6,
+              background: ACTION_COLORS[log.action] || '#94a3b8',
+            }} />
             {ACTION_LABELS[isRu ? 'ru' : 'en'][log.action] || log.action}
           </span>
         </td>

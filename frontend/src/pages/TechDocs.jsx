@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileDown, Search, ChevronUp, BookOpen, Printer, Loader2 } from 'lucide-react';
+import { FileDown, Search, ChevronUp, Printer, Loader2 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
 
 const SECTIONS = [
@@ -39,10 +39,11 @@ function TocItem({ section, isRu, isActive, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="text-left text-xs px-2 py-1 rounded transition-colors w-full truncate"
+      className="text-left text-xs px-2 py-1 transition-colors w-full truncate"
       style={{
-        color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-        background: isActive ? 'var(--accent-light)' : 'transparent',
+        color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+        background: 'transparent',
+        borderLeft: isActive ? '1px solid var(--text-primary)' : '1px solid transparent',
         fontWeight: isActive ? 600 : 400,
       }}
     >
@@ -53,20 +54,21 @@ function TocItem({ section, isRu, isActive, onClick }) {
 
 function Table({ headers, rows }) {
   return (
-    <div className="my-2">
-      <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.35' }}>
+    <div className="my-3">
+      <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '11px', lineHeight: '1.4' }}>
         <thead>
-          <tr>
+          <tr style={{ borderTop: '1px solid var(--text-primary)', borderBottom: '1px solid var(--text-primary)' }}>
             {headers.map((h, i) => (
-              <th key={i} className="text-left px-1.5 py-1 font-semibold border-b align-top" style={{ borderColor: 'var(--border-glass)', color: 'var(--text-primary)', background: 'var(--bg-secondary)', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{h}</th>
+              <th key={i} className="text-left px-2 py-2 font-bold uppercase tracking-wider align-top"
+                style={{ color: 'var(--text-primary)', fontSize: '10px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row, ri) => (
-            <tr key={ri}>
+            <tr key={ri} style={{ borderBottom: '1px solid var(--border-glass)' }}>
               {row.map((cell, ci) => (
-                <td key={ci} className="px-1.5 py-1 border-b align-top" style={{ borderColor: 'var(--border-glass)', color: 'var(--text-secondary)', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{cell}</td>
+                <td key={ci} className="px-2 py-1.5 align-top" style={{ color: 'var(--text-secondary)', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{cell}</td>
               ))}
             </tr>
           ))}
@@ -78,26 +80,37 @@ function Table({ headers, rows }) {
 
 function Code({ children }) {
   return (
-    <pre className="text-xs p-3 rounded overflow-x-auto my-2" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
+    <pre className="text-xs p-3 overflow-x-auto my-3" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderLeft: '2px solid var(--border-glass)' }}>
       <code>{children}</code>
     </pre>
   );
 }
 
 function SectionTitle({ id, children }) {
-  return <h2 id={id} className="text-base font-bold mt-6 mb-3 pb-1 border-b scroll-mt-4" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-glass)' }}>{children}</h2>;
+  return (
+    <h2 id={id}
+      className="text-lg font-bold mt-8 mb-3 pb-2 border-b scroll-mt-4 tracking-tight"
+      style={{ color: 'var(--text-primary)', borderColor: 'var(--border-glass)' }}>
+      {children}
+    </h2>
+  );
 }
 
 function Sub({ children }) {
-  return <h3 className="text-sm font-semibold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>{children}</h3>;
+  return <h3 className="text-sm font-semibold mt-5 mb-2 tracking-tight" style={{ color: 'var(--text-primary)' }}>{children}</h3>;
 }
 
 function P({ children }) {
   return <p className="text-xs mb-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{children}</p>;
 }
 
-function Badge({ children, color = 'var(--accent)' }) {
-  return <span className="inline-block text-xs px-1.5 py-0.5 rounded font-mono" style={{ background: color + '22', color, border: `1px solid ${color}44` }}>{children}</span>;
+function Badge({ children, color = 'var(--text-primary)' }) {
+  return (
+    <span className="inline-block text-[11px] px-1.5 py-0.5 font-mono"
+      style={{ color, border: '1px solid var(--border-glass)' }}>
+      {children}
+    </span>
+  );
 }
 
 export default function TechDocs() {
@@ -220,23 +233,23 @@ export default function TechDocs() {
   return (
     <div className="flex gap-0 h-[calc(100vh-56px)]">
       {/* TOC Sidebar */}
-      <div className="w-56 min-w-56 max-w-56 flex-shrink-0 glass-static p-3 flex flex-col gap-1 overflow-y-auto print:hidden" style={{ borderRight: '1px solid var(--border-glass)' }}>
-        <div className="flex items-center gap-1.5 mb-2">
-          <BookOpen size={14} style={{ color: 'var(--accent)' }} />
-          <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>
+      <div className="w-56 min-w-56 max-w-56 flex-shrink-0 p-3 flex flex-col gap-1 overflow-y-auto print:hidden"
+        style={{ borderRight: '1px solid var(--border-glass)', background: 'var(--bg-primary)' }}>
+        <div className="mb-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
             {isRu ? 'Содержание' : 'Contents'}
           </span>
         </div>
 
-        <div className="relative mb-2">
-          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+        <div className="relative mb-3">
+          <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={isRu ? 'Поиск...' : 'Search...'}
-            className="w-full pl-6 pr-2 py-1 text-xs rounded"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
+            className="w-full pl-6 pr-2 py-1 text-xs outline-none"
+            style={{ background: 'transparent', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-glass)' }}
           />
         </div>
 
@@ -256,8 +269,12 @@ export default function TechDocs() {
           <button
             onClick={handleExportPdf}
             disabled={exporting}
-            className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded font-medium transition-colors w-full"
-            style={{ background: 'var(--accent)', color: '#fff' }}
+            className="flex items-center gap-1.5 text-xs px-2 py-1.5 transition-colors w-full hover:opacity-70"
+            style={{
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--text-primary)',
+            }}
           >
             {exporting ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
             {exporting
@@ -266,33 +283,34 @@ export default function TechDocs() {
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded font-medium transition-colors w-full"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
+            className="flex items-center gap-1.5 text-xs px-2 py-1.5 transition-colors w-full hover:opacity-70"
+            style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}
           >
             <Printer size={12} />
             {isRu ? 'Печать' : 'Print'}
           </button>
-          <div className="text-center mt-1" style={{ color: 'var(--text-muted)', fontSize: 10 }}>
-            {isRu ? 'Создана' : 'Created'}: {generatedDate}
+          <div className="mt-2 text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+            {isRu ? 'Создана' : 'Created'} · {generatedDate}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div ref={contentRef} className="flex-1 overflow-y-auto p-6 print:p-2" style={{ background: 'var(--bg-primary)' }}>
+      <div ref={contentRef} className="flex-1 overflow-y-auto p-8 print:p-2" style={{ background: 'var(--bg-primary)' }}>
         {/* Header */}
-        <div className="mb-6 pb-4 border-b" style={{ borderColor: 'var(--border-glass)' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              MetricsAiUp — {isRu ? 'Техническая документация' : 'Technical Documentation'}
+        <div className="mb-8 pb-6 border-b" style={{ borderColor: 'var(--border-glass)' }}>
+          <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>
+            MetricsAiUp · v3.0 · {generatedDate}
+          </div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              {isRu ? 'Техническая документация' : 'Technical Documentation'}
             </h1>
             <HelpButton pageKey="techDocs" />
           </div>
-          <div className="flex gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <span>{isRu ? 'Версия' : 'Version'}: 3.0</span>
-            <span>{isRu ? 'Дата' : 'Date'}: {generatedDate}</span>
-            <span>{isRu ? 'Система мониторинга автосервиса' : 'Auto Service Monitoring System'}</span>
-          </div>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+            {isRu ? 'Система мониторинга автосервиса' : 'Auto Service Monitoring System'}
+          </p>
         </div>
 
         {/* ============================================================ */}
@@ -1988,10 +2006,14 @@ DiscrepancyNotifier  Socket.IO   DiscrepancyDigest
       {showScrollTop && (
         <button
           onClick={() => contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 p-2 rounded-full shadow-lg print:hidden"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          className="fixed bottom-6 right-6 p-2 print:hidden hover:opacity-70 transition-opacity"
+          style={{
+            background: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--text-primary)',
+          }}
         >
-          <ChevronUp size={18} />
+          <ChevronUp size={16} />
         </button>
       )}
     </div>

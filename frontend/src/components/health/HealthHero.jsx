@@ -22,7 +22,9 @@ export default function HealthHero({ snapshot, lastUpdate, onRefresh, refreshing
   const offset = circumference * (1 - Math.max(0, Math.min(100, score)) / 100);
 
   return (
-    <div className="glass p-4 lg:p-5">
+    <div className="relative glass p-4 lg:p-5 pl-5 lg:pl-6 overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: color, opacity: 0.85 }} />
       <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
         {/* Score ring */}
         <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: 110, height: 110 }}>
@@ -48,9 +50,7 @@ export default function HealthHero({ snapshot, lastUpdate, onRefresh, refreshing
         {/* Verdict */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <div className="p-1.5 rounded-lg" style={{ background: bg }}>
-              <Icon size={16} style={{ color }} />
-            </div>
+            <Icon size={18} style={{ color }} className="flex-shrink-0" />
             <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
               {t(`health.level.${level}`)}
             </h2>

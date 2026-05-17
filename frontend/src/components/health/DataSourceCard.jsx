@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import StatusBadge from './StatusBadge';
 import MetricRow from './MetricRow';
-import { formatAge } from './healthUtils';
+import { formatAge, statusToLevel, LEVEL_COLOR } from './healthUtils';
 
 // Карточка одного внешнего источника (CV/ML/HLS/Telegram).
 export default function DataSourceCard({ icon: Icon, title, desc, source, metrics = [] }) {
@@ -24,13 +24,16 @@ export default function DataSourceCard({ icon: Icon, title, desc, source, metric
     ...metrics,
   ];
 
+  const level = statusToLevel(source.status);
+  const accent = LEVEL_COLOR[level];
+
   return (
-    <div className="glass p-2.5 space-y-1.5 h-full">
+    <div className="relative glass p-2.5 pl-3 space-y-1.5 h-full overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: accent, opacity: 0.85 }} />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 min-w-0">
-          <div className="p-1 rounded flex-shrink-0" style={{ background: 'var(--bg-glass)' }}>
-            <Icon size={13} style={{ color: 'var(--accent)' }} />
-          </div>
+          <Icon size={14} style={{ color: 'var(--text-secondary)' }} className="flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{title}</div>
             {desc && (

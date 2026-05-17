@@ -321,11 +321,16 @@ export default function Health() {
                   {t('health.cameras.online')} / {t('health.cameras.total')}
                 </span>
               </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full font-medium"
                 style={{
-                  background: cameras.online === cameras.total ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
+                  background: 'var(--bg-glass)',
+                  border: '1px solid var(--border-glass)',
                   color: cameras.online === cameras.total ? '#10b981' : '#f59e0b',
                 }}>
+                <span className="inline-block rounded-full" style={{
+                  width: 6, height: 6,
+                  background: cameras.online === cameras.total ? '#10b981' : '#f59e0b',
+                }} />
                 {cameras.online} / {cameras.total}
               </span>
             </div>
@@ -333,14 +338,17 @@ export default function Health() {
               <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
                 {cameras.list.map(cam => {
                   const name = cam.id.replace(/^cam0?/i, '');
+                  const accent = cam.online ? '#10b981' : 'rgba(100,116,139,0.5)';
                   return (
                     <div key={cam.id}
-                      className="flex items-center justify-center gap-1 px-1.5 py-1 rounded text-[10px]"
+                      className="relative flex items-center justify-center gap-1 pl-2 pr-1.5 py-1 rounded text-[10px] overflow-hidden"
                       style={{
-                        background: cam.online ? 'rgba(16,185,129,0.08)' : 'rgba(100,116,139,0.08)',
-                        border: `1px solid ${cam.online ? 'rgba(16,185,129,0.2)' : 'rgba(100,116,139,0.15)'}`,
+                        background: 'var(--bg-glass)',
+                        border: '1px solid var(--border-glass)',
                       }}
                       title={cam.id}>
+                      <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+                        style={{ background: accent, opacity: 0.85 }} />
                       {cam.online
                         ? <Wifi size={9} style={{ color: '#10b981' }} />
                         : <WifiOff size={9} style={{ color: 'var(--text-muted)' }} />}
@@ -391,16 +399,13 @@ function PulseStat({ label, value, hint, tone }) {
 
 function InternalServiceCard({ icon: Icon, title, level, statusLabel, rows = [] }) {
   const color = LEVEL_COLOR[level];
-  const bg = level === 'ok'
-    ? 'rgba(16,185,129,0.1)'
-    : level === 'warn' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
   return (
-    <div className="glass p-2.5 space-y-1.5 h-full">
+    <div className="relative glass p-2.5 pl-3 space-y-1.5 h-full overflow-hidden">
+      <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: color, opacity: 0.85 }} />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 min-w-0">
-          <div className="p-1 rounded" style={{ background: bg }}>
-            <Icon size={13} style={{ color }} />
-          </div>
+          <Icon size={13} style={{ color }} className="flex-shrink-0" />
           <span className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
             {title}
           </span>

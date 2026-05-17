@@ -116,18 +116,16 @@ export default function Sidebar() {
         <div className="mb-2">
           <NavLink
             to="/live-debug"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all whitespace-nowrap ${
-                isActive ? 'font-medium' : 'hover:opacity-80'
-              }`
-            }
-            style={({ isActive }) => ({
-              color: isActive ? '#ef4444' : '#ef4444',
-              background: isActive ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.05)',
+            className="relative flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg transition-all whitespace-nowrap hover:opacity-80 overflow-hidden"
+            style={{
+              color: '#ef4444',
+              background: 'var(--bg-glass)',
+              border: '1px solid var(--border-glass)',
               fontSize: '11px',
-              border: '1px solid rgba(239,68,68,0.2)',
-            })}
+            }}
           >
+            <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+              style={{ background: '#ef4444', opacity: 0.85 }} />
             <Bug size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
             <span className="truncate">{t('nav.liveDebug')}</span>
           </NavLink>
@@ -146,14 +144,19 @@ export default function Sidebar() {
             return (
               <div key={item.path}>
                 <div
-                  className="flex items-center rounded-lg transition-all whitespace-nowrap"
+                  className="relative flex items-center rounded-lg transition-all whitespace-nowrap overflow-hidden"
                   style={{
-                    background: isPostsActive ? 'var(--accent-light)' : 'transparent',
+                    background: isPostsActive ? 'var(--bg-glass)' : 'transparent',
+                    border: isPostsActive ? '1px solid var(--border-glass)' : '1px solid transparent',
                   }}
                 >
+                  {isPostsActive && (
+                    <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ background: 'var(--accent)', opacity: 0.85 }} />
+                  )}
                   <button
                     onClick={() => navigate('/posts-detail')}
-                    className="flex-1 flex items-center gap-2 px-2 py-1.5 hover:opacity-80 transition-opacity"
+                    className="flex-1 flex items-center gap-2 pl-3 pr-2 py-1.5 hover:opacity-80 transition-opacity"
                     style={{
                       color: isPostsActive ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: '11px',
@@ -280,18 +283,27 @@ export default function Sidebar() {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                `relative flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg transition-all whitespace-nowrap overflow-hidden ${
                   isActive ? 'font-medium' : 'hover:opacity-80'
                 }`
               }
               style={({ isActive }) => ({
                 color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-                background: isActive ? 'var(--accent-light)' : 'transparent',
+                background: isActive ? 'var(--bg-glass)' : 'transparent',
+                border: isActive ? '1px solid var(--border-glass)' : '1px solid transparent',
                 fontSize: '11px',
               })}
             >
-              <Icon size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
-              <span className="truncate flex-1">{t(item.labelKey)}</span>
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ background: 'var(--accent)', opacity: 0.85 }} />
+                  )}
+                  <Icon size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
+                  <span className="truncate flex-1">{t(item.labelKey)}</span>
+                </>
+              )}
             </NavLink>
           );
         })}
