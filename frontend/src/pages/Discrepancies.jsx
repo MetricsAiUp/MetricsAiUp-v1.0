@@ -424,6 +424,20 @@ export default function Discrepancies() {
             style={{ color: 'var(--text-secondary)', borderRight: '1px solid var(--border-glass)' }}>
           <AlertTriangle size={14} style={{ color: '#f59e0b' }} />
           {t('discrepancies.title')}
+          <span
+            className="ml-1 px-1.5 py-0.5 rounded uppercase tracking-wide"
+            style={{
+              fontSize: '9px',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              background: 'rgba(245,158,11,0.18)',
+              color: '#f59e0b',
+              border: '1px solid rgba(245,158,11,0.45)',
+            }}
+            title={t('discrepancies.testBadgeTooltip', 'Страница в стадии тестирования')}
+          >
+            {t('discrepancies.testBadge', 'тест')}
+          </span>
         </h1>
         <div className="flex flex-wrap gap-2 flex-1">
           <KpiCard label={t('discrepancies.kpi.total')}    value={stats?.total ?? '—'}      icon={ListChecks}    tone="default" />
