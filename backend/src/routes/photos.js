@@ -73,7 +73,14 @@ router.delete('/:id', authenticate, asyncHandler(async (req, res) => {
   const photo = await prisma.photo.findUnique({ where: { id: req.params.id } });
   if (!photo) return res.status(404).json({ error: 'Photo not found' });
 
-  const filePath = path.join(__dirname, '../../../data', photo.path);
+  // Defense in depth: ensure resolved path stays inside PHOTOS_DIR.
+  // photo.path is constructed safely on upload, but verify in case of DB tampering.
+  const filePath = path.resolve(__dirname, '../../../data', photo.path);
+  const photosRoot = path.resolve(PHOTOS_DIR);
+  if (!filePath.startsWith(photosRoot + path.sep) && filePath !== photosRoot) {
+    return res.status(400).json({ error: 'Invalid photo path' });
+  }
+
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
   await prisma.photo.delete({ where: { id: req.params.id } });

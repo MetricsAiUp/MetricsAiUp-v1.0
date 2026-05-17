@@ -1,7 +1,25 @@
+// Load env from backend/.env (single source of truth, shared with backend)
+try {
+  require('./backend/node_modules/dotenv').config({ path: './backend/.env' });
+} catch (e) {
+  console.error('[FATAL] Failed to load dotenv from ./backend/node_modules/dotenv:', e.message);
+  process.exit(1);
+}
+
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
+
+// RTSP credentials from env (was hardcoded; moved out to avoid leaking via VCS)
+const RTSP_USER = process.env.RTSP_USER;
+const RTSP_PASS = process.env.RTSP_PASS;
+const RTSP_HOST = process.env.RTSP_HOST || '86.57.249.76';
+if (!RTSP_USER || !RTSP_PASS) {
+  console.error('[FATAL] RTSP_USER/RTSP_PASS not set. Check backend/.env');
+  process.exit(1);
+}
+const rtsp = (port, key) => `rtsp://${RTSP_USER}:${RTSP_PASS}@${RTSP_HOST}:${port}/${key}/`;
 
 const PORT = 8181;
 const PROJECT_DIR = __dirname;
@@ -28,16 +46,16 @@ function cam(name, rtspUrl) {
 }
 
 const cameras = {
-    cam01: cam('CAM 01 — 3.5 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/t8rFCkD7_m/'),
-    cam02: cam('CAM 02 — 3.11 СТО',       'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/w9fKX1CE_m/'),
-    cam03: cam('CAM 03 — 3.9 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/RTHaqqOJ_m/'),
-    cam04: cam('CAM 04 — 3.10 СТО',       'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/Mn1PZPF0_m/'),
-    cam05: cam('CAM 05 — 3.4 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/NQ5s26a6_m/'),
-    cam06: cam('CAM 06 — 3.6 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/AAIy5dnR_m/'),
-    cam07: cam('CAM 07 — 3.2 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/k0HNWQDk_m/'),
-    cam08: cam('CAM 08 — 3.3 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/KRoX0tGZ_m/'),
-    cam09: cam('CAM 09 — 3.1 СТО',        'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1732/we4rvi8t_m/'),
-    cam10: cam('CAM 10 — 3.7 Склад СТО',  'rtsp://ubo:0L5HQx!qGuW%40T3FMI3y4k2@86.57.249.76:1832/PxPU26jt_m/'),
+    cam01: cam('CAM 01 — 3.5 СТО',        rtsp(1732, 't8rFCkD7_m')),
+    cam02: cam('CAM 02 — 3.11 СТО',       rtsp(1832, 'w9fKX1CE_m')),
+    cam03: cam('CAM 03 — 3.9 СТО',        rtsp(1832, 'RTHaqqOJ_m')),
+    cam04: cam('CAM 04 — 3.10 СТО',       rtsp(1832, 'Mn1PZPF0_m')),
+    cam05: cam('CAM 05 — 3.4 СТО',        rtsp(1732, 'NQ5s26a6_m')),
+    cam06: cam('CAM 06 — 3.6 СТО',        rtsp(1832, 'AAIy5dnR_m')),
+    cam07: cam('CAM 07 — 3.2 СТО',        rtsp(1732, 'k0HNWQDk_m')),
+    cam08: cam('CAM 08 — 3.3 СТО',        rtsp(1832, 'KRoX0tGZ_m')),
+    cam09: cam('CAM 09 — 3.1 СТО',        rtsp(1732, 'we4rvi8t_m')),
+    cam10: cam('CAM 10 — 3.7 Склад СТО',  rtsp(1832, 'PxPU26jt_m')),
 };
 
 function startStream(camId) {

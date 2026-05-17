@@ -20,3 +20,27 @@ state.json
 *.bak
 *.bak-*
 backups/
+
+# SSL/TLS keys and certificates
+.ssl/
+
+# Runtime state (backend writes settings here)
+backend/data/
+
+# Python cache
+ml/__pycache__/
+**/__pycache__/
+
+# Local working office/binary files (root only)
+/*.docx
+/*.xlsx
+/*.dwg
+/*.pdf
+/*.jpg
+/*.jpeg
+/telegram-cloud-photo-*
+
+# Legacy/unused (not referenced from code)
+cameras.json
+https-proxy.js
+mockups/

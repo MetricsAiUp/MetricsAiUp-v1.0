@@ -107,7 +107,8 @@ router.post('/login', validate(loginSchema), async (req, res) => {
       user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[Auth] /login error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -247,7 +248,8 @@ router.post('/register', authenticate, validate(registerSchema), async (req, res
 
     res.status(201).json({ id: user.id, email: user.email });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[Auth] /register error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

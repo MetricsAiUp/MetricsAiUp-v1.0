@@ -64,7 +64,7 @@ describe('asyncHandler middleware', () => {
   });
 
   describe('error handling', () => {
-    it('catches rejected promises and sends 500', async () => {
+    it('catches rejected promises and sends 500 with generic message', async () => {
       const handler = vi.fn(async () => {
         throw new Error('Something failed');
       });
@@ -76,7 +76,7 @@ describe('asyncHandler middleware', () => {
       await wrapped(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Something failed' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     });
 
     it('handles Prisma P2025 error with 404', async () => {
@@ -95,10 +95,9 @@ describe('asyncHandler middleware', () => {
       expect(res.json).toHaveBeenCalledWith({ error: 'Not found' });
     });
 
-    it('logs error to console with method and path', async () => {
-      const handler = vi.fn(async () => {
-        throw new Error('DB connection lost');
-      });
+    it('logs full error object to console with method and path', async () => {
+      const err = new Error('DB connection lost');
+      const handler = vi.fn(async () => { throw err; });
       const wrapped = asyncHandler(handler);
       const req = { method: 'PUT', path: '/api/users/5' };
       const res = createMockRes();
@@ -108,7 +107,7 @@ describe('asyncHandler middleware', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         '[Route Error] PUT /api/users/5:',
-        'DB connection lost',
+        err,
       );
     });
 
@@ -129,9 +128,9 @@ describe('asyncHandler middleware', () => {
       expect(consoleSpy).not.toHaveBeenCalled();
     });
 
-    it('sends error.message in the 500 response body', async () => {
+    it('does NOT leak error.message in the 500 response body', async () => {
       const handler = vi.fn(async () => {
-        throw new Error('Detailed error info');
+        throw new Error('Unique constraint failed on field: email');
       });
       const wrapped = asyncHandler(handler);
       const req = { method: 'POST', path: '/api/create' };
@@ -140,7 +139,10 @@ describe('asyncHandler middleware', () => {
 
       await wrapped(req, res, next);
 
-      expect(res.json).toHaveBeenCalledWith({ error: 'Detailed error info' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
+      expect(res.json).not.toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.stringContaining('Unique constraint') }),
+      );
     });
   });
 });

@@ -14,6 +14,12 @@ const registry = require('./_serviceRegistry');
 const MONITORING_API_BASE = 'https://dev.metricsavto.com/p/test1/3100/api';
 const POLL_INTERVAL = 10_000; // 10 seconds
 
+// Fetch timeouts — prevent hung external API from blocking the poll cycle.
+// State/health/cameras are small payloads, history can be large.
+const FETCH_TIMEOUT_STATE = 15_000;
+const FETCH_TIMEOUT_HISTORY = 60_000;
+const FETCH_TIMEOUT_LIGHT = 10_000;
+
 // In-memory cache of latest monitoring state
 let cachedState = null;        // full array from external API
 let cachedPosts = [];          // mapped posts (active in DB)
@@ -83,14 +89,14 @@ async function fetchMonitoringState(from, to) {
     if (from && to) {
       url += `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
     }
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_STATE) });
     if (!res.ok) {
       logger.error('Monitoring API error', { status: res.status });
       return null;
     }
     return await res.json();
   } catch (err) {
-    logger.error('Monitoring API fetch failed', { error: err.message });
+    logger.error('Monitoring API fetch failed', { error: err.message, name: err.name });
     return null;
   }
 }
@@ -98,18 +104,22 @@ async function fetchMonitoringState(from, to) {
 async function fetchMonitoringHistory(from, to) {
   try {
     const params = new URLSearchParams({ from, to });
-    const res = await fetch(`${MONITORING_API_BASE}/monitoring/history?${params}`);
+    const res = await fetch(`${MONITORING_API_BASE}/monitoring/history?${params}`, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_HISTORY),
+    });
     if (!res.ok) return [];
     return await res.json();
   } catch (err) {
-    logger.error('Monitoring history fetch failed', { error: err.message });
+    logger.error('Monitoring history fetch failed', { error: err.message, name: err.name });
     return [];
   }
 }
 
 async function fetchMonitoringHealth() {
   try {
-    const res = await fetch(`${MONITORING_API_BASE}/monitoring/health`);
+    const res = await fetch(`${MONITORING_API_BASE}/monitoring/health`, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_LIGHT),
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch (err) {
@@ -119,11 +129,13 @@ async function fetchMonitoringHealth() {
 
 async function fetchMonitoringCameras() {
   try {
-    const res = await fetch(`${MONITORING_API_BASE}/monitoring/cameras`);
+    const res = await fetch(`${MONITORING_API_BASE}/monitoring/cameras`, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_LIGHT),
+    });
     if (!res.ok) return [];
     return await res.json();
   } catch (err) {
-    logger.error('Monitoring cameras fetch failed', { error: err.message });
+    logger.error('Monitoring cameras fetch failed', { error: err.message, name: err.name });
     return [];
   }
 }

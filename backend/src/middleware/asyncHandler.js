@@ -6,8 +6,8 @@ function asyncHandler(fn) {
       if (err.code === 'P2025') {
         return res.status(404).json({ error: 'Not found' });
       }
-      console.error(`[Route Error] ${req.method} ${req.path}:`, err.message);
-      res.status(500).json({ error: err.message });
+      console.error(`[Route Error] ${req.method} ${req.path}:`, err);
+      res.status(500).json({ error: 'Internal server error' });
     });
   };
 }

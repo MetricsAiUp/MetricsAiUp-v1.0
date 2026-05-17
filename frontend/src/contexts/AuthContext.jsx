@@ -90,12 +90,46 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     return h;
   };
 
-  const request = async (method, url, body) => {
+  // Single-flight refresh: if multiple parallel requests get 401, only one refresh runs.
+  let refreshPromise = null;
+  const refreshTokenOnce = () => {
+    if (!refreshPromise) {
+      refreshPromise = fetch(`${API_BASE}/api/auth/refresh`, {
+        method: 'POST', credentials: 'include',
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error('refresh_failed');
+          const data = await res.json();
+          if (!data?.token) throw new Error('refresh_no_token');
+          onTokenRefreshed(data.token);
+          return data.token;
+        })
+        .finally(() => { refreshPromise = null; });
+    }
+    return refreshPromise;
+  };
+
+  const request = async (method, url, body, _retried = false) => {
+    const normalizedUrl = url.replace(/^\/api\//, '');
     const opts = { method, headers: headers(), credentials: 'include' };
     if (body) opts.body = JSON.stringify(body);
-    const res = await fetch(`${API_BASE}/api/${url.replace(/^\/api\//, '')}`, opts);
+    const res = await fetch(`${API_BASE}/api/${normalizedUrl}`, opts);
+
     if (res.status === 401) {
-      throw new Error('Unauthorized');
+      // Don't try to refresh on the refresh endpoint itself, and only retry once.
+      const isRefreshCall = normalizedUrl === 'auth/refresh';
+      if (_retried || isRefreshCall) {
+        onAuthFailed();
+        throw new Error('Unauthorized');
+      }
+      try {
+        await refreshTokenOnce();
+      } catch {
+        onAuthFailed();
+        throw new Error('Unauthorized');
+      }
+      // Retry original request once with the new token
+      return request(method, url, body, true);
     }
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
