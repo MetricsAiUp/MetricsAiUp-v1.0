@@ -4947,140 +4947,375 @@ const HELP_CONTENT = {
       ],
     },
   },
-  techDocs: {
+  // ────────────────────────────
+  // ДАННЫЕ 1С (5 ТАБОВ)
+  // ────────────────────────────
+  data1c: {
     ru: {
-      title: 'Техническая документация',
-      intro: 'Единый справочник по архитектуре, API, БД и фронту MetricsAiUp. 26 разделов: от обзора и инфраструктуры до RBAC, Telegram-бота и системы аудита.',
-      sections: [
-        {
-          heading: 'Что здесь есть',
-          items: [
-            '[●indigo]**Архитектура** — стек, слои, потоки данных (CV → API → БД → UI).',
-            '[●blue]**API (26 модулей, 80+ эндпоинтов)** — auth, dashboard, posts, work-orders, oneC, discrepancies и т.д.',
-            '[●green]**База данных** — 39 моделей Prisma/SQLite, включая блок 1С v2 и Discrepancy.',
-            '[●orange]**Backend Services (13)** — eventProcessor, monitoringProxy, IMAP-парсер 1С, матчер CV↔1С, детектор нестыковок, Telegram-бот.',
-            '[●violet]**Frontend** — 25 страниц, 34 компонента, контексты Auth/Theme/Toast, хуки, утилиты i18n.',
-            '[●teal]**RBAC** — 5 ролей, 15 permissions, 3 уровня доступа (роль / страница / элемент).',
-            '[●cyan]**Интеграции** — 1С (XLSX через IMAP), CV API v2.1.0 (*Tz/*Msk), HLS-стриминг, Telegram, push.',
+      title: 'Данные 1С',
+      tabOrder: ['current', 'imports', 'raw', 'unmapped', 'settings'],
+      tabs: {
+        current: {
+          label: 'Сейчас',
+          intro: 'Текущая сводка по заказам и этапам из 1С на «здесь и сейчас». Источник — сводные таблицы OneCWorkOrderMerged + OneCStageMerged (последняя версия каждого заказа после ROW_NUMBER OVER). Это **обработанные** данные, не сырые: дубли из писем уже устранены, постам присвоены реальные `Post.id` через `PostNameMapping`.',
+          sections: [
+            {
+              heading: 'Что видно на экране',
+              items: [
+                '[●blue]**Список открытых заказов 1С** — orderNumber, дата, авто, мастер, нормо-часы, статус.',
+                '[●green]**Этапы (stages)** — для каждого заказа: дата этапа, имя этапа, привязанный пост, работник, факт/норма часов.',
+                '[●orange]**Бейдж сопоставления с CV** — если есть WorkOrderLink (matchType: vin / exact_plate / fuzzy_plate, confidence 0.5–1.0).',
+                '[tip] Все даты в Минске (+3). Сортировка по умолчанию — orderDate DESC.',
+              ],
+            },
+            {
+              heading: 'Связь с другими страницами',
+              items: [
+                '[click]**Клик по номеру заказа** → открывает страницу OrderMatching с подсветкой нужной строки.',
+                '[click]**Клик по госномеру/VIN** → открывает Sessions с фильтром по plateNumber.',
+                '[●violet]**Нестыковки** — кнопка «Перейти к нестыковкам» открывает Discrepancies с фильтром по orderNumber.',
+              ],
+            },
+            {
+              heading: 'Доступ',
+              items: [
+                '**Просмотр**: `view_1c` (admin / director / manager).',
+                'Редактирование данных в этом табе невозможно — только из 1С через IMAP.',
+              ],
+            },
           ],
         },
-        {
-          heading: 'Как пользоваться',
-          items: [
-            '[click]**Левый сайдбар** — TOC из 26 разделов, активный подсвечивается при скролле.',
-            '[search]**Поиск** в шапке — фильтрует TOC по подстроке (RU/EN, регистронезависимо).',
-            '[●indigo]**Печать / PDF** — кнопка «Печать» открывает системный диалог (CSS print-стили скрывают TOC и шапку).',
-            '[●blue]**Скачать XLSX/Markdown** — экспорт документации одним файлом.',
-            '[●green]**Кнопка «Наверх»** — появляется после прокрутки на 500px, плавный скролл.',
-            '[●violet]**Подзаголовки SectionTitle** — кликабельны (anchor через `id`), можно делиться ссылкой `/#/tech-docs#api`.',
+        imports: {
+          label: 'Импорты',
+          intro: 'Журнал писем с XLSX-вложениями, поступивших по IMAP от 1С. Каждое письмо = запись `OneCImport` с уникальным `contentHash` (дедупликация). Статусы: `parsed` (успешно распарсено), `error` (см. errorMessage). Здесь же — ручная загрузка XLSX (drag-drop) и кнопка force-fetch IMAP.',
+          sections: [
+            {
+              heading: 'Колонки таблицы',
+              items: [
+                '**Дата получения** (`receivedAt`), **От** (`fromEmail`), **Тема** (`subject`).',
+                '**Файл** — имя XLSX-вложения + размер в КБ.',
+                '[●green]**Статус** — `parsed` зелёный, `error` красный (см. подсказку errorMessage на hover).',
+                '**Тип документа** — план / заявка / выполненные работы (определяется парсером).',
+                '**Кол-во строк** — сколько строк извлечено в OneCPlanRow / OneCRepairOrderRow / OneCStageRow.',
+              ],
+            },
+            {
+              heading: 'Действия',
+              items: [
+                '[click]**Drag-drop XLSX** — ручная загрузка минуя IMAP. Файл проходит через тот же `OneCParser`.',
+                '[click]**Force-fetch** — кнопка «Запустить IMAP сейчас» — внеочередной опрос ящика без ожидания pollIntervalSec.',
+                '[click]**Acknowledge** — пометить ошибку как просмотренную (убирает её из счётчика-бейджа табa).',
+                '[tip] Дедуп: одинаковые письма (по contentHash) пропускаются автоматически.',
+              ],
+            },
+            {
+              heading: 'Бейдж-счётчик',
+              items: [
+                '[●red]**Красный счётчик** на табе «Импорты» — количество **ошибок** за последние 7 дней (acknowledged=false).',
+                'Обнуляется по мере пометки ошибок как просмотренных.',
+              ],
+            },
+            {
+              heading: 'Доступ',
+              items: [
+                '**Просмотр**: `view_1c`. **Загрузка/Force-fetch**: `manage_1c_import`.',
+              ],
+            },
           ],
         },
-        {
-          heading: 'Ключевые разделы',
-          items: [
-            '**1. Обзор системы** — кратко, для кого и зачем (4 роли пользователей).',
-            '**2. Архитектура** — Frontend (React 19 + Vite + Konva), Backend (Express + Prisma), ML (FastAPI), сервисы.',
-            '**4. БД** — RBAC, зоны/посты, сессии, заказ-наряды, смены, 1С v2 (OneCImport, OneCPlanRow, OneCWorkOrderMerged, Discrepancy и др.).',
-            '**5. API** — таблица эндпоинтов с методами, путями, телами запросов и кодами ответов.',
-            '**6. Сервисы** — eventProcessor, recommendationEngine, monitoringProxy, imap1cFetcher, oneCParser, oneCMerger, oneCCvMatcher, discrepancyDetector, discrepancyNotifier, discrepancyDigest, cameraHealthCheck, telegramBot, reportScheduler.',
-            '**14. RBAC** — таблицы ролей × permissions, страницы × роли, hiddenElements.',
-            '**18. Интеграция с 1С** — поток IMAP → парсер → merger → matcher → discrepancyDetector → UI.',
-            '**24. Мониторинг и Live-режим** — Demo vs Live, monitoringProxy, кэш, CV API v2.1.0 (поля *Tz/*Msk).',
+        raw: {
+          label: 'Сырые данные',
+          intro: 'Развернутый вид трёх таблиц сырых строк из XLSX: **планы** (`OneCPlanRow`), **заказ-наряды (КОЛ…)** (`OneCRepairOrderRow`), **этапы** (`OneCStageRow`). Каждая запись — одна строка одного письма. Дубликаты тут **остаются** — для дебага парсера. Сводки (без дублей) — в табе «Сейчас».',
+          sections: [
+            {
+              heading: 'Три номерных пространства 1С',
+              items: [
+                '[●blue]**OneCPlanRow** — план/заявка. Идентичность = композит (orderNumber + orderDate + vehiclePlate). Номер повторяется в каждой выгрузке.',
+                '[●green]**OneCRepairOrderRow** — заказ-наряд (КОЛ…). Отдельная сущность, уникальный orderNumber.',
+                '[●orange]**OneCStageRow** — этап работы. Идентичность = (orderNumber + stageDate + stageName).',
+                '[tip] Поэтому ни одну из таблиц нельзя «дедупить по orderNumber» — нужны композитные ключи. Сводки строятся через ROW_NUMBER OVER (см. таб «Сейчас»).',
+              ],
+            },
+            {
+              heading: 'Фильтры',
+              items: [
+                '**По типу документа** (вкладки внутри таба).',
+                '**По диапазону дат** (orderDate / stageDate).',
+                '**По importId** — посмотреть все строки из конкретного письма.',
+                '**Поиск** — по orderNumber, vehiclePlate, VIN, customerName.',
+              ],
+            },
+            {
+              heading: 'Зачем эта вкладка',
+              items: [
+                '[ok] Дебаг: парсер неправильно прочитал XLSX → видно тут.',
+                '[ok] История: что именно пришло из 1С в конкретное письмо.',
+                '[ok] Сравнение с обработанной сводкой («Сейчас») — найти, какие записи отфильтрованы при дедупе.',
+              ],
+            },
+            {
+              heading: 'Доступ',
+              items: ['**Просмотр**: `view_1c`. Это read-only вкладка.'],
+            },
           ],
         },
-        {
-          heading: 'Версионирование документации',
-          items: [
-            '[tip]**Версия** и **дата генерации** — в шапке под заголовком.',
-            'Документация обновляется вручную после крупных изменений (новые сервисы, модели БД, страницы).',
-            'Источник истины: `CLAUDE.md` в корне проекта + код. При расхождении доверять коду.',
+        unmapped: {
+          label: 'Несопоставленные',
+          intro: 'Сырые имена постов из XLSX («Пост 1», «П1», «П-1», «Heavy 1», «Пост N°1»…), для которых нет записи в `PostNameMapping`. Пока нет маппинга — этапы из этих писем **не попадают** на конкретные посты (postId остаётся null), и сводка «Сейчас» их не покажет.',
+          sections: [
+            {
+              heading: 'Как пользоваться',
+              items: [
+                '[●orange]**Список rawName** — все непривязанные имена постов с количеством строк.',
+                '[click]**Dropdown «Сопоставить с Post»** — выбрать реальный Post.id из 10 постов СТО.',
+                '[click]**Кнопка «Сохранить»** — создаёт запись в PostNameMapping (rawName → postId). Применяется ко всем существующим строкам и всем будущим выгрузкам.',
+                '[●red]**Кнопка «Игнорировать»** — пометить rawName как мусор (например, «Стойка», «Кафе») — больше не показывать в списке.',
+              ],
+            },
+            {
+              heading: 'Бейдж-счётчик',
+              items: [
+                '[●yellow]**Жёлтый счётчик** на табе «Несопоставленные» — количество **нерешённых** rawName.',
+                '[live]**Live-обновление**: бэкенд эмитит `unmapped:changed` при авто-резолве (детектором нестыковок) или ручном резолве через UI — счётчик пересчитывается без перезагрузки страницы.',
+              ],
+            },
+            {
+              heading: 'Зачем это нужно',
+              items: [
+                'В 1С название постов вводится мастером вручную (свободный текст) → каждая СТО придумывает свои сокращения.',
+                'Маппинг **разовый** на каждое новое сокращение — пока его нет, корректный анализ невозможен (нестыковки `wrong_post` будут ложными).',
+                '[ok] **Best practice**: после первой выгрузки 1С — разобрать этот таб сразу, потом достаточно проверять раз в неделю.',
+              ],
+            },
+            {
+              heading: 'Доступ',
+              items: ['**Просмотр + резолюция**: `manage_1c_import` (admin / manager). У других — таб скрыт.'],
+            },
           ],
         },
-        {
-          heading: 'Связанные страницы',
-          items: [
-            '[●blue]**Health** — runtime-статус компонентов (БД, камеры, диск, память).',
-            '[●green]**Audit** — журнал действий пользователей (что/кто/когда).',
-            '[●orange]**Settings → Mode** — переключение Demo/Live.',
-            '[●violet]Каждая страница имеет свою справку — кнопка [●cyan]**?** рядом с заголовком.',
+        settings: {
+          label: 'Настройки',
+          intro: 'Настройки опроса IMAP-ящика 1С. Пароль шифруется на бэкенде через AES-GCM с ключом из переменной окружения `IMAP1C_KEY` (32 байта). В API пароль никогда не возвращается в открытом виде.',
+          sections: [
+            {
+              heading: 'Поля',
+              items: [
+                '**Host** — IMAP-сервер (например, `imap.yandex.ru`, `imap.gmail.com`).',
+                '**Port** — обычно 993 (SSL) или 143 (STARTTLS).',
+                '**Use SSL** — флажок для шифрованного подключения.',
+                '**Login** — полный e-mail (например, `1c@company.ru`).',
+                '**Password** — пароль приложения (не основной пароль аккаунта!). Шифруется AES-GCM.',
+                '**Mailbox** — папка ящика (обычно `INBOX`, можно конкретную подпапку).',
+                '**Poll interval (sec)** — частота опроса (по умолчанию 300с = 5 минут).',
+                '[●green]**Active** — флажок включения/выключения фонового опроса.',
+              ],
+            },
+            {
+              heading: 'Кнопка «Тест соединения»',
+              items: [
+                '[click]Делает реальный IMAP-логин с введёнными настройками и закрывает соединение **без забора писем**.',
+                '[ok]**Успех** — зелёный тост «Соединение установлено».',
+                '[●red]**Ошибка** — красный тост с текстом исключения (AUTHENTICATIONFAILED, NETWORK, SSL и т.д.).',
+                '[tip]Если использовать Gmail/Yandex — нужно создать **пароль приложения** в настройках аккаунта, обычный пароль не сработает (двухфакторка блокирует IMAP).',
+              ],
+            },
+            {
+              heading: 'Статус опроса',
+              items: [
+                '**Last success at** — время последнего успешного захода в ящик.',
+                '[●red]**Last error** — текст последней ошибки опроса (если есть).',
+                '[tip]Если `lastSuccessAt` старше суток, а флажок Active включён — что-то сломалось (см. `lastError`).',
+              ],
+            },
+            {
+              heading: 'Доступ',
+              items: ['**Просмотр + редактирование**: `manage_1c_config` (только admin). У других — таб скрыт.'],
+            },
           ],
         },
-        {
-          heading: 'Доступ и роли',
-          items: [
-            '**Просмотр**: все авторизованные пользователи.',
-            '**Редактирование текста**: только через коммит в git (frontend/src/pages/TechDocs.jsx).',
-            'Сайдбар: «Документация» в нижней секции.',
-          ],
-        },
-      ],
+      },
     },
     en: {
-      title: 'Technical Documentation',
-      intro: 'Single reference for MetricsAiUp architecture, API, DB and frontend. 26 sections: from overview and infrastructure to RBAC, Telegram bot and audit system.',
-      sections: [
-        {
-          heading: 'What is here',
-          items: [
-            '[●indigo]**Architecture** — stack, layers, data flows (CV → API → DB → UI).',
-            '[●blue]**API (26 modules, 80+ endpoints)** — auth, dashboard, posts, work-orders, oneC, discrepancies, etc.',
-            '[●green]**Database** — 39 Prisma/SQLite models including 1C v2 and Discrepancy.',
-            '[●orange]**Backend Services (13)** — eventProcessor, monitoringProxy, 1C IMAP parser, CV↔1C matcher, discrepancy detector, Telegram bot.',
-            '[●violet]**Frontend** — 25 pages, 34 components, Auth/Theme/Toast contexts, hooks, i18n utilities.',
-            '[●teal]**RBAC** — 5 roles, 15 permissions, 3 levels of access (role / page / element).',
-            '[●cyan]**Integrations** — 1C (XLSX via IMAP), CV API v2.1.0 (*Tz/*Msk), HLS streaming, Telegram, push.',
+      title: '1C Data',
+      tabOrder: ['current', 'imports', 'raw', 'unmapped', 'settings'],
+      tabs: {
+        current: {
+          label: 'Current',
+          intro: 'Current snapshot of orders and stages from 1C as of "here and now". Source — summary tables OneCWorkOrderMerged + OneCStageMerged (latest version of each order after ROW_NUMBER OVER). These are **processed** data, not raw: email duplicates removed, posts mapped to real `Post.id` via `PostNameMapping`.',
+          sections: [
+            {
+              heading: 'What is on the screen',
+              items: [
+                '[●blue]**List of open 1C orders** — orderNumber, date, vehicle, master, norm hours, status.',
+                '[●green]**Stages** — for each order: stage date, stage name, mapped post, worker, actual/norm hours.',
+                '[●orange]**CV match badge** — if WorkOrderLink exists (matchType: vin / exact_plate / fuzzy_plate, confidence 0.5–1.0).',
+                '[tip]All dates in Minsk (+3). Default sort: orderDate DESC.',
+              ],
+            },
+            {
+              heading: 'Links to other pages',
+              items: [
+                '[click]**Click order number** → opens OrderMatching with the row highlighted.',
+                '[click]**Click plate/VIN** → opens Sessions filtered by plateNumber.',
+                '[●violet]**Discrepancies** — "Go to discrepancies" button opens Discrepancies filtered by orderNumber.',
+              ],
+            },
+            {
+              heading: 'Access',
+              items: [
+                '**View**: `view_1c` (admin / director / manager).',
+                'Editing data in this tab is not possible — only via 1C through IMAP.',
+              ],
+            },
           ],
         },
-        {
-          heading: 'How to use',
-          items: [
-            '[click]**Left sidebar** — TOC of 26 sections, the active one highlights as you scroll.',
-            '[search]**Search** in header — filters TOC by substring (RU/EN, case-insensitive).',
-            '[●indigo]**Print / PDF** — "Print" button opens the system dialog (print CSS hides TOC and header).',
-            '[●blue]**Download XLSX/Markdown** — export the whole documentation as a single file.',
-            '[●green]**"Back to top" button** — appears after 500px scroll, smooth scroll.',
-            '[●violet]**SectionTitle subheadings** — clickable (`id` anchor), share links like `/#/tech-docs#api`.',
+        imports: {
+          label: 'Imports',
+          intro: 'Journal of emails with XLSX attachments received via IMAP from 1C. Each email = an `OneCImport` record with unique `contentHash` (dedup). Statuses: `parsed` (success), `error` (see errorMessage). Also here — manual XLSX upload (drag-drop) and IMAP force-fetch button.',
+          sections: [
+            {
+              heading: 'Table columns',
+              items: [
+                '**Received at** (`receivedAt`), **From** (`fromEmail`), **Subject** (`subject`).',
+                '**File** — XLSX attachment name + size in KB.',
+                '[●green]**Status** — `parsed` green, `error` red (see errorMessage tooltip on hover).',
+                '**Document type** — plan / repair-order / performed (parser determines).',
+                '**Row count** — how many rows extracted into OneCPlanRow / OneCRepairOrderRow / OneCStageRow.',
+              ],
+            },
+            {
+              heading: 'Actions',
+              items: [
+                '[click]**Drag-drop XLSX** — manual upload bypassing IMAP. The file goes through the same `OneCParser`.',
+                '[click]**Force-fetch** — "Run IMAP now" button — out-of-schedule mailbox poll without waiting pollIntervalSec.',
+                '[click]**Acknowledge** — mark an error as seen (removes it from the tab badge counter).',
+                '[tip] Dedup: identical emails (by contentHash) are skipped automatically.',
+              ],
+            },
+            {
+              heading: 'Badge counter',
+              items: [
+                '[●red]**Red counter** on "Imports" tab — number of **errors** in the last 7 days (acknowledged=false).',
+                'Resets as errors are marked as seen.',
+              ],
+            },
+            {
+              heading: 'Access',
+              items: ['**View**: `view_1c`. **Upload/Force-fetch**: `manage_1c_import`.'],
+            },
           ],
         },
-        {
-          heading: 'Key sections',
-          items: [
-            '**1. System overview** — briefly, for whom and why (4 user roles).',
-            '**2. Architecture** — Frontend (React 19 + Vite + Konva), Backend (Express + Prisma), ML (FastAPI), services.',
-            '**4. Database** — RBAC, zones/posts, sessions, work orders, shifts, 1C v2 (OneCImport, OneCPlanRow, OneCWorkOrderMerged, Discrepancy, etc.).',
-            '**5. API** — table of endpoints with methods, paths, request bodies and response codes.',
-            '**6. Services** — eventProcessor, recommendationEngine, monitoringProxy, imap1cFetcher, oneCParser, oneCMerger, oneCCvMatcher, discrepancyDetector, discrepancyNotifier, discrepancyDigest, cameraHealthCheck, telegramBot, reportScheduler.',
-            '**14. RBAC** — tables roles × permissions, pages × roles, hiddenElements.',
-            '**18. 1C integration** — IMAP → parser → merger → matcher → discrepancyDetector → UI flow.',
-            '**24. Monitoring & Live mode** — Demo vs Live, monitoringProxy, cache, CV API v2.1.0 (*Tz/*Msk fields).',
+        raw: {
+          label: 'Raw data',
+          intro: 'Expanded view of three raw-row tables from XLSX: **plans** (`OneCPlanRow`), **repair orders (КОЛ…)** (`OneCRepairOrderRow`), **stages** (`OneCStageRow`). Each record = one row of one email. Duplicates **remain** — for parser debugging. Deduped summaries — in "Current" tab.',
+          sections: [
+            {
+              heading: 'Three 1C number spaces',
+              items: [
+                '[●blue]**OneCPlanRow** — plan/request. Identity = composite (orderNumber + orderDate + vehiclePlate). Number repeats in each export.',
+                '[●green]**OneCRepairOrderRow** — repair order (КОЛ…). Separate entity, unique orderNumber.',
+                '[●orange]**OneCStageRow** — work stage. Identity = (orderNumber + stageDate + stageName).',
+                '[tip] So no table can be "deduped by orderNumber" — composite keys are required. Summaries are built via ROW_NUMBER OVER (see "Current" tab).',
+              ],
+            },
+            {
+              heading: 'Filters',
+              items: [
+                '**By document type** (inner tabs).',
+                '**By date range** (orderDate / stageDate).',
+                '**By importId** — see all rows from a specific email.',
+                '**Search** — by orderNumber, vehiclePlate, VIN, customerName.',
+              ],
+            },
+            {
+              heading: 'Purpose',
+              items: [
+                '[ok] Debug: parser misread XLSX → visible here.',
+                '[ok] History: what exactly came from 1C in a specific email.',
+                '[ok] Compare with processed summary ("Current") — find which records were filtered during dedup.',
+              ],
+            },
+            {
+              heading: 'Access',
+              items: ['**View**: `view_1c`. This tab is read-only.'],
+            },
           ],
         },
-        {
-          heading: 'Documentation versioning',
-          items: [
-            '[tip]**Version** and **generation date** are shown in the header under the title.',
-            'Documentation is updated manually after major changes (new services, DB models, pages).',
-            'Source of truth: `CLAUDE.md` in project root + code. If they disagree, trust the code.',
+        unmapped: {
+          label: 'Unmapped',
+          intro: 'Raw post names from XLSX ("Post 1", "P1", "P-1", "Heavy 1", "Пост N°1"…) without an entry in `PostNameMapping`. Until mapped — stages from these emails do **not** reach specific posts (postId stays null), and the "Current" summary will not show them.',
+          sections: [
+            {
+              heading: 'How to use',
+              items: [
+                '[●orange]**rawName list** — all unmapped post names with row count.',
+                '[click]**"Map to Post" dropdown** — pick the real Post.id from the 10 STO posts.',
+                '[click]**"Save" button** — creates a PostNameMapping entry (rawName → postId). Applies to all existing rows and all future imports.',
+                '[●red]**"Ignore" button** — mark rawName as noise (e.g., "Stand", "Cafe") — hide from the list.',
+              ],
+            },
+            {
+              heading: 'Badge counter',
+              items: [
+                '[●yellow]**Yellow counter** on the "Unmapped" tab — count of **unresolved** rawNames.',
+                '[live]**Live update**: backend emits `unmapped:changed` on auto-resolve (by discrepancy detector) or manual resolve via UI — counter recomputes without page reload.',
+              ],
+            },
+            {
+              heading: 'Why this matters',
+              items: [
+                'In 1C, post name is typed by the master manually (free text) → every STO invents its own shortcuts.',
+                'Mapping is **one-time** for each new shortcut — until done, accurate analysis is impossible (`wrong_post` discrepancies will be false positives).',
+                '[ok] **Best practice**: after the first 1C export — clear this tab immediately, then weekly checks are enough.',
+              ],
+            },
+            {
+              heading: 'Access',
+              items: ['**View + resolve**: `manage_1c_import` (admin / manager). Others — the tab is hidden.'],
+            },
           ],
         },
-        {
-          heading: 'Related pages',
-          items: [
-            '[●blue]**Health** — runtime status of components (DB, cameras, disk, memory).',
-            '[●green]**Audit** — log of user actions (what/who/when).',
-            '[●orange]**Settings → Mode** — Demo/Live switch.',
-            '[●violet]Every page has its own help — the [●cyan]**?** button next to the title.',
+        settings: {
+          label: 'Settings',
+          intro: 'IMAP mailbox poll settings for 1C. Password is encrypted server-side via AES-GCM with the key from env var `IMAP1C_KEY` (32 bytes). Password is never returned by API in plaintext.',
+          sections: [
+            {
+              heading: 'Fields',
+              items: [
+                '**Host** — IMAP server (e.g., `imap.yandex.ru`, `imap.gmail.com`).',
+                '**Port** — usually 993 (SSL) or 143 (STARTTLS).',
+                '**Use SSL** — checkbox for encrypted connection.',
+                '**Login** — full e-mail (e.g., `1c@company.ru`).',
+                '**Password** — app password (not main account password!). Encrypted with AES-GCM.',
+                '**Mailbox** — mailbox folder (usually `INBOX`, can be a specific subfolder).',
+                '**Poll interval (sec)** — poll frequency (default 300s = 5 minutes).',
+                '[●green]**Active** — flag to enable/disable background polling.',
+              ],
+            },
+            {
+              heading: '"Test connection" button',
+              items: [
+                '[click]Performs a real IMAP login with the entered settings and closes the connection **without fetching emails**.',
+                '[ok]**Success** — green toast "Connection established".',
+                '[●red]**Error** — red toast with exception text (AUTHENTICATIONFAILED, NETWORK, SSL, etc.).',
+                '[tip]If using Gmail/Yandex — create an **app password** in account settings, regular password will not work (2FA blocks IMAP).',
+              ],
+            },
+            {
+              heading: 'Poll status',
+              items: [
+                '**Last success at** — time of last successful mailbox visit.',
+                '[●red]**Last error** — text of last poll error (if any).',
+                '[tip]If `lastSuccessAt` is older than a day, but Active is on — something broke (see `lastError`).',
+              ],
+            },
+            {
+              heading: 'Access',
+              items: ['**View + edit**: `manage_1c_config` (admin only). Others — the tab is hidden.'],
+            },
           ],
         },
-        {
-          heading: 'Access and roles',
-          items: [
-            '**View**: any authenticated user.',
-            '**Edit text**: only via git commit (frontend/src/pages/TechDocs.jsx).',
-            'Sidebar: "Documentation" in the bottom section.',
-          ],
-        },
-      ],
+      },
     },
   },
 };

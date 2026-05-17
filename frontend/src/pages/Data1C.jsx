@@ -1288,7 +1288,7 @@ export default function Data1C() {
             })}
           </div>
         </div>
-        <HelpButton pageKey="data1c" />
+        <HelpButton pageKey="data1c" tabId={active} />
       </div>
 
       <div>
