@@ -167,6 +167,73 @@ router.get('/full-history', authenticate, asyncHandler(async (req, res) => {
   res.json(fullHistory);
 }));
 
+// GET /api/monitoring/segments — full history схлопнутая в сегменты (busy / free).
+// Query: ?days=N — ограничить глубину истории по каждой зоне (по умолчанию 30 дней).
+//
+// Сегмент busy = непрерывный блок не-free snapshot'ов = один и тот же автомобиль.
+//   bestPlate / bestConfidence — наиболее уверенно распознанный номер в этом блоке.
+// Сегмент free = непрерывный блок status='free'.
+// startTs — timestamp первого snapshot'а сегмента, endTs — момент смены статуса
+// (null для активного сегмента, ещё длящегося сейчас).
+router.get('/segments', authenticate, asyncHandler(async (req, res) => {
+  const proxy = req.app.get('monitoringProxy');
+  if (!proxy) return res.status(503).json({ error: 'Monitoring proxy not available' });
+
+  const fullHistory = proxy.getFullHistory();
+  if (!fullHistory) return res.json([]);
+
+  const days = Math.max(1, Math.min(365, Number.parseInt(req.query.days, 10) || 30));
+  const sinceMs = Date.now() - days * 24 * 60 * 60 * 1000;
+
+  const confidenceValue = (c) =>
+    c === 'HIGH' ? 0.95 : c === 'MEDIUM' ? 0.8 : c === 'LOW' ? 0.6 : 0;
+
+  const result = [];
+  for (const z of fullHistory) {
+    if (!z?.zone || !Array.isArray(z.history) || z.history.length === 0) continue;
+    const history = [...z.history]
+      .filter(s => s?.timestamp && new Date(s.timestamp).getTime() >= sinceMs)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    if (history.length === 0) continue;
+
+    const segments = [];
+    let seg = null;
+    const flush = (endTs) => {
+      if (!seg) return;
+      seg.endTs = endTs;
+      segments.push(seg);
+      seg = null;
+    };
+    for (const s of history) {
+      const kind = s.status === 'free' ? 'free' : 'busy';
+      if (!seg || seg.kind !== kind) {
+        flush(s.timestamp);
+        seg = { kind, startTs: s.timestamp, endTs: null, bestPlate: null, bestConfidence: null };
+        if (kind === 'busy') {
+          seg.bestPlate = s.car?.plate || null;
+          const cv = confidenceValue(s.confidence);
+          if (cv > 0) seg.bestConfidence = s.confidence;
+        }
+      } else if (kind === 'busy') {
+        const plate = s.car?.plate || null;
+        const cv = confidenceValue(s.confidence);
+        const cur = confidenceValue(seg.bestConfidence);
+        if (plate && cv > cur) {
+          seg.bestPlate = plate;
+          seg.bestConfidence = s.confidence;
+        } else if (plate && !seg.bestPlate) {
+          seg.bestPlate = plate;
+          if (cv > 0 && !seg.bestConfidence) seg.bestConfidence = s.confidence;
+        }
+      }
+    }
+    flush(null);
+
+    result.push({ zone: z.zone, segments });
+  }
+  res.json(result);
+}));
+
 // GET /api/monitoring/db-stats — статистика по сохранённым данным мониторинга в нашей БД
 router.get('/db-stats', authenticate, asyncHandler(async (req, res) => {
   const proxy = req.app.get('monitoringProxy');

@@ -75,6 +75,60 @@ function confidenceTier(c) {
   return { label: 'LOW', pct };
 }
 
+// ── Build items from live monitoring segments ─────────────────────────────────
+// Source: /api/monitoring/segments → [{ zone: 'Пост 01', segments: [{kind,startTs,endTs,bestPlate,bestConfidence}] }]
+// Бэкенд уже схлопнул snapshot'ы в сегменты busy/free (см. monitoring.js).
+function buildLiveItems({ liveSegments, posts, zones }) {
+  const items = [];
+  const postByName = new Map(posts.map(p => [p.name, p]));
+  const zoneByName = new Map(zones.map(z => [z.name, z]));
+
+  const confidenceValue = (c) =>
+    c === 'HIGH' ? 0.95 : c === 'MEDIUM' ? 0.8 : c === 'LOW' ? 0.6 : 0;
+
+  for (const z of liveSegments || []) {
+    const zoneNameRaw = z.zone || '';
+    const postMatch = zoneNameRaw.match(/Пост\s+(\d{2})/);
+    let post = null;
+    let zone = null;
+    if (postMatch) {
+      const postName = `Пост ${parseInt(postMatch[1], 10)}`;
+      post = postByName.get(postName) || postByName.get(zoneNameRaw) || null;
+      zone = post?.zoneId ? zones.find(zz => zz.id === post.zoneId) : null;
+    } else {
+      zone = zoneByName.get(zoneNameRaw) || null;
+    }
+
+    for (const seg of z.segments || []) {
+      if (seg.kind === 'busy') {
+        items.push({
+          key: `live_${zoneNameRaw}_in_${seg.startTs}`,
+          timestamp: seg.startTs,
+          type: 'post_occupied',
+          post, zone,
+          plate: seg.bestPlate || null,
+          confidence: confidenceValue(seg.bestConfidence) || null,
+          cameraLabel: null,
+          source: 'event',
+        });
+      } else {
+        items.push({
+          key: `live_${zoneNameRaw}_out_${seg.startTs}`,
+          timestamp: seg.startTs,
+          type: 'post_vacated',
+          post, zone,
+          plate: null,
+          confidence: null,
+          cameraLabel: null,
+          source: 'event',
+        });
+      }
+    }
+  }
+
+  return items;
+}
+
 // ── Build unified items: events + postStays + workOrders ───────────────────────
 function buildItems({ events, postsHistory, posts, zones }) {
   const items = [];
@@ -178,7 +232,8 @@ function buildItems({ events, postsHistory, posts, zones }) {
 export default function Events() {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === 'ru';
-  const { api } = useAuth();
+  const { api, appMode } = useAuth();
+  const isLive = appMode === 'live';
 
   // Lists for selectors
   const [posts, setPosts] = useState([]);
@@ -227,24 +282,31 @@ export default function Events() {
         setZones(zonesList);
       }
 
-      const [eventsRes, ...historyRes] = await Promise.all([
-        api.get('/api/events?limit=1000'),
-        ...postsList.map(p =>
-          api.get(`/api/posts/by-number/${p.number}/history?limit=300`).catch(() => ({ data: null }))
-        ),
-      ]);
-
-      const events = eventsRes.data?.events || eventsRes.data || [];
-      const postsHistory = historyRes.map(r => r.data).filter(Boolean);
-
-      const unified = buildItems({ events, postsHistory, posts: postsList, zones: zonesList });
-      setItems(unified);
+      if (isLive) {
+        // Live: один запрос в monitoring proxy — сразу сегменты busy/free по всем зонам/постам.
+        const res = await api.get('/api/monitoring/segments?days=30').catch(() => ({ data: [] }));
+        const liveSegments = Array.isArray(res.data) ? res.data : [];
+        const unified = buildLiveItems({ liveSegments, posts: postsList, zones: zonesList });
+        setItems(unified);
+      } else {
+        // Demo: данные из БД (events + per-post stays/workOrders).
+        const [eventsRes, ...historyRes] = await Promise.all([
+          api.get('/api/events?limit=1000'),
+          ...postsList.map(p =>
+            api.get(`/api/posts/by-number/${p.number}/history?limit=300`).catch(() => ({ data: null }))
+          ),
+        ]);
+        const events = eventsRes.data?.events || eventsRes.data || [];
+        const postsHistory = historyRes.map(r => r.data).filter(Boolean);
+        const unified = buildItems({ events, postsHistory, posts: postsList, zones: zonesList });
+        setItems(unified);
+      }
     } catch (err) {
       console.error('Events fetch:', err);
     } finally {
       setLoading(false);
     }
-  }, [api, posts, zones]);
+  }, [api, isLive, posts, zones]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   usePolling(autoRefresh ? fetchData : null, 15000);
