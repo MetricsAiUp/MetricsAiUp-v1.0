@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { Sun, Moon } from 'lucide-react';
+import HelpButton from '../components/HelpButton';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -141,6 +142,7 @@ export default function Login() {
           >
             {i18n.language === 'ru' ? 'Сброс' : 'Reset'}
           </button>
+          <HelpButton pageKey="login" />
         </div>
       </div>
     </div>

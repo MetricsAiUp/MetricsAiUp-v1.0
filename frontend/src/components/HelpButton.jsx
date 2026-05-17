@@ -5161,6 +5161,129 @@ const HELP_CONTENT = {
       },
     },
   },
+  // ────────────────────────────
+  // ВХОД
+  // ────────────────────────────
+  login: {
+    ru: {
+      title: 'Вход в MetricsAiUp',
+      intro: 'Страница авторизации. Введите рабочий e-mail и пароль, которые выдал администратор СТО. После входа вы попадёте на Dashboard или на первую доступную вам страницу.',
+      sections: [
+        {
+          heading: 'Как войти',
+          items: [
+            '[●blue]**E-mail** — полностью, регистр не важен (`Ivan@metricsai.up` = `ivan@metricsai.up`).',
+            '[●blue]**Пароль** — чувствителен к регистру. Точки/тире/спецсимволы — как выдали.',
+            '[click]Нажмите **«Войти»** или Enter в поле пароля.',
+            '[ok]При успехе появится зелёный тост «Добро пожаловать, …» и произойдёт переход на главную.',
+          ],
+        },
+        {
+          heading: 'Типичные ошибки',
+          items: [
+            '[●red]**«Неверный email или пароль»** — проверьте раскладку, Caps Lock, лишние пробелы. Это общее сообщение специально, чтобы не подсказывать, что именно неверно (защита от перебора).',
+            '[●orange]**«Пользователь отключён»** — аккаунт деактивирован. Обратитесь к администратору, чтобы включить `isActive`.',
+            '[●yellow]**«Слишком много попыток. Подождите минуту»** — сработал rate-limit (20 попыток в минуту с одного IP). Подождите 60 секунд.',
+            '[●red]**«Ошибка входа»** — бэкенд не доступен или сеть. Проверьте интернет / обратитесь к админу.',
+          ],
+        },
+        {
+          heading: 'Кнопки внизу',
+          items: [
+            '[click]**🌙 / ☀** — тема (тёмная / светлая). Сохраняется между сессиями.',
+            '[click]**RU / EN** — язык интерфейса. Сохраняется между сессиями.',
+            '[●red]**«Сброс»** — очищает весь `localStorage` (токен, тема, язык, кэш) и перезагружает страницу. Используется, если что-то «сломалось» — например, после крупного обновления.',
+          ],
+        },
+        {
+          heading: 'Безопасность',
+          items: [
+            '[tip]Передача пароля идёт **только по HTTPS** (`artisom.dev.metricsavto.com:443`).',
+            'На бэкенде пароли хранятся в виде bcrypt-хеша — оригинал не известен даже администратору.',
+            'JWT-токен сохраняется в `localStorage` и автоматически отправляется в заголовке `Authorization: Bearer` для всех API-запросов.',
+            '[●yellow]**Не сохраняйте пароль в общественных браузерах** — пользуйтесь «Сбросом» при выходе с чужого устройства.',
+          ],
+        },
+        {
+          heading: 'Если забыли пароль',
+          items: [
+            'Самостоятельного восстановления пока нет — обратитесь к администратору СТО.',
+            'Администратор перезапишет пароль через страницу **«Пользователи»** (`/users`).',
+            'Новый пароль придёт от него — установите свой при первой возможности.',
+          ],
+        },
+        {
+          heading: 'Тестовые / seed-аккаунты',
+          items: [
+            '[●blue]`admin@metricsai.up` — admin (полный доступ), для интеграторов и тестирования.',
+            '[●blue]`demo@metricsai.up` — manager (Генри Форд), для презентаций и демо.',
+            '[●blue]`manager@metricsai.up` — manager (Сергей Петров).',
+            '[●gray]`mechanic@metricsai.up` — mechanic (Иван Козлов), **деактивирован** — войти не получится.',
+            '[tip]Эти учётки существуют **только в demo-инсталляции**. В продакшене аккаунты создаёт администратор.',
+          ],
+        },
+      ],
+    },
+    en: {
+      title: 'Sign in to MetricsAiUp',
+      intro: 'Authentication page. Enter the work e-mail and password issued by your STO admin. After signing in you will land on Dashboard, or on the first page you have access to.',
+      sections: [
+        {
+          heading: 'How to sign in',
+          items: [
+            '[●blue]**E-mail** — full, case-insensitive (`Ivan@metricsai.up` = `ivan@metricsai.up`).',
+            '[●blue]**Password** — case-sensitive. Dots/dashes/special chars — exactly as issued.',
+            '[click]Press **"Sign in"** or Enter in the password field.',
+            '[ok]On success you will see a green toast "Welcome, …" and be redirected to the home page.',
+          ],
+        },
+        {
+          heading: 'Common errors',
+          items: [
+            '[●red]**"Invalid email or password"** — check keyboard layout, Caps Lock, extra spaces. The generic message is intentional, so as not to leak which one is wrong (anti-bruteforce).',
+            '[●orange]**"User is disabled"** — account is deactivated. Ask the admin to enable `isActive`.',
+            '[●yellow]**"Too many attempts. Wait a minute"** — rate-limit triggered (20 attempts per minute per IP). Wait 60 seconds.',
+            '[●red]**"Login error"** — backend is unavailable or network down. Check internet / contact the admin.',
+          ],
+        },
+        {
+          heading: 'Bottom buttons',
+          items: [
+            '[click]**🌙 / ☀** — theme (dark / light). Persists across sessions.',
+            '[click]**RU / EN** — UI language. Persists across sessions.',
+            '[●red]**"Reset"** — clears the entire `localStorage` (token, theme, language, cache) and reloads the page. Useful if something is "broken" — e.g., after a major update.',
+          ],
+        },
+        {
+          heading: 'Security',
+          items: [
+            '[tip]Password is transmitted **only over HTTPS** (`artisom.dev.metricsavto.com:443`).',
+            'Backend stores passwords as bcrypt hashes — even the admin does not see the original.',
+            'JWT token is saved in `localStorage` and automatically attached as `Authorization: Bearer` for all API calls.',
+            '[●yellow]**Do not save the password in public browsers** — use "Reset" when leaving someone else’s device.',
+          ],
+        },
+        {
+          heading: 'Forgot the password',
+          items: [
+            'Self-service password reset is not implemented yet — ask your STO admin.',
+            'Admin re-writes the password via the **"Users"** page (`/users`).',
+            'You will get the new password from them — set your own at the first opportunity.',
+          ],
+        },
+        {
+          heading: 'Test / seed accounts',
+          items: [
+            '[●blue]`admin@metricsai.up` — admin (full access), for integrators and testing.',
+            '[●blue]`demo@metricsai.up` — manager (Henry Ford), for presentations and demos.',
+            '[●blue]`manager@metricsai.up` — manager (Sergey Petrov).',
+            '[●gray]`mechanic@metricsai.up` — mechanic (Ivan Kozlov), **disabled** — login will fail.',
+            '[tip]These accounts exist **only in the demo install**. In production, the admin creates accounts.',
+          ],
+        },
+      ],
+    },
+  },
 };
 
 // ═══════════════════════════════════════════════
