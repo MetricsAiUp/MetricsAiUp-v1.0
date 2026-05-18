@@ -28,6 +28,8 @@ let cachedFullHistory = null;  // full state with all history (loaded once at st
 let lastFetchTime = null;
 let pollTimer = null;
 let ioRef = null;
+let starting = false;
+let polling = false;
 
 // Active post/zone numbers from DB (source of truth — Post.number / Zone.name).
 // Refreshed periodically and on map:synced event so MapEditor changes propagate
@@ -430,6 +432,11 @@ async function processState(rawStateInput) {
 }
 
 async function poll() {
+  // Mutex: если предыдущий poll ещё не завершился (CV API > 10с), пропускаем tick.
+  // Иначе при медленном внешнем API можно получить параллельные processState
+  // и двойные post:status_changed события.
+  if (polling) return;
+  polling = true;
   try {
     const raw = await fetchMonitoringState();
     if (raw) {
@@ -440,6 +447,8 @@ async function poll() {
     }
   } catch (err) {
     registry.error('monitoringProxy', err);
+  } finally {
+    polling = false;
   }
 }
 
@@ -589,49 +598,57 @@ let historyTimer = null;
 const HISTORY_REFRESH_INTERVAL = 5 * 60 * 1000; // refresh full history every 5 min
 
 async function start(io) {
-  if (pollTimer) return;
-  ioRef = io;
-  registry.register('monitoringProxy', { interval: POLL_INTERVAL, cvApi: MONITORING_API_BASE });
-  logger.info('Monitoring proxy started', { interval: POLL_INTERVAL });
-
-  // Hydrate from DB BEFORE any external fetches.
-  // Без этого после рестарта /api/monitoring/state отдаёт [] до первого
-  // успешного poll, который зависит от внешнего CV API.
-  await refreshActiveSets();
+  // Идемпотентный старт: guard перед любыми await — иначе быстрый toggle
+  // demo→live→demo→live через /api/settings успеет запустить параллельную
+  // гидрацию и удвоить таймеры.
+  if (pollTimer || starting) return;
+  starting = true;
   try {
-    const { posts, zones } = await refreshCacheFromDb();
-    cachedPosts = posts;
-    cachedZones = zones;
+    ioRef = io;
+    registry.register('monitoringProxy', { interval: POLL_INTERVAL, cvApi: MONITORING_API_BASE });
+    logger.info('Monitoring proxy started', { interval: POLL_INTERVAL });
 
-    // Гидрация lastSavedState: чтобы первый poll после рестарта не писал
-    // дубликаты в MonitoringSnapshot, если внешнее состояние не изменилось.
-    const currentRows = await prisma.monitoringCurrent.findMany();
-    for (const row of currentRows) {
-      const dedupKey = JSON.stringify({
-        s: row.status,
-        p: row.plateNumber,
-        w: row.worksInProgress,
-        pc: row.peopleCount,
-        op: row.openParts,
-        c: row.confidence,
+    // Hydrate from DB BEFORE any external fetches.
+    // Без этого после рестарта /api/monitoring/state отдаёт [] до первого
+    // успешного poll, который зависит от внешнего CV API.
+    await refreshActiveSets();
+    try {
+      const { posts, zones } = await refreshCacheFromDb();
+      cachedPosts = posts;
+      cachedZones = zones;
+
+      // Гидрация lastSavedState: чтобы первый poll после рестарта не писал
+      // дубликаты в MonitoringSnapshot, если внешнее состояние не изменилось.
+      const currentRows = await prisma.monitoringCurrent.findMany();
+      for (const row of currentRows) {
+        const dedupKey = JSON.stringify({
+          s: row.status,
+          p: row.plateNumber,
+          w: row.worksInProgress,
+          pc: row.peopleCount,
+          op: row.openParts,
+          c: row.confidence,
+        });
+        lastSavedState.set(row.zoneName, dedupKey);
+      }
+
+      logger.info('Monitoring cache hydrated from DB', {
+        posts: posts.length,
+        zones: zones.length,
+        dedupKeys: currentRows.length,
       });
-      lastSavedState.set(row.zoneName, dedupKey);
+    } catch (err) {
+      logger.error('Cache hydration failed', { error: err.message });
     }
 
-    logger.info('Monitoring cache hydrated from DB', {
-      posts: posts.length,
-      zones: zones.length,
-      dedupKeys: currentRows.length,
-    });
-  } catch (err) {
-    logger.error('Cache hydration failed', { error: err.message });
+    // Затем запускаем внешние fetch'и.
+    loadFullHistory().then(() => poll());
+    pollTimer = setInterval(poll, POLL_INTERVAL);
+    historyTimer = setInterval(loadFullHistory, HISTORY_REFRESH_INTERVAL);
+    activeSetsRefreshTimer = setInterval(refreshActiveSets, ACTIVE_SETS_REFRESH_INTERVAL);
+  } finally {
+    starting = false;
   }
-
-  // Затем запускаем внешние fetch'и.
-  loadFullHistory().then(() => poll());
-  pollTimer = setInterval(poll, POLL_INTERVAL);
-  historyTimer = setInterval(loadFullHistory, HISTORY_REFRESH_INTERVAL);
-  activeSetsRefreshTimer = setInterval(refreshActiveSets, ACTIVE_SETS_REFRESH_INTERVAL);
 }
 
 function stop() {
@@ -647,6 +664,9 @@ function stop() {
     clearInterval(activeSetsRefreshTimer);
     activeSetsRefreshTimer = null;
   }
+  // Зануляем ioRef, чтобы после stop() остаточные processState (если poll был
+  // уже в полёте) не эмитили в мёртвый Socket.IO instance.
+  ioRef = null;
   registry.unregister('monitoringProxy');
   logger.info('Monitoring proxy stopped');
 }
