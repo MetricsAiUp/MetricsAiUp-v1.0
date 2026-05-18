@@ -32,8 +32,8 @@ function ListModal({ title, children, onClose }) {
       onClick={onClose}
     >
       <div
-        className="glass rounded-2xl p-5 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
-        style={{ border: '1px solid var(--border-glass)' }}
+        className="rounded-lg p-5 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -118,7 +118,7 @@ export default function PostsDetail() {
   const allItems = [...posts, ...zones];
 
   return (
-    <div className="p-4">
+    <div className="p-6">
       {isLive && (data?.stale || dashData?.stale) && (
         <div className="mb-3">
           <StaleDataBanner
@@ -148,9 +148,9 @@ export default function PostsDetail() {
         ) : (
           elVis('postsList') && <div>
             {/* Header with period + view toggle */}
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')} <HelpButton pageKey="postsDetail" /></h2>
-              <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
+              <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>{t('postsDetail.title')} <HelpButton pageKey="postsDetail" /></h2>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
                 <ShowDiscrepanciesToggle />
                 {/* Period selector */}
                 <div className="flex items-center gap-1">
@@ -163,39 +163,39 @@ export default function PostsDetail() {
                   ].map(p => (
                     <button key={p.key}
                       onClick={() => { setPeriod(p.key); if (p.key === 'custom') setShowCustom(true); else setShowCustom(false); }}
-                      className="px-2 py-1 rounded-lg text-xs transition-all"
-                      style={{ background: period === p.key ? 'var(--accent)' : 'var(--bg-glass)', color: period === p.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${period === p.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: period === p.key ? 'var(--accent)' : 'var(--bg-card)', color: period === p.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${period === p.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
                       {p.label}
                     </button>
                   ))}
                   {showCustom && (
                     <div className="flex items-center gap-1 ml-1">
                       <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                        className="px-1.5 py-0.5 rounded-lg text-xs"
-                        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+                        className="px-2 py-1.5 rounded-lg text-xs"
+                        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
                       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
                       <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                        className="px-1.5 py-0.5 rounded-lg text-xs"
-                        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+                        className="px-2 py-1.5 rounded-lg text-xs"
+                        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
                     </div>
                   )}
                 </div>
                 {/* Сводный отчёт — переход на /utilization с текущим периодом */}
                 <Link
                   to={`/utilization?entity=posts&period=${period}${period === 'custom' && customFrom ? `&from=${customFrom}` : ''}${period === 'custom' && customTo ? `&to=${customTo}` : ''}`}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
                   title={t('utilization.openReport')}
                 >
-                  <BarChart3 size={12} />
+                  <BarChart3 size={14} />
                   <span>{t('utilization.openReport')}</span>
                 </Link>
                 {/* View toggle */}
                 <div className="flex gap-1" style={{ borderLeft: '1px solid var(--border-glass)', paddingLeft: 8 }}>
                   {[{ key: 'cards', label: isRu ? 'Плитки' : 'Cards' }, { key: 'table', label: isRu ? 'Таблица' : 'Table' }].map(v => (
                     <button key={v.key} onClick={() => setViewMode(v.key)}
-                      className="px-3 py-1 rounded-lg text-xs transition-all"
-                      style={{ background: viewMode === v.key ? 'var(--accent)' : 'var(--bg-glass)', color: viewMode === v.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${viewMode === v.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: viewMode === v.key ? 'var(--accent)' : 'var(--bg-card)', color: viewMode === v.key ? '#fff' : 'var(--text-secondary)', border: `1px solid ${viewMode === v.key ? 'var(--accent)' : 'var(--border-glass)'}` }}>
                       {v.label}
                     </button>
                   ))}

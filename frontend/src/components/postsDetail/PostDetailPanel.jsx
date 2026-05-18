@@ -87,8 +87,8 @@ function SummaryCards({ post, t }) {
   const maxH = post.maxCapacityHours;
   return (
     <div className="flex gap-3 mb-4">
-      <div className="flex-1 px-3 py-2 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-        <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.planVsFact')}</div>
+      <div className="flex-1 px-4 py-3 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+        <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.planVsFact')}</div>
         {[
           { label: t('postsDetail.plan'), value: d.planHours, color: 'var(--accent)' },
           { label: t('postsDetail.fact'), value: d.factHours, color: 'var(--success)' },
@@ -104,8 +104,8 @@ function SummaryCards({ post, t }) {
         ))}
       </div>
       <div className="flex flex-col gap-2" style={{ minWidth: 180 }}>
-        <div className="px-3 py-2 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center justify-between mb-1">
+        <div className="px-4 py-3 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1">
               <Activity size={11} style={{ color: 'var(--text-muted)' }} />
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.load')}</span>
@@ -116,8 +116,8 @@ function SummaryCards({ post, t }) {
             <div className="h-full rounded-full transition-all" style={{ width: `${d.loadPercent}%`, background: loadColor(d.loadPercent) }} />
           </div>
         </div>
-        <div className="px-3 py-2 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-          <div className="flex items-center justify-between mb-1">
+        <div className="px-4 py-3 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1">
               <BarChart3 size={11} style={{ color: 'var(--text-muted)' }} />
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.efficiency')}</span>
@@ -232,8 +232,8 @@ function StatsSection({ stats, t }) {
         {t('postsDetail.avgTime')}: <strong>{stats.avgTimePerOrder}ч</strong>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div className="rounded-xl p-3" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-          <div className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.workByGroup')}</div>
+        <div className="rounded-lg p-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.workByGroup')}</div>
           <div className="space-y-1">
             {stats.byGroup.map((g, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -246,8 +246,8 @@ function StatsSection({ stats, t }) {
             ))}
           </div>
         </div>
-        <div className="rounded-xl p-3" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-          <div className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.carsByBrand')}</div>
+        <div className="rounded-lg p-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>{t('postsDetail.carsByBrand')}</div>
           <div className="space-y-1">
             {stats.byBrand.map((b, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -398,7 +398,7 @@ function CalendarSection({ calendar, post, t }) {
       </div>
 
       {/* Calendar grid */}
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
+      <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="grid grid-cols-7 text-center" style={{ background: 'var(--bg-glass)' }}>
           {weekDays.map(d => (
             <div key={d} className="py-2 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{d}</div>
@@ -560,7 +560,7 @@ function PostTimeline({ dashPost, shiftStart = '08:00', shiftEnd = '20:00' }) {
     if (h < endH) ticks.push({ h, m: 30, isHour: false });
   }
   return (
-    <div className="glass rounded-xl p-3 mb-4" style={{ border: '1px solid var(--border-glass)' }}>
+    <div className="rounded-lg p-3 mb-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <div className="relative h-5 mb-1">
         {ticks.map(({ h, m, isHour }) => {
           const pos = ((h - startH + m / 60) / total) * 100;

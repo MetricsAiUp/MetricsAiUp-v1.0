@@ -38,8 +38,8 @@ export default function PostCardsView({ posts, navigate }) {
         const topWorks = d.workStats?.byGroup?.slice(0, 3) || [];
         const alertCount = d.alerts?.length || 0;
         return (
-          <div key={post.id} className="glass rounded-xl p-4 hover:shadow-lg transition-all"
-            style={{ border: '1px solid var(--border-glass)' }}
+          <div key={post.id} className="rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
             onClick={() => navigate(`/posts-detail?${post.type === 'zone' ? 'zone' : 'post'}=${post.id}`)}>
             {/* Card header */}
             <div className="flex items-center justify-between mb-3">

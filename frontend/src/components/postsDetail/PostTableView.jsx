@@ -29,19 +29,19 @@ export default function PostTableView({ posts, navigate }) {
   const isRu = i18n.language === 'ru';
 
   return (
-    <div className="glass rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
+    <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr style={{ background: 'var(--bg-glass)' }}>
-              <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пост' : 'Post'}</th>
-              <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)', minWidth: 160 }}>{isRu ? 'План / Факт / Простой' : 'Plan / Fact / Idle'}</th>
-              <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)', minWidth: 110 }}>{t('postsDetail.load')}</th>
-              <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)', minWidth: 110 }}>{t('postsDetail.efficiency')}</th>
-              <th className="text-center px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'ЗН' : 'WO'}</th>
-              <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Исполнители' : 'Workers'}</th>
-              <th className="text-left px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Работы' : 'Works'}</th>
-              <th className="text-center px-2 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Алерты' : 'Alerts'}</th>
+            <tr style={{ background: 'var(--bg-glass)', borderBottom: '1px solid var(--border-glass)' }}>
+              <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пост' : 'Post'}</th>
+              <th className="text-left px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)', minWidth: 160 }}>{isRu ? 'План / Факт / Простой' : 'Plan / Fact / Idle'}</th>
+              <th className="text-left px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)', minWidth: 110 }}>{t('postsDetail.load')}</th>
+              <th className="text-left px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)', minWidth: 110 }}>{t('postsDetail.efficiency')}</th>
+              <th className="text-center px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'ЗН' : 'WO'}</th>
+              <th className="text-left px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Исполнители' : 'Workers'}</th>
+              <th className="text-left px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Работы' : 'Works'}</th>
+              <th className="text-center px-2 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Алерты' : 'Alerts'}</th>
               <th className="px-2 py-2.5"></th>
             </tr>
           </thead>

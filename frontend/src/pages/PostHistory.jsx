@@ -365,18 +365,18 @@ export default function PostHistory() {
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)}
-            className="p-2 rounded-xl hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            className="p-2 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
             <ArrowLeft size={18} />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                 {(() => {
                   const ruName = currentState?.displayName || currentState?.name || `Пост ${postNum}`;
                   const enName = currentState?.displayNameEn || currentState?.displayName || currentState?.name || `Post ${postNum}`;
@@ -400,8 +400,8 @@ export default function PostHistory() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={fetchData}
-            className="p-2 rounded-xl hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            className="p-2 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -419,15 +419,15 @@ export default function PostHistory() {
           { label: isRu ? 'В работе' : 'Active', value: stats.activeWork, color: POST_STATUS_COLORS.active_work },
           { label: isRu ? 'Авто' : 'Vehicles', value: stats.uniquePlates, color: 'var(--info)' },
         ].map((s, i) => (
-          <div key={i} className="glass-static rounded-xl p-3 text-center">
-            <div className="text-lg font-bold" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
+          <div key={i} className="rounded-lg p-4 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+            <div className="text-2xl font-bold font-mono leading-none mb-1" style={{ color: s.color }}>{s.value}</div>
+            <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="glass-static rounded-xl p-3 space-y-3">
+      <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         {/* Period */}
         <div className="flex items-center gap-2 flex-wrap">
           <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
@@ -491,7 +491,7 @@ export default function PostHistory() {
       </div>
 
       {/* Table */}
-      <div className="glass-static rounded-xl overflow-hidden">
+      <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -792,17 +792,17 @@ export function ZoneHistory() {
   ];
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)}
-            className="p-2 rounded-xl hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            className="p-2 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               {zoneName} — {isRu ? 'История' : 'History'}
             </h1>
             {currentState && (
@@ -818,8 +818,8 @@ export function ZoneHistory() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={fetchData}
-            className="p-2 rounded-xl hover:opacity-80"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            className="p-2 rounded-lg hover:opacity-80"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{stats.total} {isRu ? 'записей' : 'records'}</span>
@@ -835,15 +835,15 @@ export function ZoneHistory() {
           { label: isRu ? 'В работе' : 'Active', value: stats.activeWork, color: POST_STATUS_COLORS.active_work },
           { label: isRu ? 'Авто' : 'Vehicles', value: stats.uniquePlates, color: 'var(--info)' },
         ].map((s, i) => (
-          <div key={i} className="glass-static rounded-xl p-3 text-center">
-            <div className="text-lg font-bold" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
+          <div key={i} className="rounded-lg p-4 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+            <div className="text-2xl font-bold font-mono leading-none mb-1" style={{ color: s.color }}>{s.value}</div>
+            <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="glass-static rounded-xl p-3 space-y-3">
+      <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="flex items-center gap-2 flex-wrap">
           <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
           <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{isRu ? 'Период:' : 'Period:'}</span>
@@ -884,7 +884,7 @@ export function ZoneHistory() {
       </div>
 
       {/* Table */}
-      <div className="glass-static rounded-xl overflow-hidden">
+      <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -1016,8 +1016,8 @@ export function PostHistoryModal({ postNumber, historyData, onClose, onOpenFullP
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}>
-      <div className="glass rounded-2xl p-5 w-full max-w-2xl max-h-[85vh] flex flex-col"
-        style={{ border: '1px solid var(--border-glass)' }}
+      <div className="rounded-lg p-5 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
         onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between mb-3">

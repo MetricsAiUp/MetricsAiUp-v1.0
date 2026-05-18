@@ -1,23 +1,12 @@
 import { Wrench, Square, CheckCircle2, Circle, AlertTriangle, Clock } from 'lucide-react';
 import { STATUS_COLORS } from './constants';
 
-function hexA(hex, a) {
-  if (!hex || !hex.startsWith('#')) return hex;
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
 // Карточка одного цвета — крупный квадрат, иконка, краткий заголовок и пояснение.
 function Swatch({ color, Icon, title, hint }) {
-  const tint = color?.startsWith('#') ? hexA(color, 0.12) : 'var(--bg-glass)';
-  const border = color?.startsWith('#') ? hexA(color, 0.35) : 'var(--border-glass)';
   return (
     <div
       className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
-      style={{ background: tint, border: `1px solid ${border}` }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
     >
       <div
         className="flex items-center justify-center rounded"
@@ -90,8 +79,8 @@ export default function Legend({ t, isLive }) {
 
   return (
     <div
-      className="rounded-xl px-3 py-2.5"
-      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+      className="rounded-lg px-4 py-3"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
     >
       <div className="flex items-center gap-2 mb-2">
         <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>

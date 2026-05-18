@@ -10,6 +10,7 @@
   --bg-secondary: #e2e8f0;
   --bg-glass: rgba(255, 255, 255, 0.6);
   --bg-glass-hover: rgba(255, 255, 255, 0.8);
+  --bg-card: #ffffff;
   --border-glass: rgba(255, 255, 255, 0.4);
   --text-primary: #1a202c;
   --text-secondary: #4a5568;
@@ -30,6 +31,7 @@
   --bg-secondary: #1e293b;
   --bg-glass: rgba(30, 41, 59, 0.6);
   --bg-glass-hover: rgba(30, 41, 59, 0.8);
+  --bg-card: #1e293b;
   --border-glass: rgba(148, 163, 184, 0.15);
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;

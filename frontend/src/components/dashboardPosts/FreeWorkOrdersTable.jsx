@@ -32,17 +32,17 @@ export default function FreeWorkOrdersTable({ orders, t }) {
   if (!orders || orders.length === 0) return null;
 
   return (
-    <div className="mt-4">
+    <div className="mt-5">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity"
+        className="flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity"
       >
         {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
           {t('dashboardPosts.freeWorkOrders')}
         </h3>
         <span
-          className="text-xs px-2 py-0.5 rounded-full"
+          className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded"
           style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
         >
           {orders.length}
@@ -51,32 +51,32 @@ export default function FreeWorkOrdersTable({ orders, t }) {
 
       {expanded && (
         <div
-          className="glass rounded-xl overflow-hidden"
-          style={{ border: '1px solid var(--border-glass)' }}
+          className="rounded-lg overflow-hidden"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
         >
           <table className="w-full">
             <thead>
-              <tr style={{ background: 'var(--bg-glass)' }}>
+              <tr style={{ background: 'var(--bg-glass)', borderBottom: '1px solid var(--border-glass)' }}>
                 <th className="w-8" />
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('workOrders.orderNumber')}
                 </th>
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('workOrders.plateNumber')}
                 </th>
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('workOrders.workType')}
                 </th>
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('dashboardPosts.postType')}
                 </th>
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('workOrders.normHours')}
                 </th>
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('dashboardPosts.client')}
                 </th>
-                <th className="text-left px-3 py-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                   {t('dashboardPosts.note')}
                 </th>
               </tr>

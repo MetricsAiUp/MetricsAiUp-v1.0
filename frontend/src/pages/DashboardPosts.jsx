@@ -375,30 +375,30 @@ export default function DashboardPosts() {
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-5">
       {/* Аварийный баннер: данные с CV не поступают > часа */}
       {isLive && data?.stale && (
         <StaleDataBanner stale={data.stale} dataAsOf={data.dataAsOf} dataAgeMs={data.dataAgeMs} />
       )}
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2.5" style={{ color: 'var(--text-primary)' }}>
             {t('dashboardPosts.title')}
             <HelpButton pageKey="dashboardPosts" />
           </h2>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {t('dashboardPosts.subtitle')} · {todayShift.shiftStart} – {todayShift.shiftEnd}
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            {t('dashboardPosts.subtitle')} · <span className="font-mono">{todayShift.shiftStart} – {todayShift.shiftEnd}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <ShowDiscrepanciesToggle />
           {/* Save button — only visible when there are pending changes */}
           {pendingChanges.length > 0 && (
             <button
               onClick={handleSave}
               disabled={saveStatus === 'saving'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
               style={{
                 background: saveStatus === 'saved' ? 'var(--success)' : 'var(--accent)',
                 color: '#fff',
@@ -422,15 +422,15 @@ export default function DashboardPosts() {
           {/* Conflict indicator */}
           {conflicts.length > 0 && (
             <div
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium"
-              style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid var(--danger)' }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium"
+              style={{ background: 'rgba(239, 68, 68, 0.08)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
             >
               <AlertTriangle size={13} />
               {t('dashboardPosts.conflict')} ({conflicts.length})
             </div>
           )}
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <Calendar size={14} style={{ color: 'var(--accent)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
               {new Date().toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { timeZone: getAppTimezone(), weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -438,8 +438,8 @@ export default function DashboardPosts() {
           </div>
           <Link
             to={`/utilization?entity=posts&period=today`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
             title={t('utilization.openReport')}
           >
             <BarChart3 size={14} />
@@ -447,8 +447,9 @@ export default function DashboardPosts() {
           </Link>
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 rounded-xl hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            className="p-2 rounded-lg hover:opacity-80 transition-opacity"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            aria-label="Settings"
           >
             <Settings size={18} />
           </button>
@@ -518,12 +519,9 @@ export default function DashboardPosts() {
         ) : (
           <div
             key={i}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg relative group transition-all hover:translate-y-[-1px]"
-            style={card.tinted && card.color?.startsWith('#') ? {
-              background: hexA(card.color, 0.10),
-              border: `1px solid ${hexA(card.color, 0.28)}`,
-            } : {
-              background: 'var(--bg-glass)',
+            className="flex flex-col gap-1 px-4 py-3 rounded-lg relative group transition-all hover:translate-y-[-1px] min-w-[120px]"
+            style={{
+              background: 'var(--bg-card)',
               border: '1px solid var(--border-glass)',
             }}
           >
@@ -531,9 +529,11 @@ export default function DashboardPosts() {
               style={{ background: 'var(--bg-glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', width: 220, fontSize: '12px', lineHeight: 1.4 }}>
               {card.tip}
             </div>
-            <card.icon size={12} strokeWidth={2.5} style={{ color: card.color, flexShrink: 0 }} />
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{card.label}</span>
-            <span className="text-sm font-bold" style={{ color: card.color }}>{card.value}</span>
+            <div className="flex items-center gap-1.5">
+              <card.icon size={11} strokeWidth={2.5} style={{ color: card.color, flexShrink: 0 }} />
+              <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>{card.label}</span>
+            </div>
+            <span className="text-xl font-bold font-mono leading-none" style={{ color: card.color }}>{card.value}</span>
           </div>
         ))}
       </div>}

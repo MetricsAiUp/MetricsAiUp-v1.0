@@ -64,12 +64,12 @@ function KpiCard({ icon: Icon, label, value, unit, sub, color = 'var(--accent)',
   const deltaColor = deltaPct == null ? null
     : deltaPct > 0 ? 'var(--success)' : deltaPct < 0 ? 'var(--danger)' : 'var(--text-muted)';
   return (
-    <div className="glass-static rounded-xl p-3 flex flex-col gap-1">
-      <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-        {Icon && <Icon size={12} />}{label}
+    <div className="rounded-lg p-4 flex flex-col gap-1.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>
+        {Icon && <Icon size={11} />}{label}
       </div>
       <div className="flex items-baseline gap-1.5">
-        <span className="text-xl font-bold" style={{ color }}>{value}</span>
+        <span className="text-2xl font-bold font-mono leading-none" style={{ color }}>{value}</span>
         {unit && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{unit}</span>}
       </div>
       {sub && <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{sub}</div>}
@@ -124,8 +124,8 @@ function SettingsModal({ open, settings, onClose, onSave, canEdit }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}>
-      <div className="glass rounded-2xl p-5 w-full max-w-md"
-        style={{ border: '1px solid var(--border-glass)' }}
+      <div className="rounded-lg p-5 w-full max-w-md shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -299,7 +299,7 @@ function DrillDownPanel({ open, date, data, entity, hourlyRate, currency, onClos
             ? `/post-history/${r.id}`
             : `/zone-history/${encodeURIComponent(r.name)}`;
           return (
-            <div key={r.id} className="glass-static rounded-xl p-3">
+            <div key={r.id} className="rounded-lg p-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{r.name}</span>
                 <Link to={histLink} onClick={onClose}
@@ -584,12 +584,12 @@ export default function UtilizationReport() {
   ];
 
   return (
-    <div className="p-4 space-y-3" id="utilization-report-root">
+    <div className="p-6 space-y-4" id="utilization-report-root">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <BarChart3 size={20} style={{ color: 'var(--accent)' }} />
-          <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2.5">
+          <BarChart3 size={22} style={{ color: 'var(--accent)' }} />
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('utilization.title')}
           </h1>
           <HelpButton pageKey="utilization" />
@@ -597,7 +597,7 @@ export default function UtilizationReport() {
         <div className="flex items-center gap-2">
           <button onClick={() => setShowSettings(true)}
             className="px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1 hover:opacity-80"
-            style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+            style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
             <SettingsIcon size={12} />
             {hourlyRate != null ? `${fmtMoney(hourlyRate, currency)}/ч` : t('utilization.settings.rate')}
             {' · '}
@@ -605,29 +605,29 @@ export default function UtilizationReport() {
           </button>
           <button onClick={fetchData}
             className="p-1.5 rounded-lg hover:opacity-80"
-            style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+            style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
           <button onClick={exportXlsx} title={t('utilization.export.xlsx')}
             className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 hover:opacity-80"
-            style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+            style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
             <Download size={12} /> XLSX
           </button>
           <button onClick={exportPdf} title={t('utilization.export.pdf')}
             className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 hover:opacity-80"
-            style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+            style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
             <FileText size={12} /> PDF
           </button>
           <button onClick={exportPng} title={t('utilization.export.png')}
             className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 hover:opacity-80"
-            style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+            style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
             <ImageIcon size={12} /> PNG
           </button>
         </div>
       </div>
 
       {/* Filters: period + entity tabs + compare */}
-      <div className="glass-static rounded-xl p-3 space-y-2">
+      <div className="rounded-lg p-4 space-y-2.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="flex items-center gap-2 flex-wrap">
           <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
           <div className="flex gap-1 flex-wrap">
@@ -678,7 +678,7 @@ export default function UtilizationReport() {
 
       {/* Loading state */}
       {loading && !data && (
-        <div className="glass-static rounded-xl p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        <div className="rounded-lg p-8 text-center text-sm" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           <RefreshCw size={18} className="animate-spin inline mr-2" />
           {t('utilization.loading')}
         </div>
@@ -727,8 +727,8 @@ export default function UtilizationReport() {
 
       {/* Top losses — только посты */}
       {data && isPosts && top3Loss.length > 0 && (
-        <div className="glass-static rounded-xl p-3">
-          <div className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
+        <div className="rounded-lg p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="text-[10px] uppercase tracking-wider font-semibold mb-2.5 flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
             <AlertTriangle size={12} style={{ color: 'var(--danger)' }} />
             {t('utilization.top.title')}
           </div>
@@ -755,8 +755,8 @@ export default function UtilizationReport() {
 
       {/* Table */}
       {data && byEntity.length > 0 && (
-        <div className="glass-static rounded-xl overflow-hidden">
-          <div className="px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+        <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
             {isPosts ? t('utilization.table.title') : t('utilization.table.titleZones')}
           </div>
           <div className="overflow-x-auto">
@@ -835,8 +835,8 @@ export default function UtilizationReport() {
 
       {/* Trend chart */}
       {data && aggregatedByDay.length > 0 && (
-        <div className="glass-static rounded-xl p-3" id="utilization-trend-chart">
-          <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
+        <div className="rounded-lg p-4" id="utilization-trend-chart" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+          <div className="text-[10px] uppercase tracking-wider font-semibold mb-2.5" style={{ color: 'var(--text-secondary)' }}>
             {t('utilization.trend.title')}
           </div>
           <ResponsiveContainer width="100%" height={240}>
@@ -871,7 +871,7 @@ export default function UtilizationReport() {
 
       {/* Empty state */}
       {data && byEntity.length === 0 && !loading && (
-        <div className="glass-static rounded-xl p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        <div className="rounded-lg p-8 text-center text-sm" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {t('utilization.empty')}
         </div>
       )}
