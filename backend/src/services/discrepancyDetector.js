@@ -143,14 +143,15 @@ async function upsertDiscrepancy(draft) {
 }
 
 // Главная функция: для одного orderNumber.
-async function detectForOrder(orderNumber) {
+// runCtx (опционально) — контекст массового прогона detectAll: { windowMs, postCache }.
+async function detectForOrder(orderNumber, runCtx = null) {
   const order = await getCurrentOrder(orderNumber);
   if (!order) return { detected: 0, new: 0 };
 
   const stages = await getCurrentStagesForOrder(orderNumber);
 
   // Матчинг
-  const match = await matcher.findMatch(order);
+  const match = await matcher.findMatch(order, runCtx);
   await matcher.persistMatch(order, match);
 
   // Если есть сессия — найдём ассоциированный PostStay
@@ -159,7 +160,15 @@ async function detectForOrder(orderNumber) {
   const postStay = match.session
     ? await matcher.findPostStayForSession(match.session.id, anchor, windowMs)
     : null;
-  const post = postStay ? await getPost(postStay.postId) : null;
+  let post = null;
+  if (postStay) {
+    if (runCtx && runCtx.postCache && runCtx.postCache.has(postStay.postId)) {
+      post = runCtx.postCache.get(postStay.postId);
+    } else {
+      post = await getPost(postStay.postId);
+      if (runCtx && runCtx.postCache) runCtx.postCache.set(postStay.postId, post);
+    }
+  }
 
   const ctx = {
     order,
@@ -219,10 +228,17 @@ async function detectAll({ since } = {}) {
   `);
   const orderNumbers = orderRows.map((r) => r.order_number);
 
+  // Контекст массового прогона: окно матчинга и кэш постов — переиспользуются
+  // между orderNumber'ами, чтобы избежать N×SELECT imap_1c_config и N×findUnique(post).
+  const runCtx = {
+    windowMs: await matcher.getMatchWindowMs(),
+    postCache: new Map(),
+  };
+
   let totalDetected = 0;
   let totalNew = 0;
   for (const on of orderNumbers) {
-    const r = await detectForOrder(on);
+    const r = await detectForOrder(on, runCtx);
     totalDetected += r.detected;
     totalNew += r.new;
   }
@@ -238,8 +254,31 @@ async function detectAll({ since } = {}) {
   });
   const allStages = await getAllCurrentStages();
 
+  // Batch-prefetch постов для второго цикла: один findMany вместо N findUnique.
+  // Объединяем с уже накопленным postCache из первого цикла.
+  const missingPostIds = [];
   for (const ps of stays) {
-    const post = await getPost(ps.postId);
+    if (ps.postId && !runCtx.postCache.has(ps.postId)) missingPostIds.push(ps.postId);
+  }
+  if (missingPostIds.length) {
+    const uniq = Array.from(new Set(missingPostIds));
+    const fetched = await prisma.post.findMany({
+      where: { id: { in: uniq } },
+      select: { id: true, name: true, number: true, isTracked: true },
+    });
+    const foundIds = new Set();
+    for (const p of fetched) {
+      runCtx.postCache.set(p.id, p);
+      foundIds.add(p.id);
+    }
+    // Помечаем отсутствующие как null, чтобы не идти повторно в БД на каждый stay.
+    for (const id of uniq) {
+      if (!foundIds.has(id)) runCtx.postCache.set(id, null);
+    }
+  }
+
+  for (const ps of stays) {
+    const post = runCtx.postCache.get(ps.postId);
     if (!post || !post.isTracked) continue;
     const draft = rules.noShowIn1C({ postStay: ps, post, stages: allStages });
     if (!draft) continue;

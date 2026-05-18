@@ -195,6 +195,7 @@ model VehicleSession {
 
   @@index([status])
   @@index([trackId, status])
+  @@index([plateNumber])
   @@map("vehicle_sessions")
 }
 
@@ -233,6 +234,7 @@ model PostStay {
 
   @@index([vehicleSessionId, endTime])
   @@index([postId, endTime])
+  @@index([startTime])
   @@map("post_stays")
 }
 

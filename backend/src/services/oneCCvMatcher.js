@@ -70,10 +70,12 @@ function chooseClosest(candidates, anchor, matchType, confidence) {
 }
 
 // Главная функция: ищет CV-матч для записи 1С (work-order-merged строка).
-async function findMatch(orderRecord) {
+// ctx (опционально) позволяет переиспользовать windowMs между вызовами в одном
+// прогоне detectAll (избавляемся от N×SELECT imap_1c_config).
+async function findMatch(orderRecord, ctx = null) {
   const { orderNumber, vin, plateNumber } = orderRecord;
   const anchor = orderRecord.scheduledStart || orderRecord.workStartedAt || orderRecord.orderDate;
-  const windowMs = await getMatchWindowMs();
+  const windowMs = (ctx && typeof ctx.windowMs === 'number') ? ctx.windowMs : await getMatchWindowMs();
   const windowFrom = anchor ? new Date(anchor.getTime() - windowMs) : null;
   const windowTo = anchor ? new Date(anchor.getTime() + windowMs) : null;
 
@@ -167,4 +169,5 @@ module.exports = {
   persistMatch,
   normalizePlate,
   levenshtein,
+  getMatchWindowMs,
 };
