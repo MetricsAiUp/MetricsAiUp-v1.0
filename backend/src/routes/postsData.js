@@ -1113,7 +1113,7 @@ router.get('/dashboard-posts', async (req, res) => {
       // Зоны из БД, не пришедшие в мониторинге → no_data
       try {
         const dbZones = await prisma.zone.findMany({
-          where: { isActive: true },
+          where: { deleted: false, isActive: true },
           select: { id: true, name: true, displayName: true, type: true },
         });
         const seenZ = new Set(zoneRows.map(z => z.number));
@@ -1275,7 +1275,7 @@ router.get('/dashboard-posts', async (req, res) => {
     // ── Зоны (demo): только нумерованные «Зона N», без таймлайна ──
     try {
       const dbZones = await prisma.zone.findMany({
-        where: { isActive: true },
+        where: { deleted: false, isActive: true },
         select: { name: true, displayName: true, type: true },
       });
       const zoneRows = [];
