@@ -144,14 +144,14 @@ export default function Sidebar() {
             return (
               <div key={item.path}>
                 <div
-                  className="relative flex items-center rounded-lg transition-all whitespace-nowrap overflow-hidden"
+                  className="relative flex items-center rounded-lg transition-all whitespace-nowrap"
                   style={{
                     background: isPostsActive ? 'var(--bg-glass)' : 'transparent',
                     border: isPostsActive ? '1px solid var(--border-glass)' : '1px solid transparent',
                   }}
                 >
                   {isPostsActive && (
-                    <span className="absolute left-0 top-0 bottom-0 w-[3px]"
+                    <span className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg"
                       style={{ background: 'var(--accent)', opacity: 0.85 }} />
                   )}
                   <button
