@@ -22,9 +22,19 @@ async function checkCamera(camId) {
   }
 }
 
+let checkTimer = null;
+let checking = false;
+
 function startCameraHealthCheck() {
+  // Идемпотентный старт: повторный вызов не запускает второй setInterval.
+  if (checkTimer) return;
   registry.register('cameraHealthCheck', { interval: 30000, cameras: CAM_IDS.length });
   const check = async () => {
+    // Mutex: 16 камер × 5s timeout = до 80s в worst-case при тормозах CV API.
+    // Без этого следующий tick (30s) накладывался на текущий, выдавая дубли
+    // camera:status emit'ов в Socket.IO и копя in-flight fetch'и.
+    if (checking) return;
+    checking = true;
     try {
       for (const camId of CAM_IDS) {
         const online = await checkCamera(camId);
@@ -39,10 +49,20 @@ function startCameraHealthCheck() {
       registry.tick('cameraHealthCheck');
     } catch (err) {
       registry.error('cameraHealthCheck', err);
+    } finally {
+      checking = false;
     }
   };
   check();
-  setInterval(check, 30000);
+  checkTimer = setInterval(check, 30000);
+}
+
+function stop() {
+  if (checkTimer) {
+    clearInterval(checkTimer);
+    checkTimer = null;
+    logger.info('Camera health check stopped');
+  }
 }
 
 function getCameraStatuses() {
@@ -51,4 +71,4 @@ function getCameraStatuses() {
   return result;
 }
 
-module.exports = { startCameraHealthCheck, getCameraStatuses };
+module.exports = { startCameraHealthCheck, getCameraStatuses, stop };

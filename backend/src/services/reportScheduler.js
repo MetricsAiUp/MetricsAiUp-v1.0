@@ -19,8 +19,18 @@ function shouldRun(schedule, now, tz) {
   return true;
 }
 
+let task = null;
+let running = false;
+
 function startReportScheduler() {
-  cron.schedule('* * * * *', async () => {
+  // Идемпотентный старт: повторный вызов не создаёт второй cron job.
+  if (task) return;
+  task = cron.schedule('* * * * *', async () => {
+    // Mutex: если предыдущий tick ещё генерит XLSX/шлёт Telegram, пропускаем.
+    // Без этого weekly-отчёт (7 дней) при долгой генерации мог уйти в Telegram
+    // дважды — следующий cron tick находил тот же schedule (lastRunAt ещё не записан).
+    if (running) return;
+    running = true;
     try {
       registry.tick('reportScheduler');
       const schedules = await prisma.reportSchedule.findMany({ where: { isActive: true } });
@@ -46,9 +56,18 @@ function startReportScheduler() {
         }
       }
     } catch (err) { registry.error('reportScheduler', err); }
+    finally { running = false; }
   });
   registry.register('reportScheduler', { cron: '* * * * *' });
   logger.info('Report scheduler started');
 }
 
-module.exports = { startReportScheduler };
+function stop() {
+  if (task) {
+    task.stop();
+    task = null;
+    logger.info('Report scheduler stopped');
+  }
+}
+
+module.exports = { startReportScheduler, stop };

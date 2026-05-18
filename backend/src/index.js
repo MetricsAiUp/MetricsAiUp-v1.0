@@ -243,6 +243,9 @@ async function shutdown(signal) {
     backupScheduler.stop();
     retentionCleaner.stop();
     try { require('./services/discrepancyDetectorScheduler').stop(); } catch { /* */ }
+    try { require('./services/reportScheduler').stop?.(); } catch { /* */ }
+    try { require('./services/cameraHealthCheck').stop?.(); } catch { /* */ }
+    try { require('./services/discrepancyDigest').stop?.(); } catch { /* */ }
     await new Promise(res => server.close(() => res()));
     if (httpsServer) await new Promise(res => httpsServer.close(() => res()));
     if (io) await new Promise(res => io.close(() => res()));
