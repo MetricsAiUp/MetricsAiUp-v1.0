@@ -228,10 +228,14 @@ async function detectAll({ since } = {}) {
   `);
   const orderNumbers = orderRows.map((r) => r.order_number);
 
-  // Контекст массового прогона: окно матчинга и кэш постов — переиспользуются
-  // между orderNumber'ами, чтобы избежать N×SELECT imap_1c_config и N×findUnique(post).
+  // Контекст массового прогона: окно матчинга, прелоад VehicleSession и кэш постов
+  // переиспользуются между orderNumber'ами, чтобы избежать:
+  //   * N×SELECT imap_1c_config (windowMs),
+  //   * 2N×SELECT vehicle_sessions (sessions: exact + fuzzy),
+  //   * N×findUnique(post).
   const runCtx = {
     windowMs: await matcher.getMatchWindowMs(),
+    sessions: await matcher.preloadSessions(),
     postCache: new Map(),
   };
 

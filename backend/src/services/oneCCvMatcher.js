@@ -69,15 +69,39 @@ function chooseClosest(candidates, anchor, matchType, confidence) {
   return { session: best, matchType, confidence, windowApplied: true };
 }
 
+// Построение прелоад-набора сессий для массового прогона detectAll.
+// Возвращает { all, byNormPlate } где:
+//   all — массив сессий { id, plateNumber, entryTime, createdAt } (для fuzzy в окне)
+//   byNormPlate — Map<normalized_plate, sessions[]> (для exact_plate)
+async function preloadSessions() {
+  const all = await prisma.vehicleSession.findMany({
+    where: { plateNumber: { not: null } },
+    select: { id: true, plateNumber: true, entryTime: true, createdAt: true },
+  });
+  const byNormPlate = new Map();
+  for (const s of all) {
+    const np = normalizePlate(s.plateNumber);
+    if (!np) continue;
+    const bucket = byNormPlate.get(np);
+    if (bucket) bucket.push(s);
+    else byNormPlate.set(np, [s]);
+  }
+  return { all, byNormPlate };
+}
+
 // Главная функция: ищет CV-матч для записи 1С (work-order-merged строка).
-// ctx (опционально) позволяет переиспользовать windowMs между вызовами в одном
-// прогоне detectAll (избавляемся от N×SELECT imap_1c_config).
+// ctx (опционально):
+//   ctx.windowMs    — переиспользовать matchWindowHours между orderNumber'ами;
+//   ctx.sessions    — { all, byNormPlate } из preloadSessions() — избавляемся
+//                     от 2×findMany на каждый order. Если не задан — fallback
+//                     на старое поведение через БД.
 async function findMatch(orderRecord, ctx = null) {
   const { orderNumber, vin, plateNumber } = orderRecord;
   const anchor = orderRecord.scheduledStart || orderRecord.workStartedAt || orderRecord.orderDate;
   const windowMs = (ctx && typeof ctx.windowMs === 'number') ? ctx.windowMs : await getMatchWindowMs();
   const windowFrom = anchor ? new Date(anchor.getTime() - windowMs) : null;
   const windowTo = anchor ? new Date(anchor.getTime() + windowMs) : null;
+  const preloaded = ctx && ctx.sessions ? ctx.sessions : null;
 
   // 1. exact VIN — пока schema не имеет VehicleSession.vin, пропускаем
   // TODO: добавить VehicleSession.vin (миграция) когда CV начнёт его репортить
@@ -85,24 +109,40 @@ async function findMatch(orderRecord, ctx = null) {
   // 2. exact plate
   if (plateNumber) {
     const np = normalizePlate(plateNumber);
-    // Ищем все сессии (нормализуем plate в JS, т.к. SQLite не имеет regex_replace)
-    const all = await prisma.vehicleSession.findMany({
-      where: { plateNumber: { not: null } },
-      select: { id: true, plateNumber: true, entryTime: true, createdAt: true },
-    });
-    const exact = all.filter((s) => normalizePlate(s.plateNumber) === np);
+    let exact;
+    if (preloaded) {
+      exact = preloaded.byNormPlate.get(np) || [];
+    } else {
+      // Fallback: грузим все сессии (нормализуем plate в JS, т.к. SQLite не имеет regex_replace)
+      const all = await prisma.vehicleSession.findMany({
+        where: { plateNumber: { not: null } },
+        select: { id: true, plateNumber: true, entryTime: true, createdAt: true },
+      });
+      exact = all.filter((s) => normalizePlate(s.plateNumber) === np);
+    }
     if (exact.length >= 1) return chooseClosest(exact, anchor, 'exact_plate', 0.9);
   }
 
   // 3. fuzzy plate (только в окне)
   if (plateNumber && windowFrom && windowTo) {
-    const candidates = await prisma.vehicleSession.findMany({
-      where: {
-        plateNumber: { not: null },
-        entryTime: { gte: windowFrom, lte: windowTo },
-      },
-      select: { id: true, plateNumber: true, entryTime: true, createdAt: true },
-    });
+    let candidates;
+    if (preloaded) {
+      // Окно по времени фильтруем in-memory по предзагруженному набору.
+      const fromT = windowFrom.getTime();
+      const toT = windowTo.getTime();
+      candidates = preloaded.all.filter((s) => {
+        const t = s.entryTime ? s.entryTime.getTime() : null;
+        return t != null && t >= fromT && t <= toT;
+      });
+    } else {
+      candidates = await prisma.vehicleSession.findMany({
+        where: {
+          plateNumber: { not: null },
+          entryTime: { gte: windowFrom, lte: windowTo },
+        },
+        select: { id: true, plateNumber: true, entryTime: true, createdAt: true },
+      });
+    }
     const np = normalizePlate(plateNumber);
     const fuzzy = candidates.filter((s) => {
       const sp = normalizePlate(s.plateNumber);
@@ -170,4 +210,5 @@ module.exports = {
   normalizePlate,
   levenshtein,
   getMatchWindowMs,
+  preloadSessions,
 };
