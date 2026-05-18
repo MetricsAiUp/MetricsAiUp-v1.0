@@ -118,7 +118,7 @@ function LastRunInfo({ schedule, t }) {
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap"
-         style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
+         style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
       <Clock size={12} style={{ color: 'var(--text-muted)' }} />
       <span style={{ color: 'var(--text-muted)' }}>{t('discrepancies.lastRun')}:</span>
       {isRunning ? (
@@ -154,8 +154,8 @@ function SchedulePopover({ schedule, onSave, onClose, saving, t }) {
   const tzOptions = ['Europe/Minsk', 'Europe/Moscow', 'Europe/Kaliningrad', 'Europe/Kiev', 'Europe/Warsaw', 'Asia/Yekaterinburg', 'Asia/Novosibirsk', 'UTC'];
 
   return (
-    <div className="rounded-xl p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
-         style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+    <div className="rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
+         style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <label className="flex flex-col gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
         <span>{t('discrepancies.scheduleForm.enabled')}</span>
         <label className="inline-flex items-center gap-2">
@@ -417,12 +417,11 @@ export default function Discrepancies() {
   const warningCount  = (stats?.bySeverity || []).find((s) => s.severity === 'warning')?.count ?? 0;
 
   return (
-    <div className="p-3 space-y-3">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
-        <h1 className="text-sm font-bold flex items-center gap-1.5 whitespace-nowrap pr-3"
-            style={{ color: 'var(--text-secondary)', borderRight: '1px solid var(--border-glass)' }}>
-          <AlertTriangle size={14} style={{ color: '#f59e0b' }} />
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 whitespace-nowrap pr-3"
+            style={{ color: 'var(--text-primary)', borderRight: '1px solid var(--border-glass)' }}>
           {t('discrepancies.title')}
           <span
             className="ml-1 px-1.5 py-0.5 rounded uppercase tracking-wide"
@@ -469,7 +468,7 @@ export default function Discrepancies() {
             <button
               onClick={() => setScheduleOpen((v) => !v)}
               className="p-1.5 rounded-lg transition-opacity hover:opacity-80"
-              style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}
+              style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}
               title={t('discrepancies.scheduleSettings')}
             >
               <Settings size={14} />
@@ -490,8 +489,8 @@ export default function Discrepancies() {
       )}
 
       {/* By type — chips */}
-      <div className="rounded-xl p-3 flex flex-col gap-2"
-           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+      <div className="rounded-lg p-3 flex flex-col gap-2"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
           {t('discrepancies.byTypeTitle')}
         </div>
@@ -550,7 +549,7 @@ export default function Discrepancies() {
           value={filters.status}
           onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}
           className="px-2 py-1 rounded-md text-sm"
-          style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
+          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
         >
           <option value="">{t('discrepancies.filters.allStatuses')}</option>
           {STATUS_KEYS.map((k) => <option key={k} value={k}>{t(`discrepancies.status.${k}`)}</option>)}
@@ -559,7 +558,7 @@ export default function Discrepancies() {
           value={filters.severity}
           onChange={(e) => setFilters((p) => ({ ...p, severity: e.target.value }))}
           className="px-2 py-1 rounded-md text-sm"
-          style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
+          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
         >
           <option value="">{t('discrepancies.filters.allSeverities')}</option>
           {SEVERITY_KEYS.map((k) => <option key={k} value={k}>{t(`discrepancies.severity.${k}`)}</option>)}
@@ -568,7 +567,7 @@ export default function Discrepancies() {
           value={filters.type}
           onChange={(e) => setFilters((p) => ({ ...p, type: e.target.value }))}
           className="px-2 py-1 rounded-md text-sm"
-          style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
+          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}
         >
           <option value="">{t('discrepancies.filters.allTypes')}</option>
           {TYPE_KEYS.map((k) => <option key={k} value={k}>{t(`discrepancies.type.${k}`)}</option>)}
@@ -578,13 +577,13 @@ export default function Discrepancies() {
           value={filters.orderNumber}
           onChange={(e) => setFilters((p) => ({ ...p, orderNumber: e.target.value }))}
           className="px-2 py-1 rounded-md text-sm font-mono"
-          style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', maxWidth: 160 }}
+          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', maxWidth: 160 }}
         />
       </FilterBar>
 
       {/* Table */}
-      <div className="rounded-xl overflow-hidden"
-           style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+      <div className="rounded-lg overflow-hidden"
+           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="overflow-auto">
           <table className="w-full text-sm">
             <thead style={{ background: 'rgba(0,0,0,0.12)', position: 'sticky', top: 0, zIndex: 1 }}>

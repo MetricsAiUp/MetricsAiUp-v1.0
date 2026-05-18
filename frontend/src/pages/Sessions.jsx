@@ -67,7 +67,8 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}>
-      <div className="glass-static p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      <div className="rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -102,7 +103,7 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
             <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
               {isRu ? 'Распознанный номер' : 'Recognized Plate'}
             </p>
-            <div className="flex items-center justify-center p-4 rounded-xl"
+            <div className="flex items-center justify-center p-4 rounded-lg"
               style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
               <PlatePreview plate={session.plateNumber} />
             </div>
@@ -118,7 +119,7 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
         </div>
 
         {/* Edit plate */}
-        <div className="mb-5 p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="mb-5 p-4 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
           <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
             {isRu ? 'Гос. номер (можно исправить)' : 'Plate number (editable)'}
           </p>
@@ -139,21 +140,21 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
 
         {/* Info grid */}
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="p-3 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Текущая зона' : 'Current Zone'}</p>
             <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{translateZone(zone?.name, isRu) || '—'}</p>
           </div>
-          <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="p-3 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Текущий пост' : 'Current Post'}</p>
             <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>{translatePost(post, isRu) || '—'}</p>
           </div>
-          <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="p-3 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Время въезда' : 'Entry Time'}</p>
             <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>
               {formatInAppTz(session.entryTime)}
             </p>
           </div>
-          <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="p-3 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Статус' : 'Status'}</p>
             <p className="text-sm font-medium mt-1" style={{
               color: session.status === 'active' ? '#10b981' : '#94a3b8'
@@ -164,7 +165,7 @@ function SessionModal({ session, onClose, isRu, workOrders }) {
         </div>
 
         {/* Linked Work Order from 1C */}
-        <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="p-4 rounded-lg" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
           <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
             {isRu ? 'Заказ-наряд из 1С' : 'Work Order from 1C'}
           </p>
@@ -273,9 +274,10 @@ export default function Sessions() {
 
   if (isLive) {
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('sessions.title')}</h2>
-        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-6 space-y-5">
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('sessions.title')}</h2>
+        <div className="rounded-lg p-8 text-center"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
         </div>
       </div>
@@ -283,10 +285,10 @@ export default function Sessions() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('sessions.title')}
           </h2>
           <HelpButton pageKey="sessions" />
@@ -296,9 +298,9 @@ export default function Sessions() {
             <button
               key={s}
               onClick={() => setStatus(s)}
-              className="px-4 py-2 rounded-xl text-sm transition-all"
+              className="px-4 py-2 rounded-lg text-sm transition-all"
               style={{
-                background: status === s ? 'var(--accent)' : 'var(--bg-glass)',
+                background: status === s ? 'var(--accent)' : 'var(--bg-card)',
                 color: status === s ? 'white' : 'var(--text-secondary)',
                 border: `1px solid ${status === s ? 'var(--accent)' : 'var(--border-glass)'}`,
               }}
@@ -316,10 +318,11 @@ export default function Sessions() {
         </span>
         <button
           onClick={() => setPostFilter('all')}
-          className="px-3 py-1 rounded-lg text-xs transition-all"
+          className="px-3 py-1 rounded-md text-xs transition-all"
           style={{
-            background: postFilter === 'all' ? 'var(--accent)' : 'var(--bg-glass)',
+            background: postFilter === 'all' ? 'var(--accent)' : 'var(--bg-card)',
             color: postFilter === 'all' ? 'white' : 'var(--text-muted)',
+            border: '1px solid ' + (postFilter === 'all' ? 'var(--accent)' : 'var(--border-glass)'),
           }}
         >
           {isRu ? 'Все' : 'All'}
@@ -328,10 +331,11 @@ export default function Sessions() {
           <button
             key={name}
             onClick={() => setPostFilter(name)}
-            className="px-3 py-1 rounded-lg text-xs transition-all"
+            className="px-3 py-1 rounded-md text-xs transition-all"
             style={{
-              background: postFilter === name ? 'var(--accent)' : 'var(--bg-glass)',
+              background: postFilter === name ? 'var(--accent)' : 'var(--bg-card)',
               color: postFilter === name ? 'white' : 'var(--text-muted)',
+              border: '1px solid ' + (postFilter === name ? 'var(--accent)' : 'var(--border-glass)'),
             }}
           >
             {translatePost(name, isRu)}
@@ -342,31 +346,32 @@ export default function Sessions() {
         </span>
       </div>
 
-      <div className="glass-static overflow-x-auto">
+      <div className="rounded-lg overflow-x-auto"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <table className="w-full text-sm" style={{ minWidth: 700 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
-              <th className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:opacity-80"
+              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold cursor-pointer select-none hover:opacity-80"
                 style={{ color: sortBy === 'plate' ? 'var(--accent)' : 'var(--text-muted)' }}
                 onClick={() => toggleSort('plate')}>
                 {t('sessions.plateNumber')}{sortIcon('plate')}
               </th>
-              <th className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:opacity-80"
+              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold cursor-pointer select-none hover:opacity-80"
                 style={{ color: sortBy === 'entryTime' ? 'var(--accent)' : 'var(--text-muted)' }}
                 onClick={() => toggleSort('entryTime')}>
                 {t('sessions.entryTime')}{sortIcon('entryTime')}
               </th>
-              <th className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:opacity-80"
+              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold cursor-pointer select-none hover:opacity-80"
                 style={{ color: sortBy === 'zone' ? 'var(--accent)' : 'var(--text-muted)' }}
                 onClick={() => toggleSort('zone')}>
                 {t('sessions.currentZone')}{sortIcon('zone')}
               </th>
-              <th className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:opacity-80"
+              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold cursor-pointer select-none hover:opacity-80"
                 style={{ color: sortBy === 'post' ? 'var(--accent)' : 'var(--text-muted)' }}
                 onClick={() => toggleSort('post')}>
                 {t('sessions.currentPost')}{sortIcon('post')}
               </th>
-              <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--text-muted)' }}>
+              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
                 {t('sessions.status')}
               </th>
             </tr>

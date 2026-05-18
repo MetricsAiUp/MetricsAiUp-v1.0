@@ -131,17 +131,16 @@ export default function Audit() {
   const rangeEnd = Math.min((page + 1) * perPage, total);
 
   return (
-    <div className="space-y-3">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Shield size={20} style={{ color: 'var(--accent)' }} />
-        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
           {t('audit.title')}
         </h2>
         <HelpButton pageKey="audit" />
         <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full"
           style={{
-            background: 'var(--bg-glass)',
+            background: 'var(--bg-card)',
             border: '1px solid var(--border-glass)',
             color: 'var(--text-secondary)',
           }}>
@@ -196,17 +195,17 @@ export default function Audit() {
       </div>
 
       {/* Table */}
-      <div className="glass rounded-xl overflow-hidden">
+      <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
-                <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Время' : 'Time'}</th>
-                <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пользователь' : 'User'}</th>
-                <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Действие' : 'Action'}</th>
-                <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Сущность' : 'Entity'}</th>
-                <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>ID</th>
-                <th className="text-left px-3 py-2.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>IP</th>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Время' : 'Time'}</th>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пользователь' : 'User'}</th>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Действие' : 'Action'}</th>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Сущность' : 'Entity'}</th>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>ID</th>
+                <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>IP</th>
               </tr>
             </thead>
             <tbody>
@@ -251,7 +250,7 @@ function LogRow({ log, expanded, onToggle, isRu, formatDate, formatJson }) {
         <td className="px-3 py-2">
           <span className="inline-flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded-full font-medium"
             style={{
-              background: 'var(--bg-glass)',
+              background: 'var(--bg-card)',
               border: '1px solid var(--border-glass)',
               color: ACTION_COLORS[log.action] || '#94a3b8',
             }}>
@@ -274,7 +273,7 @@ function LogRow({ log, expanded, onToggle, isRu, formatDate, formatJson }) {
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={6} className="px-3 py-3" style={{ background: 'var(--bg-glass)' }}>
+          <td colSpan={6} className="px-3 py-3" style={{ background: 'var(--bg-secondary)' }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {log.oldData && (
                 <div>

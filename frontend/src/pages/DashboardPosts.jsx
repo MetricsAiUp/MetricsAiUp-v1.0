@@ -460,9 +460,9 @@ export default function DashboardPosts() {
       {elVis('currentShift') && currentShift && (
         <Link
           to="/shifts"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:opacity-90 transition-opacity"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:opacity-90 transition-opacity"
           style={{
-            background: currentShift.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-glass)',
+            background: currentShift.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-card)',
             border: `1px solid ${currentShift.status === 'active' ? 'rgba(34, 197, 94, 0.3)' : 'var(--border-glass)'}`,
           }}
         >

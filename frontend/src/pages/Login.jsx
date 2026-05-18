@@ -58,10 +58,10 @@ export default function Login() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ background: 'var(--gradient-bg)' }}
     >
-      <div className="glass-static p-8 w-full max-w-md">
+      <div className="rounded-lg p-8 w-full max-w-md shadow-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('app.title')}
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>{t('app.subtitle')}</p>
@@ -77,7 +77,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl outline-none transition-all"
+              className="w-full px-4 py-3 rounded-lg outline-none transition-all"
               style={{
                 background: 'var(--bg-glass)',
                 border: '1px solid var(--border-glass)',
@@ -95,7 +95,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl outline-none transition-all"
+              className="w-full px-4 py-3 rounded-lg outline-none transition-all"
               style={{
                 background: 'var(--bg-glass)',
                 border: '1px solid var(--border-glass)',
@@ -112,7 +112,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
+            className="w-full py-3 rounded-lg font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
             style={{ background: 'var(--accent)' }}
           >
             {loading ? '...' : t('auth.login')}

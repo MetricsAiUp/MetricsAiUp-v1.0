@@ -19,7 +19,6 @@
         "events",
         "analytics",
         "cameras",
-        "camera-mapping",
         "data-1c",
         "users"
       ]
@@ -170,13 +169,6 @@
       "label": {
         "ru": "Камеры",
         "en": "Cameras"
-      }
-    },
-    {
-      "id": "camera-mapping",
-      "label": {
-        "ru": "Разметка камер",
-        "en": "Camera Mapping"
       }
     },
     {

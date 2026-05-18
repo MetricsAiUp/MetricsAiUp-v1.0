@@ -105,7 +105,7 @@ export default function MyPost() {
     return (
       <div className="max-w-lg mx-auto space-y-4 p-2">
         <h1 className="text-2xl font-bold text-center" style={{ color: 'var(--text-primary)' }}>{t('myPost.title')}</h1>
-        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+        <div className="rounded-lg p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {i18n.language === 'ru' ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
         </div>
       </div>
@@ -117,8 +117,7 @@ export default function MyPost() {
       {/* Header */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Wrench size={24} style={{ color: 'var(--accent)' }} />
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('myPost.title')}
           </h1>
           <HelpButton pageKey="myPost" />
@@ -137,7 +136,7 @@ export default function MyPost() {
       </div>
 
       {/* Current WO card */}
-      <div className="glass rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
+      <div className="rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="flex items-center gap-2 mb-4">
           <FileText size={18} style={{ color: 'var(--accent)' }} />
           <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -151,7 +150,7 @@ export default function MyPost() {
               {currentWO.workOrderNumber}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                 <div className="flex items-center gap-1 mb-1">
                   <Car size={12} style={{ color: 'var(--text-muted)' }} />
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('myPost.vehicle')}</span>
@@ -165,7 +164,7 @@ export default function MyPost() {
                   </div>
                 )}
               </div>
-              <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                 <div className="flex items-center gap-1 mb-1">
                   <Wrench size={12} style={{ color: 'var(--text-muted)' }} />
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('myPost.workType')}</span>
@@ -174,7 +173,7 @@ export default function MyPost() {
                   {currentWO.workType}
                 </div>
               </div>
-              <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                 <div className="flex items-center gap-1 mb-1">
                   <Clock size={12} style={{ color: 'var(--text-muted)' }} />
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('myPost.normHours')}</span>
@@ -183,7 +182,7 @@ export default function MyPost() {
                   {currentWO.normHours} {isRu ? 'ч' : 'h'}
                 </div>
               </div>
-              <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                 <div className="flex items-center gap-1 mb-1">
                   <User size={12} style={{ color: 'var(--text-muted)' }} />
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('myPost.status')}</span>
@@ -204,7 +203,7 @@ export default function MyPost() {
 
       {/* Timer */}
       {currentWO && (
-        <div className="glass rounded-2xl p-5 text-center" style={{ border: '1px solid var(--border-glass)' }}>
+        <div className="rounded-lg p-5 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <div className="flex items-center justify-center gap-2 mb-3">
             <Timer size={18} style={{ color: 'var(--accent)' }} />
             <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -271,7 +270,7 @@ export default function MyPost() {
           <div className="flex gap-3 justify-center">
             {!timer.isRunning && !timer.isPaused && currentWO.status !== 'completed' && (
               <button onClick={handleStart}
-                className="flex-1 max-w-[200px] flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
+                className="flex-1 max-w-[200px] flex items-center justify-center gap-2 px-6 py-4 rounded-lg text-lg font-bold text-white transition-all hover:opacity-90"
                 style={{ background: '#10b981' }}>
                 <Play size={24} /> {t('myPost.start')}
               </button>
@@ -279,12 +278,12 @@ export default function MyPost() {
             {timer.isRunning && (
               <>
                 <button onClick={handlePause}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg text-lg font-bold text-white transition-all hover:opacity-90"
                   style={{ background: '#f59e0b' }}>
                   <Pause size={24} /> {t('myPost.pause')}
                 </button>
                 <button onClick={handleFinish}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg text-lg font-bold text-white transition-all hover:opacity-90"
                   style={{ background: '#10b981' }}>
                   <CheckCircle size={24} /> {t('myPost.finish')}
                 </button>
@@ -293,12 +292,12 @@ export default function MyPost() {
             {timer.isPaused && (
               <>
                 <button onClick={handleResume}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg text-lg font-bold text-white transition-all hover:opacity-90"
                   style={{ background: 'var(--accent)' }}>
                   <Play size={24} /> {t('myPost.resume')}
                 </button>
                 <button onClick={handleFinish}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-lg font-bold text-white transition-all hover:opacity-90"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg text-lg font-bold text-white transition-all hover:opacity-90"
                   style={{ background: '#10b981' }}>
                   <CheckCircle size={24} /> {t('myPost.finish')}
                 </button>

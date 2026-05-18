@@ -41,9 +41,9 @@ export default function WorkerStats() {
 
   if (isLive) {
     return (
-      <div className="p-4 space-y-4">
-        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.workerStats') || 'Worker Stats'}</h2>
-        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-6 space-y-5">
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('nav.workerStats') || 'Worker Stats'}</h2>
+        <div className="rounded-lg p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {isRu ? 'В режиме LIVE данные этой страницы не отображаются.' : 'This page has no data in LIVE mode.'}
         </div>
       </div>
@@ -81,15 +81,14 @@ export default function WorkerStats() {
   ];
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-xs mb-1 hover:opacity-80" style={{ color: 'var(--accent)' }}>
             <ArrowLeft size={14} /> {t('workerStats.back')}
           </button>
-          <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-            <User size={20} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             {t('workerStats.title')}: {decodeURIComponent(workerName)}
             <HelpButton pageKey="workerStats" />
           </h2>
@@ -101,7 +100,7 @@ export default function WorkerStats() {
             value={dateFrom}
             onChange={e => setDateFrom(e.target.value)}
             className="px-2 py-1 rounded-lg text-xs"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
           />
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>-</span>
           <input
@@ -109,7 +108,7 @@ export default function WorkerStats() {
             value={dateTo}
             onChange={e => setDateTo(e.target.value)}
             className="px-2 py-1 rounded-lg text-xs"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
           />
         </div>
       </div>
@@ -119,12 +118,12 @@ export default function WorkerStats() {
         {kpis.map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <div key={i} className="glass-static rounded-2xl p-4" style={{ border: '1px solid var(--border-glass)' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <Icon size={16} style={{ color: kpi.color }} />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
+            <div key={i} className="rounded-lg p-4 flex flex-col gap-1" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+              <div className="flex items-center gap-1.5">
+                <Icon size={11} strokeWidth={2.5} style={{ color: kpi.color }} />
+                <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
               </div>
-              <div className="text-2xl font-bold font-mono" style={{ color: kpi.color }}>
+              <div className="text-2xl font-bold font-mono leading-none tracking-tight" style={{ color: kpi.color }}>
                 {kpi.value}
               </div>
             </div>
@@ -135,7 +134,7 @@ export default function WorkerStats() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Daily output chart */}
         {dailyStats.length > 0 && (
-          <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
+          <div className="rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
               {t('workerStats.dailyOutput')}
             </h3>
@@ -159,7 +158,7 @@ export default function WorkerStats() {
 
         {/* Repair types pie chart */}
         {topRepairTypes.length > 0 && (
-          <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
+          <div className="rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
               {t('workerStats.repairTypes')}
             </h3>
@@ -191,7 +190,7 @@ export default function WorkerStats() {
 
         {/* Top brands */}
         {topBrands.length > 0 && (
-          <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
+          <div className="rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
               <Car size={16} style={{ color: 'var(--accent)' }} />
               {t('workerStats.brands')}
@@ -200,7 +199,7 @@ export default function WorkerStats() {
               {topBrands.map((b, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className="text-sm flex-1" style={{ color: 'var(--text-primary)' }}>{b.brand}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-glass)' }}>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
                     <div
                       className="h-full rounded-full"
                       style={{ width: `${(b.count / topBrands[0].count) * 100}%`, background: COLORS[i % COLORS.length] }}
@@ -215,7 +214,7 @@ export default function WorkerStats() {
 
         {/* Recent orders table */}
         {recentOrders.length > 0 && (
-          <div className="glass-static rounded-2xl p-5" style={{ border: '1px solid var(--border-glass)' }}>
+          <div className="rounded-lg p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
               {t('workerStats.recentOrders')}
             </h3>
@@ -223,11 +222,11 @@ export default function WorkerStats() {
               <table className="w-full text-xs">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
-                    <th className="text-left px-2 py-1.5 font-medium" style={{ color: 'var(--text-muted)' }}>#</th>
-                    <th className="text-left px-2 py-1.5 font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Тип' : 'Type'}</th>
-                    <th className="text-left px-2 py-1.5 font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Авто' : 'Vehicle'}</th>
-                    <th className="text-right px-2 py-1.5 font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Н/ч' : 'N/h'}</th>
-                    <th className="text-left px-2 py-1.5 font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Статус' : 'Status'}</th>
+                    <th className="text-left px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>#</th>
+                    <th className="text-left px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Тип' : 'Type'}</th>
+                    <th className="text-left px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Авто' : 'Vehicle'}</th>
+                    <th className="text-right px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Н/ч' : 'N/h'}</th>
+                    <th className="text-left px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Статус' : 'Status'}</th>
                   </tr>
                 </thead>
                 <tbody>

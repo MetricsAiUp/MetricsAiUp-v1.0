@@ -86,11 +86,11 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div
-        className="w-full max-w-lg rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
-        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
+        className="w-full max-w-lg rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {shift ? t('shifts.editShift') : t('shifts.newShift')}
           </h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
@@ -107,7 +107,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               className="w-full px-3 py-1.5 rounded-lg text-sm"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
             />
           </div>
           <div>
@@ -119,7 +119,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
               value={form.date}
               onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
               className="w-full px-3 py-1.5 rounded-lg text-sm"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -132,7 +132,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
                 value={form.startTime}
                 onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
                 className="w-full px-2 py-1.5 rounded-lg text-sm"
-                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
               />
             </div>
             <div>
@@ -144,7 +144,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
                 value={form.endTime}
                 onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
                 className="w-full px-2 py-1.5 rounded-lg text-sm"
-                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
               />
             </div>
           </div>
@@ -157,7 +157,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               rows={2}
               className="w-full px-3 py-1.5 rounded-lg text-sm resize-none"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
             />
           </div>
         </div>
@@ -174,7 +174,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
                 <div
                   key={w.id}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}
                 >
                   <RoleIcon size={13} style={{ color: 'var(--accent)' }} />
                   <span className="text-xs flex-1" style={{ color: 'var(--text-primary)' }}>{w.name}</span>
@@ -199,13 +199,13 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
               onChange={e => setNewWorker(w => ({ ...w, name: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && addWorker()}
               className="flex-1 px-2.5 py-1.5 rounded-lg text-xs"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
             />
             <select
               value={newWorker.role}
               onChange={e => setNewWorker(w => ({ ...w, role: e.target.value }))}
               className="px-2 py-1.5 rounded-lg text-xs"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
             >
               <option value="mechanic">{t('shifts.mechanic')}</option>
               <option value="master">{t('shifts.master')}</option>
@@ -216,7 +216,7 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
               value={newWorker.postId}
               onChange={e => setNewWorker(w => ({ ...w, postId: e.target.value }))}
               className="w-20 px-2 py-1.5 rounded-lg text-xs"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
             />
             <button
               onClick={addWorker}
@@ -231,14 +231,14 @@ function ShiftFormModal({ shift, onSave, onClose, t, isRu }) {
         <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl text-sm"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            className="px-4 py-1.5 rounded-lg text-sm"
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
           >
             {t('shifts.cancel')}
           </button>
           <button
             onClick={() => onSave(form)}
-            className="px-4 py-1.5 rounded-xl text-sm font-medium"
+            className="px-4 py-1.5 rounded-lg text-sm font-medium"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
             {t('shifts.save')}
@@ -254,11 +254,11 @@ function HandoverModal({ shift, onConfirm, onClose, t, isRu }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div
-        className="w-full max-w-lg rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
-        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
+        className="w-full max-w-lg rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('shifts.handoverAct')}
           </h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
@@ -266,7 +266,7 @@ function HandoverModal({ shift, onConfirm, onClose, t, isRu }) {
           </button>
         </div>
 
-        <div className="rounded-xl p-3 space-y-2" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="rounded-lg p-3 space-y-2" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <div className="flex justify-between text-sm">
             <span style={{ color: 'var(--text-muted)' }}>{isRu ? 'Смена' : 'Shift'}</span>
             <span style={{ color: 'var(--text-primary)' }}>{shift.name}</span>
@@ -291,7 +291,7 @@ function HandoverModal({ shift, onConfirm, onClose, t, isRu }) {
               <div
                 key={w.id}
                 className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}
               >
                 <MapPin size={13} style={{ color: 'var(--accent)' }} />
                 <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
@@ -320,7 +320,7 @@ function HandoverModal({ shift, onConfirm, onClose, t, isRu }) {
                 <div
                   key={w.id}
                   className="flex items-center justify-between px-2.5 py-1.5 rounded-lg"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}
                 >
                   <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{w.name}</span>
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{hours}{isRu ? 'ч' : 'h'}</span>
@@ -333,14 +333,14 @@ function HandoverModal({ shift, onConfirm, onClose, t, isRu }) {
         <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl text-sm"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+            className="px-4 py-1.5 rounded-lg text-sm"
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
           >
             {t('shifts.cancel')}
           </button>
           <button
             onClick={onConfirm}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium"
             style={{ background: 'var(--success)', color: '#fff' }}
           >
             <CheckCircle size={14} />
@@ -357,12 +357,12 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div
-        className="w-full max-w-lg rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
-        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
+        className="w-full max-w-lg rounded-lg p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{shift.name}</h3>
+            <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{shift.name}</h3>
             <StatusBadge status={shift.status} t={t} />
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
@@ -370,7 +370,7 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
           </button>
         </div>
 
-        <div className="rounded-xl p-3 space-y-2" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="rounded-lg p-3 space-y-2" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <div className="flex justify-between text-sm">
             <span style={{ color: 'var(--text-muted)' }}>{isRu ? 'Дата' : 'Date'}</span>
             <span style={{ color: 'var(--text-primary)' }}>
@@ -402,13 +402,13 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
           <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             {t('shifts.workers')} ({shift.workers?.length || 0})
           </h4>
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-glass)' }}>
             <table className="w-full text-xs">
               <thead>
-                <tr style={{ background: 'var(--bg-glass)' }}>
-                  <th className="text-left px-3 py-2 font-medium" style={{ color: 'var(--text-muted)' }}>{t('shifts.worker')}</th>
-                  <th className="text-left px-3 py-2 font-medium" style={{ color: 'var(--text-muted)' }}>{t('shifts.role')}</th>
-                  <th className="text-left px-3 py-2 font-medium" style={{ color: 'var(--text-muted)' }}>{t('shifts.assignedPost')}</th>
+                <tr style={{ background: 'var(--bg-secondary)' }}>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{t('shifts.worker')}</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{t('shifts.role')}</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{t('shifts.assignedPost')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -446,7 +446,7 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
         <div className="flex items-center justify-between pt-2">
           <button
             onClick={onDelete}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs hover:opacity-80"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs hover:opacity-80"
             style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
           >
             <Trash2 size={13} /> {t('shifts.delete')}
@@ -454,15 +454,15 @@ function ShiftDetailModal({ shift, onEdit, onComplete, onDelete, onClose, t, isR
           <div className="flex gap-2">
             <button
               onClick={onEdit}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
             >
               <Edit3 size={13} /> {t('shifts.editShift')}
             </button>
             {shift.status === 'active' && (
               <button
                 onClick={onComplete}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
                 style={{ background: 'var(--success)', color: '#fff' }}
               >
                 <CheckCircle size={13} /> {t('shifts.completeShift')}
@@ -642,9 +642,9 @@ export default function Shifts() {
 
   if (isLive) {
     return (
-      <div className="p-4 space-y-4">
-        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.shifts')}</h2>
-        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-6 space-y-5">
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('nav.shifts')}</h2>
+        <div className="rounded-lg p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
         </div>
       </div>
@@ -652,11 +652,11 @@ export default function Shifts() {
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             {t('shifts.title')}
             <HelpButton pageKey="shifts" />
           </h2>
@@ -666,7 +666,7 @@ export default function Shifts() {
         </div>
         <div className="flex items-center gap-2">
           {/* Week navigation */}
-          <div className="flex items-center gap-1 px-2 py-1 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <button onClick={prevWeek} className="p-1 rounded hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>
               <ChevronLeft size={16} />
             </button>
@@ -679,7 +679,7 @@ export default function Shifts() {
           </div>
           <button
             onClick={() => { setEditingShift(null); setShowForm(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
             <Plus size={15} />
@@ -699,11 +699,10 @@ export default function Shifts() {
           return (
             <div
               key={dateKey}
-              className="rounded-xl p-2 flex flex-col min-h-[180px]"
+              className="rounded-lg p-2 flex flex-col min-h-[180px]"
               style={{
-                background: isToday ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-glass)',
+                background: isToday ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-card)',
                 border: isToday ? '2px solid var(--accent)' : '1px solid var(--border-glass)',
-                backdropFilter: 'blur(12px)',
                 opacity: isPast ? 0.7 : 1,
               }}
             >
@@ -813,12 +812,12 @@ export default function Shifts() {
       {conflictModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
           <div
-            className="w-full max-w-md rounded-2xl p-5 space-y-4"
-            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
+            className="w-full max-w-md rounded-lg p-5 space-y-4 shadow-2xl"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
           >
             <div className="flex items-center gap-2">
               <AlertTriangle size={18} style={{ color: 'var(--warning)' }} />
-              <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                 {t('shifts.conflictDetected')}
               </h3>
             </div>
@@ -839,14 +838,14 @@ export default function Shifts() {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setConflictModal(null)}
-                className="px-4 py-1.5 rounded-xl text-sm"
-                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
+                className="px-4 py-1.5 rounded-lg text-sm"
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}
               >
                 {t('shifts.fixConflicts')}
               </button>
               <button
                 onClick={() => doSave(conflictModal.form, true)}
-                className="px-4 py-1.5 rounded-xl text-sm font-medium"
+                className="px-4 py-1.5 rounded-lg text-sm font-medium"
                 style={{ background: 'var(--warning)', color: '#fff' }}
               >
                 {t('shifts.saveAnyway')}

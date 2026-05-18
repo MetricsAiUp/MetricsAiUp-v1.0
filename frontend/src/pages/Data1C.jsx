@@ -76,7 +76,7 @@ const TR_CLASS = 'transition-colors hover:bg-[var(--bg-glass-hover)]';
 // Универсальный wrapper для таблицы — общий каркас.
 function TableShell({ children }) {
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+    <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <div className="overflow-auto">
         <table className="w-full text-sm">
           {children}
@@ -351,8 +351,8 @@ function TabImports({ api, canImport, onMutate }) {
       </div>
 
       {canImport && (
-        <div className="rounded-xl p-3 flex items-center gap-2 flex-wrap"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="rounded-lg p-3 flex items-center gap-2 flex-wrap"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <select value={forceType} onChange={(e) => setForceType(e.target.value)}
             className="px-2 py-1.5 rounded-md text-sm"
             style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
@@ -662,7 +662,7 @@ function TabRaw({ api }) {
     <div className="space-y-3">
       {/* Подтабы как сегменты */}
       <div className="flex items-center gap-1 p-1 rounded-lg w-fit"
-        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         {['plan', 'repair', 'performed'].map((id) => (
           <button key={id} onClick={() => setType(id)}
             className="px-3 py-1.5 rounded-md text-sm transition-all"
@@ -892,8 +892,8 @@ function TabUnmapped({ api, canManage, onMutate }) {
 // ---------- Tab: Settings ----------
 function SettingsCard({ title, icon: Icon, children }) {
   return (
-    <div className="rounded-xl p-4 space-y-3"
-      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+    <div className="rounded-lg p-4 space-y-3"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <div className="flex items-center gap-2">
         {Icon && <Icon size={16} style={{ color: 'var(--accent)' }} />}
         <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
@@ -1244,7 +1244,7 @@ export default function Data1C() {
   useSocket('unmapped:changed', () => { reloadBadges(); });
 
   return (
-    <div className="p-3 space-y-2">
+    <div className="p-6 space-y-4">
       <div className="flex items-center justify-between gap-2 border-b" style={{ borderColor: 'var(--border-glass)' }}>
         <div className="flex items-center gap-3 flex-1 overflow-x-auto">
           <h1 className="text-sm font-bold flex items-center gap-1.5 whitespace-nowrap pr-2"

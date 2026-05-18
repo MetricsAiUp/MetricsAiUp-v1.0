@@ -22,9 +22,10 @@ const PERIODS = [
 
 function StatCard({ label, value, sub, color }) {
   return (
-    <div className="glass px-3 py-2">
-      <p className="text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>{label}</p>
-      <p className="text-lg font-bold leading-tight" style={{ color: color || 'var(--accent)' }}>{value}</p>
+    <div className="px-4 py-3 rounded-lg flex flex-col gap-1"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+      <p className="text-[10px] uppercase tracking-wider font-medium leading-tight" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <p className="text-2xl font-bold font-mono leading-none tracking-tight" style={{ color: color || 'var(--accent)' }}>{value}</p>
       {sub && <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
     </div>
   );
@@ -32,8 +33,9 @@ function StatCard({ label, value, sub, color }) {
 
 function ChartCard({ title, children, chartRef, onContextMenu }) {
   return (
-    <div className="glass-static p-5" ref={chartRef} onContextMenu={onContextMenu}>
-      <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+    <div className="p-5 rounded-lg" ref={chartRef} onContextMenu={onContextMenu}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+      <h3 className="text-[11px] uppercase tracking-wider font-semibold mb-4" style={{ color: 'var(--text-muted)' }}>{title}</h3>
       {children}
     </div>
   );
@@ -304,9 +306,10 @@ export default function Analytics() {
 
   if (isLive) {
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('nav.analytics')}</h2>
-        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-6 space-y-5">
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('nav.analytics')}</h2>
+        <div className="rounded-lg p-8 text-center"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
         </div>
       </div>
@@ -314,7 +317,7 @@ export default function Analytics() {
   }
 
   return (
-    <div className="space-y-6" ref={containerRef}>
+    <div className="p-6 space-y-5" ref={containerRef}>
       {/* Context menu for chart PNG download */}
       {ctxMenu && (
         <div
@@ -322,9 +325,8 @@ export default function Analytics() {
           style={{
             left: ctxMenu.x,
             top: ctxMenu.y,
-            background: 'var(--bg-glass)',
+            background: 'var(--bg-card)',
             border: '1px solid var(--border-glass)',
-            backdropFilter: 'blur(12px)',
           }}
         >
           <button
@@ -340,7 +342,7 @@ export default function Analytics() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {isRu ? 'Аналитика постов' : 'Post Analytics'}
           </h2>
           <HelpButton pageKey="analytics" />
@@ -349,9 +351,9 @@ export default function Analytics() {
           <button
             onClick={handleExportXlsx}
             disabled={exporting === 'xlsx'}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all hover:opacity-80"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:opacity-80"
             style={{
-              background: 'var(--bg-glass)',
+              background: 'var(--bg-card)',
               color: 'var(--text-secondary)',
               border: '1px solid var(--border-glass)',
               opacity: exporting === 'xlsx' ? 0.6 : 1,
@@ -364,9 +366,9 @@ export default function Analytics() {
           <button
             onClick={handleExportPdf}
             disabled={exporting === 'pdf'}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all hover:opacity-80"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:opacity-80"
             style={{
-              background: 'var(--bg-glass)',
+              background: 'var(--bg-card)',
               color: 'var(--text-secondary)',
               border: '1px solid var(--border-glass)',
               opacity: exporting === 'pdf' ? 0.6 : 1,
@@ -383,9 +385,9 @@ export default function Analytics() {
             { key: '30d', label: isRu ? '30 дней' : '30 days' },
           ].map(p => (
             <button key={p.key} onClick={() => setPeriod(p.key)}
-              className="px-4 py-2 rounded-xl text-sm transition-all"
+              className="px-4 py-2 rounded-lg text-sm transition-all"
               style={{
-                background: period === p.key ? 'var(--accent)' : 'var(--bg-glass)',
+                background: period === p.key ? 'var(--accent)' : 'var(--bg-card)',
                 color: period === p.key ? 'white' : 'var(--text-secondary)',
                 border: `1px solid ${period === p.key ? 'var(--accent)' : 'var(--border-glass)'}`,
               }}>
@@ -395,9 +397,9 @@ export default function Analytics() {
           <div className="w-px h-6" style={{ background: 'var(--border-glass)' }} />
           <button
             onClick={() => setCompareMode(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all"
             style={{
-              background: compareMode ? 'var(--accent)' : 'var(--bg-glass)',
+              background: compareMode ? 'var(--accent)' : 'var(--bg-card)',
               color: compareMode ? 'white' : 'var(--text-secondary)',
               border: `1px solid ${compareMode ? 'var(--accent)' : 'var(--border-glass)'}`,
             }}
@@ -630,7 +632,7 @@ export default function Analytics() {
         <ChartCard title={`${selSummary.name} — ${isRu ? 'детализация' : 'details'}`}>
           <div className="flex justify-end mb-2">
             <button onClick={() => setSelectedPost(null)} className="text-xs px-3 py-1 rounded-lg"
-              style={{ color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}>✕</button>
+              style={{ background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}>✕</button>
           </div>
 
           {/* Summary row */}

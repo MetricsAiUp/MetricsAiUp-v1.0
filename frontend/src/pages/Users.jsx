@@ -92,19 +92,18 @@ export default function Users() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <UsersIcon size={18} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {isRu ? 'Пользователи' : 'Users'}
           </h2>
           <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>{users.length}</span>
           <HelpButton pageKey="users" />
         </div>
         <button onClick={() => setShowNew(true)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-white hover:opacity-90"
+          className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium text-white hover:opacity-90"
           style={{ background: 'var(--accent)' }}>
           <Plus size={13} />
           {isRu ? 'Создать' : 'Create'}
@@ -112,14 +111,14 @@ export default function Users() {
       </div>
 
       {/* Users table */}
-      <div className="glass rounded-xl overflow-hidden">
+      <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <table className="w-full">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
-              <th className="text-left px-3 py-2 text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пользователь' : 'User'}</th>
-              <th className="text-left px-3 py-2 text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Роль' : 'Role'}</th>
-              <th className="text-left px-3 py-2 text-[11px] font-medium hidden md:table-cell" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Доступ' : 'Access'}</th>
-              <th className="text-right px-3 py-2 text-[11px] font-medium" style={{ color: 'var(--text-muted)', width: 80 }}></th>
+              <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Пользователь' : 'User'}</th>
+              <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Роль' : 'Role'}</th>
+              <th className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold hidden md:table-cell" style={{ color: 'var(--text-muted)' }}>{isRu ? 'Доступ' : 'Access'}</th>
+              <th className="text-right px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)', width: 80 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -227,9 +226,9 @@ function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
   const deselectAll = () => setForm(prev => ({ ...prev, pages: ['dashboard'] }));
 
   return (
-    <div className="space-y-4 max-w-xl">
+    <div className="p-6 space-y-5 max-w-xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
           {isNew ? (isRu ? 'Новый пользователь' : 'New User') : (isRu ? 'Редактирование' : 'Edit User')}
         </h2>
         <button onClick={onCancel} className="p-1 rounded-lg hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
@@ -237,7 +236,7 @@ function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
         </button>
       </div>
 
-      <div className="glass rounded-xl p-4 space-y-3">
+      <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="grid grid-cols-2 gap-2.5">
           <Field label={isRu ? 'Имя' : 'First Name'} value={form.firstName} onChange={v => setForm({ ...form, firstName: v })} />
           <Field label={isRu ? 'Фамилия' : 'Last Name'} value={form.lastName} onChange={v => setForm({ ...form, lastName: v })} />
@@ -275,7 +274,7 @@ function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
       </div>
 
       {/* Pages */}
-      <div className="glass rounded-xl p-4">
+      <div className="rounded-lg p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <div className="flex items-center justify-between mb-2">
           <label className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
             {isRu ? 'Доступные разделы' : 'Pages'} <span style={{ color: 'var(--text-muted)' }}>({form.pages.length}/{pages.length})</span>
@@ -307,7 +306,7 @@ function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
 
       {/* Elements visibility per page */}
       {form.pages.some(p => PAGE_ELEMENTS[p]) && (
-        <div className="glass rounded-xl p-4">
+        <div className="rounded-lg p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <div className="flex items-center gap-2 mb-2">
             <LayoutGrid size={14} style={{ color: 'var(--accent)' }} />
             <label className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -368,7 +367,7 @@ function UserForm({ user, roles, pages, lang, isRu, onSave, onCancel }) {
       <div className="flex gap-2">
         <button onClick={onCancel}
           className="flex-1 px-3 py-1.5 rounded-lg text-xs"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           {isRu ? 'Отмена' : 'Cancel'}
         </button>
         <button onClick={() => onSave(form)}

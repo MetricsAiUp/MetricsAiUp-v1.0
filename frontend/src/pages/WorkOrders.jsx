@@ -116,9 +116,10 @@ export default function WorkOrders() {
 
   if (isLive) {
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('workOrders.title')}</h2>
-        <div className="glass p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+      <div className="p-6 space-y-5">
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('workOrders.title')}</h2>
+        <div className="rounded-lg p-8 text-center"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
         </div>
       </div>
@@ -126,32 +127,33 @@ export default function WorkOrders() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('workOrders.title')}
           </h2>
           <HelpButton pageKey="workOrders" />
         </div>
         <button onClick={() => setShowImport(!showImport)}
-          className="px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
+          className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
           style={{ background: 'var(--accent)' }}>
           {t('workOrders.importCsv')}
         </button>
       </div>
 
       {showImport && (
-        <div className="glass p-4 space-y-3">
+        <div className="rounded-lg p-4 space-y-3"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <textarea value={csvText} onChange={e => setCsvText(e.target.value)}
             placeholder="order_number,date,plate_number,work_type,norm_hours" rows={5}
-            className="w-full p-3 rounded-xl text-sm font-mono outline-none"
+            className="w-full p-3 rounded-lg text-sm font-mono outline-none"
             style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
           <div className="flex gap-2">
-            <button onClick={handleImport} className="px-4 py-2 rounded-xl text-sm text-white" style={{ background: 'var(--success)' }}>
+            <button onClick={handleImport} className="px-4 py-2 rounded-lg text-sm text-white" style={{ background: 'var(--success)' }}>
               {t('common.save')}
             </button>
-            <button onClick={() => setShowImport(false)} className="px-4 py-2 rounded-xl text-sm" style={{ color: 'var(--text-muted)' }}>
+            <button onClick={() => setShowImport(false)} className="px-4 py-2 rounded-lg text-sm" style={{ color: 'var(--text-muted)' }}>
               {t('common.cancel')}
             </button>
           </div>
@@ -162,20 +164,22 @@ export default function WorkOrders() {
       <div className="flex flex-wrap gap-3 items-center">
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder={isRu ? 'Поиск по номеру ЗН, авто, типу работ...' : 'Search by WO number, plate, work type...'}
-          className="px-4 py-2 rounded-xl text-sm outline-none flex-1 min-w-[200px]"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
+          className="px-4 py-2 rounded-lg text-sm outline-none flex-1 min-w-[200px]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }} />
         <DateRangePicker dateFrom={dateFrom} dateTo={dateTo} onDateFromChange={setDateFrom} onDateToChange={setDateTo} ns="workOrders" />
         <div className="flex gap-1.5">
           <button onClick={() => setStatusFilter('all')}
-            className="px-3 py-1.5 rounded-lg text-xs" style={{
-              background: statusFilter === 'all' ? 'var(--accent)' : 'var(--bg-glass)',
+            className="px-3 py-1.5 rounded-md text-xs transition-all" style={{
+              background: statusFilter === 'all' ? 'var(--accent)' : 'var(--bg-card)',
               color: statusFilter === 'all' ? 'white' : 'var(--text-muted)',
+              border: '1px solid ' + (statusFilter === 'all' ? 'var(--accent)' : 'var(--border-glass)'),
             }}>{isRu ? 'Все' : 'All'}</button>
           {uniqueStatuses.map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}
-              className="px-3 py-1.5 rounded-lg text-xs" style={{
-                background: statusFilter === s ? 'var(--accent)' : 'var(--bg-glass)',
+              className="px-3 py-1.5 rounded-md text-xs transition-all" style={{
+                background: statusFilter === s ? 'var(--accent)' : 'var(--bg-card)',
                 color: statusFilter === s ? 'white' : 'var(--text-muted)',
+                border: '1px solid ' + (statusFilter === s ? 'var(--accent)' : 'var(--border-glass)'),
               }}>{t(`workOrders.${s}`)}</button>
           ))}
         </div>
@@ -183,13 +187,14 @@ export default function WorkOrders() {
       </div>
 
       {/* Table */}
-      <div className="glass-static overflow-x-auto">
+      <div className="rounded-lg overflow-x-auto"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
         <table className="w-full text-sm" style={{ minWidth: 700 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
               {columns.map(col => (
                 <th key={col.key}
-                  className={`text-left px-4 py-3 font-medium ${col.noSort ? '' : 'cursor-pointer select-none hover:opacity-80'}`}
+                  className={`text-left px-4 py-3 text-[10px] uppercase tracking-wider font-semibold ${col.noSort ? '' : 'cursor-pointer select-none hover:opacity-80'}`}
                   style={{ color: sortBy === col.key ? 'var(--accent)' : 'var(--text-muted)' }}
                   onClick={() => !col.noSort && toggleSort(col.key)}>
                   {col.label}{!col.noSort && sortIcon(col.key)}

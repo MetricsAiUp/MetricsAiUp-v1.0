@@ -85,7 +85,7 @@ function ZoneCameraCard({ zone, isDark, isRu, onCameraClick, cameraStatuses }) {
   const Icon = TYPE_ICONS[zone.type] || Wrench;
 
   return (
-    <div className="glass p-4">
+    <div className="rounded-lg p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Icon size={14} style={{ color }} />
@@ -144,7 +144,9 @@ function AllCamerasCard({ cam, isDark, isRu, onCameraClick }) {
   const isOnline = cam.online === true;
 
   return (
-    <div className="glass overflow-hidden cursor-pointer" onClick={() => onCameraClick?.(cam.num)}>
+    <div className="rounded-lg overflow-hidden cursor-pointer transition-all hover:translate-y-[-1px]"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
+      onClick={() => onCameraClick?.(cam.num)}>
       {/* Video stream area — 16:9 ratio, ready for HLS/RTSP */}
       <div
         className="relative w-full flex items-center justify-center"
@@ -227,10 +229,10 @@ export default function Cameras() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {isRu ? 'Камеры' : 'Cameras'}
           </h2>
           <HelpButton pageKey="cameras" />
@@ -251,9 +253,9 @@ export default function Cameras() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className="px-4 py-2 rounded-xl text-sm transition-all"
+            className="px-4 py-2 rounded-lg text-sm transition-all"
             style={{
-              background: tab === t.key ? 'var(--accent)' : 'var(--bg-glass)',
+              background: tab === t.key ? 'var(--accent)' : 'var(--bg-card)',
               color: tab === t.key ? 'white' : 'var(--text-secondary)',
               border: `1px solid ${tab === t.key ? 'var(--accent)' : 'var(--border-glass)'}`,
             }}
@@ -272,10 +274,11 @@ export default function Cameras() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className="px-3 py-1.5 rounded-lg text-xs transition-all"
+                className="px-3 py-1.5 rounded-md text-xs transition-all"
                 style={{
-                  background: filter === f.key ? 'var(--accent)' : 'var(--bg-glass)',
+                  background: filter === f.key ? 'var(--accent)' : 'var(--bg-card)',
                   color: filter === f.key ? 'white' : 'var(--text-muted)',
+                  border: `1px solid ${filter === f.key ? 'var(--accent)' : 'var(--border-glass)'}`,
                 }}
               >
                 {f.label}

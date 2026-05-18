@@ -97,19 +97,18 @@ export default function ReportSchedule() {
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-            <FileSpreadsheet size={20} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             {t('reportSchedule.title')}
             <HelpButton pageKey="reportSchedule" />
           </h2>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-white"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white"
           style={{ background: 'var(--accent)' }}
         >
           <Plus size={14} />
@@ -119,16 +118,16 @@ export default function ReportSchedule() {
 
       {/* Table */}
       {schedules.length === 0 ? (
-        <div className="glass-static p-8 rounded-2xl text-center" style={{ color: 'var(--text-muted)' }}>
+        <div className="rounded-lg p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {t('reportSchedule.noSchedules')}
         </div>
       ) : (
-        <div className="glass-static rounded-2xl overflow-hidden">
+        <div className="rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
                 {[t('reportSchedule.name'), t('reportSchedule.frequency'), t('reportSchedule.hour'), t('reportSchedule.format'), t('reportSchedule.active'), t('reportSchedule.lastRun'), ''].map((h, i) => (
-                  <th key={i} className="px-4 py-3 text-left text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{h}</th>
+                  <th key={i} className="px-4 py-3 text-left text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -174,9 +173,9 @@ export default function ReportSchedule() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="glass-static p-6 rounded-2xl max-w-md w-full mx-4 space-y-4">
+          <div className="rounded-lg p-6 max-w-md w-full mx-4 space-y-4 shadow-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                 {editItem ? t('reportSchedule.name') : t('reportSchedule.addNew')}
               </h3>
               <button onClick={() => setShowForm(false)} style={{ color: 'var(--text-muted)' }}>
@@ -190,8 +189,8 @@ export default function ReportSchedule() {
                 <input
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl text-sm"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                 />
               </div>
 
@@ -200,8 +199,8 @@ export default function ReportSchedule() {
                 <select
                   value={form.frequency}
                   onChange={e => setForm({ ...form, frequency: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl text-sm"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                 >
                   <option value="daily">{t('reportSchedule.daily')}</option>
                   <option value="weekly">{t('reportSchedule.weekly')}</option>
@@ -216,8 +215,8 @@ export default function ReportSchedule() {
                   <select
                     value={form.dayOfWeek}
                     onChange={e => setForm({ ...form, dayOfWeek: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl text-sm"
-                    style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                    className="w-full px-3 py-2 rounded-lg text-sm"
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                   >
                     {days.map((d, i) => <option key={i} value={i}>{d}</option>)}
                   </select>
@@ -231,8 +230,8 @@ export default function ReportSchedule() {
                     type="number" min={0} max={23}
                     value={form.hour}
                     onChange={e => setForm({ ...form, hour: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl text-sm"
-                    style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                    className="w-full px-3 py-2 rounded-lg text-sm"
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                   />
                 </div>
                 <div className="flex-1">
@@ -241,8 +240,8 @@ export default function ReportSchedule() {
                     type="number" min={0} max={59}
                     value={form.minute}
                     onChange={e => setForm({ ...form, minute: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl text-sm"
-                    style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                    className="w-full px-3 py-2 rounded-lg text-sm"
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                   />
                 </div>
               </div>
@@ -252,8 +251,8 @@ export default function ReportSchedule() {
                 <select
                   value={form.format}
                   onChange={e => setForm({ ...form, format: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl text-sm"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                 >
                   <option value="xlsx">XLSX</option>
                 </select>
@@ -265,8 +264,8 @@ export default function ReportSchedule() {
                   value={form.chatId}
                   onChange={e => setForm({ ...form, chatId: e.target.value })}
                   placeholder={isRu ? 'Опционально' : 'Optional'}
-                  className="w-full px-3 py-2 rounded-xl text-sm"
-                  style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
                 />
               </div>
             </div>
@@ -275,14 +274,14 @@ export default function ReportSchedule() {
               <button
                 onClick={handleSubmit}
                 disabled={!form.name || !form.frequency}
-                className="flex-1 px-4 py-2 rounded-xl text-sm font-medium text-white"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white"
                 style={{ background: 'var(--accent)', opacity: (!form.name || !form.frequency) ? 0.5 : 1 }}
               >
                 {t('reportSchedule.save')}
               </button>
               <button
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 rounded-xl text-sm"
+                className="px-4 py-2 rounded-lg text-sm"
                 style={{ color: 'var(--text-muted)', border: '1px solid var(--border-glass)' }}
               >
                 {t('common.cancel')}

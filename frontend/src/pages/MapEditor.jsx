@@ -784,7 +784,7 @@ export default function MapEditor() {
   return (
     <div ref={pageRef} className="flex flex-col overflow-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Top Bar */}
-      <div className="glass-static flex items-center gap-1 px-2 py-1 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+      <div className="flex items-center gap-1 px-2 py-1 flex-shrink-0" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-glass)' }}>
         <HelpButton pageKey="mapEditor" />
         <input
           type="text"
@@ -873,7 +873,7 @@ export default function MapEditor() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Toolbar */}
-        <div className="glass-static flex flex-col gap-0.5 p-1.5 flex-shrink-0" style={{ width: 44, borderRight: '1px solid var(--border-glass)' }}>
+        <div className="flex flex-col gap-0.5 p-1.5 flex-shrink-0" style={{ width: 44, background: 'var(--bg-card)', borderRight: '1px solid var(--border-glass)' }}>
           {TOOLS.map(tl => {
             const Icon = tl.icon;
             const active = tool === tl.id;
@@ -1043,7 +1043,7 @@ export default function MapEditor() {
         </div>
 
         {/* Right Properties Panel */}
-        <div className="glass-static flex flex-col p-2 flex-shrink-0 overflow-y-auto" style={{ width: 160, borderLeft: '1px solid var(--border-glass)', minHeight: 0 }}>
+        <div className="flex flex-col p-2 flex-shrink-0 overflow-y-auto" style={{ width: 160, background: 'var(--bg-card)', borderLeft: '1px solid var(--border-glass)', minHeight: 0 }}>
           <h3 className="text-xs font-semibold mb-3" style={{ color: 'var(--accent)' }}>{t('mapEditor.properties')}</h3>
           {selected ? (editingId === selected.id ? (
             <div className="space-y-2">

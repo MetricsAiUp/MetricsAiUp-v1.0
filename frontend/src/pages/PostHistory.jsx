@@ -506,8 +506,8 @@ export default function PostHistory() {
                 ].map(col => (
                   <th key={col.key}
                     onClick={col.noSort ? undefined : () => toggleSort(col.key)}
-                    className={`px-3 py-2 text-left font-semibold ${col.noSort ? '' : 'cursor-pointer hover:opacity-80'}`}
-                    style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                    className={`px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${col.noSort ? '' : 'cursor-pointer hover:opacity-80'}`}
+                    style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-glass)' }}>
                     <div className="flex items-center gap-1">
                       <col.icon size={11} />
                       {col.label}
@@ -898,8 +898,8 @@ export function ZoneHistory() {
                   { key: 'confidence', label: isRu ? 'Точность' : 'Confidence', icon: Shield },
                 ].map(col => (
                   <th key={col.key} onClick={col.noSort ? undefined : () => toggleSort(col.key)}
-                    className={`px-3 py-2 text-left font-semibold ${col.noSort ? '' : 'cursor-pointer hover:opacity-80'}`}
-                    style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                    className={`px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${col.noSort ? '' : 'cursor-pointer hover:opacity-80'}`}
+                    style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-glass)' }}>
                     <div className="flex items-center gap-1">
                       <col.icon size={11} /> {col.label}
                       {!col.noSort && <SortIcon field={col.key} />}

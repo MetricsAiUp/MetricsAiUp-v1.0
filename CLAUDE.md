@@ -68,7 +68,7 @@ cd /project && node server.js
 └── index.html                  # Entry point (SPA)
 ```
 
-## Frontend — 24 страницы
+## Frontend — 23 страницы
 
 | Страница | Файл | Описание |
 |----------|------|----------|
@@ -84,7 +84,6 @@ cd /project && node server.js
 | Data1C | Data1C.jsx (540) | Данные 1С v2: 5 табов (Сейчас/Импорты/Несопоставленные/Выработка/Настройки IMAP) |
 | Discrepancies | Discrepancies.jsx (315) | Нестыковки 1С↔CV: 6 правил, 4 статуса, KPI/фильтры/двухпанельный детал |
 | Cameras | Cameras.jsx | 10 камер, зоны покрытия, HLS стримы |
-| CameraMapping | CameraMapping.jsx (328) | Маппинг камера↔зона, приоритеты |
 | Users | Users.jsx | CRUD пользователей, роли, доступ к страницам |
 | Shifts | Shifts.jsx | Недельное расписание смен, worker assignment |
 | Audit | Audit.jsx | Аудит-лог действий, фильтры, CSV-экспорт |

@@ -27,12 +27,13 @@ const EVENT_TYPES = {
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="glass px-3 py-2 flex items-center gap-2">
-      <div className="p-1 rounded-md" style={{ background: color + '15' }}>
-        <Icon size={14} style={{ color }} />
+    <div className="flex flex-col gap-1 px-4 py-3 rounded-lg transition-all hover:translate-y-[-1px]"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+      <div className="flex items-center gap-1.5">
+        <Icon size={11} strokeWidth={2.5} style={{ color }} />
+        <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>{label}</span>
       </div>
-      <span className="text-lg font-bold leading-none" style={{ color }}>{value}</span>
-      <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span className="text-2xl font-bold font-mono leading-none tracking-tight" style={{ color }}>{value}</span>
     </div>
   );
 }
@@ -47,7 +48,8 @@ function RecommendationCard({ rec, onAcknowledge, t, isRu }) {
   };
 
   return (
-    <div className="glass p-2.5 flex items-center justify-between gap-2">
+    <div className="rounded-lg p-3 flex items-center justify-between gap-2"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <div className="min-w-0">
         <span
           className="text-xs font-medium px-1.5 py-0.5 rounded-full"
@@ -132,9 +134,9 @@ export default function Dashboard() {
     ?.reduce((sum, p) => sum + p._count, 0) || 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
           {t('nav.dashboard')}
         </h2>
         <HelpButton pageKey="dashboard" />
@@ -143,7 +145,7 @@ export default function Dashboard() {
 
       {/* Stats — only in demo mode */}
       {!isLive && elVis('statCards') && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard icon={Car} label={t('dashboard.activeSessions')} value={overview?.activeSessions || 0} color="var(--accent)" />
           <StatCard icon={CircleCheck} label={t('dashboard.freePosts')} value={freePostsCount} color="var(--success)" />
           <StatCard icon={Wrench} label={t('dashboard.occupiedPosts')} value={occupiedCount} color="var(--warning)" />
@@ -160,12 +162,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recommendations — only in demo mode */}
         {!isLive && elVis('recommendations') && <div>
-          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-[11px] uppercase tracking-wider font-semibold mb-3" style={{ color: 'var(--text-muted)' }}>
             {t('recommendations.title')}
           </h3>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {recommendations.length === 0 ? (
-              <div className="glass p-4 text-center" style={{ color: 'var(--text-muted)' }}>
+              <div className="rounded-lg p-4 text-center"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
                 {t('common.noData')}
               </div>
             ) : (
@@ -186,24 +189,27 @@ export default function Dashboard() {
 
         {/* Recent Events — only in demo mode */}
         {!isLive && elVis('recentEvents') && <div>
-          <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-[11px] uppercase tracking-wider font-semibold mb-3" style={{ color: 'var(--text-muted)' }}>
             {t('dashboard.recentEvents')}
           </h3>
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="flex flex-wrap gap-1.5 mb-3">
             <button onClick={() => setEventFilter('all')}
-              className="px-2 py-1 rounded text-xs" style={{
-                background: eventFilter === 'all' ? 'var(--accent)' : 'var(--bg-glass)',
+              className="px-2.5 py-1 rounded-md text-xs transition-all" style={{
+                background: eventFilter === 'all' ? 'var(--accent)' : 'var(--bg-card)',
                 color: eventFilter === 'all' ? 'white' : 'var(--text-muted)',
+                border: '1px solid ' + (eventFilter === 'all' ? 'var(--accent)' : 'var(--border-glass)'),
               }}>{isRu ? 'Все' : 'All'}</button>
             {[...new Set(events.map(e => e.type))].slice(0, 5).map(type => (
               <button key={type} onClick={() => setEventFilter(type)}
-                className="px-2 py-1 rounded text-xs" style={{
-                  background: eventFilter === type ? 'var(--accent)' : 'var(--bg-glass)',
+                className="px-2.5 py-1 rounded-md text-xs transition-all" style={{
+                  background: eventFilter === type ? 'var(--accent)' : 'var(--bg-card)',
                   color: eventFilter === type ? 'white' : 'var(--text-muted)',
+                  border: '1px solid ' + (eventFilter === type ? 'var(--accent)' : 'var(--border-glass)'),
                 }}>{EVENT_TYPES[type]?.[isRu ? 'ru' : 'en'] || type}</button>
             ))}
           </div>
-          <div className="glass-static overflow-hidden">
+          <div className="rounded-lg overflow-hidden"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             {filteredEvents.length === 0 ? (
               <div className="p-4 text-center" style={{ color: 'var(--text-muted)' }}>
                 {t('common.noData')}

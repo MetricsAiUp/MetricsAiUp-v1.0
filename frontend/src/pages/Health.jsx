@@ -75,7 +75,7 @@ export default function Health() {
         {error && <span className="text-[10px] font-mono">{error}</span>}
         <button onClick={() => fetchHealth(true)}
           className="px-3 py-1.5 rounded-lg text-xs"
-          style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)' }}>
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}>
           {t('health.refresh')}
         </button>
       </div>
@@ -102,11 +102,11 @@ export default function Health() {
   const cpuPct = Math.round((cpuLoad / cpuCount) * 100);
 
   return (
-    <div className="space-y-3">
+    <div className="p-6 space-y-5">
       {/* Title bar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('health.title')}
           </h1>
           <HelpButton pageKey="health" />
@@ -156,7 +156,7 @@ export default function Health() {
 
       {/* Pulse — полноширинный ряд 8 KPI */}
       <Section title={t('health.sections.pulse')}>
-        <div className="glass p-3">
+        <div className="rounded-lg p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             <PulseStat
               label={t('health.metrics.lastEvent')}
@@ -179,7 +179,7 @@ export default function Health() {
 
       {/* Resources — полноширинный ряд 4 баров */}
       <Section title={t('health.sections.resources')}>
-        <div className="glass p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-2.5">
+        <div className="rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-2.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <ResourceBar
             label={t('health.resources.heap')}
             percent={heapPct}
@@ -295,7 +295,7 @@ export default function Health() {
       {/* Security + Cameras (1:2 — камер больше места) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <Section title={t('health.sections.security')}>
-          <div className="glass p-3 space-y-1.5">
+          <div className="rounded-lg p-4 space-y-1.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <MetricRow
               label={t('health.security.failedLogins')}
               value={security.failedLogins24h ?? 0}
@@ -313,7 +313,7 @@ export default function Health() {
         </Section>
 
         <Section title={t('health.sections.cameras')} className="lg:col-span-2">
-          <div className="glass p-3 space-y-2">
+          <div className="rounded-lg p-4 space-y-2" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Camera size={14} style={{ color: 'var(--accent)' }} />
@@ -400,7 +400,7 @@ function PulseStat({ label, value, hint, tone }) {
 function InternalServiceCard({ icon: Icon, title, level, statusLabel, rows = [] }) {
   const color = LEVEL_COLOR[level];
   return (
-    <div className="relative glass p-2.5 pl-3 space-y-1.5 h-full overflow-hidden">
+    <div className="relative rounded-lg p-3 pl-4 space-y-1.5 h-full overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
       <span className="absolute left-0 top-0 bottom-0 w-[3px]"
         style={{ background: color, opacity: 0.85 }} />
       <div className="flex items-center justify-between">

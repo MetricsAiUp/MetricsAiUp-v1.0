@@ -105,7 +105,7 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
   return (
     <div className="space-y-2">
       {/* Vehicle */}
-      <div className="p-3 rounded-xl" style={{ background: 'var(--accent-light)' }}>
+      <div className="p-3 rounded-lg" style={{ background: 'var(--accent-light)' }}>
         <div className="flex items-center gap-2 mb-1">
           <Car size={14} style={{ color: 'var(--accent)' }} />
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentVehicle')}</span>
@@ -131,7 +131,7 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
 
       {/* Works */}
       {liveItem.worksInProgress && (
-        <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <div className="flex items-center gap-2 mb-1">
             <Wrench size={14} style={{ color: 'var(--accent)' }} />
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.worksInProgress')}</span>
@@ -144,17 +144,17 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
 
       {/* People + Open Parts + Confidence */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="p-2 rounded-lg text-center" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <Users size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.people')}</div>
           <div className="text-sm font-bold" style={{ color: liveItem.peopleCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{liveItem.peopleCount ?? 0}</div>
         </div>
-        <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="p-2 rounded-lg text-center" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <Eye size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.confidence')}</div>
           <div className="mt-0.5"><ConfidenceBadge level={liveItem.confidence} isRu={isRu} /></div>
         </div>
-        <div className="p-2 rounded-xl text-center" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="p-2 rounded-lg text-center" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <Clock size={12} style={{ color: 'var(--text-muted)', margin: '0 auto 2px' }} />
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.lastUpdate')}</div>
           <div className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>
@@ -165,7 +165,7 @@ function LiveInfoBlock({ liveItem, t, isRu }) {
 
       {/* Open parts */}
       {liveItem.openParts?.length > 0 && (
-        <div className="p-2 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        <div className="p-2 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
           <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{t('mapView.openParts')}</div>
           <OpenPartsBadges parts={liveItem.openParts} isRu={isRu} />
         </div>
@@ -208,12 +208,12 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div className="glass rounded-2xl p-5 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
-        style={{ border: '1px solid var(--border-glass)' }} onClick={e => e.stopPropagation()}>
+      <div className="rounded-lg p-5 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ background: statusColor }} />
-            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               {t(`posts.post${postNum}`)}
             </h3>
             <span className="text-xs px-2 py-0.5 rounded-full"
@@ -232,7 +232,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
           ) : (
             /* Demo mode data */
             <>
-              <div className="p-3 rounded-xl" style={{ background: 'var(--accent-light)' }}>
+              <div className="p-3 rounded-lg" style={{ background: 'var(--accent-light)' }}>
                 <div className="flex items-center gap-2 mb-1">
                   <Car size={14} style={{ color: 'var(--accent)' }} />
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentVehicle')}</span>
@@ -251,7 +251,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                 )}
               </div>
               {currentWO && (
-                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <FileText size={14} style={{ color: 'var(--accent)' }} />
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.currentWO')}</span>
@@ -263,7 +263,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                 </div>
               )}
               {currentWO?.worker && (
-                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <User size={14} style={{ color: 'var(--text-muted)' }} />
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.worker')}</span>
@@ -272,7 +272,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2">
-                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                   <div className="flex items-center gap-1 mb-1">
                     <Clock size={12} style={{ color: 'var(--text-muted)' }} />
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.placedAt')}</span>
@@ -283,7 +283,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                       : '---'}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)' }}>
                   <div className="flex items-center gap-1 mb-1">
                     <Timer size={12} style={{ color: 'var(--text-muted)' }} />
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('mapView.estimatedEnd')}</span>
@@ -301,7 +301,7 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
                 </div>
               )}
               {currentWO?.note && (
-                <div className="p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid var(--warning)' }}>
+                <div className="p-3 rounded-lg" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid var(--warning)' }}>
                   <div className="flex items-center gap-1 mb-1">
                     <AlertTriangle size={12} style={{ color: 'var(--warning)' }} />
                     <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>{t('mapView.note')}</span>
@@ -316,14 +316,14 @@ function PostModal({ postNum, dashboardData, monitoringData, isLive, onClose, on
         {/* Action buttons */}
         <div className="flex gap-2 mt-4">
           <button onClick={() => onGoToPost(postNum)}
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
             style={{ background: 'var(--accent)', color: '#fff' }}>
             {t('mapView.goToPost')} <ArrowRight size={16} />
           </button>
           {isLive && liveItem?.history?.length > 0 && (
             <button onClick={() => onGoToHistory()}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-              style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+              className="px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
               <History size={16} /> {liveItem.history.length}
             </button>
           )}
@@ -347,12 +347,12 @@ function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div className="glass rounded-2xl p-5 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
-        style={{ border: '1px solid var(--border-glass)' }} onClick={e => e.stopPropagation()}>
+      <div className="rounded-lg p-5 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ background: statusColor }} />
-            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               {zoneName}
             </h3>
             <span className="text-xs px-2 py-0.5 rounded-full"
@@ -377,8 +377,8 @@ function ZoneModal({ zoneName, monitoringData, isLive, onClose, onGoToHistory, t
         {/* History button */}
         {isLive && liveItem?.history?.length > 0 && (
           <button onClick={() => onGoToHistory()}
-            className="w-full mt-4 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            className="w-full mt-4 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
             <History size={16} /> {t('mapView.viewHistory')} ({liveItem.history.length})
           </button>
         )}
@@ -895,7 +895,7 @@ export default function MapViewer() {
         {/* Stats pills */}
         {stats.map((s, i) => (
           <div key={i} className="flex items-center gap-1 px-2 py-0.5 rounded"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{s.label}</span>
             <span className="text-xs font-bold" style={{ color: s.color }}>{s.value}</span>
           </div>
@@ -919,7 +919,7 @@ export default function MapViewer() {
         <div className="relative">
           <button onClick={() => setShowLayersPanel(!showLayersPanel)}
             className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
             <Layers size={12} /> {t('mapView.layers')}
             {showLayersPanel ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
           </button>
@@ -951,7 +951,7 @@ export default function MapViewer() {
           <button onClick={() => setReplayMode(m => !m)}
             className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
             style={{
-              background: replayMode ? 'var(--accent)' : 'var(--bg-glass)',
+              background: replayMode ? 'var(--accent)' : 'var(--bg-card)',
               border: '1px solid var(--border-glass)',
               color: replayMode ? '#fff' : 'var(--text-secondary)',
             }}
@@ -961,12 +961,12 @@ export default function MapViewer() {
         )}
         <button onClick={handleExportPng}
           className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           <Image size={12} /> PNG
         </button>
         <button onClick={handleExportPdf}
           className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium hover:opacity-80 transition-opacity"
-          style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)' }}>
           <FileDown size={12} /> PDF
         </button>
         <HelpButton pageKey="map" />
