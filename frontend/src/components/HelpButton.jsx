@@ -4796,7 +4796,7 @@ const HELP_CONTENT = {
   data1c: {
     ru: {
       title: 'Данные 1С',
-      tabOrder: ['current', 'imports', 'raw', 'unmapped', 'settings'],
+      tabOrder: ['current', 'imports', 'raw', 'settings'],
       tabs: {
         current: {
           label: 'Сейчас',
@@ -4902,40 +4902,6 @@ const HELP_CONTENT = {
             },
           ],
         },
-        unmapped: {
-          label: 'Несопоставленные',
-          intro: 'Сырые имена постов из XLSX («Пост 1», «П1», «П-1», «Heavy 1», «Пост N°1»…), для которых нет записи в `PostNameMapping`. Пока нет маппинга — этапы из этих писем **не попадают** на конкретные посты (postId остаётся null), и сводка «Сейчас» их не покажет.',
-          sections: [
-            {
-              heading: 'Как пользоваться',
-              items: [
-                '[●orange]**Список rawName** — все непривязанные имена постов с количеством строк.',
-                '[click]**Dropdown «Сопоставить с Post»** — выбрать реальный Post.id из 10 постов СТО.',
-                '[click]**Кнопка «Сохранить»** — создаёт запись в PostNameMapping (rawName → postId). Применяется ко всем существующим строкам и всем будущим выгрузкам.',
-                '[●red]**Кнопка «Игнорировать»** — пометить rawName как мусор (например, «Стойка», «Кафе») — больше не показывать в списке.',
-              ],
-            },
-            {
-              heading: 'Бейдж-счётчик',
-              items: [
-                '[●yellow]**Жёлтый счётчик** на табе «Несопоставленные» — количество **нерешённых** rawName.',
-                '[live]**Live-обновление**: бэкенд эмитит `unmapped:changed` при авто-резолве (детектором нестыковок) или ручном резолве через UI — счётчик пересчитывается без перезагрузки страницы.',
-              ],
-            },
-            {
-              heading: 'Зачем это нужно',
-              items: [
-                'В 1С название постов вводится мастером вручную (свободный текст) → каждая СТО придумывает свои сокращения.',
-                'Маппинг **разовый** на каждое новое сокращение — пока его нет, корректный анализ невозможен (нестыковки `wrong_post` будут ложными).',
-                '[ok] **Best practice**: после первой выгрузки 1С — разобрать этот таб сразу, потом достаточно проверять раз в неделю.',
-              ],
-            },
-            {
-              heading: 'Доступ',
-              items: ['**Просмотр + резолюция**: `manage_1c_import` (admin / manager). У других — таб скрыт.'],
-            },
-          ],
-        },
         settings: {
           label: 'Настройки',
           intro: 'Настройки опроса IMAP-ящика 1С. Пароль шифруется на бэкенде через AES-GCM с ключом из переменной окружения `IMAP1C_KEY` (32 байта). В API пароль никогда не возвращается в открытом виде.',
@@ -4980,7 +4946,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: '1C Data',
-      tabOrder: ['current', 'imports', 'raw', 'unmapped', 'settings'],
+      tabOrder: ['current', 'imports', 'raw', 'settings'],
       tabs: {
         current: {
           label: 'Current',
@@ -5081,40 +5047,6 @@ const HELP_CONTENT = {
             {
               heading: 'Access',
               items: ['**View**: `view_1c`. This tab is read-only.'],
-            },
-          ],
-        },
-        unmapped: {
-          label: 'Unmapped',
-          intro: 'Raw post names from XLSX ("Post 1", "P1", "P-1", "Heavy 1", "Пост N°1"…) without an entry in `PostNameMapping`. Until mapped — stages from these emails do **not** reach specific posts (postId stays null), and the "Current" summary will not show them.',
-          sections: [
-            {
-              heading: 'How to use',
-              items: [
-                '[●orange]**rawName list** — all unmapped post names with row count.',
-                '[click]**"Map to Post" dropdown** — pick the real Post.id from the 10 STO posts.',
-                '[click]**"Save" button** — creates a PostNameMapping entry (rawName → postId). Applies to all existing rows and all future imports.',
-                '[●red]**"Ignore" button** — mark rawName as noise (e.g., "Stand", "Cafe") — hide from the list.',
-              ],
-            },
-            {
-              heading: 'Badge counter',
-              items: [
-                '[●yellow]**Yellow counter** on the "Unmapped" tab — count of **unresolved** rawNames.',
-                '[live]**Live update**: backend emits `unmapped:changed` on auto-resolve (by discrepancy detector) or manual resolve via UI — counter recomputes without page reload.',
-              ],
-            },
-            {
-              heading: 'Why this matters',
-              items: [
-                'In 1C, post name is typed by the master manually (free text) → every STO invents its own shortcuts.',
-                'Mapping is **one-time** for each new shortcut — until done, accurate analysis is impossible (`wrong_post` discrepancies will be false positives).',
-                '[ok] **Best practice**: after the first 1C export — clear this tab immediately, then weekly checks are enough.',
-              ],
-            },
-            {
-              heading: 'Access',
-              items: ['**View + resolve**: `manage_1c_import` (admin / manager). Others — the tab is hidden.'],
             },
           ],
         },

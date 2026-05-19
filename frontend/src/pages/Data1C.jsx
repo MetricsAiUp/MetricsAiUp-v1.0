@@ -1,4 +1,4 @@
-// Данные 1С — экран на 5 вкладок (Сейчас / Импорты / Сырые таблицы / Несопоставленные / Настройки).
+// Данные 1С — экран на 4 вкладки (Сейчас / Импорты / Сырые таблицы / Настройки).
 // «Выработка» вынесена в отдельную страницу /payroll (3 ролевых среза).
 // Под капотом — REST /api/oneC/*.
 //
@@ -6,14 +6,13 @@
 // сортируемые колонки, цветные бейджи состояний и типов, chips для видов работ,
 // бейджи-счётчики на самих табах.
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { useSocket } from '../hooks/useSocket';
 import {
   Database, Inbox, AlertTriangle, BarChart3, Settings, Upload, RefreshCw, Save,
-  CheckCircle2, XCircle, Layers, Activity, Hourglass, ListChecks, Hash, Users, Mail, Server, FilterX,
+  CheckCircle2, XCircle, Layers, Activity, Hourglass, ListChecks, Hash, Users, Mail, Server,
   BellOff, Bell, HelpCircle, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import HelpButton from '../components/HelpButton';
@@ -33,7 +32,6 @@ const TAB_DEFS = [
   { id: 'current',  icon: Database,       perm: 'view_1c' },
   { id: 'imports',  icon: Inbox,          perm: 'view_1c' },
   { id: 'raw',      icon: Layers,         perm: 'view_1c' },
-  { id: 'unmapped', icon: AlertTriangle,  perm: 'manage_1c_import' },
   { id: 'settings', icon: Settings,       perm: 'manage_1c_config' },
 ];
 
@@ -98,13 +96,41 @@ function inPeriod(value, period) {
 }
 
 // ---------- Tab: Current ----------
+// Forward-looking присеты для вкладки «Сейчас»: что предстоит сегодня/завтра/+7д/+30д.
+// Поле фильтрации — scheduled_start (плановое начало работ).
+const FORWARD_PRESETS = ['today', 'tomorrow', 'weekAhead', 'monthAhead'];
+
+function startOfDayLocal(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function endOfDayLocal(d)   { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; }
+
+function rangeForForwardPreset(preset) {
+  const now = new Date();
+  if (preset === 'today') {
+    return { from: startOfDayLocal(now).toISOString(), to: endOfDayLocal(now).toISOString() };
+  }
+  if (preset === 'tomorrow') {
+    const t = new Date(now); t.setDate(t.getDate() + 1);
+    return { from: startOfDayLocal(t).toISOString(), to: endOfDayLocal(t).toISOString() };
+  }
+  if (preset === 'weekAhead') {
+    const e = new Date(now); e.setDate(e.getDate() + 6);
+    return { from: startOfDayLocal(now).toISOString(), to: endOfDayLocal(e).toISOString() };
+  }
+  if (preset === 'monthAhead') {
+    const e = new Date(now); e.setDate(e.getDate() + 29);
+    return { from: startOfDayLocal(now).toISOString(), to: endOfDayLocal(e).toISOString() };
+  }
+  return { from: null, to: null };
+}
+
 function TabCurrent({ api }) {
   const { t } = useTranslation();
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState('');
-  const [period, setPeriod] = useState({ preset: 'all', from: null, to: null });
+  const [presetId, setPresetId] = useState('today');
+  const period = useMemo(() => ({ preset: presetId, ...rangeForForwardPreset(presetId) }), [presetId]);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
 
@@ -119,7 +145,7 @@ function TabCurrent({ api }) {
   }, [api]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [search, stateFilter, period.preset, period.from, period.to]);
+  useEffect(() => { setPage(1); }, [search, stateFilter, presetId]);
 
   // Список уникальных состояний для dropdown'а
   const stateOptions = useMemo(() => {
@@ -128,13 +154,10 @@ function TabCurrent({ api }) {
     return [...set].sort();
   }, [allItems]);
 
-  // Фильтрация
+  // Фильтрация: всегда по выбранному периоду (forward-looking, по scheduled_start)
   const filtered = useMemo(() => {
-    let res = allItems;
+    let res = allItems.filter((r) => inPeriod(r.scheduled_start, period));
     if (stateFilter) res = res.filter((r) => r.state === stateFilter);
-    if (period.preset !== 'all') {
-      res = res.filter((r) => inPeriod(r.scheduled_start, period));
-    }
     if (search) {
       const q = search.toLowerCase();
       res = res.filter((r) =>
@@ -147,40 +170,63 @@ function TabCurrent({ api }) {
     return res;
   }, [allItems, stateFilter, period, search]);
 
-  // KPI
+  // KPI считаем строго по выбранному периоду (scheduled_start или closed_at в [from, to])
   const kpi = useMemo(() => {
-    const inWork = allItems.filter((r) => /работ/i.test(r.state || '')).length;
-    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
-    const closedToday = allItems.filter((r) => r.closed_at && new Date(r.closed_at) >= startOfToday).length;
+    const inP = (iso) => inPeriod(iso, period);
     const now = Date.now();
-    const overdue = allItems.filter((r) =>
-      /работ/i.test(r.state || '') && r.scheduled_start && new Date(r.scheduled_start).getTime() < now - 12 * 3600 * 1000
+    const scheduled = allItems.filter((r) => inP(r.scheduled_start));
+    const inWork    = scheduled.filter((r) => /работ/i.test(r.state || '')).length;
+    const closed    = allItems.filter((r) => r.closed_at && inP(r.closed_at)).length;
+    const overdue   = scheduled.filter((r) =>
+      !r.closed_at && r.scheduled_start && new Date(r.scheduled_start).getTime() < now
     ).length;
-    return { total: allItems.length, inWork, closedToday, overdue };
-  }, [allItems]);
+    return { scheduled: scheduled.length, inWork, closed, overdue };
+  }, [allItems, period]);
 
-  // Сортировка — снимаем подсказки из ключей API (snake_case).
-  const { sorted, sortKey, sortDir, toggle } = useTableSort(filtered, null, 'desc');
+  // Сортировка — по умолчанию ближайшие сверху (forward-looking).
+  const { sorted, sortKey, sortDir, toggle } = useTableSort(filtered, 'scheduled_start', 'asc');
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const items = sorted.slice((page - 1) * perPage, page * perPage);
 
   const onReset = () => {
-    setSearch(''); setStateFilter(''); setPeriod({ preset: 'all', from: null, to: null });
+    setSearch(''); setStateFilter(''); setPresetId('today');
   };
-  const hasFilters = !!search || !!stateFilter || period.preset !== 'all';
+  const hasFilters = !!search || !!stateFilter || presetId !== 'today';
+  const periodHint = t(`data1c.current.periodHint.${presetId}`);
 
   return (
     <div className="space-y-3">
+      {/* Сегментированный контрол: forward-looking присеты */}
+      <div className="flex items-center gap-0.5 p-0.5 rounded-lg w-fit"
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
+        {FORWARD_PRESETS.map((p) => {
+          const active = presetId === p;
+          return (
+            <button key={p} onClick={() => setPresetId(p)}
+              className="px-3 py-1.5 text-sm rounded-md transition-all whitespace-nowrap"
+              style={{
+                background: active ? 'var(--accent)' : 'transparent',
+                color: active ? 'white' : 'var(--text-secondary)',
+                fontWeight: active ? 600 : 500,
+              }}
+            >
+              {t(`data1c.current.preset.${p}`)}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex flex-wrap gap-3">
-        <KpiCard label={t('data1c.kpi.current.total')}       value={kpi.total}       icon={Hash}        tone="default" />
-        <KpiCard label={t('data1c.kpi.current.inWork')}      value={kpi.inWork}      icon={Activity}    tone="info"      onClick={() => setStateFilter(stateOptions.find((s) => /работ/i.test(s)) || '')} active={stateFilter && /работ/i.test(stateFilter)} />
-        <KpiCard label={t('data1c.kpi.current.closedToday')} value={kpi.closedToday} icon={CheckCircle2} tone="success" />
-        <KpiCard label={t('data1c.kpi.current.overdue')}     value={kpi.overdue}     icon={Hourglass}   tone="danger" />
+        <KpiCard label={t('data1c.kpi.current.scheduled')} value={kpi.scheduled} icon={Hash}         tone="default" hint={periodHint} />
+        <KpiCard label={t('data1c.kpi.current.inWork')}    value={kpi.inWork}    icon={Activity}     tone="info"    hint={periodHint}
+          onClick={() => setStateFilter(stateOptions.find((s) => /работ/i.test(s)) || '')} active={stateFilter && /работ/i.test(stateFilter)} />
+        <KpiCard label={t('data1c.kpi.current.closed')}    value={kpi.closed}    icon={CheckCircle2} tone="success" hint={periodHint} />
+        <KpiCard label={t('data1c.kpi.current.overdue')}   value={kpi.overdue}   icon={Hourglass}    tone="danger"  hint={periodHint} />
       </div>
 
       <FilterBar
-        period={period} onPeriodChange={setPeriod} periodLabel={t('data1c.filterByPlan')}
+        showPeriod={false}
         search={search} onSearchChange={setSearch} searchPlaceholder={t('data1c.current.searchPlaceholder')}
         onRefresh={load} onReset={hasFilters ? onReset : null}
         info={t('data1c.found', { shown: filtered.length, total: allItems.length })}
@@ -717,178 +763,6 @@ function TabRaw({ api }) {
   );
 }
 
-// ---------- Tab: Unmapped ----------
-function TabUnmapped({ api, canManage, onMutate }) {
-  const { t } = useTranslation();
-  const toast = useToast();
-  const [allItems, setAllItems] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [onlyUnresolved, setOnlyUnresolved] = useState(true);
-  const [drafts, setDrafts] = useState({});
-  const [savedRows, setSavedRows] = useState({});  // rawName -> ts (для индикатора "Сохранено")
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
-  const saveTimers = useRef({});
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [u, p] = await Promise.all([
-        api.get('/api/oneC/unmapped-posts'),
-        api.get('/api/posts'),
-      ]);
-      setAllItems(u.data?.items || []);
-      setPosts(p.data || []);
-    } finally {
-      setLoading(false);
-    }
-  }, [api]);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [search, onlyUnresolved]);
-
-  // KPI
-  const kpi = useMemo(() => {
-    const unresolved = allItems.filter((r) => !r.resolved).length;
-    const tracked = allItems.filter((r) => r.resolved && !!r.resolvedPostId).length;
-    const skipped = allItems.filter((r) => r.resolved && r.resolvedAsNonTracked).length;
-    return { total: allItems.length, unresolved, tracked, skipped };
-  }, [allItems]);
-
-  // Фильтрация
-  const filtered = useMemo(() => {
-    let res = allItems;
-    if (onlyUnresolved) res = res.filter((r) => !r.resolved);
-    if (search) {
-      const q = search.toLowerCase();
-      res = res.filter((r) => (r.rawName || '').toLowerCase().includes(q));
-    }
-    return res;
-  }, [allItems, search, onlyUnresolved]);
-
-  const { sorted, sortKey, sortDir, toggle } = useTableSort(filtered, 'occurrences', 'desc');
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
-  const items = sorted.slice((page - 1) * perPage, page * perPage);
-
-  // Auto-save с debounce 600мс. Не дёргаем backend на каждом клике.
-  const scheduleSave = (rawName, draft) => {
-    setDrafts((p) => ({ ...p, [rawName]: draft }));
-    if (saveTimers.current[rawName]) clearTimeout(saveTimers.current[rawName]);
-    saveTimers.current[rawName] = setTimeout(async () => {
-      try {
-        await api.post('/api/oneC/unmapped-posts/resolve', {
-          rawName,
-          postId: draft.postId || null,
-          isTracked: draft.isTracked,
-        });
-        setSavedRows((p) => ({ ...p, [rawName]: Date.now() }));
-        // Тихо обновим данные через секунду
-        setTimeout(() => load(), 800);
-        if (onMutate) onMutate();
-      } catch (e) {
-        toast.error(t('data1c.savingError') + ': ' + e.message);
-      }
-    }, 600);
-  };
-
-  const onReset = () => { setSearch(''); setOnlyUnresolved(false); };
-  const hasFilters = !!search || onlyUnresolved;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
-        <KpiCard label={t('data1c.kpi.unmapped.total')}      value={kpi.total}      icon={Layers}        tone="default" />
-        <KpiCard label={t('data1c.kpi.unmapped.unresolved')} value={kpi.unresolved} icon={AlertTriangle} tone={kpi.unresolved > 0 ? 'warning' : 'success'} />
-        <KpiCard label={t('data1c.kpi.unmapped.tracked')}    value={kpi.tracked}    icon={CheckCircle2}  tone="success" />
-        <KpiCard label={t('data1c.kpi.unmapped.skipped')}    value={kpi.skipped}    icon={FilterX}       tone="info" />
-      </div>
-
-      <FilterBar
-        showPeriod={false}
-        search={search} onSearchChange={setSearch} searchPlaceholder={t('data1c.unmapped.searchPlaceholder')}
-        onRefresh={load} onReset={hasFilters ? onReset : null}
-        info={t('data1c.found', { shown: filtered.length, total: allItems.length })}
-        loading={loading}
-      >
-        <label className="flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-md"
-          style={{ background: onlyUnresolved ? 'var(--accent-light)' : 'var(--bg-glass)', border: '1px solid var(--border-glass)' }}>
-          <input type="checkbox" checked={onlyUnresolved} onChange={(e) => setOnlyUnresolved(e.target.checked)} />
-          {t('data1c.onlyUnresolved')}
-        </label>
-      </FilterBar>
-
-      <TableShell>
-        <thead style={{ background: 'rgba(0,0,0,0.12)', position: 'sticky', top: 0, zIndex: 1 }}>
-          <tr>
-            <SortableTh sortKey="rawName"     current={sortKey} dir={sortDir} onToggle={toggle}>{t('data1c.unmapped.colRawName')}</SortableTh>
-            <SortableTh sortKey="occurrences" current={sortKey} dir={sortDir} onToggle={toggle} align="right">{t('data1c.unmapped.colOccurrences')}</SortableTh>
-            <SortableTh sortKey="firstSeenAt" current={sortKey} dir={sortDir} onToggle={toggle}>{t('data1c.unmapped.colFirstSeen')}</SortableTh>
-            <SortableTh sortKey="lastSeenAt"  current={sortKey} dir={sortDir} onToggle={toggle}>{t('data1c.unmapped.colLastSeen')}</SortableTh>
-            <SortableTh                       current={sortKey} dir={sortDir}>{t('data1c.unmapped.colResolution')}</SortableTh>
-            <SortableTh                       current={sortKey} dir={sortDir}></SortableTh>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={6} className="px-3 py-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.common.loading')}</td></tr>
-          ) : items.length === 0 ? (
-            <tr><td colSpan={6} className="px-3 py-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('data1c.unmapped.allResolved')}</td></tr>
-          ) : items.map((r, idx) => {
-            const draft = drafts[r.rawName] || { postId: r.resolvedPostId || '', isTracked: !r.resolvedAsNonTracked };
-            const wasSaved = savedRows[r.rawName] && Date.now() - savedRows[r.rawName] < 4000;
-            return (
-              <tr key={r.rawName} className={TR_CLASS} style={{ ...tdStyle(idx), borderTop: '1px solid var(--border-glass)' }}>
-                <td className="px-3 py-2 font-mono text-xs">{r.rawName}</td>
-                <td className="px-3 py-2 text-right font-mono font-semibold">{r.occurrences}</td>
-                <td className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>{fmtDt(r.firstSeenAt) || <Dash />}</td>
-                <td className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>{fmtDt(r.lastSeenAt) || <Dash />}</td>
-                <td className="px-3 py-2">
-                  {canManage ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <select value={draft.postId || ''}
-                        onChange={(e) => scheduleSave(r.rawName, { ...draft, postId: e.target.value })}
-                        className="px-2 py-0.5 rounded text-xs"
-                        style={{ background: 'var(--bg-glass)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)' }}>
-                        <option value="">{t('data1c.unmapped.notOurPost')}</option>
-                        {posts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                      <label className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                        <input type="checkbox" checked={!!draft.isTracked}
-                          onChange={(e) => scheduleSave(r.rawName, { ...draft, isTracked: e.target.checked })} />
-                        {t('data1c.unmapped.track')}
-                      </label>
-                    </div>
-                  ) : (
-                    <span style={{ color: 'var(--text-muted)' }}>
-                      {r.resolved ? (r.resolvedAsNonTracked ? t('data1c.unmapped.resolvedNotOurPost') : t('data1c.unmapped.resolved')) : t('data1c.unmapped.unresolved')}
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-right">
-                  {wasSaved && (
-                    <span className="inline-flex items-center gap-1 text-xs" style={{ color: '#10b981' }}>
-                      <CheckCircle2 size={12} /> {t('data1c.saved')}
-                    </span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </TableShell>
-
-      <Pagination
-        page={page} totalPages={totalPages} totalItems={sorted.length}
-        perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage}
-      />
-    </div>
-  );
-}
-
-
 // ---------- Tab: Settings ----------
 function SettingsCard({ title, icon: Icon, children }) {
   return (
@@ -1214,17 +1088,9 @@ export default function Data1C() {
   const canImport = hasPermission && hasPermission('manage_1c_import');
 
   // Подгружаем счётчики для табов фоном — только то, что важно показать.
-  // Несопоставленные: количество нерешённых. Импорты: ошибок за неделю.
+  // Импорты: ошибок за неделю.
   const reloadBadges = useCallback(async () => {
     const next = {};
-    if (canImport) {
-      try {
-        const u = await api.get('/api/oneC/unmapped-posts');
-        const items = u.data?.items || [];
-        const unresolved = items.filter((r) => !r.resolved).length;
-        if (unresolved > 0) next.unmapped = { count: unresolved, tone: 'warning' };
-      } catch { /* ignore */ }
-    }
     try {
       const now = new Date();
       const w = new Date(now); w.setDate(w.getDate() - 7);
@@ -1238,10 +1104,6 @@ export default function Data1C() {
   }, [api, canImport]);
 
   useEffect(() => { reloadBadges(); }, [reloadBadges, active]);
-
-  // Live-обновление счётчика «Несопоставленные»: бэкенд эмитит unmapped:changed
-  // при auto-резолве (детектор нестыковок) и при ручном резолве через UI.
-  useSocket('unmapped:changed', () => { reloadBadges(); });
 
   return (
     <div className="p-6 space-y-4">
@@ -1295,7 +1157,6 @@ export default function Data1C() {
         {active === 'current'  && <TabCurrent  api={api} />}
         {active === 'imports'  && <TabImports  api={api} canImport={canImport} onMutate={reloadBadges} />}
         {active === 'raw'      && <TabRaw      api={api} />}
-        {active === 'unmapped' && <TabUnmapped api={api} canManage={canImport} onMutate={reloadBadges} />}
         {active === 'settings' && <TabSettings api={api} />}
       </div>
     </div>

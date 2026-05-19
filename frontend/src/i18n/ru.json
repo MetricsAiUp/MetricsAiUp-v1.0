@@ -423,7 +423,6 @@
       "current": "Сейчас",
       "imports": "Импорты",
       "raw": "Файлы 1С",
-      "unmapped": "Несопоставленные",
       "settings": "Настройки"
     },
     "period": {
@@ -436,9 +435,9 @@
     },
     "kpi": {
       "current": {
-        "total": "Всего заказов",
+        "scheduled": "Запланировано",
         "inWork": "В работе",
-        "closedToday": "Закрыто сегодня",
+        "closed": "Закрыто",
         "overdue": "Просрочено"
       },
       "imports": {
@@ -451,12 +450,6 @@
         "plan": "Планы и Заявки",
         "repair": "Заказ-наряды",
         "performed": "Выработка"
-      },
-      "unmapped": {
-        "total": "Всего",
-        "unresolved": "Не решено",
-        "tracked": "Отслеживается",
-        "skipped": "Не наш пост"
       }
     },
     "filterByPeriod": "По дате",
@@ -553,7 +546,19 @@
       "colPlan": "План",
       "colClosed": "Закрыт",
       "colNorm": "Норма",
-      "colExecutor": "Исполнитель"
+      "colExecutor": "Исполнитель",
+      "preset": {
+        "today": "Сегодня",
+        "tomorrow": "Завтра",
+        "weekAhead": "Неделя вперёд",
+        "monthAhead": "Месяц вперёд"
+      },
+      "periodHint": {
+        "today": "на сегодня",
+        "tomorrow": "на завтра",
+        "weekAhead": "на 7 дней",
+        "monthAhead": "на 30 дней"
+      }
     },
     "imports": {
       "autoDetectType": "Авто-детект типа",
@@ -593,21 +598,6 @@
         "error_unknown_format": "Ошибка: неизвестный формат",
         "unknown": "—"
       }
-    },
-    "unmapped": {
-      "searchPlaceholder": "Поиск по сырому имени поста",
-      "colRawName": "Сырое имя",
-      "colOccurrences": "Встречалось",
-      "colFirstSeen": "Первое",
-      "colLastSeen": "Последнее",
-      "colResolution": "Резолюция",
-      "allResolved": "Все имена сопоставлены",
-      "notOurPost": "— не наш пост —",
-      "track": "отслеживать",
-      "saveTitle": "Сохранить",
-      "resolvedNotOurPost": "не наш пост",
-      "resolved": "сопоставлено",
-      "unresolved": "не сопоставлено"
     },
     "settings": {
       "host": "IMAP host",

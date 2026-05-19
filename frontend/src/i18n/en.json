@@ -423,7 +423,6 @@
       "current": "Current",
       "imports": "Imports",
       "raw": "1C files",
-      "unmapped": "Unmapped",
       "settings": "Settings"
     },
     "period": {
@@ -436,9 +435,9 @@
     },
     "kpi": {
       "current": {
-        "total": "Total orders",
+        "scheduled": "Scheduled",
         "inWork": "In progress",
-        "closedToday": "Closed today",
+        "closed": "Closed",
         "overdue": "Overdue"
       },
       "imports": {
@@ -451,12 +450,6 @@
         "plan": "Plans & Requests",
         "repair": "Work orders",
         "performed": "Performed"
-      },
-      "unmapped": {
-        "total": "Total",
-        "unresolved": "Unresolved",
-        "tracked": "Tracked",
-        "skipped": "Not our post"
       }
     },
     "filterByPeriod": "By date",
@@ -553,7 +546,19 @@
       "colPlan": "Plan",
       "colClosed": "Closed",
       "colNorm": "Norm",
-      "colExecutor": "Executor"
+      "colExecutor": "Executor",
+      "preset": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "weekAhead": "Next 7 days",
+        "monthAhead": "Next 30 days"
+      },
+      "periodHint": {
+        "today": "for today",
+        "tomorrow": "for tomorrow",
+        "weekAhead": "next 7 days",
+        "monthAhead": "next 30 days"
+      }
     },
     "imports": {
       "autoDetectType": "Auto-detect type",
@@ -593,21 +598,6 @@
         "error_unknown_format": "Error: unknown format",
         "unknown": "—"
       }
-    },
-    "unmapped": {
-      "searchPlaceholder": "Search by raw post name",
-      "colRawName": "Raw name",
-      "colOccurrences": "Occurrences",
-      "colFirstSeen": "First seen",
-      "colLastSeen": "Last seen",
-      "colResolution": "Resolution",
-      "allResolved": "All names resolved",
-      "notOurPost": "— not our post —",
-      "track": "track",
-      "saveTitle": "Save",
-      "resolvedNotOurPost": "not our post",
-      "resolved": "resolved",
-      "unresolved": "unresolved"
     },
     "settings": {
       "host": "IMAP host",
