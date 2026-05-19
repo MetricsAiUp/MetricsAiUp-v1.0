@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { connectSocket, disconnectSocket, getSocket } from '../hooks/useSocket';
 import { setAppTimezone } from '../utils/appTimezone';
+import { ROLE_PAGES as ROLE_DEFAULT_PAGES } from '../constants/rolePages';
 
 const AuthContext = createContext();
 
@@ -153,15 +154,6 @@ function createApi(getToken, onTokenRefreshed, onAuthFailed) {
     delete: (url) => request('DELETE', url),
   };
 }
-
-// Default pages per role (used when backend doesn't return pages)
-const ROLE_DEFAULT_PAGES = {
-  admin: Object.keys(PAGE_PERMISSIONS),
-  manager: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'data-1c', 'discrepancies'],
-  director: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'work-orders', 'shifts', 'events', 'analytics', 'cameras', 'discrepancies'],
-  mechanic: ['dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post'],
-  viewer: ['dashboard', 'dashboard-posts', 'map-view'],
-};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

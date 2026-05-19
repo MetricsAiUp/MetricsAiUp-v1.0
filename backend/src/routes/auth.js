@@ -2,7 +2,8 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, buildReqUser } = require('../middleware/auth');
+const authCache = require('../config/authCache');
 const { validate } = require('../middleware/validate');
 const { loginSchema, registerSchema } = require('../schemas/auth');
 
@@ -136,10 +137,29 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ error: 'Невалидный refresh token' });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    // Перечитываем юзера с ролями/пермишенами, чтобы клиент получил актуальные права
+    // (например после смены роли админом — без выхода/входа).
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: { include: { permission: true } },
+              },
+            },
+          },
+        },
+      },
+    });
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'Пользователь не найден' });
     }
+
+    // Сбрасываем authCache, чтобы следующий запрос с новым access-токеном
+    // взял свежие данные из БД, а не закэшированные.
+    authCache.invalidate(user.id);
 
     // Rotate: issue new pair
     const { accessToken, refreshToken: newRefresh } = generateTokens(user.id);
@@ -147,7 +167,7 @@ router.post('/refresh', async (req, res) => {
 
     res.json({
       token: accessToken,
-      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+      user: buildReqUser(user),
     });
   } catch (err) {
     res.clearCookie('refreshToken', { path: '/api/auth' });

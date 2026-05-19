@@ -47,11 +47,20 @@ function PageLoader() {
   );
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, pageId }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  // Если задан pageId — проверяем доступ. admin всегда имеет доступ ко всему.
+  if (pageId && user.role !== 'admin' && !user.pages?.includes(pageId)) {
+    return <Navigate to="/" replace />;
+  }
   return children;
+}
+
+// Компактная обёртка для страниц внутри Layout
+function Page({ id, children }) {
+  return <ProtectedRoute pageId={id}>{children}</ProtectedRoute>;
 }
 
 function AppRoutes() {
@@ -71,31 +80,31 @@ function AppRoutes() {
             </ErrorBoundary>
           </ProtectedRoute>
         }>
-          <Route path="live-debug" element={<LiveDebug />} />
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard-posts" element={<DashboardPosts />} />
-          <Route path="posts-detail" element={<PostsDetail />} />
-          <Route path="sessions" element={<Sessions />} />
-          <Route path="work-orders" element={<WorkOrders />} />
-          <Route path="events" element={<Events />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="data-1c" element={<Data1C />} />
-          <Route path="discrepancies" element={<Discrepancies />} />
-          <Route path="order-matching" element={<OrderMatching />} />
-          <Route path="cameras" element={<Cameras />} />
-          <Route path="users" element={<Users />} />
-          <Route path="map-editor" element={<MapEditor />} />
-          <Route path="map-view" element={<MapViewer />} />
-          <Route path="shifts" element={<Shifts />} />
-          <Route path="audit" element={<Audit />} />
-          <Route path="my-post" element={<MyPost />} />
-          <Route path="health" element={<Health />} />
-          <Route path="worker-stats/:workerName" element={<WorkerStats />} />
-          <Route path="post-history/:postNumber" element={<PostHistory />} />
-          <Route path="zone-history/:zoneName" element={<ZoneHistory />} />
-          <Route path="utilization" element={<UtilizationReport />} />
-          <Route path="report-schedule" element={<ReportSchedule />} />
-          <Route path="tech-docs" element={<TechDocs />} />
+          <Route path="live-debug" element={<Page id="live-debug"><LiveDebug /></Page>} />
+          <Route index element={<Page id="dashboard"><Dashboard /></Page>} />
+          <Route path="dashboard-posts" element={<Page id="dashboard-posts"><DashboardPosts /></Page>} />
+          <Route path="posts-detail" element={<Page id="posts-detail"><PostsDetail /></Page>} />
+          <Route path="sessions" element={<Page id="sessions"><Sessions /></Page>} />
+          <Route path="work-orders" element={<Page id="work-orders"><WorkOrders /></Page>} />
+          <Route path="events" element={<Page id="events"><Events /></Page>} />
+          <Route path="analytics" element={<Page id="analytics"><Analytics /></Page>} />
+          <Route path="data-1c" element={<Page id="data-1c"><Data1C /></Page>} />
+          <Route path="discrepancies" element={<Page id="discrepancies"><Discrepancies /></Page>} />
+          <Route path="order-matching" element={<Page id="discrepancies"><OrderMatching /></Page>} />
+          <Route path="cameras" element={<Page id="cameras"><Cameras /></Page>} />
+          <Route path="users" element={<Page id="users"><Users /></Page>} />
+          <Route path="map-editor" element={<Page id="map-editor"><MapEditor /></Page>} />
+          <Route path="map-view" element={<Page id="map-view"><MapViewer /></Page>} />
+          <Route path="shifts" element={<Page id="shifts"><Shifts /></Page>} />
+          <Route path="audit" element={<Page id="audit"><Audit /></Page>} />
+          <Route path="my-post" element={<Page id="my-post"><MyPost /></Page>} />
+          <Route path="health" element={<Page id="health"><Health /></Page>} />
+          <Route path="worker-stats/:workerName" element={<Page id="analytics"><WorkerStats /></Page>} />
+          <Route path="post-history/:postNumber" element={<Page id="posts-detail"><PostHistory /></Page>} />
+          <Route path="zone-history/:zoneName" element={<Page id="posts-detail"><ZoneHistory /></Page>} />
+          <Route path="utilization" element={<Page id="utilization"><UtilizationReport /></Page>} />
+          <Route path="report-schedule" element={<Page id="report-schedule"><ReportSchedule /></Page>} />
+          <Route path="tech-docs" element={<Page id="tech-docs"><TechDocs /></Page>} />
         </Route>
       </Routes>
     </Suspense>

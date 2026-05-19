@@ -1,24 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-// Recreate the ROLE_DEFAULT_PAGES mapping from users route
-const ROLE_DEFAULT_PAGES = {
-  admin: [
-    'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
-    'shifts', 'events', 'analytics', 'cameras', 'data-1c',
-    'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
-    'report-schedule', 'tech-docs', 'live-debug',
-  ],
-  manager: [
-    'dashboard', 'dashboard-posts', 'posts-detail', 'map-view',
-    'sessions', 'work-orders', 'shifts', 'analytics', 'events', 'data-1c',
-  ],
-  mechanic: [
-    'dashboard', 'dashboard-posts', 'posts-detail', 'map-view', 'sessions', 'my-post',
-  ],
-  viewer: [
-    'dashboard', 'dashboard-posts', 'map-view',
-  ],
-};
+import { ROLE_PAGES as ROLE_DEFAULT_PAGES } from '../../config/rolePages.js';
 
 // Recreate the ROLES constant from the users route
 const ROLES = [
