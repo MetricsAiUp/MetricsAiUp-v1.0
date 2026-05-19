@@ -275,7 +275,15 @@ export default function Sessions() {
   if (isLive) {
     return (
       <div className="p-6 space-y-5">
-        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{t('sessions.title')}</h2>
+        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+          {t('sessions.title')}
+          <span
+            className="text-[10px] uppercase tracking-[0.15em] font-semibold px-2 py-0.5 rounded-md"
+            style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+          >
+            test
+          </span>
+        </h2>
         <div className="rounded-lg p-8 text-center"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {isRu ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
@@ -291,6 +299,12 @@ export default function Sessions() {
           <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('sessions.title')}
           </h2>
+          <span
+            className="text-[10px] uppercase tracking-[0.15em] font-semibold px-2 py-0.5 rounded-md"
+            style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+          >
+            test
+          </span>
           <HelpButton pageKey="sessions" />
         </div>
         <div className="flex gap-2">

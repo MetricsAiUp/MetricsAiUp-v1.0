@@ -16,7 +16,7 @@ const HELP_CONTENT = {
   dashboard: {
     ru: {
       title: 'Дашборд — Главный экран',
-      intro: 'Стартовая страница системы. За 5 секунд даёт ответ на главный вопрос: «Всё ли в порядке на СТО прямо сейчас?». Сочетает KPI-карточки, живой обзор постов, ML-прогнозы и список рекомендаций. Обновляется каждые 5 секунд в демо-режиме и в реальном времени через Socket.IO в live-режиме.',
+      intro: 'Стартовая страница системы. За 5 секунд даёт ответ на главный вопрос: «Всё ли в порядке на СТО прямо сейчас?». Сочетает KPI-карточки, живой обзор постов, ML-прогнозы и список рекомендаций. Обновляется каждые 5 секунд в демо-режиме и в реальном времени в рабочем режиме.',
       sections: [
         {
           heading: 'Карта экрана (что и где)',
@@ -32,12 +32,12 @@ const HELP_CONTENT = {
         {
           heading: 'KPI-карточки — как читать',
           items: [
-            '**Активные сессии** — авто, находящиеся на территории СТО прямо сейчас (открытые **VehicleSession** без времени выезда). Цвет зависит от загрузки.',
+            '**Активные сессии** — авто, находящиеся на территории СТО прямо сейчас (открытые записи о визитах без времени выезда). Цвет зависит от загрузки.',
             '**Свободные посты** — посты в статусе «Свободен». [●green]{green:зелёный} — есть свободные, [●red]{red:красный} — все 10 заняты, нужен резерв.',
             '**Занятые посты** — посты в статусах «Занят без работ» и «Активная работа». Высокое число = высокая загрузка.',
-            '**Рекомендации** — количество необработанных уведомлений. [●orange]{orange:оранжевый} бейдж — требует внимания.',
+            '**Рекомендации** — количество необработанных уведомлений. [●orange]{orange:оранжевый} значок — требует внимания.',
             '[click] Любая карточка **кликабельна** — открывает соответствующую страницу детализации.',
-            '**Дельта-бейдж** (треугольник вверх/вниз с %) показывает рост или падение по сравнению с предыдущим равным периодом. [●green]{green:Зелёный} — улучшение, [●red]{red:красный} — ухудшение.',
+            '**Дельта-значок** (треугольник вверх/вниз с %) показывает рост или падение по сравнению с предыдущим равным периодом. [●green]{green:Зелёный} — улучшение, [●red]{red:красный} — ухудшение.',
             'Цифра 0 без дельты — данных за прошлый период нет (например, начало учёта).',
           ],
         },
@@ -62,7 +62,7 @@ const HELP_CONTENT = {
             '**Прогноз освобождения постов** — таблица «Пост → когда освободится».',
             '**Прогноз длительности** — оценка времени по типу работ (ТО / ремонт / диагностика).',
             'В **демо-режиме** значения генерируются псевдослучайно — для презентации.',
-            'В **live-режиме** модель анализирует исторические паттерны (день недели, час, тип работ).',
+            'В **рабочем режиме** модель анализирует исторические паттерны (день недели, час, тип работ).',
             'Помогает мастеру-приёмщику принять заказ: «можно ли вписать машину в 14:30?»',
           ],
         },
@@ -93,7 +93,7 @@ const HELP_CONTENT = {
           heading: 'Период метрик и сравнение',
           items: [
             'Переключатель **24 часа / 7 дней / 30 дней** в правом верхнем углу — определяет окно расчёта KPI.',
-            'Дельта-бейджи всегда сравнивают текущий период с предыдущим равным (24ч ↔ предыдущие 24ч, и т.д.).',
+            'Дельта-значки всегда сравнивают текущий период с предыдущим равным (24ч ↔ предыдущие 24ч, и т.д.).',
             'Период **сохраняется** в URL (?period=24h|7d|30d) — можно делиться ссылкой.',
             'Смена периода **не перезагружает** страницу — данные подтягиваются inline.',
           ],
@@ -102,7 +102,7 @@ const HELP_CONTENT = {
           heading: 'Обновление данных и соединение',
           items: [
             'В **демо-режиме** — опрос каждые **5 секунд**.',
-            'В **live-режиме** — Socket.IO, обновление мгновенное при изменении.',
+            'В **рабочем режиме** — обновление мгновенное при любом изменении.',
             'При потере соединения — **жёлтый индикатор** в шапке + замораживание данных (отображается «остаточное» состояние).',
             'При восстановлении соединения — автоматическая досинхронизация, индикатор зелёный.',
           ],
@@ -110,7 +110,7 @@ const HELP_CONTENT = {
         {
           heading: 'Устаревшие данные (stale)',
           items: [
-            '[●red]{red:Красный} баннер появляется, если последний апдейт от внешнего CV старше **1 часа**. KPI и графики продолжают рендериться, но снабжены пометкой «данные устарели Xч Yмин назад».',
+            '[●red]{red:Красный} баннер появляется, если последнее обновление от внешнего CV старше **1 часа**. KPI и графики продолжают отображаться, но снабжены пометкой «данные устарели Xч Yмин назад».',
             '[warn] Появление баннера — **сигнал инженеру**: проверить статус прокси-мониторинга на странице «Live-отладка».',
             '[●orange]{orange:Оранжевый} **разрыв ≥ 5 минут** в таймлайне поста закрывает текущий «визит» — пустые часы не дорисовываются как продолжение последнего состояния.',
             '[●green]{green:Зелёный} — свежие данные (< 5 минут с последнего обновления) — досинхронизация активна, текущий визит виден до момента «сейчас».',
@@ -130,114 +130,114 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Dashboard — Main Screen',
-      intro: 'Landing page of the system. Answers the main question in 5 seconds: "Is everything OK at the STO right now?". Combines KPI cards, live post overview, ML predictions, and recommendations. Auto-refreshes every 5 seconds in demo and in real-time via Socket.IO in live mode.',
+      intro: 'The system\'s landing page. Answers the main question in 5 seconds: "Is everything OK at the STO right now?" Combines KPI cards, a live post overview, ML predictions, and recommendations. Auto-refreshes every 5 seconds in demo mode and in real time via Socket.IO in live mode.',
       sections: [
         {
           heading: 'Screen Map (where things are)',
           items: [
             '**Top** — 4 KPI cards in a row: active sessions, free posts, occupied posts, recommendations.',
-            '**Left under KPI** — LiveSTOWidget with compact grid of all 10 posts.',
-            '**Right under KPI** — PredictionWidget with ML predictions (load, duration, availability).',
-            '**Middle area** — list of active recommendations (collapses if empty).',
-            '**Bottom area** — feed of last 10 events with category filter.',
-            '**Top right corner** — metrics period switcher (24h / 7d / 30d) and connection indicator.',
+            '**Left under KPIs** — LiveSTOWidget with a compact grid of all 10 posts.',
+            '**Right under KPIs** — PredictionWidget with ML predictions (load, duration, availability).',
+            '**Middle area** — list of active recommendations (collapses when empty).',
+            '**Bottom area** — feed of the last 10 events with a category filter.',
+            '**Top-right corner** — metrics period switcher (24h / 7d / 30d) and connection indicator.',
           ],
         },
         {
           heading: 'KPI Cards — How to Read',
           items: [
-            '**Active Sessions** — vehicles currently on STO premises (open VehicleSession without exitTime). Color depends on load.',
-            '**Free Posts** — posts with **free** status. [●green]{green:Green} — there are free posts, [●red]{red:red} — all 10 are occupied, need to manage capacity.',
-            '**Occupied Posts** — posts in **occupied** (car waiting, no work) and **active_work** (service in progress) statuses. High number = high load.',
-            '**Recommendations** — count of unhandled notifications. [●orange]{orange:Orange} badge — needs attention.',
+            '**Active Sessions** — vehicles currently on the STO premises (open VehicleSession without exitTime). Color depends on load.',
+            '**Free Posts** — posts with **free** status. [●green]{green:Green} — there are free posts; [●red]{red:red} — all 10 are occupied, capacity needs to be managed.',
+            '**Occupied Posts** — posts in **occupied** (car waiting, no work) or **active_work** (service in progress) status. A higher number = higher load.',
+            '**Recommendations** — count of unhandled notifications. An [●orange]{orange:orange} badge means attention is needed.',
             '[click] Any card is **clickable** — opens the corresponding detail page.',
-            '**Delta badge** (up/down triangle with %) shows growth or decline vs the previous equivalent period. [●green]{green:Green} — improvement, [●red]{red:red} — degradation.',
-            'Number 0 without delta — no data for previous period (e.g., start of tracking).',
+            '**Delta badge** (up/down triangle with %) shows growth or decline vs the previous equivalent period. [●green]{green:Green} — improvement; [●red]{red:red} — degradation.',
+            'A 0 without a delta means there is no data for the previous period (e.g., the start of tracking).',
           ],
         },
         {
           heading: 'Live Posts Overview (LiveSTOWidget)',
           items: [
-            'Grid of **10 posts** with color status and key info:',
+            'A grid of **10 posts** with color status and key info:',
             '[●green]{green:Green} = free.',
             '[●purple]{purple:Purple} = active_work (service in progress, worker present).',
             '[●red]{red:Red} = occupied_no_work (car parked, no one working — possible idle).',
             '[●orange]{orange:Orange} = occupied (warning / transitional state).',
-            '[●gray]{gray:Gray} = no_data (CV not reporting this post).',
-            'Occupied posts show: **plate** as badge and **time on post** (HH:MM).',
+            '[●gray]{gray:Gray} = no_data (CV is not reporting this post).',
+            'Occupied posts show the **plate** as a badge and the **time on post** (HH:MM).',
             'Great for a second monitor — see the entire STO without switching screens.',
-            'Click a post — opens detailed post screen (PostHistory or PostsDetail).',
+            'Click a post to open its detail screen (PostHistory or PostsDetail).',
           ],
         },
         {
           heading: 'ML Predictions (PredictionWidget)',
           items: [
-            '**Load forecast** for the next 4 hours — line chart with hourly dynamics. Source: **/api/predict/load**.',
-            '**Post availability** — "Post → ETA" table (when becomes free). Source: **/api/predict/free**.',
+            '**Load forecast** for the next 4 hours — a line chart with hourly dynamics. Source: **/api/predict/load**.',
+            '**Post availability** — "Post → ETA" table (when each post becomes free). Source: **/api/predict/free**.',
             '**Duration prediction** — time estimate by work type (Maintenance / Repair / Diagnostics). Source: **/api/predict/duration**.',
-            'In **demo mode** values are seeded random — for presentation.',
+            'In **demo mode** values are seeded random — for presentations.',
             'In **live mode** the model analyzes historical patterns (day of week, hour, work type).',
-            'Helps service advisor decide: "Can I fit a car at 2:30 PM?"',
+            'Helps the service advisor decide: "Can I fit a car in at 2:30 PM?"',
           ],
         },
         {
           heading: 'Recommendations — 5 Types',
           items: [
-            '[●red]**No-show (no_show)** — client did not arrive for scheduled WO. Trigger: start time passed, status unchanged.',
-            '[●green]**Post free (post_free)** — post idle 30+ min, unassigned WOs exist. Can be loaded.',
-            '[●blue]**Capacity available (capacity_available)** — more than half of posts free. Can accept additional clients.',
-            '[●yellow]**Work overtime (work_overtime)** — actual time > 120% norm hours. Complex job or lost time.',
-            '[●yellow]**Vehicle idle (vehicle_idle)** — car on post > 15 min without worker. Notify the mechanic.',
-            '**"Acknowledge"** button — confirms handling, recommendation disappears (acknowledgedAt stored in DB).',
-            'No recommendations = section hidden (empty = everything good).',
+            '[●red]**No-show (no_show)** — the client did not arrive for a scheduled WO. Trigger: start time has passed, status unchanged.',
+            '[●green]**Post free (post_free)** — post idle for 30+ min and unassigned WOs exist. Can be loaded.',
+            '[●blue]**Capacity available (capacity_available)** — more than half of the posts are free. Can accept additional clients.',
+            '[●yellow]**Work overtime (work_overtime)** — actual time > 120% of norm hours. A complex job or lost time.',
+            '[●yellow]**Vehicle idle (vehicle_idle)** — car on the post for > 15 min without a worker. Notify the mechanic.',
+            'The **"Acknowledge"** button confirms handling and removes the recommendation (acknowledgedAt is stored in the DB).',
+            'No recommendations = section hidden (empty = everything is good).',
           ],
         },
         {
           heading: 'Recent Events Feed',
           items: [
-            'Feed of **10 latest** computer vision (CV) events.',
+            'Feed of the **10 latest** computer vision (CV) events.',
             'Category filter: **All** / **Vehicle** (entry/exit) / **Post** (occupied/vacated) / **Worker** (present/absent) / **Work** (activity/idle).',
             'Event card: **type** + **zone/post** + **source cameras** (CAM 01, CAM 02…) + **time** (HH:MM:SS).',
             'Confidence indicator color: [●green]{green:green} ≥ 90%, [●yellow]{yellow:yellow} 70–89%, [●red]{red:red} < 70%.',
-            'Low confidence = possible false positive, manual check recommended.',
-            'Click event — opens modal with camera info and raw payload.',
+            'Low confidence = possible false positive; manual verification recommended.',
+            'Click an event to open a modal with camera info and the raw payload.',
           ],
         },
         {
           heading: 'Metrics Period and Comparison',
           items: [
-            '**24h / 7d / 30d** switcher in top right corner — defines KPI calculation window.',
-            'Delta badges always compare current period to previous equivalent (24h ↔ previous 24h, etc.).',
-            'Period **persists** in URL (?period=24h|7d|30d) — shareable link.',
-            'Period change does **not reload** the page — data fetched inline.',
+            '**24h / 7d / 30d** switcher in the top-right corner — defines the KPI calculation window.',
+            'Delta badges always compare the current period to the previous equivalent (24h ↔ previous 24h, etc.).',
+            'The period **persists** in the URL (?period=24h|7d|30d) — shareable link.',
+            'Changing the period does **not reload** the page — data is fetched inline.',
           ],
         },
         {
           heading: 'Data Refresh and Connection',
           items: [
-            '**Demo mode** — polling every **5 seconds** (setInterval).',
-            '**Live mode** — Socket.IO, instant updates on changes.',
-            'On connection loss — **yellow indicator** in header + frozen data (shows last known state).',
-            'On reconnect — automatic re-sync, indicator turns green.',
+            '**Demo mode** — polls every **5 seconds** (setInterval).',
+            '**Live mode** — Socket.IO, instant updates on every change.',
+            'On connection loss — a **yellow indicator** appears in the header and data freezes (shows the last known state).',
+            'On reconnect — automatic re-sync; indicator turns green.',
           ],
         },
         {
           heading: 'Stale Data',
           items: [
-            '[●red]{red:Red} **StaleDataBanner** appears if the last external CV update is older than **1 hour**. KPIs and charts keep rendering but are tagged "data is stale Xh Ymin ago".',
-            '[warn] Banner shown = **signal to engineer**: check MonitoringProxy status on LiveDebug page.',
-            '[●orange]{orange:Orange} **gap ≥ 5 min** in a post timeline closes the current "visit" — empty hours are NOT extended as continuation of the last state.',
-            '[●green]{green:Green} = fresh data (< 5 min since lastUpdate) — sync-fallback drawing is active, current visit visible up to "now".',
+            '[●red]{red:Red} **StaleDataBanner** appears when the last external CV update is older than **1 hour**. KPIs and charts keep rendering but are tagged "data is stale Xh Ymin ago".',
+            '[warn] Banner shown = **signal to the engineer**: check MonitoringProxy status on the LiveDebug page.',
+            '[●orange]{orange:Orange} **gap ≥ 5 min** in a post timeline closes the current "visit" — empty hours are NOT extended as a continuation of the last state.',
+            '[●green]{green:Green} = fresh data (< 5 min since lastUpdate) — sync-fallback drawing is active; the current visit is visible up to "now".',
             'See section 24 "Monitoring & Live Mode" in TechDocs for details.',
           ],
         },
         {
           heading: 'Common Workflows',
           items: [
-            '[ok] **Morning check** — open page → review recommendations (handle if any) → switch to Posts Timeline for shift planning.',
-            '[ok] **Daytime monitoring** — keep LiveSTOWidget on second monitor → notice a post stuck in occupied_no_work — send a master.',
-            '[ok] **Spike analysis** — noticed 9/10 posts occupied → switch period to 7d and compare via delta with last week.',
-            '[ok] **No-show response** — no_show recommendation appeared → click "Acknowledge" → reschedule slot in Posts Timeline.',
+            '[ok] **Morning check** — open the page → review recommendations (handle any) → switch to Posts Timeline for shift planning.',
+            '[ok] **Daytime monitoring** — keep LiveSTOWidget on a second monitor → notice a post stuck in occupied_no_work → send a master.',
+            '[ok] **Spike analysis** — noticed 9/10 posts occupied → switch the period to 7d and compare via delta with last week.',
+            '[ok] **No-show response** — a no_show recommendation appeared → click "Acknowledge" → reschedule the slot in Posts Timeline.',
           ],
         },
       ],
@@ -250,7 +250,7 @@ const HELP_CONTENT = {
   dashboardPosts: {
     ru: {
       title: 'Таймлайн постов — Gantt-диаграмма',
-      intro: 'Главный инструмент мастера-приёмщика. Визуальное расписание всех заказ-нарядов на смене по 10 постам. Перетаскивание (drag-n-drop) для перепланирования, мгновенная подсветка конфликтов, статистика смены сверху, нераспределённые ЗН снизу.',
+      intro: 'Главный инструмент мастера-приёмщика. Визуальное расписание всех заказ-нарядов на смене по 10 постам. Перетаскивание для перепланирования, мгновенная подсветка конфликтов, статистика смены сверху, нераспределённые ЗН снизу.',
       sections: [
         {
           heading: 'Карта экрана (что и где)',
@@ -270,56 +270,56 @@ const HELP_CONTENT = {
           items: [
             'Каждая **строка** — один пост, от **Поста 1** до **Поста 10**.',
             '**Длина блока** = нормочасы (например, ТО 2ч → блок шириной 2 часа на шкале).',
-            '**Левый край блока** = scheduledTime (планируемое начало).',
-            '**Правый край** = scheduledTime + normHours.',
-            'Блоки **обрезаются** границами смены — не выходят за shiftStart/shiftEnd.',
-            'Наведение мыши — **тултип**: номер ЗН, госномер, тип работ, мастер.',
-            'Клик по блоку — **WorkOrderModal** с полной информацией и действиями.',
+            '**Левый край блока** = планируемое начало.',
+            '**Правый край** = планируемое начало + нормочасы.',
+            'Блоки **обрезаются** границами смены — не выходят за начало и конец смены.',
+            'Наведение мыши — **всплывающая подсказка**: номер ЗН, госномер, тип работ, мастер.',
+            'Клик по блоку — **карточка ЗН** с полной информацией и действиями.',
           ],
         },
         {
           heading: 'Цвета и паттерны блоков ЗН',
           items: [
-            '[●green]{green:Зелёный} — completed (работа завершена).',
-            '[●purple]{purple:Фиолетовый} — in_progress (работа идёт прямо сейчас).',
-            '[●gray]{gray:Серый} — scheduled (запланировано, ещё не начато).',
-            '[●gray]**Бледный/полупрозрачный** — cancelled (ЗН отменён).',
-            '[●red]{red:Красная обводка} — overdue (фактическое время превысило нормочасы).',
+            '[●green]{green:Зелёный} — работа завершена.',
+            '[●purple]{purple:Фиолетовый} — работа идёт прямо сейчас.',
+            '[●gray]{gray:Серый} — запланировано, ещё не начато.',
+            '[●gray]**Бледный/полупрозрачный** — ЗН отменён.',
+            '[●red]{red:Красная обводка} — фактическое время превысило нормочасы.',
             '[warn] **Полосатый паттерн** — конфликт: два ЗН пересекаются по времени на одном посту.',
-            '[bolt] **«Турбо»** — ЗН выполнен быстрее нормы (savedTime > 0).',
+            '[bolt] **«Турбо»** — ЗН выполнен быстрее нормы (есть сэкономленное время).',
           ],
         },
         {
           heading: 'Индикатор точки поста (слева)',
           items: [
-            'Использует **единую палитру карты СТО** — те же цвета, что на STOMap:',
-            '[●green]{green:Зелёный} = free.',
-            '[●purple]{purple:Фиолетовый} = active_work.',
-            '[●red]{red:Красный} = occupied_no_work.',
-            '[●orange]{orange:Оранжевый} = occupied.',
-            '[●gray]{gray:Серый} = no_data.',
+            'Использует **единую палитру карты СТО** — те же цвета, что на карте:',
+            '[●green]{green:Зелёный} = свободен.',
+            '[●purple]{purple:Фиолетовый} = активная работа.',
+            '[●red]{red:Красный} = занят без работ.',
+            '[●orange]{orange:Оранжевый} = занят.',
+            '[●gray]{gray:Серый} = нет данных.',
           ],
         },
         {
           heading: 'KPI-полоса смены — что считается',
           items: [
             '**Занято / Свободно** — мгновенный срез по статусу постов.',
-            '**Завершённые ЗН** — количество ЗН со статусом completed за смену.',
-            '**Нормочасы** — суммарные normHours всех ЗН смены (включая нераспределённые).',
-            '**Время простоя (idleTime)** — сколько часов посты простаивали (без авто или без работника).',
-            '**Просроченные (overdueTime)** — суммарное время превышения нормы по всем in_progress / completed ЗН.',
-            '**«Турбо» (savedTime)** — суммарное сэкономленное время (где факт < нормы). Чем больше — тем эффективнее смена.',
+            '**Завершённые ЗН** — количество завершённых ЗН за смену.',
+            '**Нормочасы** — суммарные нормочасы всех ЗН смены (включая нераспределённые).',
+            '**Время простоя** — сколько часов посты простаивали (без авто или без работника).',
+            '**Просроченные** — суммарное время превышения нормы по всем активным и завершённым ЗН.',
+            '**«Турбо»** — суммарное сэкономленное время (где факт < нормы). Чем больше — тем эффективнее смена.',
           ],
         },
         {
-          heading: 'Drag-and-drop — перепланирование',
+          heading: 'Перетаскивание — перепланирование',
           items: [
-            '**По горизонтали** — изменить время начала. Snap = **15 минут** (блок «прилипает» к четвертям часа).',
+            '**По горизонтали** — изменить время начала. Шаг **15 минут** (блок «прилипает» к четвертям часа).',
             '**По вертикали** — перенести на другой пост. ЗН меняет назначенный пост.',
             'При наведении на конфликтный слот блок **подсвечивается красным с полосами**.',
             'Кнопка **«Сохранить»** в правом верхнем углу — отправить изменения на сервер.',
-            'При сохранении бэкенд проверяет **версию** (защита от одновременного редактирования). Если кто-то изменил параллельно → ошибка 409 → обновите страницу.',
-            '**Двигать можно только запланированные ЗН** — «В работе» и «Завершён» приклеены к своему слоту.',
+            'При сохранении бэкенд проверяет **версию** (защита от одновременного редактирования). Если кто-то изменил параллельно — ошибка 409 — обновите страницу.',
+            '**Двигать можно только запланированные ЗН** — «В работе» и «Завершён» закреплены за своим слотом.',
             'Кнопка **«Сбросить»** — откатить локальные изменения до последней сохранённой версии.',
           ],
         },
@@ -340,7 +340,7 @@ const HELP_CONTENT = {
             'Видно работника, мастера и аудиторскую историю изменений.',
             'Кнопки управления статусом: **Начать**, **Пауза**, **Продолжить**, **Завершить**, **Отменить**.',
             'Можно вручную сменить **пост** или **запланированное время** через поля формы (альтернатива перетаскиванию).',
-            'При сохранении из модалки — те же правила версионирования (ошибка 409 при конфликте).',
+            'При сохранении из карточки — те же правила версионирования (ошибка 409 при конфликте).',
           ],
         },
         {
@@ -354,12 +354,12 @@ const HELP_CONTENT = {
           ],
         },
         {
-          heading: 'Свежесть live-данных и баннер устаревания',
+          heading: 'Свежесть данных и баннер устаревания',
           items: [
-            '[●red]{red:Красный} баннер сверху — последний апдейт CV старше **1 часа**. Таймлайн рендерится, но цифры могут отставать.',
-            '[●orange]{orange:Оранжевый} **разрыв ≥ 5 мин** в сегменте — текущий «визит» закрывается. Без свежих апдейтов не дорисовывается «фантомная» полоса до конца смены.',
-            '[●green]{green:Зелёный} — досинхронизация активна (последнее обновление в пределах смены и < 5 минут назад) — сегмент дотягивается до момента «сейчас».',
-            '[info] Тип поста (легковой / грузовой / специальный) и его цветовой ярлычок берутся из имени зоны во внешней CV-разметке — это гарантирует, что подпись зоны и цвет всегда совпадают.',
+            '[●red]{red:Красный} баннер сверху — последнее обновление от камер старше **1 часа**. Таймлайн отображается, но цифры могут отставать.',
+            '[●orange]{orange:Оранжевый} **разрыв ≥ 5 мин** в сегменте — текущий «визит» закрывается. Без свежих обновлений не дорисовывается «фантомная» полоса до конца смены.',
+            '[●green]{green:Зелёный} — досинхронизация активна (последнее обновление в пределах смены и менее 5 минут назад) — сегмент дотягивается до момента «сейчас».',
+            '[info] Тип поста (легковой / грузовой / специальный) и его цветовой ярлычок берутся из имени зоны во внешней системе камер — это гарантирует, что подпись зоны и цвет всегда совпадают.',
           ],
         },
         {
@@ -375,8 +375,8 @@ const HELP_CONTENT = {
           heading: 'Возможные проблемы',
           items: [
             '**Ошибка 409 при сохранении** — кто-то редактировал параллельно. Решение: обновите страницу (F5), внесите правки заново.',
-            '**Блок не двигается** — статус не scheduled (in_progress / completed нельзя перемещать).',
-            '**Блок «исчезает» при перетаскивании** — улетел за shiftEnd. Сначала расширьте смену через настройки.',
+            '**Блок не двигается** — статус не «Запланирован» («В работе» и «Завершён» нельзя перемещать).',
+            '**Блок «исчезает» при перетаскивании** — улетел за конец смены. Сначала расширьте смену через настройки.',
             '**Полосатый блок** — конфликт по времени. Перетащите один из ЗН в свободный слот.',
           ],
         },
@@ -384,7 +384,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Posts Timeline — Gantt Chart',
-      intro: 'Primary tool for the service advisor. Visual schedule of all WOs across 10 posts for the shift. Drag-and-drop for replanning, instant conflict highlighting, shift KPI strip on top, unassigned WOs below.',
+      intro: 'The primary tool for the service advisor. A visual schedule of all WOs across the 10 posts for the shift. Drag-and-drop for replanning, instant conflict highlighting, a shift KPI strip on top, and unassigned WOs below.',
       sections: [
         {
           heading: 'Screen Map (where things are)',
@@ -393,10 +393,10 @@ const HELP_CONTENT = {
             '**Timeline header** — horizontal time scale (default 08:00–20:00).',
             '**Timeline body** — 10 rows (one per post) with WO rectangles.',
             '**Red vertical line** — current time. Moves every minute.',
-            '**Gear icon** (top right) — shift settings (hours, post count).',
-            '**"Current shift"** button — scrolls timeline to current time.',
-            '**Table below timeline** — unassigned WOs ready to be slotted.',
-            '**Bottom of page** — Legend explaining colors and patterns.',
+            '**Gear icon** (top-right) — shift settings (hours, post count).',
+            '**"Current shift"** button — scrolls the timeline to the current time.',
+            '**Table below the timeline** — unassigned WOs ready to be slotted in.',
+            '**Bottom of the page** — legend explaining colors and patterns.',
           ],
         },
         {
@@ -564,7 +564,7 @@ const HELP_CONTENT = {
             '**Среднее время** — средняя продолжительность обслуживания одного авто.',
             'Цвет индикатора: [●green]{green:зелёный} > 70%, [●yellow]{yellow:жёлтый} 40-70%, [●red]{red:красный} < 40%.',
             'Номер поста отображается в левом верхнем углу карточки.',
-            'Бейдж типа поста — [●blue]{blue:Легковой} / [●orange]{orange:Грузовой} / [●purple]{purple:Спец} — берётся из имени зоны во внешней CV-разметке. Если CV не отдаёт зону — берётся тип из настроек поста.',
+            'Метка типа поста — [●blue]{blue:Легковой} / [●orange]{orange:Грузовой} / [●purple]{purple:Спец} — берётся из имени зоны во внешней системе камер. Если зона не передана — берётся тип из настроек поста.',
           ],
         },
         {
@@ -582,9 +582,9 @@ const HELP_CONTENT = {
         {
           heading: 'Детали в панели: дополнительные разделы',
           items: [
-            '**Журнал событий** — все CV-события на этом посту за период.',
+            '**Журнал событий** — все события от камер на этом посту за период.',
             '**Статистика** — суммарные метрики: общее время работы, простоя, количество пауз.',
-            '**Камеры** — привязанные к посту камеры с превью последнего кадра.',
+            '**Камеры** — привязанные к посту камеры с миниатюрой последнего кадра.',
             'Кнопка **«Показать все»** открывает модальное окно с полным списком (для ЗН и работников).',
           ],
         },
@@ -599,28 +599,28 @@ const HELP_CONTENT = {
           ],
         },
         {
-          heading: 'Свежесть live-данных и stale-баннер',
+          heading: 'Свежесть данных и баннер устаревания',
           items: [
-            '[●red]{red:Красный} баннер сверху — последний апдейт CV старше **1 часа**. Метрики могут отражать «застывшее» состояние.',
+            '[●red]{red:Красный} баннер сверху — последнее обновление от камер старше **1 часа**. Метрики могут отражать «застывшее» состояние.',
             '[●orange]{orange:Оранжевый} **разрыв ≥ 5 мин** между событиями = закрытие текущего «визита». Простой не докручивается до конца смены искусственно.',
-            '[warn] Если в timeline поста виден большой пустой хвост — это НЕ ошибка отображения, это разрыв в потоке CV-данных.',
-            '[info] Карточка поста и панель деталей не дорисовывают «синтетический» простой, если последнее обновление CV вышло за границы смены — этим устранена длинная фантомная полоса на посту после конца смены.',
+            '[warn] Если на временной шкале поста виден большой пустой хвост — это НЕ ошибка отображения, это разрыв в потоке данных от камер.',
+            '[info] Карточка поста и панель деталей не дорисовывают «синтетический» простой, если последнее обновление от камер вышло за границы смены — этим устранена длинная фантомная полоса на посту после конца смены.',
           ],
         },
         {
           heading: 'Типичные сценарии',
           items: [
-            '[ok] **Поиск узких мест** — выбрали Неделю → отсортировали таблицу по загрузке (ASC) → нашли посты с < 40% → открыли детали → выяснили причину (нет работника / мало ЗН).',
+            '[ok] **Поиск узких мест** — выбрали Неделю → отсортировали таблицу по загрузке (по возрастанию) → нашли посты с < 40% → открыли детали → выяснили причину (нет работника / мало ЗН).',
             '[ok] **Анализ работника** — открыли пост → раздел «Работники» → увидели, кто меньше всего часов отработал.',
             '[ok] **Сравнение «вчера vs сегодня»** — Сегодня → запомнили цифры → Вчера → сравнили вручную.',
-            '[ok] **Подготовка к митингу** — Месяц → таблица → отсортировали по эффективности → сделали screenshot топ-3 / худшие 3.',
+            '[ok] **Подготовка к совещанию** — Месяц → таблица → отсортировали по эффективности → сделали скриншот топ-3 / худшие 3.',
           ],
         },
       ],
     },
     en: {
       title: 'Posts Detail',
-      intro: 'Detailed analytics per post: occupancy, efficiency, WO history, workers. Use to analyze performance and identify bottlenecks. Supports periods from one day to a month, two view modes, and a deep-dive detail panel.',
+      intro: 'Detailed per-post analytics: occupancy, efficiency, WO history, workers. Use it to analyze performance and identify bottlenecks. Supports periods from one day to a month, two view modes, and a deep-dive detail panel.',
       sections: [
         {
           heading: 'Screen Map',
@@ -722,16 +722,16 @@ const HELP_CONTENT = {
   map: {
     ru: {
       title: 'Карта СТО — Живой обзор',
-      intro: 'Интерактивная карта станции на базе Konva (Canvas). Реальные пропорции СТО (46540×30690 мм). Показывает все посты, зоны, камеры и автомобили в реальном времени, с цветовой индикацией статусов и кликабельными элементами. Поддерживает режим воспроизведения (replay) для просмотра истории.',
+      intro: 'Интерактивная карта станции. Реальные пропорции СТО (46540×30690 мм). Показывает все посты, зоны, камеры и автомобили в реальном времени, с цветовой индикацией статусов и кликабельными элементами. Поддерживает режим воспроизведения для просмотра истории.',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
             '[eye] **Центр** — холст карты с зданиями, постами, зонами и камерами.',
-            '[eye] **Правый верхний угол** — панель «Слои» (toggle для каждого типа элементов).',
+            '[eye] **Правый верхний угол** — панель «Слои» (переключатель для каждого типа элементов).',
             '[eye] **Левый нижний угол** — кнопки масштаба (+/−), сброс, полный экран.',
             '[eye] **Низ или боковая панель** — сводка по постам и счётчик авто.',
-            '[eye] **Полоса replay** (если включена) — слайдер времени для просмотра истории.',
+            '[eye] **Полоса воспроизведения** (если включена) — ползунок времени для просмотра истории.',
           ],
         },
         {
@@ -756,7 +756,7 @@ const HELP_CONTENT = {
             '[●purple]{purple:Фиолетовый} — идёт обслуживание, есть работник.',
             '[●red]{red:Красный} — авто стоит, работа не ведётся.',
             '[●orange]{orange:Оранжевый} — занят (предупреждение, переходное состояние).',
-            '[●gray]{gray:Серый} — пост есть в системе, но CV не присылает данные.',
+            '[●gray]{gray:Серый} — пост есть в системе, но камеры не присылают данные.',
             '[info] У каждого поста — номер и иконка типа (грузовой / легковой / спец).',
           ],
         },
@@ -772,10 +772,10 @@ const HELP_CONTENT = {
         {
           heading: 'Навигация и масштаб',
           items: [
-            '**Колёсико мыши** — zoom in/out с центром на курсоре.',
-            '**Зажатая левая кнопка** — перетаскивание карты (pan).',
+            '**Колёсико мыши** — приближение/отдаление с центром на курсоре.',
+            '**Зажатая левая кнопка** — перетаскивание карты.',
             'Кнопки **«+» / «−»** — пошаговое масштабирование.',
-            'Кнопка **«На весь экран»** — развернуть карту на всё окно (fullscreen).',
+            'Кнопка **«На весь экран»** — развернуть карту на всё окно.',
             'Кнопка **«Сбросить»** — вернуть начальный масштаб и позицию.',
             'Реальный размер: **46540×30690 мм** — соответствует пропорциям СТО.',
           ],
@@ -787,23 +787,23 @@ const HELP_CONTENT = {
             '**Клик на зону** — карточка зоны: тип, текущее количество авто, список госномеров.',
             '**Клик на камеру** — модальное окно с видеотрансляцией камеры.',
             '**Клик на инфозону** — дополнительная информация (текст, статистика).',
-            'Все модалки закрываются кликом вне или кнопкой X.',
+            'Все модальные окна закрываются кликом вне или кнопкой X.',
           ],
         },
         {
-          heading: 'Replay — режим воспроизведения',
+          heading: 'Воспроизведение — просмотр истории',
           items: [
-            'Кнопка **«Replay»** включает режим истории — карта отображает состояние за прошлый момент.',
-            'Появляется **слайдер времени** — двигайте для перехода к нужному моменту.',
-            'Кнопки **Play / Pause** — автоматическое воспроизведение с заданной скоростью.',
+            'Кнопка **«Воспроизведение»** включает режим истории — карта отображает состояние за прошлый момент.',
+            'Появляется **ползунок времени** — двигайте для перехода к нужному моменту.',
+            'Кнопки **«Старт» / «Пауза»** — автоматическое воспроизведение с заданной скоростью.',
             'Полезно для разбора инцидентов: «что было в 14:23?»',
-            'Чтобы вернуться в реальное время — кнопка **«Сейчас»** или выключите Replay.',
+            'Чтобы вернуться в реальное время — кнопка **«Сейчас»** или выключите режим воспроизведения.',
           ],
         },
         {
           heading: 'Обновление данных',
           items: [
-            'В **live-режиме** — каждые **10 секунд** опрашивается внешний CV-сервис.',
+            'В **рабочем режиме** — каждые **10 секунд** опрашивается внешний сервис камер.',
             'В **демо-режиме** — каждые **5 секунд**.',
             'Статусы постов и активные сессии приходят с бэкенда системы.',
             'Геометрия карты подгружается из последней сохранённой версии.',
@@ -825,14 +825,14 @@ const HELP_CONTENT = {
             '[ok] **Контроль смены** — открыли карту на втором мониторе → видите все посты и движение авто в реальном времени.',
             '[ok] **Поиск авто** — клиент звонит «где моя машина?» → нашли её на карте по госномеру.',
             '[ok] **Проверка камеры** — заметили проблему на посту → клик на ближайшую камеру → смотрите видео.',
-            '[ok] **Разбор инцидента** — Replay → переместили слайдер на нужный момент → разобрались, что произошло.',
+            '[ok] **Разбор инцидента** — включили воспроизведение → переместили ползунок на нужный момент → разобрались, что произошло.',
           ],
         },
       ],
     },
     en: {
       title: 'STO Map — Live Overview',
-      intro: 'Interactive STO map powered by Konva (Canvas). Real STO proportions (46540×30690 mm). Displays all posts, zones, cameras, and vehicles in real-time with color-coded statuses and clickable elements. Supports replay mode for browsing history.',
+      intro: 'Interactive STO map powered by Konva (Canvas). Real STO proportions (46540×30690 mm). Displays all posts, zones, cameras, and vehicles in real time with color-coded statuses and clickable elements. Supports replay mode for browsing history.',
       sections: [
         {
           heading: 'Screen Map',
@@ -948,7 +948,7 @@ const HELP_CONTENT = {
   mapEditor: {
     ru: {
       title: 'Редактор карты СТО',
-      intro: 'Полнофункциональный визуальный редактор планировки СТО. 10 типов элементов, перетаскивание мышью, рисование полигонов, фоновое изображение для обводки. Поддерживает отмену (до 50 шагов), версионирование (история) и экспорт в файл. Изменения становятся видны на странице «Карта» после сохранения.',
+      intro: 'Полнофункциональный визуальный редактор планировки СТО. 10 типов элементов, перетаскивание мышью, рисование полигонов, фоновое изображение для обводки. Поддерживает отмену действий (до 50 шагов), версионирование (история) и экспорт в файл. Изменения становятся видны на странице «Карта» после сохранения.',
       sections: [
         {
           heading: 'Карта экрана',
@@ -993,14 +993,14 @@ const HELP_CONTENT = {
             'Для постов: номер поста, тип (тяжёлый/лёгкий/специальный).',
             'Для зон: тип зоны (ремонт/ожидание/въезд/парковка/свободная).',
             'Для камер: направление обзора (угол), название.',
-            'Изменения применяются мгновенно на canvas.',
+            'Изменения применяются мгновенно на холсте.',
           ],
         },
         {
           heading: 'Горячие клавиши',
           items: [
-            '**Ctrl+Z** — отменить последнее действие (Undo, до 50 шагов).',
-            '**Ctrl+Shift+Z** — повторить отменённое действие (Redo).',
+            '**Ctrl+Z** — отменить последнее действие (до 50 шагов).',
+            '**Ctrl+Shift+Z** — повторить отменённое действие.',
             '**Delete** — удалить выделенный элемент.',
             '**Escape** — снять выделение / отменить рисование.',
             '**Стрелки** — сдвинуть элемент на 10px. **Shift+стрелки** — сдвиг на 1px.',
@@ -1020,7 +1020,7 @@ const HELP_CONTENT = {
           heading: 'Сетка и привязка',
           items: [
             '**Сетка** — включается/выключается кнопкой. Шаг 10px.',
-            '**Snap-to-grid** — при перемещении элементы привязываются к сетке (шаг 10px).',
+            '**Привязка к сетке** — при перемещении элементы прилипают к узлам сетки (шаг 10px).',
             'Помогает выравнивать элементы относительно друг друга.',
             'Размер холста: **46540x30690 мм** — реальные размеры СТО.',
           ],
@@ -1194,7 +1194,7 @@ const HELP_CONTENT = {
   sessions: {
     ru: {
       title: 'Сессии автомобилей',
-      intro: 'Журнал визитов автомобилей на СТО. Сессия = одно посещение: открывается на въезде (CV-камера зафиксировала госномер) и закрывается на выезде. Внутри сессии — маршрут по зонам и пребывание на постах. Отключена в live-режиме (там сессии управляются автоматически внешней системой).',
+      intro: 'Журнал визитов автомобилей на СТО. Сессия = одно посещение: открывается на въезде (камера зафиксировала госномер) и закрывается на выезде. Внутри сессии — маршрут по зонам и пребывание на постах. Отключена в рабочем режиме (там сессии управляются автоматически внешней системой).',
       sections: [
         {
           heading: 'Карта экрана',
@@ -1255,7 +1255,7 @@ const HELP_CONTENT = {
         {
           heading: 'Ограничения',
           items: [
-            'Страница **отключена в live-режиме** — в живом режиме сессии управляются автоматически.',
+            'Страница **отключена в рабочем режиме** — в рабочем режиме сессии управляются автоматически.',
             'Данные в демо-режиме генерируются автоматически для демонстрации.',
           ],
         },
@@ -1272,7 +1272,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Vehicle Sessions',
-      intro: 'Log of vehicle visits to STO. A session = one visit: opens at entry (CV camera captures plate) and closes at exit. Inside a session — zone route (ZoneStay) and post stays (PostStay). Disabled in live mode (sessions are managed automatically by the external system).',
+      intro: 'A log of vehicle visits to the STO. A session = one visit: opens at entry (when a CV camera captures the plate) and closes at exit. Inside a session — zone route (ZoneStay) and post stays (PostStay). Disabled in live mode (sessions are managed automatically by the external system).',
       sections: [
         {
           heading: 'Screen Map',
@@ -1356,7 +1356,7 @@ const HELP_CONTENT = {
   workOrders: {
     ru: {
       title: 'Заказ-наряды',
-      intro: 'Реестр всех ЗН — основных документов работы СТО. Здесь можно создать, импортировать из CSV, отфильтровать и управлять жизненным циклом ЗН: начать, поставить на паузу, возобновить, завершить, отменить. Версионирование защищает от параллельных правок. Отключена в live-режиме (там ЗН управляются через 1С).',
+      intro: 'Реестр всех ЗН — основных документов работы СТО. Здесь можно создать, импортировать из CSV, отфильтровать и управлять жизненным циклом ЗН: начать, поставить на паузу, возобновить, завершить, отменить. Версионирование защищает от параллельных правок. Отключена в рабочем режиме (там ЗН управляются через 1С).',
       sections: [
         {
           heading: 'Карта экрана',
@@ -1371,11 +1371,11 @@ const HELP_CONTENT = {
         {
           heading: 'Статусы заказ-нарядов',
           items: [
-            '**Запланирован** — ЗН создан, ожидает начала работ. Серый бейдж.',
-            '**В работе** — механик начал работу. Синий бейдж.',
-            '**Завершён** — работа выполнена. Зелёный бейдж.',
-            '**Отменён** — ЗН отменён. Красный бейдж.',
-            '**Неявка** — клиент не приехал. Красный бейдж с полосой.',
+            '**Запланирован** — ЗН создан, ожидает начала работ. Серая метка.',
+            '**В работе** — механик начал работу. Синяя метка.',
+            '**Завершён** — работа выполнена. Зелёная метка.',
+            '**Отменён** — ЗН отменён. Красная метка.',
+            '**Неявка** — клиент не приехал. Красная метка с полосой.',
             'Статус меняется последовательно: «Запланирован» → «В работе» → «Завершён».',
           ],
         },
@@ -1396,7 +1396,7 @@ const HELP_CONTENT = {
             '**Госномер** — номер автомобиля.',
             '**Тип работ** — вид обслуживания (ТО, ремонт, диагностика и т.д.).',
             '**Нормочасы** — нормативное время выполнения в часах.',
-            '**Статус** — текущий статус с цветным бейджем.',
+            '**Статус** — текущий статус с цветной меткой.',
             'Сортировка по любой колонке.',
           ],
         },
@@ -1408,7 +1408,7 @@ const HELP_CONTENT = {
             '**Возобновить** — продолжить работу после паузы.',
             '**Завершить** — закрыть работу (статус меняется на «Завершён»). Фиксируется время завершения.',
             '**Отменить** — отменить ЗН.',
-            'Все действия записываются в **аудит-лог**.',
+            'Все действия записываются в **журнал аудита**.',
           ],
         },
         {
@@ -1424,7 +1424,7 @@ const HELP_CONTENT = {
         {
           heading: 'Ограничения',
           items: [
-            'Страница **отключена в live-режиме** — в живом режиме ЗН управляются через 1С.',
+            'Страница **отключена в рабочем режиме** — в рабочем режиме ЗН управляются через 1С.',
             'Нельзя удалить ЗН в статусе «В работе» — сначала завершите или отмените.',
             'Версионирование: при конфликте (одновременное редактирование) — система покажет предупреждение и попросит перезагрузить страницу.',
           ],
@@ -1442,7 +1442,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Work Orders',
-      intro: 'Registry of all WOs — the core STO work documents. Create, import (CSV), filter, and manage WO lifecycle (start/pause/resume/complete/cancel). Versioning protects against concurrent edits (HTTP 409). Disabled in live mode (WOs managed via 1C there).',
+      intro: 'Registry of all WOs — the core STO work documents. Create, import (CSV), filter, and manage the WO lifecycle (start/pause/resume/complete/cancel). Versioning protects against concurrent edits (HTTP 409). Disabled in live mode (WOs are managed via 1C there).',
       sections: [
         {
           heading: 'Screen Map',
@@ -1534,7 +1534,7 @@ const HELP_CONTENT = {
   events: {
     ru: {
       title: 'Журнал событий',
-      intro: 'Лента всех событий от системы компьютерного зрения (CV). 10 типов, 4 группы. Каждое событие — снимок состояния, зафиксированный одной или несколькими камерами с уровнем уверенности (confidence). Поддерживает фильтры, текстовый поиск и автообновление.',
+      intro: 'Лента всех событий от системы компьютерного зрения. 10 типов, 4 группы. Каждое событие — снимок состояния, зафиксированный одной или несколькими камерами с уровнем уверенности. Поддерживает фильтры, текстовый поиск и автообновление.',
       sections: [
         {
           heading: 'Карта экрана',
@@ -1585,7 +1585,7 @@ const HELP_CONTENT = {
         {
           heading: 'Уровень уверенности',
           items: [
-            '**Высокий (≥ 90%)** — зелёный индикатор. CV-система уверена в распознавании.',
+            '**Высокий (≥ 90%)** — зелёный индикатор. Система камер уверена в распознавании.',
             '**Средний (70-89%)** — жёлтый индикатор. Возможны неточности.',
             '**Низкий (< 70%)** — красный индикатор. Требуется ручная проверка.',
             'Уверенность отображается процентом рядом с каждым событием.',
@@ -1598,7 +1598,7 @@ const HELP_CONTENT = {
             'Каждое событие содержит **список камер**, которые зафиксировали его.',
             'Формат: CAM 01, CAM 02 и т.д.',
             'Если событие подтверждено несколькими камерами — уверенность выше.',
-            'Клик на камеру открывает стрим в модальном окне.',
+            'Клик на камеру открывает видеотрансляцию в модальном окне.',
           ],
         },
         {
@@ -1624,7 +1624,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Event Log',
-      intro: 'Feed of all computer vision (CV) events. 10 types, 4 groups. Each event = snapshot of state captured by one or more cameras with confidence. Supports filters, text search, and auto-refresh.',
+      intro: 'A feed of all computer vision (CV) events. 10 types in 4 groups. Each event is a state snapshot captured by one or more cameras with a confidence score. Supports filters, text search, and auto-refresh.',
       sections: [
         {
           heading: 'Screen Map',
@@ -1720,7 +1720,7 @@ const HELP_CONTENT = {
   analytics: {
     ru: {
       title: 'Аналитика',
-      intro: 'Комплексная аналитика СТО: 6 KPI-карточек, 8 типов графиков и таблица постов. Поддерживает сравнение с прошлым равным периодом (с бейджем дельты) и экспорт всего в XLSX, PDF или отдельных графиков в PNG. Главный инструмент для отчётов руководству.',
+      intro: 'Комплексная аналитика СТО: 6 KPI-карточек, 8 типов графиков и таблица постов. Поддерживает сравнение с прошлым равным периодом (со значком дельты) и экспорт всего в XLSX, PDF или отдельных графиков в PNG. Главный инструмент для отчётов руководству.',
       sections: [
         {
           heading: 'Карта экрана',
@@ -1736,7 +1736,7 @@ const HELP_CONTENT = {
           heading: 'Период и сравнение',
           items: [
             'Три периода: **Сегодня** (последние 24 часа), **7 дней**, **30 дней**.',
-            '**Режим сравнения** — включает бейдж дельты, показывающий разницу с предыдущим аналогичным периодом.',
+            '**Режим сравнения** — включает значок дельты, показывающий разницу с предыдущим аналогичным периодом.',
             'Дельта отображается стрелкой вверх (рост, зелёный) или вниз (падение, красный).',
             'Сравнение помогает отслеживать тренды: загрузка растёт или падает.',
           ],
@@ -1795,7 +1795,7 @@ const HELP_CONTENT = {
           heading: 'Типичные сценарии',
           items: [
             '[ok] **Месячный отчёт руководству** — 30 дней + Сравнение → проверили все KPI → Экспорт PDF → отправили директору.',
-            '[ok] **Поиск часов перегрузки** — Heatmap «Почасовая нагрузка» → нашли часы 100% → решили о доп. постах или переносе ЗН.',
+            '[ok] **Поиск часов перегрузки** — тепловая карта «Почасовая нагрузка» → нашли часы 100% → решили о доп. постах или переносе ЗН.',
             '[ok] **Сравнение недель** — 7д с включённым Сравнением → дельта показала рост или падение.',
             '[ok] **График в презентацию** — правый клик на график → «Сохранить как PNG» → вставили в слайд.',
           ],
@@ -1804,7 +1804,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Analytics',
-      intro: 'Comprehensive STO analytics: 6 KPI cards, 8 chart types, and per-post table. Supports comparison with previous equivalent period (DeltaBadge) and export to XLSX, PDF, or individual charts as PNG. Main tool for management reporting.',
+      intro: 'Comprehensive STO analytics: 6 KPI cards, 8 chart types, and a per-post table. Supports comparison with the previous equivalent period (DeltaBadge) and export to XLSX, PDF, or individual charts as PNG. The main tool for management reporting.',
       sections: [
         {
           heading: 'Screen Map',
@@ -1894,14 +1894,14 @@ const HELP_CONTENT = {
   cameras: {
     ru: {
       title: 'Камеры видеонаблюдения',
-      intro: 'Управление и просмотр камер СТО. 16 камер (CAM 00–15), видеотрансляция через выделенный порт. Группировка по зонам, статусы «онлайн / офлайн», превью кадров. Отключена в live-режиме (видеопотоки отдаёт внешняя система).',
+      intro: 'Управление и просмотр камер СТО. 16 камер (CAM 00–15), видеотрансляция через выделенный порт. Группировка по зонам, статусы «онлайн / офлайн», миниатюры кадров. Отключена в рабочем режиме (видеопотоки отдаёт внешняя система).',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
             '[eye] **Верх** — вкладки: «Камеры по зонам» / «Все камеры».',
             '[eye] **Под вкладками** — фильтр по зонам (Все, Въезд/Выезд, Подъёмники, Парковка, Склад).',
-            '[eye] **Центр** — сетка карточек камер (превью, статус, приоритет).',
+            '[eye] **Центр** — сетка карточек камер (миниатюра, статус, приоритет).',
             '[eye] **Модальное окно** — открывается по клику для просмотра видеопотока.',
           ],
         },
@@ -1918,9 +1918,9 @@ const HELP_CONTENT = {
           items: [
             'Название камеры (CAM 00 — CAM 15).',
             '**Статус** — зелёный кружок («онлайн») или красный («офлайн»). Обновляется автоматически.',
-            '**Приоритет** — бейдж P3–P10 показывает приоритет камеры в зоне.',
+            '**Приоритет** — метка P3–P10 показывает приоритет камеры в зоне.',
             '**Зона покрытия** — какие зоны видит камера.',
-            'Превью последнего кадра (если доступно).',
+            'Миниатюра последнего кадра (если доступно).',
           ],
         },
         {
@@ -1948,7 +1948,7 @@ const HELP_CONTENT = {
           heading: 'Статус камер',
           items: [
             'Фоновая проверка доступности камер каждые 30 секунд.',
-            'Изменение статуса мгновенно прилетает в браузер по веб-сокету.',
+            'Изменение статуса мгновенно приходит в браузер по веб-сокету.',
             'Карточки камер обновляются автоматически.',
             'Если камера в офлайне дольше 5 минут — формируется рекомендация.',
           ],
@@ -1956,24 +1956,24 @@ const HELP_CONTENT = {
         {
           heading: 'Ограничения',
           items: [
-            'Страница **отключена в live-режиме** — стримы доступны только в демо.',
-            'Качество стрима зависит от сетевого подключения.',
-            'Максимум 4 одновременных стрима для снижения нагрузки на сервер.',
+            'Страница **отключена в рабочем режиме** — видеотрансляции доступны только в демо.',
+            'Качество трансляции зависит от сетевого подключения.',
+            'Максимум 4 одновременных видеотрансляции для снижения нагрузки на сервер.',
           ],
         },
         {
           heading: 'Типичные сценарии',
           items: [
             '[ok] **Проверка камер утром** — открыли страницу → пробежались по сетке → красные кружки = надо срочно чинить.',
-            '[ok] **Просмотр инцидента** — знаете зону → фильтр по зоне → клик на нужную камеру → стрим в модалке.',
-            '[ok] **Проверка приоритетов** — переключились в «Все камеры» → проверили P-бейджи → если важная зона на P3 → перейти в «Маппинг камер по зонам» и поднять.',
+            '[ok] **Просмотр инцидента** — знаете зону → фильтр по зоне → клик на нужную камеру → видеотрансляция в модальном окне.',
+            '[ok] **Проверка приоритетов** — переключились в «Все камеры» → проверили метки приоритета → если важная зона на P3 → перейти в «Сопоставление камер по зонам» и поднять.',
           ],
         },
       ],
     },
     en: {
       title: 'Surveillance Cameras',
-      intro: 'Manage and view STO cameras. 16 cameras (CAM 00–15), HLS streaming via :8181 (FFmpeg converts RTSP → HLS). Zone grouping, online/offline status, frame previews. Disabled in live mode (streams provided by external system).',
+      intro: 'Manage and view STO cameras. 16 cameras (CAM 00–15), HLS streaming via port :8181 (FFmpeg converts RTSP → HLS). Zone grouping, online/offline status, and frame previews. Disabled in live mode (streams are provided by the external system).',
       sections: [
         {
           heading: 'Screen Map',
@@ -2060,17 +2060,17 @@ const HELP_CONTENT = {
   discrepancies: {
     ru: {
       title: 'Нестыковки 1С↔CV — журнал расхождений',
-      intro: 'Сводная страница расхождений между планом 1С и реальностью с камер. Детектор применяет 6 правил поверх **OneCWorkOrderMerged** + **VehicleSession** + **PostStay** и записывает каждое расхождение в журнал нестыковок (статусы: открыто, принято, решено, отклонено). Уведомления: Telegram (критичные — немедленно, плюс дайджест) и Socket.IO в браузер.',
+      intro: 'Сводная страница расхождений между планом 1С и реальностью с камер. Фоновая служба применяет 6 правил к актуальным заказ-нарядам и данным с камер и записывает каждое расхождение в журнал нестыковок (статусы: открыто, принято, решено, отклонено). Уведомления: Telegram (критичные — немедленно, плюс дайджест) и мгновенное обновление в браузере.',
       sections: [
         {
           heading: '6 типов нестыковок',
           items: [
-            '[●red] **Авто не приехало по CV** — заказ-наряд закрыт в 1С, но CV не видела авто на территории. Возможен фейк-наряд или сбой интеграции.',
+            '[●red] **Авто не приехало по камерам** — заказ-наряд закрыт в 1С, но камеры не видели авто на территории. Возможен фиктивный наряд или сбой интеграции.',
             '[●yellow] **Авто на посту без оформления в 1С** — авто стояло на посту дольше N минут с работником, но в 1С нет соответствующего ЗН. Возможна серая работа.',
-            '[●yellow] **Не тот пост** — 1С говорит «пост 3», CV видит на «посту 7».',
+            '[●yellow] **Не тот пост** — 1С говорит «пост 3», камеры видят на «посту 7».',
             '[●yellow] **Завышены нормочасы** — нормочасы превышают фактическое время на посту в **разы**.',
             '[●blue] **Заниженное фактическое время** — фактическое время на посту заметно превышает норму (занижение в 1С).',
-            '[●blue] **Расхождение времени закрытия** — закрытие в 1С и выезд по CV отличаются больше окна матчинга.',
+            '[●blue] **Расхождение времени закрытия** — закрытие в 1С и выезд по камерам отличаются больше окна сопоставления.',
           ],
         },
         {
@@ -2079,15 +2079,15 @@ const HELP_CONTENT = {
             'Верх страницы — 5 карточек: Всего, Открыто, За 24 часа, Критичные, Предупреждения.',
             'Ниже — 6 карточек по типам нестыковок: клик переключает фильтр по типу.',
             'Фильтры: статус, важность, номер заказа. По умолчанию показаны только нестыковки со статусом «Открыто».',
-            'Бейдж в сайдбаре (рядом с пунктом «Нестыковки») — счётчик открытых плюс критичных за 24 часа, обновляется каждые 30 секунд.',
+            'Значок в боковом меню (рядом с пунктом «Нестыковки») — счётчик открытых плюс критичных за 24 часа, обновляется каждые 30 секунд.',
           ],
         },
         {
           heading: 'Жизненный цикл',
           items: [
-            '[●yellow] **Открыто** — детектор только что нашёл расхождение.',
+            '[●yellow] **Открыто** — система только что нашла расхождение.',
             '[●blue] **Принято** — нестыковка взята в работу (фиксируются автор и время).',
-            '[●green] **Решено** — поправили (в 1С, CV или в обоих); фиксируются автор, время, причина и комментарий.',
+            '[●green] **Решено** — поправили (в 1С, в камерах или в обоих); фиксируются автор, время, причина и комментарий.',
             '[●gray] **Отклонено** — отметили как ложную (например, ручная сверка показала, что всё в порядке).',
             'Для возврата в статус «Открыто» — кнопка «Открыть» в правой колонке (сбрасывает поля принятия и решения).',
             'Дубликаты схлопываются по уникальному ключу (тип, номер заказа, пост, сессия авто) — повторное обнаружение того же не создаёт новую запись.',
@@ -2096,28 +2096,28 @@ const HELP_CONTENT = {
         {
           heading: 'Раскрытая строка (детали)',
           items: [
-            'Клик по шеврону слева — раскрывает двухпанельный режим: 1С слева, CV справа.',
-            'Слева: номер, состояние, госномер, VIN, план, закрыт, норма, исполнитель — из последней версии **OneCWorkOrderMerged**.',
-            'Справа: госномер, въезд, выезд из **VehicleSession**.',
-            'Если у нестыковки сохранены сырые значения 1С/CV — они показываются в исходном виде для диагностики.',
+            'Клик по шеврону слева — раскрывает двухпанельный режим: 1С слева, камеры справа.',
+            'Слева: номер, состояние, госномер, VIN, план, закрыт, норма, исполнитель — из актуальной версии заказ-наряда в 1С.',
+            'Справа: госномер, въезд, выезд из записи о визите.',
+            'Если у нестыковки сохранены сырые значения из 1С и камер — они показываются в исходном виде для диагностики.',
           ],
         },
         {
           heading: 'Уведомления',
           items: [
             '[zap] **Критичные** — Telegram-сообщение немедленно (рассылка в чат).',
-            '[zap] **Дайджест** — раз в N часов (по умолчанию 4 часа): сводка с топ-3 постами и разбивкой по важности. Можно отключить через переменную окружения.',
-            '[zap] **Socket.IO** — событие новой нестыковки отправляется в браузер; счётчик в сайдбаре обновляется без перезагрузки.',
-            '[zap] **Тоггл «Нестыковки» в шапке** Dashboard/MapViewer/PostsDetail/MyPost/DashboardPosts включает красные точки на постах с открытыми нестыковками — состояние сохраняется в профиле пользователя.',
+            '[zap] **Дайджест** — раз в N часов (по умолчанию 4 часа): сводка с тройкой худших постов и разбивкой по важности. Можно отключить через переменную окружения.',
+            '[zap] **В реальном времени** — событие новой нестыковки отправляется в браузер; счётчик в боковом меню обновляется без перезагрузки.',
+            '[zap] **Переключатель «Нестыковки» в шапке** Дашборда / Карты / Детализации постов / Моего поста / Таймлайна постов включает красные точки на постах с открытыми нестыковками — состояние сохраняется в профиле пользователя.',
           ],
         },
         {
           heading: 'Кнопки «Обновить» и «Пересчитать»',
           items: [
-            '**Обновить** (внутри блока фильтров) — перезагружает данные с сервера без запуска детектора. Просто свежий снимок текущего содержимого журнала нестыковок.',
-            '**Пересчитать** (синяя кнопка в шапке) — запускает детектор в фоне: применяет 6 правил по всем заказам и нераспаренным **PostStay** за выбранное окно (по умолчанию 7 дней), создаёт новые и обновляет существующие записи. Операция небыстрая (на 1500+ заказах — десятки секунд), поэтому выполняется асинхронно: индикатор крутится, по завершении приходит уведомление с числом обработанных и новых.',
+            '**Обновить** (внутри блока фильтров) — перезагружает данные с сервера без запуска проверки. Просто свежий снимок текущего содержимого журнала нестыковок.',
+            '**Пересчитать** (синяя кнопка в шапке) — запускает проверку в фоне: применяет 6 правил по всем заказам и непривязанным стоянкам на постах за выбранное окно (по умолчанию 7 дней), создаёт новые и обновляет существующие записи. Операция небыстрая (на 1500+ заказах — десятки секунд), поэтому выполняется асинхронно: индикатор крутится, по завершении приходит уведомление с числом обработанных и новых.',
             '**Авто-пересчёт** — рядом с кнопкой шестерёнка: расписание (по умолчанию 08:00 Europe/Minsk, ежедневно), часовой пояс и окно анализа. Можно временно отключить.',
-            'Время последнего пересчёта показано слева от кнопки («2 ч назад · 18с · +12»). Цвет: зелёный — норма, красный — ошибка, синий с крутилкой — выполняется.',
+            'Время последнего пересчёта показано слева от кнопки («2 ч назад · 18с · +12»). Цвет: зелёный — норма, красный — ошибка, синий с индикатором загрузки — выполняется.',
           ],
         },
         {
@@ -2132,14 +2132,14 @@ const HELP_CONTENT = {
           items: [
             '[ok] **Утренний разбор** — открыть страницу, отфильтровать по критичным открытым, по каждой строке решить: принять и разобраться либо отклонить.',
             '[ok] **Серая работа** — нашли нестыковку «Авто на посту без оформления в 1С» → подняли запись в 1С → отметили как «Решено» с комментарием «оформлено постфактум».',
-            '[ok] **Ложный фейк** — критичная нестыковка «Авто не приехало по CV» → проверили: клиент действительно не приехал, но мастер забыл отменить ЗН → отметили как «Решено» с указанием причины.',
+            '[ok] **Ложное срабатывание** — критичная нестыковка «Авто не приехало по CV» → проверили: клиент действительно не приехал, но мастер забыл отменить ЗН → отметили как «Решено» с указанием причины.',
             '[ok] **После правки 1С** — нажать «Пересчитать»: нестыковка автоматически закрывается (правило больше не срабатывает), либо остаётся — значит правка не помогла.',
           ],
         },
       ],
     },
     en: {
-      title: 'Discrepancies 1C↔CV — Mismatch journal',
+      title: 'Discrepancies 1C↔CV — Mismatch Journal',
       intro: 'Aggregate page for mismatches between the 1C plan and what the cameras actually see. The detector runs 6 rules over **OneCWorkOrderMerged** + **VehicleSession** + **PostStay** and writes each mismatch into **Discrepancy** (open/acknowledged/resolved/dismissed). Notifications: Telegram (critical immediately + digest) and Socket.IO to the browser.',
       sections: [
         {
@@ -2230,67 +2230,67 @@ const HELP_CONTENT = {
       tabs: {
         overview: {
           label: 'Страница в целом',
-          intro: 'Страница «Сопоставления» — единая точка входа для разных типов матчинга в данных 1С. Внутри неё 4 вкладки, каждая решает свою задачу. Источники данных у всех вкладок — обработанные UI-таблицы (дедуплицированные `OneCPlanRow`, `OneCRepairSnapshot`, `OneCWorkPerformed`), а не сырые письма из 1С. Это гарантирует, что сводки совпадают с тем, что видно во вкладках «Данные 1С → Планы / Заказ-наряды / Закрытые ЗН».',
+          intro: 'Страница «Сопоставления» — единая точка входа для разных типов сопоставлений в данных 1С. Внутри неё 4 вкладки, каждая решает свою задачу. Источники данных у всех вкладок — обработанные таблицы для интерфейса (планы, заказ-наряды и закрытые ЗН с устранёнными дубликатами), а не сырые письма из 1С. Это гарантирует, что сводки совпадают с тем, что видно во вкладках «Данные 1С → Планы / Заказ-наряды / Закрытые ЗН».',
           sections: [
             {
               heading: '4 вкладки (типы сопоставлений)',
               items: [
-                '[●purple] **ЗН ↔ Заявки** — основной актуальный матчинг: для каждого заказ-наряда из 1С (последняя версия) ищется заявка/план, чьё `documentText` совпадает с `basis` ЗН. Показывает связь и рассинхрон фактических/плановых моментов времени.',
-                '[●purple] **Закр. ЗН ↔ Заказ-наряды и Заявки** — берём закрытые ЗН (последняя версия performed) и сравниваем 4 длительности: Δплан, Δуточн, Δфакт и Δзакр.−факт против нормочасов. Цель — поймать переработки и недоработки.',
-                '[●gray] **Закр. ЗН ↔ CV** *(скоро)* — закрытые ЗН против VehicleSession/PostStay: было ли авто действительно на посту в нужное время.',
+                '[●purple] **ЗН ↔ Заявки** — основное актуальное сопоставление: для каждого заказ-наряда из 1С (последняя версия) ищется заявка/план, чей текст документа совпадает с основанием ЗН. Показывает связь и рассинхрон фактических/плановых моментов времени.',
+                '[●purple] **Закр. ЗН ↔ Заказ-наряды и Заявки** — берём закрытые ЗН (последняя версия из «выполнено») и сравниваем 4 длительности: Δплан, Δуточн, Δфакт и Δзакр.−факт против нормочасов. Цель — поймать переработки и недоработки.',
+                '[●gray] **Закр. ЗН ↔ Камеры** *(скоро)* — закрытые ЗН против записей о визитах и стоянок на постах: было ли авто действительно на посту в нужное время.',
                 '[●gray] **Выработка** *(скоро)* — сводка по нормочасам и фактическому времени за период с разбивкой по исполнителям.',
-                'Заглушки помечены бейджем «скоро» и приглушены — клик переключает таб, но внутри пока заготовка.',
+                'Заглушки помечены значком «скоро» и приглушены — клик переключает вкладку, но внутри пока заготовка.',
               ],
             },
             {
               heading: 'Общая раскладка экрана',
               items: [
-                '[eye] **Шапка** — название «Сопоставления» + горизонтальный таб-бар (4 вкладки) + кнопка «Помощь» справа.',
-                '[eye] **Полоса KPI-чипов** — счётчики и одновременно фильтры (клик включает/выключает критерий). Активный — фиолетовый с лёгким свечением.',
+                '[eye] **Шапка** — название «Сопоставления» + горизонтальная панель вкладок (4 штуки) + кнопка «Помощь» справа.',
+                '[eye] **Полоса KPI-меток** — счётчики и одновременно фильтры (клик включает/выключает критерий). Активный — фиолетовый с лёгким свечением.',
                 '[eye] **Полоса фильтров** — стеклянная панель: поиск, тематические переключатели, кнопка «Сбросить».',
                 '[eye] **Таблица** — главная область, сразу под фильтрами. У каждой вкладки своя структура колонок.',
-                '[eye] **Подвал таблицы** — счётчик строк + пагинация со выбором размера страницы (25 / 50 / 100, по умолчанию 50).',
+                '[eye] **Подвал таблицы** — счётчик строк + пагинация с выбором размера страницы (25 / 50 / 100, по умолчанию 50).',
               ],
             },
             {
               heading: 'Связи между вкладками',
               items: [
-                '[click] **№ ЗН** в «Закр. ЗН ↔ Заказ-наряды и Заявки» кликабельный (синий, подчёркивается на hover) — клик переключает на «ЗН ↔ Заявки», подставляет номер в поиск и подсвечивает нужную строку фиолетовым фоном на 2.5 секунды.',
+                '[click] **№ ЗН** в «Закр. ЗН ↔ Заказ-наряды и Заявки» кликабельный (синий, подчёркивается при наведении) — клик переключает на «ЗН ↔ Заявки», подставляет номер в поиск и подсвечивает нужную строку фиолетовым фоном на 2.5 секунды.',
                 '[ok] Можно вернуться обратно (Сбросить → нажать кнопку «Закр. ЗН»). Состояние фильтров каждой вкладки независимо.',
               ],
             },
             {
               heading: 'Дизайн и поведение',
               items: [
-                '[eye] Все панели (KPI, фильтры, таблица, плейсхолдеры) — стилистика «стекло»: полупрозрачный фон (`--bg-glass`), `backdrop-blur`, мягкая тень.',
-                '[eye] Иконки только Lucide React, без emoji.',
-                '[eye] Плейсхолдер «н/д» подставляется на месте пустых значений серым с пониженной прозрачностью, чтобы не сливаться с типографским минусом «−» в Δ-подсказках.',
-                '[ok] Право доступа: `view_1c`. Управления здесь нет — только чтение.',
+                '[eye] Все панели (KPI, фильтры, таблица, заглушки) — стилистика «стекло»: полупрозрачный фон, размытие, мягкая тень.',
+                '[eye] Иконки единого стиля, без эмодзи.',
+                '[eye] Заглушка «н/д» подставляется на месте пустых значений серым с пониженной прозрачностью, чтобы не сливаться с типографским минусом «−» в Δ-подсказках.',
+                '[ok] Право доступа: «Просмотр данных 1С». Управления здесь нет — только чтение.',
               ],
             },
           ],
         },
         zn_plan: {
           label: 'ЗН ↔ Заявки',
-          intro: 'Основной актуальный матчинг: дедуплицированные заказ-наряды 1С связываются с актуальными заявками/планами через строгое равенство `repair.basis === plan.documentText`. Дальше всё (бейдж связи, severity моментов и Δ длительностей) — производные метрики.',
+          intro: 'Основное актуальное сопоставление: заказ-наряды 1С (с устранёнными дубликатами) связываются с актуальными заявками/планами через строгое равенство основания ЗН и текста документа заявки. Дальше всё (метка связи, важность моментов и Δ длительностей) — производные метрики.',
           sections: [
             {
-              heading: 'KPI-чипы — счётчик + фильтр',
+              heading: 'KPI-метки — счётчик + фильтр',
               items: [
-                '[●gray] **Всего ЗН** — общее число дедуплицированных ЗН. Клик сбрасывает KPI-фильтры (но не поиск/состояние/severity).',
-                '[●green] **Сопоставлено** — basis нашёл соответствующий documentText. Клик добавляет фильтр `matchStatus=matched`.',
-                '[●gray] **Без основания** — пустое поле basis. Клик включает `no_basis`.',
-                '[●red] **Основание не найдено** — basis есть, но среди актуальных заявок ничего похожего. **Критичный** случай.',
-                '[●orange] **Существенные расхождения** — ЗН, у которых хотя бы одно отклонение времени попадает в `orange` или `red`.',
+                '[●gray] **Всего ЗН** — общее число ЗН без дубликатов. Клик сбрасывает KPI-фильтры (но не поиск/состояние/важность).',
+                '[●green] **Сопоставлено** — основание нашло соответствующий текст документа в заявке. Клик добавляет фильтр «сопоставлено».',
+                '[●gray] **Без основания** — поле основания пустое. Клик включает фильтр «без основания».',
+                '[●red] **Основание не найдено** — основание заполнено, но среди актуальных заявок ничего похожего. **Критичный** случай.',
+                '[●orange] **Существенные расхождения** — ЗН, у которых хотя бы одно отклонение времени попадает в оранжевый или красный диапазон.',
               ],
             },
             {
-              heading: 'Бейджи связи (колонка «Связь»)',
+              heading: 'Метки связи (колонка «Связь»)',
               items: [
-                '[●green] **Совпадает** — basis найден в заявках, VIN/госномер тоже сходятся (либо у заявки нет авто).',
-                '[●yellow] **Авто не совпадает** — basis найден, но авто в заявке не совпадает с авто в ЗН.',
-                '[●gray] **Без основания** — поле basis пустое в данных 1С.',
-                '[●red] **Основание не найдено** — basis заполнен, но среди заявок ничего похожего нет.',
+                '[●green] **Совпадает** — основание найдено в заявках, VIN/госномер тоже сходятся (либо у заявки нет авто).',
+                '[●yellow] **Авто не совпадает** — основание найдено, но авто в заявке не совпадает с авто в ЗН.',
+                '[●gray] **Без основания** — поле основания пустое в данных 1С.',
+                '[●red] **Основание не найдено** — основание заполнено, но среди заявок ничего похожего нет.',
               ],
             },
             {
@@ -2298,13 +2298,13 @@ const HELP_CONTENT = {
               items: [
                 'Каждая ячейка показывает три горизонтальные строки одного момента (старта работ или их окончания):',
                 '**ПЛАН** — изначально запланированное в плане/заявке 1С. Базовая линия, подсветки нет.',
-                '**УТОЧН.** — уточнение основания (`basisStart` / `basisEnd`). Подсветка по разнице с ПЛАНом.',
+                '**УТОЧН.** — уточнение основания (начало/окончание по основанию). Подсветка по разнице с ПЛАНом.',
                 '**ФАКТ** — фактическое время из заказ-наряда. Подсветка по разнице с УТОЧН.',
                 '[●gray] «н/д» — данных нет (например, ЗН ещё открыт — нет факта окончания).',
               ],
             },
             {
-              heading: 'Шкала severity (моменты времени)',
+              heading: 'Шкала важности (моменты времени)',
               items: [
                 'Подсветка строки УТОЧН/ФАКТ отражает абсолютную разницу относительно базовой линии:',
                 '[●gray] **Серый** — <15м или сравнивать не с чем.',
@@ -2320,17 +2320,17 @@ const HELP_CONTENT = {
                 'Δ план = (факт. длительность ЗН) − (плановая длительность из заявки).',
                 'Δ уточн. = (факт. длительность ЗН) − (уточнённая длительность).',
                 'Знак: «+» дольше плана, «−» короче, «±0» — точно. Минус — типографский «−», чтобы не путать с «н/д».',
-                'Под цифрой — хинт «факт Xч Yм − план Aч Bм».',
-                'Цвет фона — та же шкала severity, но применяется к разнице длительностей.',
+                'Под цифрой — подсказка «факт Xч Yм − план Aч Bм».',
+                'Цвет фона — та же шкала важности, но применяется к разнице длительностей.',
               ],
             },
             {
               heading: 'Сортировка по столбцам',
               items: [
-                '[click] Заголовок столбца с иконкой ↕ — кликабельный. Активный направление: ↑ (asc) или ↓ (desc), фиолетовый цвет.',
+                '[click] Заголовок столбца с иконкой ↕ — кликабельный. Активное направление: ↑ (по возрастанию) или ↓ (по убыванию), фиолетовый цвет.',
                 'Сортируемые: **№ ЗН**, **Состояние**, **Связь**, **Начало**, **Окончание**, **Δ план**, **Δ уточн.**, **Мастер**, **Диспетчер**.',
                 '**По умолчанию: Окончание ↓** — самая новая дата окончания сверху, с каскадом **факт → уточн → план**.',
-                'Колонки «Начало» / «Окончание» используют тот же каскад (sortBy=startAny / endAny на бэке).',
+                'Колонки «Начало» / «Окончание» используют тот же каскад.',
                 'Смена сортировки автоматически сбрасывает страницу на 1.',
               ],
             },
@@ -2339,7 +2339,7 @@ const HELP_CONTENT = {
               items: [
                 'Шеврон ▶ слева есть только у ЗН, у которых **больше одной версии**. Развёрнутая панель показывает таблицу версий: только те колонки, у которых значения различаются.',
                 'Последняя версия подсвечена фиолетовым с меткой «АКТУАЛЬНАЯ».',
-                '[ok] Зачем смотреть — отследить, в какой версии появилось/исчезло поле basis, изменился пост, переписали госномер.',
+                '[ok] Зачем смотреть — отследить, в какой версии появилось/исчезло поле основания, изменился пост, переписали госномер.',
               ],
             },
             {
@@ -2353,69 +2353,68 @@ const HELP_CONTENT = {
               ],
             },
             {
-              heading: 'Источник данных и API',
+              heading: 'Источник данных',
               items: [
-                '**Запрос:** `GET /api/oneC/matching?take=...&skip=...&q=...&matchStatus=...&minSeverity=...&state=...&sortBy=...&sortDir=...`',
-                '**Бэкенд:** `routes/oneCMatching.js` → дедуплицированные строки через `oneCDeduped.getDedupedRepairRows()` + `getDedupedPlanRows()`.',
-                '**Алгоритм:** строгое равенство `repair.basis === plan.documentText`. Никакого fuzzy.',
-                '**Severity** считается на бэке. Пороги моментов: ≤15м green, ≤1ч yellow, ≤4ч orange, >4ч red.',
-                '**Право доступа:** `view_1c`.',
+                '**Источник:** актуальные строки заказ-нарядов и заявок из 1С (с устранёнными дубликатами).',
+                '**Алгоритм:** строгое равенство основания ЗН и текста документа заявки. Никакого нечёткого сопоставления.',
+                '**Важность** считается на сервере. Пороги моментов: ≤15м зелёный, ≤1ч жёлтый, ≤4ч оранжевый, >4ч красный.',
+                '**Право доступа:** «Просмотр данных 1С».',
               ],
             },
             {
               heading: 'Подводные камни',
               items: [
-                '[warn] Матчинг строго по строковому равенству. Один лишний неразрывный пробел в 1С → `basis_not_found`.',
-                '[warn] Авто в заявке и в ЗН сравниваются эвристически — возможен ложный `matched_vehicle_mismatch`.',
-                '[warn] «Актуальной» версией считается строка с максимальным `receivedAt`, а не `workStartedAt`. При задержке писем порядок может прыгнуть.',
-                '[warn] Страница не подписана на Socket.IO — обновление при смене фильтра/перезаходе.',
+                '[warn] Сопоставление строго по строковому равенству. Один лишний неразрывный пробел в 1С → «основание не найдено».',
+                '[warn] Авто в заявке и в ЗН сравниваются эвристически — возможна ложная пометка «авто не совпадает».',
+                '[warn] «Актуальной» версией считается строка с самой свежей датой получения письма, а не датой начала работ. При задержке писем порядок может прыгнуть.',
+                '[warn] Страница не подписана на мгновенные обновления — данные обновляются при смене фильтра/перезаходе.',
               ],
             },
           ],
         },
         closed_zn_orders: {
           label: 'Закр. ЗН ↔ Заказ-наряды и Заявки',
-          intro: 'База — закрытые ЗН (последняя версия `OneCWorkPerformed`). По номеру ЗН подтягиваются: из заказ-нарядов 1С — фактические метки начала/окончания работ; из заявок (через `basis`) — план и уточнение. Цель — сравнить 4 длительности (план / уточн / факт / закр.−старт) с нормочасами и поймать переработки/недоработки.',
+          intro: 'База — закрытые ЗН (последняя версия из «выполнено»). По номеру ЗН подтягиваются: из заказ-нарядов 1С — фактические метки начала/окончания работ; из заявок (через основание) — план и уточнение. Цель — сравнить 4 длительности (план / уточн / факт / закр.−старт) с нормочасами и поймать переработки/недоработки.',
           sections: [
             {
-              heading: 'KPI-чипы',
+              heading: 'KPI-метки',
               items: [
-                '[●gray] **Всего закрытых ЗН** — общее число строк после дедупа performed.',
+                '[●gray] **Всего закрытых ЗН** — общее число строк после устранения дубликатов «выполнено».',
                 '[●red] **Расхождение >30%** — кликабельный фильтр. Включает только строки, где |Δфакт − нормочасы| / нормочасы > 30%.',
                 '[●orange] **Превышение нормы** — переработка (Δфакт > нормочасы·1.3).',
                 '[●green] **Экономия нормы** — недоработка (Δфакт < нормочасы·0.7).',
-                '[●gray] **Без нормочасов** — `norm_hours` не указан, для таких строк подсветка отключена.',
+                '[●gray] **Без нормочасов** — нормочасы не указаны, для таких строк подсветка отключена.',
               ],
             },
             {
               heading: '7 колонок (в порядке слева направо)',
               items: [
-                '**№ ЗН** — номер закрытого ЗН (формат `КОЛ…`). [click] **Кликабельный**: переход на вкладку «ЗН ↔ Заявки» с автофильтрацией по этому номеру и подсветкой строки. Синий цвет, подчёркивается на hover.',
-                '**Закрыт** — `closedAt` из performed.',
-                '[●purple] **Нормочасы** *(violet фон)* — из performed (`norm_hours`), эталон для сравнения. Отображаются в часах с десятыми (`3.5ч`).',
-                '[●blue] **Δ план** *(sky фон)* — planEnd − planStart (длительность плана). Берётся через `basis` ЗН в актуальных заявках.',
-                '[●yellow] **Δ уточн.** *(amber фон)* — basisEnd − basisStart (уточнённая длительность из ЗН).',
-                '[●green] **Δ факт** *(emerald фон)* — workFinishedAt − workStartedAt. Это основа для сравнения с нормочасами.',
-                '[●pink] **Δ закр.−факт** *(pink фон)* — closedAt − workFinishedAt. Лаг между «закончил работать» и «закрыл наряд» — время оформления документов в 1С.',
+                '**№ ЗН** — номер закрытого ЗН (формат КОЛ…). [click] **Кликабельный**: переход на вкладку «ЗН ↔ Заявки» с автофильтрацией по этому номеру и подсветкой строки. Синий цвет, подчёркивается при наведении.',
+                '**Закрыт** — время закрытия из «выполнено».',
+                '[●purple] **Нормочасы** *(фиолетовый фон)* — из «выполнено», эталон для сравнения. Отображаются в часах с десятыми (например, 3.5ч).',
+                '[●blue] **Δ план** *(голубой фон)* — окончание плана минус начало плана (длительность плана). Берётся через основание ЗН в актуальных заявках.',
+                '[●yellow] **Δ уточн.** *(янтарный фон)* — окончание по основанию минус начало по основанию (уточнённая длительность из ЗН).',
+                '[●green] **Δ факт** *(зелёный фон)* — времени окончания работ минус времени начала. Это основа для сравнения с нормочасами.',
+                '[●pink] **Δ закр.−факт** *(розовый фон)* — времени закрытия минус времени окончания работ. Лаг между «закончил работать» и «закрыл наряд» — время оформления документов в 1С.',
               ],
             },
             {
               heading: 'Подсветка строк (расхождение с нормой)',
               items: [
-                'Логика: если `|Δфакт − нормочасы·3600| / нормочасы·3600 > 30%` — строка подсвечивается.',
-                '[●red] **Левая красная полоса 3px + бледно-красный фон** — расхождение есть.',
-                'В ячейке Δфакт значение становится **красным жирным**, под ним появляется мини-бейдж с процентом и направлением:',
+                'Логика: если |Δфакт − нормочасы| / нормочасы > 30% — строка подсвечивается.',
+                '[●red] **Левая красная полоса + бледно-красный фон** — расхождение есть.',
+                'В ячейке Δфакт значение становится **красным жирным**, под ним появляется мини-метка с процентом и направлением:',
                 '[●red] **↑ +NN%** — переработка (Δфакт > нормы).',
                 '[●green] **↓ −NN%** — экономия (Δфакт < нормы).',
-                'Подсветка отключена, если `norm_hours` пустой/ноль — для таких строк бейджа нет.',
-                'Порог 30% задан на бэке константой `NORM_MISMATCH_THRESHOLD = 0.3` и возвращается клиенту в ответе (`threshold`).',
+                'Подсветка отключена, если нормочасы пустые или ноль — для таких строк метки нет.',
+                'Порог 30% задан на сервере и возвращается клиенту в ответе.',
               ],
             },
             {
               heading: 'Фильтры и пагинация',
               items: [
                 '**Поиск** — подстрочный по № ЗН, ВИН, госномеру, мастеру, исполнителю, описанию причины. Регистр игнорируется.',
-                '**Только расхождение >30%** — переключатель ChipToggle и одновременно KPI-чип «Расхождение >30%». Это один и тот же фильтр.',
+                '**Только расхождение >30%** — переключатель и одновременно KPI-метка «Расхождение >30%». Это один и тот же фильтр.',
                 '**Сбросить** — очищает поиск и переключатель.',
                 '**Пагинация** внизу: 25 / 50 / 100 строк (по умолчанию 50).',
               ],
@@ -2423,47 +2422,46 @@ const HELP_CONTENT = {
             {
               heading: 'Цветовая семантика колонок',
               items: [
-                'Фон у Δ-колонок и нормочасов — **жёсткие цвета**, НЕ зависят от severity:',
-                '[●purple] **Violet** — нормочасы (эталон).',
-                '[●blue] **Sky** — Δплан.',
-                '[●yellow] **Amber** — Δуточн.',
-                '[●green] **Emerald** — Δфакт.',
-                '[●pink] **Pink** — Δзакр.−факт.',
+                'Фон у Δ-колонок и нормочасов — **жёсткие цвета**, НЕ зависят от важности:',
+                '[●purple] **Фиолетовый** — нормочасы (эталон).',
+                '[●blue] **Голубой** — Δплан.',
+                '[●yellow] **Янтарный** — Δуточн.',
+                '[●green] **Зелёный** — Δфакт.',
+                '[●pink] **Розовый** — Δзакр.−факт.',
                 'Цвет помогает мгновенно отличить семантику числа: рядом стоящие «5.2ч» в разных колонках читаются по-разному.',
               ],
             },
             {
-              heading: 'Источник данных и API',
+              heading: 'Источник данных',
               items: [
-                '**Запрос:** `GET /api/oneC/matching/closed?take=...&skip=...&q=...&onlyMismatch=1`',
-                '**Бэкенд:** `routes/oneCMatching.js` → `getDedupedPerformedRows()` (база) + `getDedupedRepairRows()` (factStart/End, basis) + `getDedupedPlanRows()` (planSpan через basis).',
-                'Сначала строится мапа последних версий performed по `orderNumber`. К каждой подтягивается последняя версия repair и группа plan-строк по basis.',
-                'Длительности считаются как `(end − start)` в секундах, на UI преобразуются в часы.',
-                '**Право доступа:** `view_1c`.',
+                '**Источник:** актуальные строки «выполнено» (база) плюс заказ-наряды (фактические начало/окончание, основание) и заявки (длительность плана через основание).',
+                'Сначала строится карта последних версий «выполнено» по номеру заказа. К каждой подтягивается последняя версия заказ-наряда и группа строк плана по основанию.',
+                'Длительности считаются как (конец − начало) в секундах, в интерфейсе преобразуются в часы.',
+                '**Право доступа:** «Просмотр данных 1С».',
               ],
             },
             {
               heading: 'Подводные камни',
               items: [
-                '[warn] Если у ЗН нет repair-снимка (бывает, если письмо ещё не пришло) — Δплан/Δуточн/Δфакт будут «н/д». В строке отображается только нормочасы и Δзакр (закрытие у performed своё).',
-                '[warn] Δфакт считается по `workStartedAt`/`workFinishedAt` из repair-снимка, не из performed. Они могут отличаться (1С иногда пишет в одно поле, иногда в другое).',
-                '[warn] Если факт окончание пустое или нулевое, расчёт ratio = (Δфакт − norm)/norm не выполняется и строка не подсвечивается, даже если переработка реальна.',
+                '[warn] Если у ЗН нет снимка заказ-наряда (бывает, если письмо ещё не пришло) — Δплан/Δуточн/Δфакт будут «н/д». В строке отображается только нормочасы и Δзакр (закрытие у «выполнено» своё).',
+                '[warn] Δфакт считается по времени начала и окончания работ из снимка заказ-наряда, не из «выполнено». Они могут отличаться (1С иногда пишет в одно поле, иногда в другое).',
+                '[warn] Если факт окончание пустое или нулевое, расчёт расхождения не выполняется и строка не подсвечивается, даже если переработка реальна.',
                 '[warn] Порог 30% — единое значение для всех. Маленькие ЗН на 0.5ч с расхождением 0.2ч (40%) подсветятся; крупные на 8ч с расхождением 2ч (25%) — нет. При необходимости можно вынести в настройки.',
               ],
             },
           ],
         },
         closed_zn_cv: {
-          label: 'Закр. ЗН ↔ CV',
-          intro: 'Вкладка в разработке. Планируемый сценарий: для каждого закрытого ЗН проверять, было ли авто действительно на нужном посту в окне `workStartedAt … closedAt`, опираясь на данные компьютерного зрения (`VehicleSession` + `PostStay`).',
+          label: 'Закр. ЗН ↔ Камеры',
+          intro: 'Вкладка в разработке. Планируемый сценарий: для каждого закрытого ЗН проверять, было ли авто действительно на нужном посту в окне «начало работ … закрытие», опираясь на данные компьютерного зрения (запись о визите и стоянки на постах).',
           sections: [
             {
               heading: 'Что будет показано',
               items: [
                 '**№ ЗН** + **авто** + **пост** (заявленный мастером) — слева как идентификация.',
-                '**Окно работ из 1С** (`workStartedAt` … `closedAt`) — серая полоска.',
-                '**Окно по CV** (`VehicleSession` для этого авто) — цветная полоска поверх: зелёная если попало в нужный пост, оранжевая если в другой, красная если авто вообще не наблюдалось.',
-                '**Совпадение по пост-минутам** — доля времени из заявленного окна, когда CV видела авто на нужном посту.',
+                '**Окно работ из 1С** (от времени начала работ до закрытия) — серая полоска.',
+                '**Окно по камерам** (запись о визите этого авто) — цветная полоска поверх: зелёная если попало в нужный пост, оранжевая если в другой, красная если авто вообще не наблюдалось.',
+                '**Совпадение по пост-минутам** — доля времени из заявленного окна, когда камеры видели авто на нужном посту.',
               ],
             },
             {
@@ -2477,24 +2475,24 @@ const HELP_CONTENT = {
             {
               heading: 'Зависимости (что нужно для запуска)',
               items: [
-                '[warn] Связь авто из 1С (`vehicleText`, `plate`, `vin`) с CV-сущностями (`VehicleSession.plateNumber`). Сейчас связь делается эвристически в `oneCCvMatcher` — нужно перевести на дедуплицированные данные.',
-                '[warn] Назначение поста ЗН — пока в 1С пост хранится текстом, требуется `PostNameMapping`.',
-                '[warn] CV-история по дате — `monitoringProxy` + `PostStay`. Уже есть, но индексация по дате нуждается в кэше для быстрых запросов.',
+                '[warn] Связь авто из 1С (текст авто, номер, VIN) с данными камер (номер из записи о визите). Сейчас связь делается эвристически — нужно перевести на данные без дубликатов.',
+                '[warn] Назначение поста ЗН — пока в 1С пост хранится текстом, требуется справочник постов.',
+                '[warn] История от камер по дате — уже есть, но индексация по дате нуждается в кэше для быстрых запросов.',
               ],
             },
           ],
         },
         payroll: {
           label: 'Выработка',
-          intro: 'Вкладка в разработке. Планируемая сводка по нормочасам и фактическому времени за период с разбивкой по исполнителям. Сейчас аналогичная информация частично доступна в эндпоинте `/api/oneC/payroll` и в вкладке «Данные 1С → Выработка».',
+          intro: 'Вкладка в разработке. Планируемая сводка по нормочасам и фактическому времени за период с разбивкой по исполнителям. Сейчас аналогичная информация частично доступна в вкладке «Данные 1С → Выработка».',
           sections: [
             {
               heading: 'Что будет показано',
               items: [
-                '**Исполнитель** — ФИО из performed (`executor`).',
+                '**Исполнитель** — ФИО исполнителя из «выполнено».',
                 '**Закрытых ЗН** за период.',
-                '**Сумма нормочасов** — sum(`norm_hours`).',
-                '**Сумма Δфакт** — sum факт-длительностей.',
+                '**Сумма нормочасов** — сумма нормочасов.',
+                '**Сумма Δфакт** — сумма факт-длительностей.',
                 '**Эффективность** = норма / факт (≈100% — точно по норме, >100% — переработка, <100% — экономия).',
                 'Разбивка по типам работ (ТО / Ремонт / Диагностика) — гистограмма внутри строки.',
               ],
@@ -2502,7 +2500,7 @@ const HELP_CONTENT = {
             {
               heading: 'Период и фильтры',
               items: [
-                '**Период** — диапазон дат closedAt (день / неделя / месяц / произвольный).',
+                '**Период** — диапазон дат закрытия (день / неделя / месяц / произвольный).',
                 '**Поиск** — по ФИО исполнителя.',
                 '**Сортировка** по нормочасам / эффективности / числу ЗН.',
                 'Экспорт XLSX/PDF — как на странице «Аналитика».',
@@ -2526,7 +2524,7 @@ const HELP_CONTENT = {
       tabs: {
         overview: {
           label: 'Page overview',
-          intro: 'The "Matching" page is a single entry point for several kinds of 1C-data matching. It hosts 4 tabs, each solves a specific task. Data sources are the deduplicated UI-grade tables (`OneCPlanRow`, `OneCRepairSnapshot`, `OneCWorkPerformed`), not raw e-mails — so the summaries always match what is shown under "1C Data → Plans / Work Orders / Closed WOs".',
+          intro: 'The "Matching" page is a single entry point for several kinds of 1C-data matching. It hosts 4 tabs, each solving a specific task. The data sources are the deduplicated UI-grade tables (`OneCPlanRow`, `OneCRepairSnapshot`, `OneCWorkPerformed`), not raw emails — so the summaries always match what is shown under "1C Data → Plans / Work Orders / Closed WOs".',
           sections: [
             {
               heading: '4 tabs (matching kinds)',
@@ -2568,7 +2566,7 @@ const HELP_CONTENT = {
         },
         zn_plan: {
           label: 'WO ↔ Plans',
-          intro: 'Main current matching: deduplicated 1C work orders link to current plans/requests via strict equality `repair.basis === plan.documentText`. Everything else (link badge, moment severity, duration deltas) is derived.',
+          intro: 'The main current matching: deduplicated 1C work orders are linked to current plans/requests via strict equality `repair.basis === plan.documentText`. Everything else (link badge, moment severity, duration deltas) is derived.',
           sections: [
             {
               heading: 'KPI chips — counters + filters',
@@ -2670,7 +2668,7 @@ const HELP_CONTENT = {
         },
         closed_zn_orders: {
           label: 'Closed WO ↔ Orders & Plans',
-          intro: 'Base — closed WOs (latest `OneCWorkPerformed` version). By WO number we pull actual start/end work marks from repair snapshots and plan/refined intervals (via `basis`) from plan rows. The goal: compare 4 durations (plan / refined / fact / closed−start) against norm-hours and catch overruns/underruns.',
+          intro: 'Base: closed WOs (the latest `OneCWorkPerformed` version). For each WO number we pull actual start/end work marks from repair snapshots and plan/refined intervals (via `basis`) from plan rows. The goal: compare 4 durations (plan / refined / fact / closed−start) against norm hours and catch overruns and underruns.',
           sections: [
             {
               heading: 'KPI chips',
@@ -2823,15 +2821,15 @@ const HELP_CONTENT = {
   users: {
     ru: {
       title: 'Управление пользователями',
-      intro: 'Полное управление учётными записями: создание/изменение/удаление, роли (5 типов), доступ к страницам (21 страница), точечное скрытие элементов интерфейса. Все мутации записываются в аудит-лог. Доступно только администраторам (защита от случайного блокирования системы).',
+      intro: 'Полное управление учётными записями: создание/изменение/удаление, роли (5 типов), доступ к страницам (21 страница), точечное скрытие элементов интерфейса. Все изменения записываются в журнал аудита. Доступно только администраторам (защита от случайного блокирования системы).',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
             '[eye] **Верх** — поле поиска и кнопка «Добавить».',
-            '[eye] **Центр** — таблица пользователей: имя, email, роль (бейдж), активность, кол-во страниц.',
+            '[eye] **Центр** — таблица пользователей: имя, email, роль (метка), активность, количество страниц.',
             '[eye] **Модальное окно редактирования** — открывается по клику на строку: вкладки «Основное», «Страницы», «Элементы».',
-            '[eye] **Нижняя строка модалки** — кнопки «Сохранить» / «Отмена» / «Удалить».',
+            '[eye] **Нижняя строка модального окна** — кнопки «Сохранить» / «Отмена» / «Удалить».',
           ],
         },
         {
@@ -2858,8 +2856,8 @@ const HELP_CONTENT = {
         {
           heading: 'Доступ к страницам',
           items: [
-            'Для каждого пользователя — набор **чекбоксов страниц** (до 20 штук).',
-            'Доступные разделы: Дашборд, Дашборд постов, Посты, Карта, Сессии, Заказ-наряды, События, Аналитика, Камеры, Данные 1С, Пользователи, Смены, Аудит-лог, Мой пост, Редактор карты, Здоровье, Расписание отчётов, Статистика работника, Live-отладка, Техническая документация.',
+            'Для каждого пользователя — набор **флажков страниц** (до 20 штук).',
+            'Доступные разделы: Дашборд, Дашборд постов, Посты, Карта, Сессии, Заказ-наряды, События, Аналитика, Камеры, Данные 1С, Пользователи, Смены, Журнал аудита, Мой пост, Редактор карты, Здоровье, Расписание отчётов, Статистика работника, Live-отладка, Техническая документация.',
             'Кнопка **«Выбрать все»** — включить все страницы.',
             'Кнопка **«Сбросить»** — снять все галочки.',
             'Пользователь видит в боковом меню только разрешённые страницы.',
@@ -2871,7 +2869,7 @@ const HELP_CONTENT = {
             '**Дерево элементов** — для каждой страницы можно скрыть отдельные элементы интерфейса.',
             'Пример: на странице Дашборд можно скрыть виджет «Прогнозы» или «Рекомендации».',
             'Настройка тонкозернистая — контролирует каждый блок на странице.',
-            'Скрытые элементы не рендерятся на клиенте (проверка прав на стороне фронтенда).',
+            'Скрытые элементы не отрисовываются на клиенте (проверка прав на стороне фронтенда).',
           ],
         },
         {
@@ -2881,13 +2879,13 @@ const HELP_CONTENT = {
             'Можно изменить: имя, фамилию, email, роль, пароль, активность, страницы.',
             '**Нельзя удалить администратора** — защита от блокировки системы.',
             'При редактировании **себя** — изменения применяются немедленно (перезагрузка не нужна).',
-            'Все изменения записываются в **аудит-лог**.',
+            'Все изменения записываются в **журнал аудита**.',
           ],
         },
         {
           heading: 'Таблица пользователей',
           items: [
-            'Колонки: имя, email, роль (цветной бейдж), активность, количество страниц.',
+            'Колонки: имя, email, роль (цветная метка), активность, количество страниц.',
             'Поиск по имени или email.',
             'Неактивные пользователи отображаются бледным цветом.',
           ],
@@ -2905,7 +2903,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'User Management',
-      intro: 'Full account management: CRUD, roles (5 types), page access (21 pages), fine-grained UI element hiding. All mutations are recorded in Audit Log. Available only to users with admin role (protects against accidental system lockout).',
+      intro: 'Full account management: CRUD, roles (5 types), page access (21 pages), and fine-grained UI element hiding. All mutations are recorded in the Audit Log. Available only to users with the admin role (this protects against accidental system lockout).',
       sections: [
         {
           heading: 'Screen Map',
@@ -3073,7 +3071,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Shift Management',
-      intro: 'Work shift calendar. 7-day view with color-coded statuses (planned/active/completed). Assign workers of three roles (mechanic / master / diagnostician) to posts. Automatic conflict detection: one worker cannot be in two shifts simultaneously. Shift completion generates a handover act.',
+      intro: 'Work shift calendar. A 7-day view with color-coded statuses (planned/active/completed). Assign workers in three roles (mechanic / master / diagnostician) to posts. Automatic conflict detection: one worker cannot be in two shifts simultaneously. Completing a shift generates a handover act.',
       sections: [
         {
           heading: 'Screen Map',
@@ -3116,10 +3114,10 @@ const HELP_CONTENT = {
         {
           heading: 'Worker Roles in Shift',
           items: [
-            '**Mechanic** — performs work on post.',
-            '**Master** — supervises work, receives vehicles.',
-            '**Diagnostician** — performs diagnostics.',
-            'Each worker is assigned to a specific **post (postId)**.',
+            '**Mechanic** — performs work at the post.',
+            '**Master** — supervises the work and receives vehicles.',
+            '**Diagnostician** — runs diagnostics.',
+            'Each worker is assigned to a specific **post**.',
           ],
         },
         {
@@ -3158,14 +3156,14 @@ const HELP_CONTENT = {
   // ────────────────────────────
   audit: {
     ru: {
-      title: 'Аудит-лог',
+      title: 'Журнал аудита',
       intro: 'Полный журнал всех изменений данных в системе. Каждая запись хранит автора, IP, тип объекта, действие и сравнение «до» / «после». Хранение бессрочное. Фильтры и экспорт в CSV для отчётов и расследований. Только для администраторов.',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
             '[eye] **Верх** — фильтры: текстовый поиск, действие, сущность, диапазон дат + кнопка «Экспорт CSV».',
-            '[eye] **Центр** — таблица записей с цветными бейджами действий.',
+            '[eye] **Центр** — таблица записей с цветными метками действий.',
             '[eye] **Развёртываемая строка** (клик на запись) — показывает сравнение значений «до» и «после».',
             '[eye] **Низ** — пагинация (25 / 50 / 100 на страницу).',
           ],
@@ -3186,7 +3184,7 @@ const HELP_CONTENT = {
           items: [
             '**Время** — точное время действия (формат: дата + ЧЧ:ММ:СС).',
             '**Пользователь** — кто выполнил действие (имя + фамилия).',
-            '**Действие** — цветной бейдж: зелёный (Создание), синий (Изменение), красный (Удаление).',
+            '**Действие** — цветная метка: зелёный (Создание), синий (Изменение), красный (Удаление).',
             '**Сущность** — тип объекта (пользователь, зона, пост и т.д.).',
             '**ID сущности** — идентификатор конкретного объекта.',
             '**IP-адрес** — откуда было выполнено действие.',
@@ -3241,7 +3239,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Audit Log',
-      intro: 'Complete log of all mutations (POST/PUT/PATCH/DELETE) in the system. Each record stores actor, IP, entity type, action, and diff between "before" and "after". Indefinite storage. Filters and CSV export for reports and investigations. Admin only.',
+      intro: 'A complete log of all mutations (POST/PUT/PATCH/DELETE) in the system. Each record stores the actor, IP, entity type, action, and a diff between "before" and "after". Stored indefinitely. Filters and CSV export for reports and investigations. Admin only.',
       sections: [
         {
           heading: 'Screen Map',
@@ -3329,14 +3327,14 @@ const HELP_CONTENT = {
   myPost: {
     ru: {
       title: 'Мой пост — Рабочий экран механика',
-      intro: 'Простой и понятный экран для механика. Видно текущий ЗН, крупный таймер с прогресс-баром, обратный отсчёт до дедлайна и большие сенсорные кнопки управления (Start / Pause / Resume / Finish). Цвет таймера меняется по мере приближения и превышения нормы. Отключён в live-режиме (там механик использует внешние терминалы).',
+      intro: 'Простой и понятный экран для механика. Видно текущий ЗН, крупный таймер с полосой прогресса, обратный отсчёт до крайнего срока и большие сенсорные кнопки управления (Начать / Пауза / Продолжить / Завершить). Цвет таймера меняется по мере приближения и превышения нормы. Отключён в рабочем режиме (там механик использует внешние терминалы).',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
             '[eye] **Верх** — заголовок: «Пост N» и имя механика.',
             '[eye] **Центр** — карточка ЗН: номер, госномер крупно, марка/модель, тип работ, нормочасы.',
-            '[eye] **Под карточкой** — большой таймер ЧЧ:ММ:СС и прогресс-бар.',
+            '[eye] **Под карточкой** — большой таймер ЧЧ:ММ:СС и полоса прогресса.',
             '[eye] **Под таймером** — обратный отсчёт «Осталось / Просрочено».',
             '[eye] **Внизу** — крупные сенсорные кнопки управления (одна-две активны в зависимости от статуса).',
           ],
@@ -3346,7 +3344,7 @@ const HELP_CONTENT = {
           items: [
             '**Номер ЗН** — уникальный номер текущего заказ-наряда.',
             '**Госномер** — номер автомобиля крупным шрифтом.',
-            '**Марка/Модель** — бренд и модель автомобиля.',
+            '**Марка/Модель** — марка и модель автомобиля.',
             '**Тип работ** — вид обслуживания (ТО, ремонт, диагностика).',
             '**Нормочасы** — сколько времени отведено на работу по нормативу.',
             'Если ЗН не назначен — отображается сообщение «Нет активного ЗН».',
@@ -3356,8 +3354,8 @@ const HELP_CONTENT = {
           heading: 'Таймер работы',
           items: [
             'Крупный таймер в формате **ЧЧ:ММ:СС** — прошедшее время работы.',
-            '**Прогресс-бар** — визуальное заполнение от 0% до 100%+ относительно нормочасов.',
-            'Цвет прогресс-бара меняется по уровням предупреждения.',
+            '**Полоса прогресса** — визуальное заполнение от 0% до 100%+ относительно нормочасов.',
+            'Цвет полосы прогресса меняется по уровням предупреждения.',
             '**Без предупреждения** (0-79%) — зелёный/синий прогресс.',
             '**Предупреждение** (80-94%) — жёлтый. Работа скоро должна быть завершена.',
             '**Критично** (95-99%) — оранжевый. Почти превышение нормы.',
@@ -3370,7 +3368,7 @@ const HELP_CONTENT = {
             'Показывает сколько времени **осталось** до завершения по нормочасам.',
             'Формат: «Осталось: ХХ мин» или «Просрочено на: ХХ мин».',
             'При превышении нормы — текст становится красным.',
-            'Учитывает время пауз — дедлайн сдвигается.',
+            'Учитывает время пауз — крайний срок сдвигается.',
           ],
         },
         {
@@ -3387,7 +3385,7 @@ const HELP_CONTENT = {
         {
           heading: 'Учёт пауз',
           items: [
-            'Время пауз отслеживается отдельно (**totalPausedMs**).',
+            'Время пауз отслеживается отдельно.',
             'Пауза не влияет на общее прошедшее время, но учитывается в отчётах.',
             'Количество пауз записывается.',
             'Паузы видны в детализации ЗН.',
@@ -3396,8 +3394,8 @@ const HELP_CONTENT = {
         {
           heading: 'Ограничения',
           items: [
-            'Страница **отключена в live-режиме**.',
-            'Работает только если механику назначен пост через смену (Shifts).',
+            'Страница **отключена в рабочем режиме**.',
+            'Работает только если механику назначен пост через смену.',
             'Один механик — один пост — один ЗН одновременно.',
           ],
         },
@@ -3406,15 +3404,15 @@ const HELP_CONTENT = {
           items: [
             '[ok] **Начало рабочего дня** — открыли страницу → видим ЗН → нажали «Начать» → таймер пошёл.',
             '[ok] **Перерыв** — «Пауза» → таймер замер → после возврата «Продолжить».',
-            '[ok] **Завершение работы** — кнопка «Завершить» → ЗН перешёл в completed → автоматически подгружается следующий ЗН (если есть).',
-            '[ok] **Сложная работа** — таймер стал жёлтым (80%) → если не успеваете, оповестите мастера → продолжайте, при overtime цвет станет красным.',
+            '[ok] **Завершение работы** — кнопка «Завершить» → ЗН перешёл в «Завершён» → автоматически подгружается следующий ЗН (если есть).',
+            '[ok] **Сложная работа** — таймер стал жёлтым (80%) → если не успеваете, оповестите мастера → продолжайте, при превышении нормы цвет станет красным.',
           ],
         },
       ],
     },
     en: {
       title: 'My Post — Mechanic Screen',
-      intro: 'Simple and clear screen for mechanics. Shows current WO, large timer with progress bar, deadline countdown, and big touch-friendly control buttons (Start / Pause / Resume / Finish). Timer color changes as deadline approaches and is exceeded. Disabled in live mode (mechanics use external terminals there).',
+      intro: 'A simple, clear screen for mechanics. Shows the current WO, a large timer with progress bar, a deadline countdown, and big touch-friendly control buttons (Start / Pause / Resume / Finish). The timer color changes as the deadline approaches and is exceeded. Disabled in live mode (mechanics use external terminals there).',
       sections: [
         {
           heading: 'Screen Map',
@@ -3505,15 +3503,15 @@ const HELP_CONTENT = {
   health: {
     ru: {
       title: 'Здоровье системы',
-      intro: 'Технический мониторинг всех компонентов: сервер, база данных, синхронизация 1С, дисковое пространство, статус камер. Зелёный/жёлтый/красный индикатор для каждого блока. Автообновление каждые 30 секунд. Только для администраторов.',
+      intro: 'Технический мониторинг всех компонентов: сервер, база данных, синхронизация 1С, дисковое пространство, статус камер. Зелёный/жёлтый/красный индикатор для каждого блока. Автоматическое обновление каждые 30 секунд. Только для администраторов.',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
-            '[eye] **Верх** — крупный общий статус системы (зелёный/жёлтый/красный) и uptime.',
+            '[eye] **Верх** — крупный общий статус системы (зелёный/жёлтый/красный) и время непрерывной работы.',
             '[eye] **6 секций-карточек**: Сервер, База данных, Синхронизация 1С, Диск, Камеры, Дополнительно.',
             'Каждая секция со своим цветным индикатором.',
-            '[eye] **Автообновление** работает в фоне, индикатор обновления — в углу.',
+            '[eye] **Автоматическое обновление** работает в фоне, индикатор обновления — в углу.',
           ],
         },
         {
@@ -3575,8 +3573,8 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '[ok] **Утренний чек-ап** — открыли страницу → пробежались по 6 блокам → все зелёные = можно работать.',
-            '[ok] **Реакция на проблему** — память сервера > 85% → перезапустить сервер; диск > 80% — почистить логи и старые файлы.',
+            '[ok] **Утренняя проверка** — открыли страницу → пробежались по 6 блокам → все зелёные = можно работать.',
+            '[ok] **Реакция на проблему** — память сервера > 85% → перезапустить сервер; диск > 80% — почистить журналы и старые файлы.',
             '[ok] **1С отвалилась** — последняя синхронизация старше 24 часов → проверьте настройки IMAP на странице «Данные 1С» и журнал импортов.',
             '[ok] **Камеры в офлайне** — посмотрели на этой странице сводку → перешли на «Камеры» для деталей.',
           ],
@@ -3668,9 +3666,9 @@ const HELP_CONTENT = {
           heading: 'Карта экрана',
           items: [
             '[eye] **Шапка** — кнопка **«Добавить расписание»** (сверху справа).',
-            '[eye] **Список расписаний** — карточки с названием, частотой, временем, статусом (активно/выключено), Chat ID и временем последнего запуска.',
+            '[eye] **Список расписаний** — карточки с названием, частотой, временем, статусом (активно/выключено), идентификатором чата и временем последнего запуска.',
             '[eye] **На каждой карточке:** кнопки **«Запустить сейчас»**, **«Редактировать»**, **«Удалить»** и переключатель активности.',
-            '[eye] **Форма создания/редактирования** — модальное окно с полями: название, частота, день недели (для weekly), час, минуты, Chat ID.',
+            '[eye] **Форма создания/редактирования** — модальное окно с полями: название, частота, день недели (для еженедельной), час, минуты, идентификатор чата.',
           ],
         },
         {
@@ -3687,8 +3685,8 @@ const HELP_CONTENT = {
         {
           heading: 'Telegram-доставка',
           items: [
-            '**Chat ID** — ID чата Telegram для отправки отчёта (опционально).',
-            'Если Chat ID указан — отчёт автоматически отправляется в Telegram.',
+            '**Идентификатор чата** — ID чата Telegram для отправки отчёта (необязательно).',
+            'Если идентификатор чата указан — отчёт автоматически отправляется в Telegram.',
             'Используется Telegram Bot API.',
             'Бот должен быть добавлен в чат и иметь права на отправку файлов.',
           ],
@@ -3696,10 +3694,10 @@ const HELP_CONTENT = {
         {
           heading: 'Управление расписаниями',
           items: [
-            '**isActive** — переключатель: включить/выключить расписание.',
+            '**Активно** — переключатель: включить/выключить расписание.',
             '**Редактирование** — клик по расписанию открывает форму.',
             '**Удаление** — кнопка удалить с подтверждением.',
-            '**Последний запуск** — timestamp последней успешной генерации.',
+            '**Последний запуск** — отметка времени последней успешной генерации.',
           ],
         },
         {
@@ -3707,7 +3705,7 @@ const HELP_CONTENT = {
           items: [
             'Кнопка **«Запустить сейчас»** — немедленная генерация отчёта.',
             'Отчёт скачивается в браузер как XLSX-файл.',
-            'Не влияет на расписание — следующий автозапуск по плану.',
+            'Не влияет на расписание — следующий автоматический запуск по плану.',
           ],
         },
         {
@@ -3722,27 +3720,27 @@ const HELP_CONTENT = {
         {
           heading: 'Техническая реализация',
           items: [
-            'Сервис **reportScheduler.js** использует **node-cron** для планирования.',
-            'XLSX генерируется через **serverExport.js**.',
-            'Расписания хранятся в таблице **ReportSchedule** в БД.',
-            'Cron-выражения формируются автоматически из настроек.',
+            'Планировщик отчётов работает по расписанию (внутренний планировщик).',
+            'XLSX формируется серверным экспортом.',
+            'Расписания хранятся в таблице расписаний в БД.',
+            'Расписания формируются автоматически из настроек.',
           ],
         },
         {
           heading: 'Типичные сценарии',
           items: [
-            '[ok] **Ежедневный отчёт директору:** Добавить → daily → 08:00 → Chat ID директора → Сохранить. Каждое утро отчёт за вчера приходит в Telegram.',
-            '[ok] **Еженедельная сводка в группу:** weekly → понедельник → 09:00 → Chat ID группы → отчёт за неделю каждый понедельник.',
-            '[ok] **Проверить настройки перед запуском по плану:** «Запустить сейчас» → проверить XLSX в браузере → если ок, оставить расписание включённым.',
-            '[ok] **Временно отключить отчёты (отпуск, переезд):** переключатель **isActive** → off. Расписание сохранится, авто-запуск остановится.',
-            '[ok] **Узнать ID чата для бота:** добавить бота в чат → отправить любое сообщение → посмотреть ID через @userinfobot или API getUpdates.',
+            '[ok] **Ежедневный отчёт директору:** Добавить → ежедневно → 08:00 → идентификатор чата директора → Сохранить. Каждое утро отчёт за вчера приходит в Telegram.',
+            '[ok] **Еженедельная сводка в группу:** еженедельно → понедельник → 09:00 → идентификатор чата группы → отчёт за неделю каждый понедельник.',
+            '[ok] **Проверить настройки перед запуском по плану:** «Запустить сейчас» → проверить XLSX в браузере → если всё в порядке, оставить расписание включённым.',
+            '[ok] **Временно отключить отчёты (отпуск, переезд):** переключатель **Активно** → выключить. Расписание сохранится, автоматический запуск остановится.',
+            '[ok] **Узнать идентификатор чата для бота:** добавить бота в чат → отправить любое сообщение → посмотреть ID через @userinfobot.',
           ],
         },
       ],
     },
     en: {
       title: 'Report Schedule',
-      intro: 'Automatic report generation and delivery on schedule. Reports built daily/weekly, exported to XLSX, and delivered to a Telegram chat — to a manager, group, or channel. Set it up once — every morning the report is waiting in your chat.',
+      intro: 'Automatic report generation and delivery on a schedule. Reports are built daily or weekly, exported to XLSX, and delivered to a Telegram chat — to a manager, group, or channel. Set it up once and every morning the report is waiting in your chat.',
       sections: [
         {
           heading: 'Screen Map',
@@ -3828,7 +3826,7 @@ const HELP_CONTENT = {
   workerStats: {
     ru: {
       title: 'Статистика работника',
-      intro: 'Персональная аналитика по конкретному механику: сколько работал, что делал, насколько эффективен. Используется руководителем для оценки персонала, начисления премий, разбора нагрузки. Открывается из списка работников или дашборда — в адресной строке имя выбранного работника.',
+      intro: 'Персональная аналитика по конкретному механику: сколько работал, что делал, насколько эффективен. Используется руководителем для оценки персонала, начисления премий, разбора нагрузки. Открывается из списка работников или главной страницы — в адресной строке имя выбранного работника.',
       sections: [
         {
           heading: 'Карта экрана',
@@ -3864,7 +3862,7 @@ const HELP_CONTENT = {
           items: [
             '**Дневная выработка** — столбчатый график: нормочасы (план) против фактического времени за каждый день.',
             '**Типы ремонта** — круговая диаграмма распределения ЗН по видам работ.',
-            '**Топ марок** — столбчатый график самых частых марок автомобилей.',
+            '**Самые частые марки** — столбчатый график марок автомобилей.',
           ],
         },
         {
@@ -3872,7 +3870,7 @@ const HELP_CONTENT = {
           items: [
             'Список последних заказ-нарядов работника.',
             'Колонки: номер ЗН, госномер, тип работ, нормочасы, факт, статус.',
-            'Цветные бейджи статусов: зелёный (Завершён), синий (В работе), серый (Запланирован).',
+            'Цветные метки статусов: зелёный (Завершён), синий (В работе), серый (Запланирован).',
             'Сортировка по дате — новые сверху.',
           ],
         },
@@ -3888,7 +3886,7 @@ const HELP_CONTENT = {
           heading: 'Доступ',
           items: [
             'Доступна менеджерам, директорам и администраторам.',
-            'Ссылка на страницу обычно из списка работников или дашборда.',
+            'Ссылка на страницу обычно из списка работников или главной.',
             'Имя работника передаётся в адресной строке — позволяет делиться ссылкой на конкретного механика.',
           ],
         },
@@ -3906,7 +3904,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Worker Statistics',
-      intro: 'Personal analytics for a specific mechanic: how much they worked, what they did, how efficient they are. Used by managers to evaluate staff, calculate bonuses, analyze workload. Opened from worker list or dashboard — URL with workerName param.',
+      intro: 'Personal analytics for a specific mechanic: how much they worked, what they did, and how efficient they are. Used by managers to evaluate staff, calculate bonuses, and analyze workload. Opened from the worker list or dashboard — the URL carries a workerName param.',
       sections: [
         {
           heading: 'Screen Map',
@@ -3949,7 +3947,7 @@ const HELP_CONTENT = {
         {
           heading: 'Recent WOs Table',
           items: [
-            'List of worker recent work orders.',
+            'List of the worker\'s recent work orders.',
             'Columns: WO number, plate, work type, norm hours, actual, status.',
             'Colored status badges: green (completed), blue (in_progress), gray (scheduled).',
             'Sorted by date — newest first.',
@@ -3991,33 +3989,33 @@ const HELP_CONTENT = {
   liveDebug: {
     ru: {
       title: 'Отладка мониторинга',
-      intro: 'Окно «под капот» live-режима для админов и интеграторов. Видны сырые данные от CV-системы без обработки — что именно прислало распознавание, в каком порядке и с какими задержками. Используется при настройке камер, калибровке зон, разборе расхождений между дашбордом и реальностью. Доступно только в live-режиме (красный пункт в боковом меню).',
+      intro: 'Окно «под капот» рабочего режима для администраторов и интеграторов. Видны сырые данные от системы камер без обработки — что именно прислало распознавание, в каком порядке и с какими задержками. Используется при настройке камер, калибровке зон, разборе расхождений между главным экраном и реальностью. Доступно только в рабочем режиме (красный пункт в боковом меню).',
       sections: [
         {
           heading: 'Карта экрана',
           items: [
-            '[eye] **Шапка** — индикатор подключения к CV-сервису (зелёный/красный) + время отклика в миллисекундах.',
+            '[eye] **Шапка** — индикатор подключения к сервису камер (зелёный/красный) + время отклика в миллисекундах.',
             '[eye] **Левая колонка:** сырые состояния постов и зон (структурированный текст).',
             '[eye] **Правая колонка:** список камер с их статусами и ссылками на видеопотоки.',
-            '[eye] **Низ страницы:** прокручивающийся лог событий с точностью до миллисекунд.',
+            '[eye] **Низ страницы:** прокручивающийся журнал событий с точностью до миллисекунд.',
           ],
         },
         {
           heading: 'Назначение',
           items: [
-            'Страница для **диагностики** и **отладки** подключения к внешнему CV-сервису.',
+            'Страница для **диагностики** и **отладки** подключения к внешнему сервису камер.',
             'Показывает **сырые данные** без обработки и агрегации.',
             'Помогает понять, что именно видит система мониторинга в реальном времени.',
-            'Используется при настройке и калибровке CV-системы.',
-            'Видна в боковом меню **только в live-режиме** — с красным акцентом.',
+            'Используется при настройке и калибровке системы камер.',
+            'Видна в боковом меню **только в рабочем режиме** — с красным акцентом.',
           ],
         },
         {
           heading: 'Данные мониторинга',
           items: [
-            'Сырые данные от прокси-службы, опрашивающей внешний CV-сервис.',
-            '**Состояния постов** — текущий статус каждого поста от CV-системы (не из БД).',
-            '**Состояния зон** — количество авто, список госномеров от CV.',
+            'Сырые данные от службы мониторинга, опрашивающей внешний сервис камер.',
+            '**Состояния постов** — текущий статус каждого поста от системы камер (не из БД).',
+            '**Состояния зон** — количество авто, список госномеров от камер.',
             'Данные обновляются в реальном времени, опрашивая внешний сервис.',
             'Формат: структурированный текст с подсветкой синтаксиса.',
           ],
@@ -4036,15 +4034,15 @@ const HELP_CONTENT = {
           items: [
             '**Полная история** с точными метками времени (с точностью до миллисекунд).',
             'Каждое событие: тип, зона, пост, камера, уверенность распознавания, госномер.',
-            'Данные не агрегированы — каждый «тик» CV-системы.',
-            'Лог прокручивается автоматически к новым записям.',
-            'Полезно для отладки: видно порядок и задержки событий.',
+            'Данные не агрегированы — каждый «тик» системы камер.',
+            'Журнал прокручивается автоматически к новым записям.',
+            'Полезно для отладки: видны порядок и задержки событий.',
           ],
         },
         {
           heading: 'Доступность внешнего сервиса',
           items: [
-            'Проверка доступности **внешнего CV-сервиса**.',
+            'Проверка доступности **внешнего сервиса камер**.',
             '**Время отклика** в миллисекундах.',
             '**Статус** — «Подключён», «Отключён», «Ошибка».',
             'При ошибке подключения — красный индикатор с описанием ошибки.',
@@ -4053,26 +4051,26 @@ const HELP_CONTENT = {
         {
           heading: 'Доступ и ограничения',
           items: [
-            'Доступна **только в live-режиме** — при переключении в демо-режим страница скрывается.',
+            'Доступна **только в рабочем режиме** — при переключении в демо-режим страница скрывается.',
             'Рекомендуется для **администраторов** и **интеграторов**.',
-            'Данные на этой странице могут отличаться от дашборда — это нормально (разные уровни обработки).',
+            'Данные на этой странице могут отличаться от главного экрана — это нормально (разные уровни обработки).',
           ],
         },
         {
           heading: 'Типичные сценарии',
           items: [
-            '[ok] **На дашборде «не то» состояние поста:** сравнить статус в системе (Дашборд) с сырыми данными CV здесь → если в CV статус правильный, проблема в обработчике событий; если в CV неверно — проблема в распознавании/камере.',
+            '[ok] **На главной «не то» состояние поста:** сравнить статус в системе (Дашборд) с сырыми данными от камер здесь → если статус от камер правильный, проблема в обработчике событий; если от камер неверно — проблема в распознавании/камере.',
             '[ok] **Камера «не видит» машину:** найти камеру в списке → проверить, что в сети → открыть видеопоток → визуально сверить ракурс/перекрытия.',
-            '[ok] **Машина зашла в зону, но не привязалась к посту:** в логе событий найти момент въезда → проверить пребывание в зоне и на посту в это время → если CV не прислало событие занятия поста — проблема CV.',
-            '[ok] **Внешний CV отвалился:** красный индикатор в шапке → проверить время отклика → известить интегратора → временно переключиться в демо-режим, чтобы пользователи продолжали работать.',
-            '[ok] **Калибровка границ зон:** сравнить координаты события (камера, уверенность распознавания) с реальной разметкой → передать данные команде CV.',
+            '[ok] **Машина зашла в зону, но не привязалась к посту:** в журнале событий найти момент въезда → проверить пребывание в зоне и на посту в это время → если событие занятия поста не пришло — проблема в распознавании.',
+            '[ok] **Внешний сервис камер недоступен:** красный индикатор в шапке → проверить время отклика → известить интегратора → временно переключиться в демо-режим, чтобы пользователи продолжали работать.',
+            '[ok] **Калибровка границ зон:** сравнить координаты события (камера, уверенность распознавания) с реальной разметкой → передать данные команде, отвечающей за камеры.',
           ],
         },
       ],
     },
     en: {
-      title: 'Live Debug — Monitoring Debug',
-      intro: 'An "under the hood" view of live mode for admins and integrators. Shows raw data from the CV system without processing — exactly what recognition sent, in what order, with what delays. Used when configuring cameras, calibrating zones, debugging discrepancies between dashboard and reality. Live mode only (red sidebar item).',
+      title: 'Live Debug — Monitoring Diagnostics',
+      intro: 'An "under the hood" view of live mode for admins and integrators. Shows raw data from the CV system without processing — exactly what recognition sent, in what order, and with what delays. Used when configuring cameras, calibrating zones, and debugging discrepancies between the dashboard and reality. Live mode only (red sidebar item).',
       sections: [
         {
           heading: 'Screen Map',
@@ -4108,7 +4106,7 @@ const HELP_CONTENT = {
           items: [
             'List of all cameras with their **current status** (online/offline).',
             '**Stream links** — direct HLS stream URLs.',
-            'Last response time from camera.',
+            'Last response time from each camera.',
             'Helps quickly identify non-working cameras.',
           ],
         },
@@ -4159,7 +4157,7 @@ const HELP_CONTENT = {
   techDocs: {
     ru: {
       title: 'Техническая документация',
-      intro: 'Полное техническое описание системы MetricsAiUp в одном месте: архитектура, API, БД, разграничение прав, фоновые сервисы, описание страниц. Используйте для онбординга разработчиков, передачи знаний интегратору, как справочник при настройке. 23 раздела, поиск, экспорт в PDF, печать, два языка.',
+      intro: 'Полное техническое описание системы MetricsAiUp в одном месте: архитектура, API, БД, разграничение прав, фоновые сервисы, описание страниц. Используйте для введения в курс дела новых разработчиков, передачи знаний интегратору, как справочник при настройке. 23 раздела, поиск, экспорт в PDF, печать, два языка.',
       sections: [
         {
           heading: 'Карта экрана',
@@ -4186,7 +4184,7 @@ const HELP_CONTENT = {
             'Описание серверных маршрутов по всем 22 модулям.',
             'Разграничение прав — система ролей и разрешений.',
             'События реального времени между сервером и браузером.',
-            'CV-интеграция — работа с компьютерным зрением.',
+            'Интеграция с системой компьютерного зрения.',
             'Подробное описание каждой страницы интерфейса.',
           ],
         },
@@ -4227,9 +4225,9 @@ const HELP_CONTENT = {
         {
           heading: 'Типичные сценарии',
           items: [
-            '[ok] **Онбординг нового разработчика:** дать ссылку на эту страницу → пусть пройдёт по разделам сверху вниз → вопросы — потом.',
+            '[ok] **Введение нового разработчика в курс дела:** дать ссылку на эту страницу → пусть пройдёт по разделам сверху вниз → вопросы — потом.',
             '[ok] **Найти серверный маршрут:** поиск → ввести часть пути → перейти к разделу с описанием.',
-            '[ok] **Передать документацию интегратору:** **«PDF»** → отправить файл → у внешней команды офлайн-копия.',
+            '[ok] **Передать документацию интегратору:** **«PDF»** → отправить файл → у внешней команды автономная копия.',
             '[ok] **Сверить схему БД:** раздел «База данных» → найти модель → проверить поля и связи перед миграцией.',
             '[ok] **Понять, как работает страница:** раздел «Страницы интерфейса» → найти нужную → прочитать описание её состояний и потоков данных.',
           ],
@@ -4238,7 +4236,7 @@ const HELP_CONTENT = {
     },
     en: {
       title: 'Technical Documentation',
-      intro: 'Complete technical description of MetricsAiUp in one place: architecture, API, DB, RBAC, background services, page descriptions. Use it for onboarding developers, knowledge transfer to integrators, as reference during setup. 23 sections, search, PDF export, print, RU/EN.',
+      intro: 'A complete technical description of MetricsAiUp in one place: architecture, API, DB, RBAC, background services, and page descriptions. Use it to onboard developers, hand off knowledge to integrators, or as a reference during setup. 23 sections, search, PDF export, print, RU/EN.',
       sections: [
         {
           heading: 'Screen Map',
@@ -4329,11 +4327,11 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '[eye] **Шапка** — название поста и быстрые пресеты периода (Сегодня/Вчера/3д/7д/30д/Всё/Произвольный).',
+            '[eye] **Шапка** — название поста и быстрые шаблоны периода (Сегодня/Вчера/3д/7д/30д/Всё/Произвольный).',
             '[eye] **KPI-полоса (5 карточек):** Всего | Свободен | Занят | В работе | Авто.',
             '[eye] **Панель фильтров:** статус (Все/Свободен/Занят/В работе) + поисковая строка по госномерам и описаниям.',
-            '[eye] **Таблица событий** — Время, Статус (цветной), Госномер, Детали, Люди, Точность CV. Заголовки сортируемы.',
-            '[eye] **Модалка с карты** — компактная версия таблицы с кнопкой «Полная страница».',
+            '[eye] **Таблица событий** — Время, Статус (цветной), Госномер, Детали, Люди, Точность распознавания. Заголовки сортируемы.',
+            '[eye] **Модальное окно с карты** — компактная версия таблицы с кнопкой «Полная страница».',
           ],
         },
         {
@@ -4351,7 +4349,7 @@ const HELP_CONTENT = {
             '**Всего** — общее количество событий за выбранный период.',
             '**Свободен** — сколько раз пост был зафиксирован как свободный.',
             '**Занят** — автомобиль на посту (с работой или без).',
-            '**В работе** — активная работа подтверждена системой CV.',
+            '**В работе** — активная работа подтверждена системой камер.',
             '**Авто** — количество уникальных госномеров за период.',
           ],
         },
@@ -4371,7 +4369,7 @@ const HELP_CONTENT = {
             '**Госномер** — номер автомобиля (если есть), с подсветкой.',
             '**Детали** — описание работ или открытые детали (капот, двери и т.д.).',
             '**Люди** — количество людей, зафиксированных на посту.',
-            '**Точность** — уверенность системы CV: «высокая» (зелёный), «средняя» (жёлтый), «низкая» (красный).',
+            '**Точность** — уверенность системы камер: «высокая» (зелёный), «средняя» (жёлтый), «низкая» (красный).',
           ],
         },
         {
@@ -4396,8 +4394,8 @@ const HELP_CONTENT = {
             '[ok] **Спор по фактическим часам:** период = день инцидента → фильтр «В работе» → найти все интервалы → сложить продолжительность.',
             '[ok] **Найти, когда машина уехала:** поиск по госномеру → отсортировать по времени → последняя запись со статусом «Занят» → дальше «Свободен» = время выезда.',
             '[ok] **Проверить простой:** статус-фильтр → если есть длинные «Занят» без «В работе» → возможно простой → разбираться с механиком.',
-            '[ok] **Низкая точность CV:** колонка «Точность» → если много значений «низкая» — проблемы с камерой/освещением → передать интегратору.',
-            '[ok] **Открыть из карты быстро:** клик на пост → кнопка «История» → модалка → если нужно глубже, нажать «Полная страница».',
+            '[ok] **Низкая точность распознавания:** колонка «Точность» → если много значений «низкая» — проблемы с камерой/освещением → передать интегратору.',
+            '[ok] **Открыть из карты быстро:** клик на пост → кнопка «История» → модальное окно → если нужно глубже, нажать «Полная страница».',
           ],
         },
       ],
@@ -4489,7 +4487,7 @@ const HELP_CONTENT = {
   utilization: {
     ru: {
       title: 'Отчёт «Занятость и загрузка»',
-      intro: 'Сводный отчёт по эффективности использования СТО за выбранный период: фактическое рабочее время постов и зон, простой, загрузка в процентах, потенциальная и фактическая выручка, потери. Поддерживает сравнение с предыдущим периодом, два разреза (по постам и по зонам), heatmap по дням/часам и три формата экспорта.',
+      intro: 'Сводный отчёт по эффективности использования СТО за выбранный период: фактическое рабочее время постов и зон, простой, загрузка в процентах, потенциальная и фактическая выручка, потери. Поддерживает сравнение с предыдущим периодом, два разреза (по постам и по зонам), тепловую карту по дням/часам и три формата экспорта.',
       sections: [
         {
           heading: 'Зачем этот отчёт',
@@ -4505,27 +4503,27 @@ const HELP_CONTENT = {
         {
           heading: 'Карта экрана',
           items: [
-            '**Шапка** — заголовок, кнопки: «Ставка / ±%» (открывает настройки), refresh, экспорт XLSX/PDF/PNG.',
-            '**Фильтры** — период (Сегодня / Вчера / 7д / 30д / свой), чекбокс «Сравнить с предыдущим», переключатель «По постам / По зонам».',
+            '**Шапка** — заголовок, кнопки: «Ставка / ±%» (открывает настройки), обновить, экспорт XLSX/PDF/PNG.',
+            '**Фильтры** — период (Сегодня / Вчера / 7д / 30д / свой), флажок «Сравнить с предыдущим», переключатель «По постам / По зонам».',
             '**Полоса KPI** — 5-7 карточек: рабочий фонд, занятость, простой, загрузка %, и для постов — потенциал/заработано/потери.',
-            '**Тренд** (ComposedChart) — столбцы занятости + линия загрузки % по дням периода.',
-            '**Heatmap** — двухмерная карта «день недели × час» — где провалы и пики загрузки.',
+            '**Тренд** (комбинированный график) — столбцы занятости + линия загрузки % по дням периода.',
+            '**Тепловая карта** — двухмерная карта «день недели × час» — где провалы и пики загрузки.',
             '**Таблица «По сущностям»** — построчно посты или зоны: фонд, занятость, простой, загрузка %, для постов — заработано/потери.',
-            '**Топ-3 потерь** (только для постов) — кто больше всего простаивает в деньгах.',
+            '**Тройка постов с наибольшими потерями** (только для постов) — кто больше всего простаивает в деньгах.',
           ],
         },
         {
           heading: 'KPI-карточки — как читать',
           items: [
             '**Раб. фонд, ч** — теоретическое рабочее время за период: (часов в смену) × (рабочих дней) × (количество постов/зон).',
-            '**Занятость, ч** — суммарное время, когда пост был в статусе **active_work** или **occupied_no_work**.',
+            '**Занятость, ч** — суммарное время, когда пост был в статусе «Активная работа» или «Занят без работ».',
             '**Простой, ч** = фонд − занятость. Логически это «потерянное» время в рабочие часы.',
             '**Загрузка, %** = занятость / фонд × 100. [●green]≥ 60% — хорошо, [●orange] 30-60% — средне, [●red] < 30% — низко.',
             '**Потенциал, ₽** = фонд × ставка ₽/ч. Сколько могли бы заработать, если бы пост был занят 100% рабочего времени.',
             '**Заработано, ₽** = занятость × ставка. Фактическая выручка по этим постам (грубая оценка).',
             '**Потери, ₽** = потенциал − заработано. Сколько недозаработали из-за простоев.',
-            '**Дельта-бейдж** появляется при включённом «Сравнить» — показывает рост/падение по сравнению с предыдущим равным периодом.',
-            '**Погрешность ±%** — рядом с цифрами в скобках диапазон (низ — верх). Учитывает ошибки CV-системы.',
+            '**Дельта-значок** появляется при включённом «Сравнить» — показывает рост/падение по сравнению с предыдущим равным периодом.',
+            '**Погрешность ±%** — рядом с цифрами в скобках диапазон (низ — верх). Учитывает ошибки системы камер.',
           ],
         },
         {
@@ -4535,8 +4533,8 @@ const HELP_CONTENT = {
             '**Вчера** — полный вчерашний день.',
             '**7 дней** — последние 7 календарных дней включая сегодня.',
             '**30 дней** — последние 30 календарных дней включая сегодня.',
-            '**Свой** — два input[type=date], любой диапазон. Параметры сохраняются в URL (`?from=...&to=...`).',
-            '**Сравнить с предыдущим** — чекбокс справа от фильтров. Подтягивает данные за предыдущий равный период (для 7д — −7 дней, для 30д — −30 дней). На KPI появляются дельты с %.',
+            '**Свой** — два поля для выбора даты, любой диапазон. Параметры сохраняются в адресной строке.',
+            '**Сравнить с предыдущим** — флажок справа от фильтров. Подтягивает данные за предыдущий равный период (для 7д — −7 дней, для 30д — −30 дней). На KPI появляются дельты с %.',
           ],
         },
         {
@@ -4551,18 +4549,18 @@ const HELP_CONTENT = {
           heading: 'Настройки расчёта',
           items: [
             'Открыть: кнопка с иконкой шестерёнки в шапке (показывает текущую ставку и погрешность).',
-            '**Рабочее время** — `workStart` / `workEnd` (по умолчанию 09:00–18:00). Определяет смену.',
-            '**Рабочие дни** — массив [пн, вт, …, вс] чекбоксами. Выходные исключаются из фонда.',
-            '**Ставка ₽/ч** — `hourlyRate`. Базовая ставка для расчёта потенциала и потерь. Только для постов.',
+            '**Рабочее время** — начало и конец рабочего дня (по умолчанию 09:00–18:00). Определяет смену.',
+            '**Рабочие дни** — массив [пн, вт, …, вс] флажками. Выходные исключаются из фонда.',
+            '**Ставка ₽/ч** — базовая ставка для расчёта потенциала и потерь. Только для постов.',
             '**Валюта** — символ (₽, $, €) или код. Влияет только на отображение.',
-            '**Погрешность ±%** — `errorMarginPct`. Учитывает ошибки CV (например, 5% значит, что цифры округлены ±5%). Отображается в скобках под каждой KPI-карточкой.',
+            '**Погрешность ±%** — учитывает ошибки камер (например, 5% значит, что цифры округлены ±5%). Отображается в скобках под каждой KPI-карточкой.',
             '**Примечание к погрешности** — свободный текст, например «Без камеры на посту 5 в апреле».',
-            'Все настройки хранятся в `app_settings.weekSchedule` на бэкенде и применяются ко всем пользователям СТО.',
-            'Право редактирования — `manage_settings` (admin/director).',
+            'Все настройки хранятся в общих настройках системы и применяются ко всем пользователям СТО.',
+            'Право редактирования — «Управление настройками» (администратор/директор).',
           ],
         },
         {
-          heading: 'Heatmap «день × час»',
+          heading: 'Тепловая карта «день × час»',
           items: [
             'Двумерная сетка: **строки** — дни недели (пн–вс), **столбцы** — часы суток (0–23).',
             'Цвет ячейки = средняя загрузка % в эту комбинацию (дн+час) по всему выбранному периоду.',
@@ -4574,10 +4572,10 @@ const HELP_CONTENT = {
         {
           heading: 'Тренд по дням',
           items: [
-            'ComposedChart: **столбцы** — занятость, ч; **линия** — загрузка %.',
+            'Комбинированный график: **столбцы** — занятость, ч; **линия** — загрузка %.',
             'При включённом «Сравнить» — вторая полупрозрачная серия для предыдущего периода.',
             'Подсказка над точкой — точные значения и дельта.',
-            'Кнопка PNG в шапке — экспорт именно этого графика в виде картинки 2× resolution.',
+            'Кнопка PNG в шапке — экспорт именно этого графика в виде картинки удвоенного разрешения.',
           ],
         },
         {
@@ -4591,7 +4589,7 @@ const HELP_CONTENT = {
           ],
         },
         {
-          heading: 'Топ-3 потерь (только посты)',
+          heading: 'Тройка постов с наибольшими потерями (только посты)',
           items: [
             'Три поста с наибольшими потерями в рублях за период.',
             'Помогает мастеру сразу увидеть «болевые точки» — куда направить внимание.',
@@ -4602,19 +4600,19 @@ const HELP_CONTENT = {
           heading: 'Экспорт',
           items: [
             '**XLSX** — три листа: «Сводка» (KPI), «По постам/зонам» (детали по строкам), «По дням» (агрегированный тренд).',
-            '**PDF** — многостраничный отчёт через `exportUtilizationPdf` — обложка, KPI, таблица, графики. Подходит для отправки собственнику.',
+            '**PDF** — многостраничный отчёт: обложка, KPI, таблица, графики. Подходит для отправки собственнику.',
             '**PNG** — только график-тренд в высоком разрешении (для презентаций, отчётов в Word).',
-            'Имя файла: `utilization-{entity}-{from}-{to}.xlsx` (entity = posts или zones).',
+            'Имя файла включает разрез (по постам или по зонам) и даты периода.',
             'Все экспорты учитывают текущие фильтры и язык интерфейса.',
           ],
         },
         {
           heading: 'Источник данных',
           items: [
-            'API: **GET /api/utilization?from=...&to=...&entity=posts|zones&compare=1**.',
-            'Бэкенд собирает данные из **MonitoringSnapshot** (live-режим) или **PostStay** + **ZoneStay** (demo-режим).',
-            'Учитываются только периоды в **рабочие часы** согласно настройкам `app_settings.weekSchedule`.',
-            'Статусы **occupied** + **active_work** + **occupied_no_work** считаются занятостью; **free** + **no_data** — простоем.',
+            'Источник: серверный отчёт «Утилизация» за выбранный период (с разрезом по постам или зонам, опционально со сравнением).',
+            'Сервер собирает данные из снимков мониторинга (рабочий режим) или пребываний на постах и в зонах (демо-режим).',
+            'Учитываются только периоды в **рабочие часы** согласно настройкам.',
+            'Статусы «Занят», «Активная работа», «Занят без работ» считаются занятостью; «Свободен» и «Нет данных» — простоем.',
             '[●orange] Авто на посту вне рабочих часов (например, оставили на ночь) — **не учитывается** как занятость.',
           ],
         },
@@ -4622,18 +4620,18 @@ const HELP_CONTENT = {
           heading: 'Типичные сценарии',
           items: [
             '[ok] **Месячный отчёт собственнику:** период «30 дней» → «Сравнить» → экспорт PDF → отправить.',
-            '[ok] **Поиск провалов:** период «7 дней» → heatmap → найти ячейки с низкой загрузкой → обсудить причины.',
+            '[ok] **Поиск провалов:** период «7 дней» → тепловая карта → найти ячейки с низкой загрузкой → обсудить причины.',
             '[ok] **Аргументация повышения ставки:** «Загрузка 75%, потери 80к ₽/мес — нужно повысить ставку или взять второго механика».',
-            '[ok] **Спор с механиком о ставке:** топ-3 потерь → исследовать конкретный пост в «История поста» → конкретные пробелы.',
-            '[ok] **Планирование смен:** heatmap → выявить пиковые часы → перестроить расписание в «Смены».',
+            '[ok] **Спор с механиком о ставке:** тройка постов с наибольшими потерями → исследовать конкретный пост в «История поста» → конкретные пробелы.',
+            '[ok] **Планирование смен:** тепловая карта → выявить пиковые часы → перестроить расписание в «Смены».',
           ],
         },
         {
           heading: 'Доступ и роли',
           items: [
-            'Просмотр: `view_dashboard` или `view_analytics` (manager, director, admin).',
-            'Изменение настроек (ставка, погрешность, рабочее время): `manage_settings` (admin, director).',
-            'В Sidebar — пункт «Утилизация» в разделе «Аналитика».',
+            'Просмотр: «Просмотр дашборда» или «Просмотр аналитики» (менеджер, директор, администратор).',
+            'Изменение настроек (ставка, погрешность, рабочее время): «Управление настройками» (администратор, директор).',
+            'В боковом меню — пункт «Утилизация» в разделе «Аналитика».',
           ],
         },
       ],
@@ -4800,145 +4798,145 @@ const HELP_CONTENT = {
       tabs: {
         current: {
           label: 'Сейчас',
-          intro: 'Текущая сводка по заказам и этапам из 1С на «здесь и сейчас». Источник — сводные таблицы OneCWorkOrderMerged + OneCStageMerged (последняя версия каждого заказа после ROW_NUMBER OVER). Это **обработанные** данные, не сырые: дубли из писем уже устранены, постам присвоены реальные `Post.id` через `PostNameMapping`.',
+          intro: 'Текущая сводка по заказам и этапам из 1С на «здесь и сейчас». Источник — сводки заказ-нарядов и этапов (актуальная версия каждого заказа). Это **обработанные** данные, не сырые: дубли из писем уже устранены, постам присвоены реальные идентификаторы через справочник постов.',
           sections: [
             {
               heading: 'Что видно на экране',
               items: [
-                '[●blue]**Список открытых заказов 1С** — orderNumber, дата, авто, мастер, нормо-часы, статус.',
-                '[●green]**Этапы (stages)** — для каждого заказа: дата этапа, имя этапа, привязанный пост, работник, факт/норма часов.',
-                '[●orange]**Бейдж сопоставления с CV** — если есть WorkOrderLink (matchType: vin / exact_plate / fuzzy_plate, confidence 0.5–1.0).',
-                '[tip] Все даты в Минске (+3). Сортировка по умолчанию — orderDate DESC.',
+                '[●blue]**Список открытых заказов 1С** — номер заказа, дата, авто, мастер, нормо-часы, статус.',
+                '[●green]**Этапы** — для каждого заказа: дата этапа, имя этапа, привязанный пост, работник, факт/норма часов.',
+                '[●orange]**Метка сопоставления с камерами** — если найдена связь (тип совпадения: по VIN / по точному номеру / по похожему номеру; уверенность 0.5–1.0).',
+                '[tip] Все даты в Минске (+3). Сортировка по умолчанию — по дате заказа, новые сверху.',
               ],
             },
             {
               heading: 'Связь с другими страницами',
               items: [
-                '[click]**Клик по номеру заказа** → открывает страницу OrderMatching с подсветкой нужной строки.',
-                '[click]**Клик по госномеру/VIN** → открывает Sessions с фильтром по plateNumber.',
-                '[●violet]**Нестыковки** — кнопка «Перейти к нестыковкам» открывает Discrepancies с фильтром по orderNumber.',
+                '[click]**Клик по номеру заказа** → открывает страницу «Сопоставления» с подсветкой нужной строки.',
+                '[click]**Клик по госномеру/VIN** → открывает «Сессии» с фильтром по номеру.',
+                '[●violet]**Нестыковки** — кнопка «Перейти к нестыковкам» открывает страницу нестыковок с фильтром по номеру заказа.',
               ],
             },
             {
               heading: 'Доступ',
               items: [
-                '**Просмотр**: `view_1c` (admin / director / manager).',
-                'Редактирование данных в этом табе невозможно — только из 1С через IMAP.',
+                '**Просмотр**: «Просмотр данных 1С» (администратор / директор / менеджер).',
+                'Редактирование данных на этой вкладке невозможно — только из 1С через почту.',
               ],
             },
           ],
         },
         imports: {
           label: 'Импорты',
-          intro: 'Журнал писем с XLSX-вложениями, поступивших по IMAP от 1С. Каждое письмо = запись `OneCImport` с уникальным `contentHash` (дедупликация). Статусы: `parsed` (успешно распарсено), `error` (см. errorMessage). Здесь же — ручная загрузка XLSX (drag-drop) и кнопка force-fetch IMAP.',
+          intro: 'Журнал писем с XLSX-вложениями, поступивших по IMAP от 1С. Каждое письмо — отдельный импорт с уникальной контрольной суммой содержимого (для устранения дубликатов). Статусы: «распарсено» (успешно) или «ошибка» (см. текст ошибки). Здесь же — ручная загрузка XLSX перетаскиванием и кнопка принудительной выборки писем.',
           sections: [
             {
               heading: 'Колонки таблицы',
               items: [
-                '**Дата получения** (`receivedAt`), **От** (`fromEmail`), **Тема** (`subject`).',
+                '**Дата получения**, **От**, **Тема**.',
                 '**Файл** — имя XLSX-вложения + размер в КБ.',
-                '[●green]**Статус** — `parsed` зелёный, `error` красный (см. подсказку errorMessage на hover).',
-                '**Тип документа** — план / заявка / выполненные работы (определяется парсером).',
-                '**Кол-во строк** — сколько строк извлечено в OneCPlanRow / OneCRepairOrderRow / OneCStageRow.',
+                '[●green]**Статус** — «распарсено» зелёный, «ошибка» красный (см. текст ошибки при наведении).',
+                '**Тип документа** — план / заявка / выполненные работы (определяется автоматически).',
+                '**Кол-во строк** — сколько строк извлечено в таблицы планов / заказ-нарядов / этапов.',
               ],
             },
             {
               heading: 'Действия',
               items: [
-                '[click]**Drag-drop XLSX** — ручная загрузка минуя IMAP. Файл проходит через тот же `OneCParser`.',
-                '[click]**Force-fetch** — кнопка «Запустить IMAP сейчас» — внеочередной опрос ящика без ожидания pollIntervalSec.',
-                '[click]**Acknowledge** — пометить ошибку как просмотренную (убирает её из счётчика-бейджа табa).',
-                '[tip] Дедуп: одинаковые письма (по contentHash) пропускаются автоматически.',
+                '[click]**Перетаскивание XLSX** — ручная загрузка минуя IMAP. Файл проходит через тот же парсер 1С.',
+                '[click]**Принудительная выборка** — кнопка «Запустить IMAP сейчас» — внеочередной опрос ящика без ожидания заданного интервала.',
+                '[click]**Подтвердить** — пометить ошибку как просмотренную (убирает её из счётчика-метки вкладки).',
+                '[tip] Устранение дубликатов: одинаковые письма (по контрольной сумме содержимого) пропускаются автоматически.',
               ],
             },
             {
-              heading: 'Бейдж-счётчик',
+              heading: 'Метка-счётчик',
               items: [
-                '[●red]**Красный счётчик** на табе «Импорты» — количество **ошибок** за последние 7 дней (acknowledged=false).',
+                '[●red]**Красный счётчик** на вкладке «Импорты» — количество **ошибок** за последние 7 дней (непросмотренных).',
                 'Обнуляется по мере пометки ошибок как просмотренных.',
               ],
             },
             {
               heading: 'Доступ',
               items: [
-                '**Просмотр**: `view_1c`. **Загрузка/Force-fetch**: `manage_1c_import`.',
+                '**Просмотр**: «Просмотр данных 1С». **Загрузка/Принудительная выборка**: «Управление импортом 1С».',
               ],
             },
           ],
         },
         raw: {
           label: 'Сырые данные',
-          intro: 'Развернутый вид трёх таблиц сырых строк из XLSX: **планы** (`OneCPlanRow`), **заказ-наряды (КОЛ…)** (`OneCRepairOrderRow`), **этапы** (`OneCStageRow`). Каждая запись — одна строка одного письма. Дубликаты тут **остаются** — для дебага парсера. Сводки (без дублей) — в табе «Сейчас».',
+          intro: 'Развёрнутый вид трёх таблиц сырых строк из XLSX: **планы**, **заказ-наряды (КОЛ…)** и **этапы**. Каждая запись — одна строка одного письма. Дубликаты тут **остаются** — для отладки разбора. Сводки (без дублей) — во вкладке «Сейчас».',
           sections: [
             {
               heading: 'Три номерных пространства 1С',
               items: [
-                '[●blue]**OneCPlanRow** — план/заявка. Идентичность = композит (orderNumber + orderDate + vehiclePlate). Номер повторяется в каждой выгрузке.',
-                '[●green]**OneCRepairOrderRow** — заказ-наряд (КОЛ…). Отдельная сущность, уникальный orderNumber.',
-                '[●orange]**OneCStageRow** — этап работы. Идентичность = (orderNumber + stageDate + stageName).',
-                '[tip] Поэтому ни одну из таблиц нельзя «дедупить по orderNumber» — нужны композитные ключи. Сводки строятся через ROW_NUMBER OVER (см. таб «Сейчас»).',
+                '[●blue]**Строка плана** — план/заявка. Идентичность = композит (номер заказа + дата заказа + госномер авто). Номер повторяется в каждой выгрузке.',
+                '[●green]**Строка заказ-наряда** — заказ-наряд (КОЛ…). Отдельная сущность, уникальный номер.',
+                '[●orange]**Строка этапа** — этап работы. Идентичность = (номер заказа + дата этапа + имя этапа).',
+                '[tip] Поэтому ни одну из таблиц нельзя «дедупить по номеру заказа» — нужны композитные ключи. Сводки строятся отдельно (см. вкладку «Сейчас»).',
               ],
             },
             {
               heading: 'Фильтры',
               items: [
-                '**По типу документа** (вкладки внутри таба).',
-                '**По диапазону дат** (orderDate / stageDate).',
-                '**По importId** — посмотреть все строки из конкретного письма.',
-                '**Поиск** — по orderNumber, vehiclePlate, VIN, customerName.',
+                '**По типу документа** (вкладки внутри страницы).',
+                '**По диапазону дат** (дата заказа / дата этапа).',
+                '**По идентификатору импорта** — посмотреть все строки из конкретного письма.',
+                '**Поиск** — по номеру заказа, госномеру, VIN, имени клиента.',
               ],
             },
             {
               heading: 'Зачем эта вкладка',
               items: [
-                '[ok] Дебаг: парсер неправильно прочитал XLSX → видно тут.',
+                '[ok] Отладка: при неправильном разборе XLSX → видно тут.',
                 '[ok] История: что именно пришло из 1С в конкретное письмо.',
-                '[ok] Сравнение с обработанной сводкой («Сейчас») — найти, какие записи отфильтрованы при дедупе.',
+                '[ok] Сравнение с обработанной сводкой («Сейчас») — найти, какие записи отфильтрованы при устранении дубликатов.',
               ],
             },
             {
               heading: 'Доступ',
-              items: ['**Просмотр**: `view_1c`. Это read-only вкладка.'],
+              items: ['**Просмотр**: «Просмотр данных 1С». Это вкладка только для чтения.'],
             },
           ],
         },
         settings: {
           label: 'Настройки',
-          intro: 'Настройки опроса IMAP-ящика 1С. Пароль шифруется на бэкенде через AES-GCM с ключом из переменной окружения `IMAP1C_KEY` (32 байта). В API пароль никогда не возвращается в открытом виде.',
+          intro: 'Настройки опроса IMAP-ящика 1С. Пароль шифруется на сервере по протоколу AES-GCM с ключом из переменной окружения (32 байта). При запросе данных пароль никогда не возвращается в открытом виде.',
           sections: [
             {
               heading: 'Поля',
               items: [
-                '**Host** — IMAP-сервер (например, `imap.yandex.ru`, `imap.gmail.com`).',
-                '**Port** — обычно 993 (SSL) или 143 (STARTTLS).',
-                '**Use SSL** — флажок для шифрованного подключения.',
-                '**Login** — полный e-mail (например, `1c@company.ru`).',
-                '**Password** — пароль приложения (не основной пароль аккаунта!). Шифруется AES-GCM.',
-                '**Mailbox** — папка ящика (обычно `INBOX`, можно конкретную подпапку).',
-                '**Poll interval (sec)** — частота опроса (по умолчанию 300с = 5 минут).',
-                '[●green]**Active** — флажок включения/выключения фонового опроса.',
+                '**Хост** — IMAP-сервер (например, `imap.yandex.ru`, `imap.gmail.com`).',
+                '**Порт** — обычно 993 (SSL) или 143 (STARTTLS).',
+                '**Использовать SSL** — флажок для шифрованного подключения.',
+                '**Логин** — полный e-mail (например, `1c@company.ru`).',
+                '**Пароль** — пароль приложения (не основной пароль аккаунта!). Шифруется по протоколу AES-GCM.',
+                '**Папка** — папка ящика (обычно `INBOX`, можно конкретную подпапку).',
+                '**Интервал опроса (сек)** — частота опроса (по умолчанию 300с = 5 минут).',
+                '[●green]**Активен** — флажок включения/выключения фонового опроса.',
               ],
             },
             {
               heading: 'Кнопка «Тест соединения»',
               items: [
-                '[click]Делает реальный IMAP-логин с введёнными настройками и закрывает соединение **без забора писем**.',
-                '[ok]**Успех** — зелёный тост «Соединение установлено».',
-                '[●red]**Ошибка** — красный тост с текстом исключения (AUTHENTICATIONFAILED, NETWORK, SSL и т.д.).',
-                '[tip]Если использовать Gmail/Yandex — нужно создать **пароль приложения** в настройках аккаунта, обычный пароль не сработает (двухфакторка блокирует IMAP).',
+                '[click]Делает реальный IMAP-вход с введёнными настройками и закрывает соединение **без забора писем**.',
+                '[ok]**Успех** — зелёное уведомление «Соединение установлено».',
+                '[●red]**Ошибка** — красное уведомление с текстом ошибки (неверный логин/пароль, нет сети, проблема с SSL и т.д.).',
+                '[tip]Если использовать Gmail/Yandex — нужно создать **пароль приложения** в настройках аккаунта, обычный пароль не сработает (двухфакторная аутентификация блокирует IMAP).',
               ],
             },
             {
               heading: 'Статус опроса',
               items: [
-                '**Last success at** — время последнего успешного захода в ящик.',
-                '[●red]**Last error** — текст последней ошибки опроса (если есть).',
-                '[tip]Если `lastSuccessAt` старше суток, а флажок Active включён — что-то сломалось (см. `lastError`).',
+                '**Время последнего успеха** — время последнего успешного захода в ящик.',
+                '[●red]**Последняя ошибка** — текст последней ошибки опроса (если есть).',
+                '[tip]Если время последнего успеха старше суток, а флажок «Активен» включён — что-то сломалось (см. последнюю ошибку).',
               ],
             },
             {
               heading: 'Доступ',
-              items: ['**Просмотр + редактирование**: `manage_1c_config` (только admin). У других — таб скрыт.'],
+              items: ['**Просмотр + редактирование**: «Настройка IMAP 1С» (только администратор). У других — вкладка скрыта.'],
             },
           ],
         },
@@ -4950,7 +4948,7 @@ const HELP_CONTENT = {
       tabs: {
         current: {
           label: 'Current',
-          intro: 'Current snapshot of orders and stages from 1C as of "here and now". Source — summary tables OneCWorkOrderMerged + OneCStageMerged (latest version of each order after ROW_NUMBER OVER). These are **processed** data, not raw: email duplicates removed, posts mapped to real `Post.id` via `PostNameMapping`.',
+          intro: 'A current snapshot of orders and stages from 1C as of "right now". Source: the summary tables OneCWorkOrderMerged + OneCStageMerged (latest version of each order via ROW_NUMBER OVER). This data is **processed**, not raw: email duplicates are removed and posts are mapped to real `Post.id` values via `PostNameMapping`.',
           sections: [
             {
               heading: 'What is on the screen',
@@ -4980,7 +4978,7 @@ const HELP_CONTENT = {
         },
         imports: {
           label: 'Imports',
-          intro: 'Journal of emails with XLSX attachments received via IMAP from 1C. Each email = an `OneCImport` record with unique `contentHash` (dedup). Statuses: `parsed` (success), `error` (see errorMessage). Also here — manual XLSX upload (drag-drop) and IMAP force-fetch button.',
+          intro: 'A journal of emails with XLSX attachments received from 1C via IMAP. Each email = one `OneCImport` record with a unique `contentHash` (used for dedup). Statuses: `parsed` (success) or `error` (see errorMessage). Also available here: manual XLSX upload (drag-drop) and an IMAP force-fetch button.',
           sections: [
             {
               heading: 'Table columns',
@@ -5016,7 +5014,7 @@ const HELP_CONTENT = {
         },
         raw: {
           label: 'Raw data',
-          intro: 'Expanded view of three raw-row tables from XLSX: **plans** (`OneCPlanRow`), **repair orders (КОЛ…)** (`OneCRepairOrderRow`), **stages** (`OneCStageRow`). Each record = one row of one email. Duplicates **remain** — for parser debugging. Deduped summaries — in "Current" tab.',
+          intro: 'An expanded view of three raw-row tables from XLSX: **plans** (`OneCPlanRow`), **repair orders (КОЛ…)** (`OneCRepairOrderRow`), and **stages** (`OneCStageRow`). Each record = one row from one email. Duplicates **remain** — for parser debugging. Deduplicated summaries live on the "Current" tab.',
           sections: [
             {
               heading: 'Three 1C number spaces',
@@ -5052,7 +5050,7 @@ const HELP_CONTENT = {
         },
         settings: {
           label: 'Settings',
-          intro: 'IMAP mailbox poll settings for 1C. Password is encrypted server-side via AES-GCM with the key from env var `IMAP1C_KEY` (32 bytes). Password is never returned by API in plaintext.',
+          intro: 'IMAP mailbox poll settings for 1C. The password is encrypted server-side via AES-GCM with the key from the `IMAP1C_KEY` env var (32 bytes). The password is never returned by the API in plaintext.',
           sections: [
             {
               heading: 'Fields',
@@ -5099,7 +5097,7 @@ const HELP_CONTENT = {
   login: {
     ru: {
       title: 'Вход в MetricsAiUp',
-      intro: 'Страница авторизации. Введите рабочий e-mail и пароль, которые выдал администратор СТО. После входа вы попадёте на Dashboard или на первую доступную вам страницу.',
+      intro: 'Страница авторизации. Введите рабочий e-mail и пароль, которые выдал администратор СТО. После входа вы попадёте на главный экран или на первую доступную вам страницу.',
       sections: [
         {
           heading: 'Как войти',
@@ -5107,16 +5105,16 @@ const HELP_CONTENT = {
             '[●blue]**E-mail** — полностью, регистр не важен (`Ivan@metricsai.up` = `ivan@metricsai.up`).',
             '[●blue]**Пароль** — чувствителен к регистру. Точки/тире/спецсимволы — как выдали.',
             '[click]Нажмите **«Войти»** или Enter в поле пароля.',
-            '[ok]При успехе появится зелёный тост «Добро пожаловать, …» и произойдёт переход на главную.',
+            '[ok]При успехе появится зелёное уведомление «Добро пожаловать, …» и произойдёт переход на главную.',
           ],
         },
         {
           heading: 'Типичные ошибки',
           items: [
             '[●red]**«Неверный email или пароль»** — проверьте раскладку, Caps Lock, лишние пробелы. Это общее сообщение специально, чтобы не подсказывать, что именно неверно (защита от перебора).',
-            '[●orange]**«Пользователь отключён»** — аккаунт деактивирован. Обратитесь к администратору, чтобы включить `isActive`.',
-            '[●yellow]**«Слишком много попыток. Подождите минуту»** — сработал rate-limit (20 попыток в минуту с одного IP). Подождите 60 секунд.',
-            '[●red]**«Ошибка входа»** — бэкенд не доступен или сеть. Проверьте интернет / обратитесь к админу.',
+            '[●orange]**«Пользователь отключён»** — учётная запись деактивирована. Обратитесь к администратору, чтобы её активировать.',
+            '[●yellow]**«Слишком много попыток. Подождите минуту»** — сработало ограничение частоты (20 попыток в минуту с одного IP). Подождите 60 секунд.',
+            '[●red]**«Ошибка входа»** — сервер недоступен или нет сети. Проверьте интернет / обратитесь к администратору.',
           ],
         },
         {
@@ -5124,47 +5122,47 @@ const HELP_CONTENT = {
           items: [
             '[click]**🌙 / ☀** — тема (тёмная / светлая). Сохраняется между сессиями.',
             '[click]**RU / EN** — язык интерфейса. Сохраняется между сессиями.',
-            '[●red]**«Сброс»** — очищает весь `localStorage` (токен, тема, язык, кэш) и перезагружает страницу. Используется, если что-то «сломалось» — например, после крупного обновления.',
+            '[●red]**«Сброс»** — очищает всё локальное хранилище браузера (токен, тема, язык, кэш) и перезагружает страницу. Используется, если что-то перестало работать — например, после крупного обновления.',
           ],
         },
         {
           heading: 'Безопасность',
           items: [
-            '[tip]Передача пароля идёт **только по HTTPS** (`artisom.dev.metricsavto.com:443`).',
-            'На бэкенде пароли хранятся в виде bcrypt-хеша — оригинал не известен даже администратору.',
-            'JWT-токен сохраняется в `localStorage` и автоматически отправляется в заголовке `Authorization: Bearer` для всех API-запросов.',
-            '[●yellow]**Не сохраняйте пароль в общественных браузерах** — пользуйтесь «Сбросом» при выходе с чужого устройства.',
+            '[tip]Передача пароля идёт **только по HTTPS**.',
+            'На сервере пароли хранятся в виде криптографического хеша — исходный пароль не известен даже администратору.',
+            'JWT-токен сохраняется в локальном хранилище браузера и автоматически прикрепляется к каждому запросу к API.',
+            '[●yellow]**Не сохраняйте пароль в общедоступных браузерах** — пользуйтесь «Сбросом» при выходе с чужого устройства.',
           ],
         },
         {
           heading: 'Если забыли пароль',
           items: [
             'Самостоятельного восстановления пока нет — обратитесь к администратору СТО.',
-            'Администратор перезапишет пароль через страницу **«Пользователи»** (`/users`).',
+            'Администратор перезапишет пароль через страницу **«Пользователи»**.',
             'Новый пароль придёт от него — установите свой при первой возможности.',
           ],
         },
         {
-          heading: 'Тестовые / seed-аккаунты',
+          heading: 'Тестовые / начальные учётные записи',
           items: [
-            '[●blue]`admin@metricsai.up` — admin (полный доступ), для интеграторов и тестирования.',
-            '[●blue]`demo@metricsai.up` — manager (Генри Форд), для презентаций и демо.',
-            '[●blue]`manager@metricsai.up` — manager (Сергей Петров).',
-            '[●gray]`mechanic@metricsai.up` — mechanic (Иван Козлов), **деактивирован** — войти не получится.',
-            '[tip]Эти учётки существуют **только в demo-инсталляции**. В продакшене аккаунты создаёт администратор.',
+            '[●blue]`admin@metricsai.up` — администратор (полный доступ), для интеграторов и тестирования.',
+            '[●blue]`demo@metricsai.up` — менеджер (Генри Форд), для презентаций и демо.',
+            '[●blue]`manager@metricsai.up` — менеджер (Сергей Петров).',
+            '[●gray]`mechanic@metricsai.up` — механик (Иван Козлов), **деактивирован** — войти не получится.',
+            '[tip]Эти учётные записи существуют **только в демо-сборке**. На рабочем сервере учётные записи создаёт администратор.',
           ],
         },
       ],
     },
     en: {
       title: 'Sign in to MetricsAiUp',
-      intro: 'Authentication page. Enter the work e-mail and password issued by your STO admin. After signing in you will land on Dashboard, or on the first page you have access to.',
+      intro: 'Authentication page. Enter the work email and password issued by your STO admin. After signing in, you will land on the Dashboard — or on the first page you have access to.',
       sections: [
         {
           heading: 'How to sign in',
           items: [
-            '[●blue]**E-mail** — full, case-insensitive (`Ivan@metricsai.up` = `ivan@metricsai.up`).',
-            '[●blue]**Password** — case-sensitive. Dots/dashes/special chars — exactly as issued.',
+            '[●blue]**Email** — full address, case-insensitive (`Ivan@metricsai.up` = `ivan@metricsai.up`).',
+            '[●blue]**Password** — case-sensitive. Dots, dashes, and special characters — exactly as issued.',
             '[click]Press **"Sign in"** or Enter in the password field.',
             '[ok]On success you will see a green toast "Welcome, …" and be redirected to the home page.',
           ],
@@ -5263,58 +5261,74 @@ export default function HelpButton({ pageKey, tabId }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(15, 23, 42, 0.55)' }}
           onClick={() => setOpen(false)}>
-          <div className="p-5 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl"
-            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
-            onClick={e => e.stopPropagation()}>
+          <div
+            className="w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-lg"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}
+            onClick={e => e.stopPropagation()}
+          >
             {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <HelpCircle size={18} style={{ color: 'var(--accent)' }} />
-                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{data.title}</h3>
+            <div className="flex items-center justify-between px-6 pt-6 pb-4"
+              style={{ borderBottom: '1px solid var(--border-glass)' }}>
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
+                  {isRu ? 'Справка' : 'Help'}
+                </span>
+                <h3 className="text-lg font-semibold tracking-tight mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                  {data.title}
+                </h3>
               </div>
-              <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:opacity-60">
-                <X size={16} style={{ color: 'var(--text-muted)' }} />
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-md transition-colors hover:bg-[var(--border-glass)]"
+                aria-label={isRu ? 'Закрыть' : 'Close'}
+              >
+                <X size={18} style={{ color: 'var(--text-muted)' }} />
               </button>
             </div>
 
-            {/* Tab bar (если поддержано) */}
-            {hasTabs && (
-              <div className="flex flex-wrap gap-1 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-glass)' }}>
-                {data.tabOrder.map((key) => {
-                  const tab = data.tabs[key];
-                  if (!tab) return null;
-                  const active = key === activeTab;
-                  return (
-                    <button key={key} onClick={() => setActiveTab(key)}
-                      className="px-2.5 py-1 rounded text-[11px] transition-all"
-                      style={{
-                        background: active ? 'var(--accent)' : 'var(--bg-glass)',
-                        color: active ? '#fff' : 'var(--text-muted)',
-                        border: '1px solid ' + (active ? 'var(--accent)' : 'var(--border-glass)'),
-                        fontWeight: active ? 600 : 500,
-                      }}>
-                      {tab.label}
-                    </button>
-                  );
-                })}
+            <div className="px-6 py-5">
+              {/* Tab bar (если поддержано) */}
+              {hasTabs && (
+                <div className="flex flex-wrap gap-x-5 gap-y-1 mb-5"
+                  style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                  {data.tabOrder.map((key) => {
+                    const tab = data.tabs[key];
+                    if (!tab) return null;
+                    const active = key === activeTab;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setActiveTab(key)}
+                        className="pb-2 -mb-px text-xs transition-colors"
+                        style={{
+                          color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                          borderBottom: '2px solid ' + (active ? 'var(--accent)' : 'transparent'),
+                          fontWeight: active ? 600 : 500,
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Intro */}
+              {view && view.intro && (
+                <p className="text-[13px] leading-relaxed mb-6 pl-4"
+                  style={{ color: 'var(--text-secondary)', borderLeft: '2px solid var(--accent)' }}>
+                  {view.intro}
+                </p>
+              )}
+
+              {/* Sections */}
+              <div className="space-y-5">
+                {(view && view.sections ? view.sections : []).map((s, i) => (
+                  <HelpSection key={i} section={s} />
+                ))}
               </div>
-            )}
-
-            {/* Intro */}
-            {view && view.intro && (
-              <p className="text-xs leading-relaxed mb-4 px-3 py-2 rounded-lg"
-                style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)' }}>
-                {view.intro}
-              </p>
-            )}
-
-            {/* Sections */}
-            <div className="space-y-3">
-              {(view && view.sections ? view.sections : []).map((s, i) => (
-                <HelpSection key={i} section={s} />
-              ))}
             </div>
           </div>
         </div>
@@ -5326,28 +5340,37 @@ export default function HelpButton({ pageKey, tabId }) {
 function HelpSection({ section }) {
   const [expanded, setExpanded] = useState(true);
   const items = section.items || [];
-  // Legacy support: if section has 'text' instead of 'items'
+  // Legacy support: если у секции есть `text` вместо `items`.
   if (section.text && items.length === 0) {
     return (
       <div>
-        <h4 className="text-xs font-semibold mb-1" style={{ color: 'var(--accent)' }}>{section.heading}</h4>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{section.text}</p>
+        <h4 className="text-[10px] uppercase tracking-[0.15em] font-semibold mb-2"
+          style={{ color: 'var(--text-muted)' }}>{section.heading}</h4>
+        <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{section.text}</p>
       </div>
     );
   }
 
   return (
     <div>
-      <button className="flex items-center gap-1.5 w-full text-left" onClick={() => setExpanded(!expanded)}>
-        {expanded ? <ChevronDown size={12} style={{ color: 'var(--accent)' }} /> : <ChevronRight size={12} style={{ color: 'var(--text-muted)' }} />}
-        <h4 className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>{section.heading}</h4>
+      <button
+        className="flex items-center gap-2 w-full text-left group"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded
+          ? <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+          : <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />}
+        <h4 className="text-[10px] uppercase tracking-[0.15em] font-semibold transition-colors group-hover:text-[color:var(--text-primary)]"
+          style={{ color: 'var(--text-muted)' }}>
+          {section.heading}
+        </h4>
       </button>
       {expanded && (
-        <ul className="mt-1 ml-5 space-y-0.5">
+        <ul className="mt-2 ml-1 space-y-1.5">
           {items.map((item, j) => (
-            <li key={j} className="text-xs leading-relaxed flex gap-1.5"
+            <li key={j} className="text-[13px] leading-relaxed flex gap-2.5"
               style={{ color: 'var(--text-secondary)' }}>
-              <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'var(--text-muted)' }} />
+              <span className="mt-[7px] w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'var(--text-muted)' }} />
               <span>{renderInline(item)}</span>
             </li>
           ))}
@@ -5371,6 +5394,7 @@ const ICON_TOKENS = {
   tip: { Cmp: Lightbulb, color: '#facc15' },
   arrow: { Cmp: ArrowRight, color: 'currentColor' },
   bolt: { Cmp: Zap, color: '#a855f7' },
+  zap: { Cmp: Zap, color: '#a855f7' },
   eye: { Cmp: Eye, color: '#3b82f6' },
   click: { Cmp: MousePointer2, color: '#3b82f6' },
 };
@@ -5385,9 +5409,11 @@ const SWATCH_COLORS = {
   gray: '#64748b',
   purple: '#6366f1',
   orange: '#f59e0b',
+  pink: '#ec4899',
+  violet: '#8b5cf6',
 };
 
-const INLINE_RE = /\*\*([^*]+)\*\*|\[(ok|check|warn|err|no|info|tip|arrow|bolt|eye|click)\]|\[●(green|yellow|red|blue|gray|purple|orange)\]|\{(green|yellow|red|blue|gray|purple|orange):([^}]+)\}/g;
+const INLINE_RE = /\*\*([^*]+)\*\*|\[(ok|check|warn|err|no|info|tip|arrow|bolt|eye|click|zap)\]|\[●(green|yellow|red|blue|gray|purple|orange|pink|violet)\]|\{(green|yellow|red|blue|gray|purple|orange|pink|violet):([^}]+)\}/g;
 
 function renderInline(text) {
   if (!text) return null;

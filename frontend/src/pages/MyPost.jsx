@@ -104,7 +104,15 @@ export default function MyPost() {
   if (isLive) {
     return (
       <div className="max-w-lg mx-auto space-y-4 p-2">
-        <h1 className="text-2xl font-bold text-center" style={{ color: 'var(--text-primary)' }}>{t('myPost.title')}</h1>
+        <h1 className="text-2xl font-bold text-center flex items-center justify-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          {t('myPost.title')}
+          <span
+            className="text-[10px] uppercase tracking-[0.15em] font-semibold px-2 py-0.5 rounded-md"
+            style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+          >
+            test
+          </span>
+        </h1>
         <div className="rounded-lg p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
           {i18n.language === 'ru' ? 'В режиме LIVE данные этой страницы не отображаются. Используйте Dashboard и Карту СТО.' : 'This page has no data in LIVE mode. Use Dashboard and STO Map.'}
         </div>
@@ -120,6 +128,12 @@ export default function MyPost() {
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             {t('myPost.title')}
           </h1>
+          <span
+            className="text-[10px] uppercase tracking-[0.15em] font-semibold px-2 py-0.5 rounded-md"
+            style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+          >
+            test
+          </span>
           <HelpButton pageKey="myPost" />
         </div>
         <div className="flex justify-center mt-1"><ShowDiscrepanciesToggle /></div>

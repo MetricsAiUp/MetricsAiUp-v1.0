@@ -407,6 +407,12 @@ export default function Events() {
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight" style={{ color: primary }}>
               {t('nav.events')}
             </h1>
+            <span
+              className="text-[10px] uppercase tracking-[0.15em] font-semibold px-2 py-0.5 rounded-md"
+              style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+            >
+              test
+            </span>
             <HelpButton pageKey="events" />
           </div>
           <div className="text-xs mt-2" style={{ color: muted }}>

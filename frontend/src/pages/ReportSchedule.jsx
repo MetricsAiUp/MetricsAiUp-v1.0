@@ -103,6 +103,12 @@ export default function ReportSchedule() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
             {t('reportSchedule.title')}
+            <span
+              className="text-[10px] uppercase tracking-[0.15em] font-semibold px-2 py-0.5 rounded-md"
+              style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+            >
+              test
+            </span>
             <HelpButton pageKey="reportSchedule" />
           </h2>
         </div>
