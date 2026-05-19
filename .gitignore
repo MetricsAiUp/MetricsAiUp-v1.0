@@ -37,6 +37,8 @@ ml/__pycache__/
 /*.dwg
 /*.pdf
 /*.jpg
+# исключение: отчёты о разработке трекаются
+!/MetricsAiUp-DevReport-*.docx
 /*.jpeg
 /telegram-cloud-photo-*
 

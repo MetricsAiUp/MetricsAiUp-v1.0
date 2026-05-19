@@ -36,6 +36,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "docx": "^9.6.1",
     "nodemon": "^3.1.7",
     "prisma": "^5.20.0",
     "vitest": "^4.1.3"
