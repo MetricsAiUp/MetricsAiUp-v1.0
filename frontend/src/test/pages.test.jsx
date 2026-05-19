@@ -228,6 +228,7 @@ import TechDocs from '../pages/TechDocs';
 import LiveDebug from '../pages/LiveDebug';
 import Discrepancies from '../pages/Discrepancies';
 import OrderMatching from '../pages/OrderMatching';
+import UserGuide from '../pages/UserGuide';
 
 // ── Tests ───────────────────────────────────────────────────────────
 describe('Page Rendering — Smoke Tests', () => {
@@ -329,5 +330,9 @@ describe('Page Rendering — Smoke Tests', () => {
 
   it('OrderMatching renders without crashing', () => {
     render(<PageWrapper><OrderMatching /></PageWrapper>);
+  });
+
+  it('UserGuide renders without crashing', () => {
+    render(<PageWrapper><UserGuide /></PageWrapper>);
   });
 });

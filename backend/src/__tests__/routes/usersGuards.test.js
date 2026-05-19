@@ -6,7 +6,7 @@ const AVAILABLE_PAGE_IDS = new Set([
   'dashboard', 'dashboard-posts', 'posts-detail', 'sessions', 'work-orders',
   'shifts', 'events', 'analytics', 'cameras', 'data-1c', 'discrepancies',
   'users', 'map-view', 'map-editor', 'audit', 'health', 'my-post',
-  'report-schedule', 'tech-docs', 'live-debug', 'utilization',
+  'report-schedule', 'tech-docs', 'user-guide', 'live-debug', 'utilization',
 ]);
 
 function sanitizePages(pages) {

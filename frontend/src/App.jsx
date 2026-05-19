@@ -29,6 +29,7 @@ const Health = lazy(() => import('./pages/Health'));
 const WorkerStats = lazy(() => import('./pages/WorkerStats'));
 const ReportSchedule = lazy(() => import('./pages/ReportSchedule'));
 const TechDocs = lazy(() => import('./pages/TechDocs'));
+const UserGuide = lazy(() => import('./pages/UserGuide'));
 const LiveDebug = lazy(() => import('./pages/LiveDebug'));
 const PostHistory = lazy(() => import('./pages/PostHistory'));
 const ZoneHistory = lazy(() => import('./pages/PostHistory').then(m => ({ default: m.ZoneHistory })));
@@ -105,6 +106,7 @@ function AppRoutes() {
           <Route path="utilization" element={<Page id="utilization"><UtilizationReport /></Page>} />
           <Route path="report-schedule" element={<Page id="report-schedule"><ReportSchedule /></Page>} />
           <Route path="tech-docs" element={<Page id="tech-docs"><TechDocs /></Page>} />
+          <Route path="user-guide" element={<Page id="user-guide"><UserGuide /></Page>} />
         </Route>
       </Routes>
     </Suspense>

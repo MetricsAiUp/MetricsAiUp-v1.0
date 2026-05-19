@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Map, Car, ClipboardList, ScrollText,
   BarChart3, Camera, Database, CalendarClock, Columns,
   ChevronDown, Users, PenTool, MapPin, Clock, Shield, Wrench, Activity,
-  FileSpreadsheet, BookOpen, Bug, AlertTriangle,
+  FileSpreadsheet, BookOpen, Bug, AlertTriangle, GraduationCap,
 } from 'lucide-react';
 import { POST_STATUS_COLORS } from '../constants';
 
@@ -33,6 +33,7 @@ const navItems = [
   { path: '/my-post', icon: Wrench, labelKey: 'nav.myPost', pageId: 'my-post' },
   { path: '/report-schedule', icon: FileSpreadsheet, labelKey: 'nav.reportSchedule', pageId: 'report-schedule' },
   { path: '/tech-docs', icon: BookOpen, labelKey: 'nav.techDocs', pageId: 'tech-docs' },
+  { path: '/user-guide', icon: GraduationCap, labelKey: 'nav.userGuide', pageId: 'user-guide' },
 ];
 
 const ZONE_ITEMS = [

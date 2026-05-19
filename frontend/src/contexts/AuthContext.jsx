@@ -67,6 +67,7 @@ const PAGE_PERMISSIONS = {
   'my-post': ['view_dashboard'],
   'report-schedule': ['view_dashboard'],
   'tech-docs': ['view_dashboard'],
+  'user-guide': ['view_dashboard'],
   'live-debug': ['manage_users'],
 };
 

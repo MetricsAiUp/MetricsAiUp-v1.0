@@ -44,6 +44,7 @@ const AVAILABLE_PAGES = [
   { id: 'my-post', label: { ru: 'Мой пост', en: 'My Post' } },
   { id: 'report-schedule', label: { ru: 'Расписание отчётов', en: 'Report Schedule' } },
   { id: 'tech-docs', label: { ru: 'Документация', en: 'Documentation' } },
+  { id: 'user-guide', label: { ru: 'Руководство пользователя', en: 'User Guide' } },
   { id: 'live-debug', label: { ru: 'Live-отладка', en: 'Live Debug' } },
   { id: 'utilization', label: { ru: 'Отчёт по утилизации', en: 'Utilization Report' } },
 ];
